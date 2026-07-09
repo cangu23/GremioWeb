@@ -34,9 +34,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Explicitly handle OPTIONS preflight requests
-app.options('*', cors());
-
 // ========== SECURITY MIDDLEWARE ==========
 
 // Helmet: Set security-related HTTP headers (AFTER CORS to avoid conflicts)
