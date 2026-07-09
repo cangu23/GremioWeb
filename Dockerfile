@@ -13,8 +13,11 @@ COPY frontend/package.json frontend/tsconfig.json frontend/
 COPY frontend/next.config.mjs frontend/
 COPY shared/package.json shared/tsconfig.json shared/
 
-# Install ALL dependencies (including devDependencies needed for build)
-RUN npm ci
+# Install OpenSSL (required by Prisma on Alpine)
+RUN apk add --no-cache openssl
+
+# Install ALL dependencies but skip postinstall (prisma schema not copied yet)
+RUN npm ci --ignore-scripts
 
 # Copy shared source files
 COPY shared/*.ts shared/
@@ -51,8 +54,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000
 
-# Install wget for health checks
-RUN apk add --no-cache wget
+# Install wget for health checks and openssl for Prisma
+RUN apk add --no-cache wget openssl
 
 # Copy only what the backend needs to run
 COPY --from=builder /app/package.json ./
