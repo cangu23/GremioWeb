@@ -73,5 +73,5 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:4000/api/health || exit 1
 
-# Start the backend API server
-CMD ["node", "backend/dist/server.js"]
+# Start the backend API server (migrate DB first, then start)
+CMD ["sh", "-c", "npx prisma db push --schema backend/prisma/schema.prisma --skip-generate && node backend/dist/server.js"]
