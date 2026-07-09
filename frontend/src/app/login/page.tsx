@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
 
 function LoginForm() {
   const { login } = useAuth();
@@ -172,47 +173,10 @@ function LoginForm() {
         <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }} />
       </div>
 
-      {/* Social buttons placeholder */}
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <button
-          type="button"
-          className="btn btn-outline"
-          style={{
-            flex: 1,
-            padding: '12px',
-            fontSize: '0.9rem',
-            borderRadius: '10px',
-            justifyContent: 'center',
-          }}
-          disabled
-        >
-          🐙 GitHub
-        </button>
-        <button
-          type="button"
-          className="btn btn-outline"
-          style={{
-            flex: 1,
-            padding: '12px',
-            fontSize: '0.9rem',
-            borderRadius: '10px',
-            justifyContent: 'center',
-          }}
-          disabled
-        >
-          🎮 Discord
-        </button>
+      {/* Google Login Button */}
+      <div style={{ marginBottom: '8px' }}>
+        <GoogleLoginButton />
       </div>
-      <p
-        style={{
-          textAlign: 'center',
-          marginTop: '8px',
-          fontSize: '0.75rem',
-          color: 'var(--text-muted)',
-        }}
-      >
-        Próximamente
-      </p>
 
       <p
         style={{

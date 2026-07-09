@@ -1,26 +1,12 @@
 import bcrypt from 'bcrypt';
-import jwt, { SignOptions } from 'jsonwebtoken';
-import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { AuthProvider, Role } from '@gremio-estelar/shared';
 import * as UserRepository from '../users/user.repository';
 import * as AuthRepository from './auth.repository';
-import AppError from '../../errors/AppError';
-import env from '../../config/env';
+import AppError from '../../errors/AppError.js';
+import env from '../../config/env.js';
+import { generateTokens, hashToken } from './tokens.js';
 import { LoginInput, RegisterInput, RefreshTokenInput } from './auth.types';
-
-const generateTokens = (userId: string) => {
-  const accessToken = jwt.sign({ userId }, env.JWT_ACCESS_SECRET, {
-    expiresIn: env.JWT_ACCESS_EXPIRES_IN,
-  } as SignOptions);
-  const refreshToken = jwt.sign({ userId }, env.JWT_REFRESH_SECRET, {
-    expiresIn: env.JWT_REFRESH_EXPIRES_IN,
-  } as SignOptions);
-  return { accessToken, refreshToken };
-};
-
-const hashToken = (token: string) => {
-  return crypto.createHash('sha256').update(token).digest('hex');
-};
 
 /**
  * Registers a new user and returns the user object without tokens.

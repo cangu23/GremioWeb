@@ -17,6 +17,7 @@ interface EnvConfig {
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_EXPIRES_IN: string;
   JWT_REFRESH_EXPIRES_IN: string;
+  GOOGLE_CLIENT_ID: string;
 }
 
 const env: EnvConfig = {
@@ -26,9 +27,15 @@ const env: EnvConfig = {
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || '',
   JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
 };
 
 // Validate required secrets (must be set via .env, never use defaults in production)
+// Warn if Google OAuth is not configured
+if (!env.GOOGLE_CLIENT_ID) {
+  console.warn('⚠️  GOOGLE_CLIENT_ID not set — Google login will be disabled');
+}
+
 if (isNaN(env.PORT) || !env.JWT_ACCESS_SECRET || !env.JWT_REFRESH_SECRET) {
   console.error(
     'Missing required environment variables.\n' +

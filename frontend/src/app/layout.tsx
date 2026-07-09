@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import { AuthProvider } from '@/lib/AuthContext';
 import { ToastProvider } from '@/lib/ToastContext';
 import Navbar from '@/components/layout/Navbar';
 import ParticlesBackground from '@/components/landing/ParticlesBackground';
 import './globals.css';
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export const metadata: Metadata = {
   title: 'Gremio Estelar — El Hogar de los VTubers',
@@ -25,14 +28,16 @@ export default function RootLayout({
     <html lang="es">
       <body>
         <ParticlesBackground />
-        <ToastProvider>
-          <AuthProvider>
-            <Navbar />
-            <main className="page">
-              {children}
-            </main>
-          </AuthProvider>
-        </ToastProvider>
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+          <ToastProvider>
+            <AuthProvider>
+              <Navbar />
+              <main className="page">
+                {children}
+              </main>
+            </AuthProvider>
+          </ToastProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

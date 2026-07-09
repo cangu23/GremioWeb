@@ -4,6 +4,7 @@ import { validateRequest } from './validateRequest';
 import { loginSchema, registerSchema, refreshTokenSchema, redeemCodeSchema } from './auth.validation';
 import { authenticate } from './authenticate';
 import * as CodesController from '../admin/codes.controller';
+import * as GoogleController from './google.controller';
 
 const router = Router();
 
@@ -16,5 +17,8 @@ router.post('/logout', AuthController.logout);
 
 // 🔐 Redeem an invitation code (authenticated users)
 router.post('/redeem-code', authenticate, validateRequest(redeemCodeSchema), CodesController.redeemCode);
+
+// 🔵 Google OAuth (Google Identity Services)
+router.post('/google', GoogleController.googleLogin);
 
 export default router;

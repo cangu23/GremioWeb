@@ -9,6 +9,7 @@ interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
   login: (data: LoginPayload) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   register: (data: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -50,6 +51,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.user);
   };
 
+  const googleLogin = async (credential: string) => {
+    const res = await apiFetch('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential })
+    });
+    setAccessToken(res.accessToken);
+    setUser(res.user);
+  };
+
   const { showToast } = useToast();
 
   const register = async (data: RegisterPayload) => {
@@ -69,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, googleLogin, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -87,6 +97,7 @@ export const useAuth = () => {
         user: null,
         isLoading: true,
         login: async () => { throw new Error('Auth not available during SSR'); },
+        googleLogin: async () => { throw new Error('Auth not available during SSR'); },
         register: async () => { throw new Error('Auth not available during SSR'); },
         logout: async () => { throw new Error('Auth not available during SSR'); },
       };
