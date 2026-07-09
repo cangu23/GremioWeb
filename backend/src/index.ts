@@ -4,6 +4,8 @@ import authRoutes from './modules/auth/auth.routes';
 import adminRoutes from './modules/auth/admin.routes';
 import { adminRoutes as adminModuleRoutes } from './modules/admin';
 
+import * as RequestsController from './modules/admin/requests.controller';
+import { authenticate } from './modules/auth/authenticate';
 import userRoutes from './modules/users/user.routes';
 import socialRoutes from './modules/social/social.routes';
 import eventRoutes from './modules/events/events.routes';
@@ -22,6 +24,9 @@ router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
 router.use('/admin', adminModuleRoutes);
+// 📋 VTuber request (authenticated users)
+router.post('/vtubers/request', authenticate, RequestsController.submitRequest);
+
 router.use('/users', userRoutes);
 router.use('/social', socialRoutes);
 router.use('/events', eventRoutes);

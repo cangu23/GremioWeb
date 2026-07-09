@@ -243,9 +243,67 @@ function VtuberProfileEditor() {
           </div>
         </div>
 
-        <button type="submit" className="btn" disabled={saving} style={{ width: '100%', padding: '14px', fontSize: '1.1rem' }}>
-          {saving ? 'Guardando perfil VTuber...' : '💾 Guardar Perfil VTuber'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button type="submit" className="btn" disabled={saving} style={{ flex: '1', padding: '14px', fontSize: '1.1rem', minWidth: '200px' }}>
+            {saving ? 'Guardando perfil VTuber...' : '💾 Guardar Perfil VTuber'}
+          </button>
+
+          {user.role !== 'VTUBER' && !user.vtuberProfile?.isApproved && (
+            <button
+              type="button"
+              className="btn"
+              style={{
+                flex: '1',
+                padding: '14px',
+                fontSize: '1.1rem',
+                minWidth: '200px',
+                background: 'linear-gradient(135deg, #ff007f, #ff9800)',
+              }}
+              onClick={async () => {
+                try {
+                  await apiFetch('/vtubers/request', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                      displayName: displayName || user.username,
+                      description: description || undefined,
+                      avatarUrl: avatarUrl || undefined,
+                      lore: lore || undefined,
+                    }),
+                  });
+                  showToast('🎉 Solicitud enviada. Recibirás un código cuando sea aprobada.', 'success');
+                } catch (err: unknown) {
+                  showToast(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
+                }
+              }}
+            >
+              🎤 Solicitar ser VTuber Oficial
+            </button>
+          )}
+
+          {user.vtuberProfile?.isApproved && user.role === 'VTUBER' && (
+            <div
+              className="glass"
+              style={{
+                flex: '1',
+                padding: '16px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                background: 'rgba(0,230,118,0.08)',
+                border: '1px solid rgba(0,230,118,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: '#00e676',
+                minWidth: '200px',
+              }}
+            >
+              ✅ Eres un VTuber Oficial
+            </div>
+          )}
+        </div>
       </form>
     </div>
   );

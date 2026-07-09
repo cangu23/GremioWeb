@@ -29,3 +29,9 @@ export const refreshTokenSchema = z.object({
     refreshToken: z.string({ required_error: 'Refresh token is required' }),
   }),
 });
+
+export const redeemCodeSchema = z.object({
+  body: z.object({
+    code: z.string().min(1, 'El código es requerido'),
+  }),
+});

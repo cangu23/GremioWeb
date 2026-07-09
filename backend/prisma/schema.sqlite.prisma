@@ -367,6 +367,42 @@ model Notification {
   @@index([userId, createdAt])
 }
 
+model RoleCode {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  role          String
+  status        String   @default("ACTIVE")
+  generatedById String
+  usedById      String?
+  usedAt        DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([code])
+  @@index([status])
+  @@index([role])
+}
+
+model VtuberRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  status        String   @default("PENDING")
+  displayName   String
+  description   String?
+  avatarUrl     String?
+  lore          String?
+  notes         String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
 model AdminLog {
   id        String   @id @default(cuid())
   userId    String

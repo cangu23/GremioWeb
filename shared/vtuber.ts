@@ -23,6 +23,10 @@ export interface VTuberProfile {
   oshiMark?: string | null;
   hashtags?: string | null;
   isLive?: boolean;
+  isVerified?: boolean;
+  isApproved?: boolean;
+  isFeatured?: boolean;
+  isHidden?: boolean;
 }
 
 export interface UpdateVTuberProfilePayload {

@@ -30,6 +30,10 @@ function DashboardContent() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [gami, setGami] = useState<GamificationData | null>(null);
+  const [showRedeem, setShowRedeem] = useState(false);
+  const [redeemCode, setRedeemCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemResult, setRedeemResult] = useState<{ message: string; newRole: string; codeName: string } | null>(null);
 
   const xpThresholds = [0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 4000, 5200, 6600, 8200, 10000, 12000];
 
@@ -385,6 +389,128 @@ function DashboardContent() {
             </div>
           </div>
         )}
+
+        {/* 🔐 Redeem Code Card */}
+        <div
+          className="glass"
+          style={{
+            padding: '32px',
+            borderRadius: '20px',
+            border: '1px solid var(--glass-border)',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '1.3rem',
+              fontWeight: 700,
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+          >
+            🔐 Canjear Código
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
+            ¿Tienes un código de invitación? Canjéalo aquí para obtener un rol especial.
+          </p>
+
+          {redeemResult ? (
+            <div
+              className="glass"
+              style={{
+                padding: '20px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                background: 'rgba(0,230,118,0.08)',
+                border: '1px solid rgba(0,230,118,0.2)',
+              }}
+            >
+              <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🎉</div>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px', color: '#00e676' }}>{redeemResult.message}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Código: {redeemResult.codeName}
+              </div>
+              <button
+                onClick={() => { setRedeemResult(null); setShowRedeem(false); window.location.reload(); }}
+                className="btn"
+                style={{ marginTop: '16px', padding: '10px 24px' }}
+              >
+                Continuar
+              </button>
+            </div>
+          ) : showRedeem ? (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!redeemCode.trim()) return;
+                setRedeeming(true);
+                try {
+                  const res = await apiFetch('/auth/redeem-code', {
+                    method: 'POST',
+                    body: JSON.stringify({ code: redeemCode.trim() }),
+                  });
+                  setRedeemResult(res);
+                  showToast(`🎉 ${res.message}`, 'success');
+                } catch (err: unknown) {
+                  showToast(err instanceof Error ? err.message : 'Código inválido', 'error');
+                } finally {
+                  setRedeeming(false);
+                }
+              }}
+            >
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <input
+                  className="input"
+                  value={redeemCode}
+                  onChange={(e) => setRedeemCode(e.target.value)}
+                  placeholder="Ej: GC-7F3K9A2B..."
+                  style={{ flex: 1, fontFamily: 'monospace', fontSize: '1rem' }}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="btn"
+                  disabled={redeeming || !redeemCode.trim()}
+                  style={{
+                    padding: '12px 24px',
+                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                  }}
+                >
+                  {redeeming ? '...' : 'Canjear'}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRedeem(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  marginTop: '8px',
+                  padding: '4px 8px',
+                }}
+              >
+                Cancelar
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setShowRedeem(true)}
+              className="btn"
+              style={{
+                width: '100%',
+                padding: '14px',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #ff007f, #8a2be2)',
+              }}
+            >
+              🔑 Tengo un Código
+            </button>
+          )}
+        </div>
 
         {/* Edit Profile Card */}
         <div

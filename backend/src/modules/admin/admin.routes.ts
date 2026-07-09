@@ -14,6 +14,8 @@ import {
   resolveReportSchema,
 } from './admin.validation';
 import * as AdminController from './admin.controller';
+import * as CodesController from './codes.controller';
+import * as RequestsController from './requests.controller';
 
 const router = Router();
 
@@ -64,6 +66,17 @@ router.delete('/comments/:id', AdminController.deleteComment);
 router.get('/reports', AdminController.listReports);
 router.post('/reports', validateRequest(createReportSchema), AdminController.createReport);
 router.patch('/reports/:id', validateRequest(resolveReportSchema), AdminController.resolveReport);
+
+// ========== 🔐 INVITATION CODES ==========
+router.post('/codes/generate', CodesController.generateCode);
+router.get('/codes', CodesController.listCodes);
+router.delete('/codes/:id', CodesController.revokeCode);
+
+// ========== 📋 VTUBER REQUESTS ==========
+router.get('/vtuber-requests', RequestsController.listRequests);
+router.get('/vtuber-requests/:id', RequestsController.getRequestDetail);
+router.post('/vtuber-requests/:id/approve', RequestsController.approveRequest);
+router.post('/vtuber-requests/:id/reject', RequestsController.rejectRequest);
 
 // ========== LOGS ==========
 router.get('/logs', AdminController.listLogs);

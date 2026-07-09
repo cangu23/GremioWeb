@@ -25,6 +25,13 @@ const adminNavItems = [
     ],
   },
   {
+    section: 'Acceso',
+    items: [
+      { href: '/admin/codes', label: 'Códigos', icon: '🔐' },
+      { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: '📋' },
+    ],
+  },
+  {
     section: 'Moderación',
     items: [
       { href: '/admin/reports', label: 'Reportes', icon: '🚨' },
