@@ -97,7 +97,6 @@ export default function GoogleLoginButton() {
       size="large"
       text="signin_with"
       shape="rectangular"
-      width="100%"
       containerProps={{
         style: {
           width: '100%',
