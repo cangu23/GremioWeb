@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
+import DiscordLoginButton from '@/components/auth/DiscordLoginButton';
 
 function RegisterForm() {
   const { register } = useAuth();
@@ -246,6 +248,30 @@ function RegisterForm() {
           )}
         </button>
       </form>
+
+      {/* Divider */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          margin: '28px 0',
+        }}
+      >
+        <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }} />
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>o continúa con</span>
+        <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }} />
+      </div>
+
+      {/* Google Login Button */}
+      <div style={{ marginBottom: '8px' }}>
+        <GoogleLoginButton />
+      </div>
+
+      {/* Discord Login Button */}
+      <div>
+        <DiscordLoginButton />
+      </div>
 
       <p
         style={{

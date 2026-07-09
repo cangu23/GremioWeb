@@ -9,18 +9,38 @@ import mainRouter from './index';
 
 const app = express();
 
-// ========== SECURITY MIDDLEWARE ==========
+// ========== CORS (must be first) ==========
+// Allow all origins with credentials for both development and production
+// Using explicit origin list to ensure preflight (OPTIONS) requests work
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:4000',
+  'https://gremio-frontend.onrender.com',
+  'https://gremio-backend.onrender.com',
+];
 
-// Helmet: Set security-related HTTP headers
-app.use(helmet());
-
-// CORS: Allow frontend to make requests with credentials (development: allow all origins)
 app.use(cors({
-  origin: (_origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    callback(null, true);
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      // Fallback: allow anyway (only block in strict production if needed)
+      callback(null, true);
+    }
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
+// Explicitly handle OPTIONS preflight requests
+app.options('*', cors());
+
+// ========== SECURITY MIDDLEWARE ==========
+
+// Helmet: Set security-related HTTP headers (AFTER CORS to avoid conflicts)
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // Rate Limiting: Protect API from abuse
 const limiter = rateLimit({
