@@ -1,0 +1,133 @@
+import { Server as HttpServer } from 'http';
+import { Server, Socket } from 'socket.io';
+import jwt from 'jsonwebtoken';
+import env from '../config/env';
+import prisma from '../database/prisma';
+
+interface AuthenticatedSocket extends Socket {
+  userId?: string;
+  username?: string;
+}
+
+export const createSocketServer = (httpServer: HttpServer) => {
+  const io = new Server(httpServer, {
+    cors: {
+      origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // In development, allow all origins
+        callback(null, true);
+      },
+      credentials: true,
+    },
+  });
+
+  // Authentication middleware
+  io.use(async (socket: AuthenticatedSocket, next) => {
+    const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+    if (!token) {
+      return next(new Error('Authentication required'));
+    }
+
+    try {
+      const decoded = jwt.verify(token as string, env.JWT_ACCESS_SECRET) as { userId: string; username: string };
+      socket.userId = decoded.userId;
+      socket.username = decoded.username;
+      next();
+    } catch {
+      next(new Error('Invalid token'));
+    }
+  });
+
+  io.on('connection', async (socket: AuthenticatedSocket) => {
+    const userId = socket.userId!;
+    const username = socket.username!;
+
+    console.log(`[Socket] User connected: ${username} (${userId})`);
+
+    // Join default global room
+    socket.join('global');
+
+    // Send recent message history
+    const recentMessages = await prisma.chatMessage.findMany({
+      where: { room: 'global' },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+          },
+        },
+      },
+    });
+
+    socket.emit('chat:history', recentMessages.reverse());
+
+    // Handle new messages
+    socket.on('chat:message', async (data: { content: string; room?: string }) => {
+      const room = data.room || 'global';
+      const content = data.content?.trim();
+
+      if (!content || content.length > 1000) return;
+
+      try {
+        const message = await prisma.chatMessage.create({
+          data: {
+            room,
+            userId,
+            content,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+              },
+            },
+          },
+        });
+
+        socket.to(room).emit('chat:message', {
+          id: message.id,
+          room: message.room,
+          userId: message.userId,
+          content: message.content,
+          createdAt: message.createdAt.toISOString(),
+          user: {
+            id: message.user.id,
+            username: message.user.username,
+            avatarUrl: message.user.vtuberProfile?.avatarUrl ?? null,
+            displayName: message.user.vtuberProfile?.displayName ?? null,
+          },
+        });
+      } catch (err) {
+        console.error('[Socket] Error saving message:', err);
+        socket.emit('chat:error', { message: 'Error al enviar mensaje' });
+      }
+    });
+
+    // Handle typing events
+    socket.on('chat:typing', (data: { room?: string; isTyping: boolean }) => {
+      const room = data.room || 'global';
+      socket.to(room).emit('chat:typing', {
+        userId,
+        username,
+        isTyping: data.isTyping,
+      });
+    });
+
+    // Handle room joins
+    socket.on('chat:join', (data: { room: string }) => {
+      socket.join(data.room);
+      console.log(`[Socket] ${username} joined room: ${data.room}`);
+    });
+
+    socket.on('disconnect', () => {
+      console.log(`[Socket] User disconnected: ${username} (${userId})`);
+    });
+  });
+
+  return io;
+};

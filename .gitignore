@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.development
+.env.production.local
+
+# Build outputs
+backend/dist/
+frontend/.next/
+frontend/out/
+shared/dist/
+
+# Logs
+*.log
+*.err
+
+# TypeScript build info
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma SQLite dev database (keep schema, ignore data)
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+shared/dev.db
+dev.db
+dev.db-journal
+
+# Accidental nested copies
+backend/backend/
+nul
+
+# Next.js auto-generated
+frontend/next-env.d.ts

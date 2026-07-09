@@ -1,0 +1,31 @@
+{
+  "name": "gremio-estelar-monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared"
+  ],
+  "scripts": {
+    "postinstall": "npm run prisma:generate",
+    "dev": "npm run build:shared && concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build:shared && npm run build --workspace=backend && npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "start:backend": "npm run start --workspace=backend",
+    "build:shared": "npm run build --workspace=@gremio-estelar/shared",
+    "prisma:generate": "prisma generate --schema backend/prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema backend/prisma/schema.prisma",
+    "prisma:generate:sqlite": "prisma generate --schema backend/prisma/schema.sqlite.prisma",
+    "prisma:push:sqlite": "prisma db push --schema backend/prisma/schema.sqlite.prisma",
+    "db:setup": "npm run prisma:push",
+    "db:seed": "echo 'Seed script pending — add your seed logic here'"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "prisma": "^5.22.0"
+  }
+}

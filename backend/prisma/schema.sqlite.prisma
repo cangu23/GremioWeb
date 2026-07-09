@@ -1,0 +1,488 @@
+// ========================================
+// Gremio Estelar — Prisma Schema (SQLite)
+// ========================================
+// For LOCAL DEVELOPMENT only.
+// Switch to this schema for dev:
+//   prisma generate --schema prisma/schema.sqlite.prisma
+//   prisma db push --schema prisma/schema.sqlite.prisma
+//
+// Set DATABASE_URL="file:./dev.db" in backend/.env
+// ========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  username      String         @unique
+  role          String         @default("USER")
+  status        String         @default("PENDING")
+  provider      String         @default("EMAIL")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  password      String?
+
+  // Gamification
+  xp            Int            @default(0)
+  level         Int            @default(1)
+
+  // Relations
+  vtuberProfile VTuberProfile?
+  refreshTokens RefreshToken[]
+
+  // Social
+  followers     Follow[]       @relation("following")
+  following     Follow[]       @relation("follower")
+
+  // Events
+  eventsCreated Event[]        @relation("eventCreator")
+  eventAttendees EventAttendee[]
+
+  // Guilds
+  guildsCreated Guild[]        @relation("guildCreator")
+  guildMembers  GuildMember[]
+  guildRequests GuildJoinRequest[]
+
+  // Achievements
+  achievements  UserAchievement[]
+
+  // Notifications
+  notifications Notification[]
+
+  // Admin
+  adminLogs     AdminLog[]
+  reportsMade   Report[]       @relation("reportReporter")
+  reportsModerated Report[]    @relation("reportModerator")
+
+  // Chat messages
+  chatMessages  ChatMessage[]
+  dmsSent       DirectMessage[] @relation("dmSender")
+  dmsReceived   DirectMessage[] @relation("dmReceiver")
+
+  // Posts / Feed
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  mentions      PostMention[]
+
+  // Payments
+  subscriptions UserSubscription[]
+  donationsSent     Donation[] @relation("donor")
+  donationsReceived Donation[] @relation("recipient")
+
+  @@index([username])
+  @@index([xp])
+}
+
+model RefreshToken {
+  id          String   @id @default(cuid())
+  hashedToken String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked     Boolean  @default(false)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VTuberProfile {
+  id          String   @id @default(cuid())
+  displayName String
+  avatarUrl   String?
+  bannerUrl   String?
+  description String?
+  lore        String?
+  socialLinks String?
+  twitchUrl   String?
+  youtubeUrl  String?
+  kickUrl     String?
+  tiktokUrl   String?
+  twitterUrl  String?
+  discordUrl  String?
+  websiteUrl  String?
+  streamSchedule String?
+  languages   String?
+  contentType String?
+  live2dModel String?
+  model3d     String?
+  fanName     String?
+  oshiMark    String?
+  hashtags    String?
+  isLive      Boolean  @default(false)
+  isVerified  Boolean  @default(false)
+  isApproved  Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  isHidden    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @unique
+
+  @@index([displayName])
+  @@index([isVerified])
+  @@index([isApproved])
+}
+
+model Post {
+  id           String       @id @default(cuid())
+  content      String
+  mediaUrl     String?
+  isPinned     Boolean      @default(false)
+  isPoll       Boolean      @default(false)
+  pollData     String?
+  isHidden     Boolean      @default(false)
+  isFeatured   Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  comments     Comment[]
+  likes        Like[]
+  hashtags     PostHashtag[]
+  mentions     PostMention[]
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([isHidden])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  mediaUrl  String?
+  isHidden  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes     Like[]
+
+  @@index([postId, createdAt])
+  @@index([isHidden])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  postId    String?
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@index([postId])
+  @@index([commentId])
+}
+
+model Hashtag {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  createdAt DateTime      @default(now())
+
+  posts     PostHashtag[]
+}
+
+model PostHashtag {
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtagId String
+  hashtag   Hashtag  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
+}
+
+model PostMention {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Event {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  date        DateTime
+  location    String?
+  maxAttendees Int?
+  coverUrl    String?
+  status      String         @default("UPCOMING")
+  streamUrl   String?
+  isFeatured  Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  creatorId   String
+  creator     User           @relation("eventCreator", fields: [creatorId], references: [id])
+
+  attendees   EventAttendee[]
+
+  @@index([date])
+  @@index([status])
+  @@index([creatorId])
+}
+
+model EventAttendee {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model Guild {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String
+  logoUrl     String?
+  coverUrl    String?
+  tags        String?
+  rules       String?
+  isSuspended Boolean      @default(false)
+  isFeatured  Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  creatorId   String
+  creator     User         @relation("guildCreator", fields: [creatorId], references: [id])
+
+  members     GuildMember[]
+  joinRequests GuildJoinRequest[]
+
+  @@index([name])
+}
+
+model GuildMember {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  role      String   @default("MEMBER")
+  joinedAt  DateTime @default(now())
+
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
+  @@index([guildId])
+  @@index([userId])
+}
+
+model GuildJoinRequest {
+  id        String   @id @default(cuid())
+  guildId   String
+  userId    String
+  message   String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, userId])
+  @@index([guildId])
+  @@index([userId])
+}
+
+model Achievement {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String
+  iconUrl     String?
+  xpReward    Int              @default(0)
+  category    String           @default("GENERAL")
+  createdAt   DateTime         @default(now())
+
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  title       String
+  message     String
+  referenceId String?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  detail    String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  reporterId  String
+  targetType  String
+  targetId    String
+  reason      String
+  description String?
+  status      String   @default("PENDING")
+  moderatorId String?
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reporter    User     @relation("reportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  moderator   User?    @relation("reportModerator", fields: [moderatorId], references: [id])
+
+  @@index([status])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  room      String   @default("global")
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([room, createdAt])
+  @@index([userId])
+}
+
+model DirectMessage {
+  id        String   @id @default(cuid())
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  senderId   String
+  sender     User     @relation("dmSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("dmReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, read])
+}
+
+model SubscriptionTier {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  description String
+  price       Float
+  interval    String             @default("month")
+  benefits    String
+  badgeLabel  String?
+  color       String?
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  subscriptions UserSubscription[]
+}
+
+model UserSubscription {
+  id            String           @id @default(cuid())
+  userId        String
+  tierId        String
+  status        String           @default("ACTIVE")
+  stripePriceId String?
+  stripeSubId   String?
+  currentPeriodStart DateTime    @default(now())
+  currentPeriodEnd   DateTime
+  cancelledAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier          SubscriptionTier @relation(fields: [tierId], references: [id])
+
+  @@index([userId])
+  @@index([tierId])
+  @@index([status])
+}
+
+model Donation {
+  id          String   @id @default(cuid())
+  donorId     String
+  recipientId String
+  amount      Float
+  currency    String   @default("USD")
+  message     String?
+  anonymous   Boolean  @default(false)
+  stripePayId String?
+  createdAt   DateTime @default(now())
+
+  donor       User     @relation("donor", fields: [donorId], references: [id], onDelete: Cascade)
+  recipient   User     @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([donorId])
+  @@index([recipientId])
+  @@index([createdAt])
+}

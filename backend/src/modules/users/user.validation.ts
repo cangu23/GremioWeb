@@ -1,0 +1,29 @@
+import { z } from 'zod';
+
+export const updateUserSchema = z.object({
+  body: z.object({
+    username: z.string().min(3).max(30).optional(),
+    displayName: z.string().max(50).optional(),
+    avatarUrl: z.string().url().optional().or(z.literal('')),
+    bannerUrl: z.string().url().optional().or(z.literal('')),
+    description: z.string().max(2000).optional(),
+    lore: z.string().max(5000).optional(),
+    twitchUrl: z.string().url().optional().or(z.literal('')),
+    youtubeUrl: z.string().url().optional().or(z.literal('')),
+    kickUrl: z.string().url().optional().or(z.literal('')),
+    tiktokUrl: z.string().url().optional().or(z.literal('')),
+    twitterUrl: z.string().url().optional().or(z.literal('')),
+    discordUrl: z.string().url().optional().or(z.literal('')),
+    websiteUrl: z.string().url().optional().or(z.literal('')),
+    streamSchedule: z.string().max(200).optional(),
+    languages: z.array(z.string()).optional(),
+    contentType: z.string().max(100).optional(),
+    live2dModel: z.string().url().optional().or(z.literal('')),
+    model3d: z.string().url().optional().or(z.literal('')),
+    fanName: z.string().max(100).optional(),
+    oshiMark: z.string().max(20).optional(),
+    hashtags: z.array(z.string()).optional(),
+    socialLinks: z.record(z.string().url()).optional(),
+    isLive: z.boolean().optional(),
+  }),
+});

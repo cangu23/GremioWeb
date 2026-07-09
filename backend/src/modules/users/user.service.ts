@@ -1,0 +1,49 @@
+import AppError from '../../errors/AppError';
+import * as UserRepository from './user.repository';
+import { UpdateUserPayload, PublicUser, UserProfile } from '@gremio-estelar/shared';
+
+export const getMe = async (userId: string): Promise<UserProfile> => {
+  const userProfile = await UserRepository.getUserProfileById(userId);
+  if (!userProfile) {
+    throw new AppError('User not found', 404);
+  }
+  
+  const { password, ...safeProfile } = userProfile;
+  return safeProfile as UserProfile;
+};
+
+export const updateMe = async (userId: string, payload: UpdateUserPayload): Promise<UserProfile> => {
+  if (payload.username) {
+    const existingUser = await UserRepository.findByUsername(payload.username);
+    if (existingUser && existingUser.id !== userId) {
+      throw new AppError('Username is already taken', 409);
+    }
+  }
+
+  const updatedProfile = await UserRepository.updateUserProfile(userId, payload);
+  if (!updatedProfile) {
+    throw new AppError('Failed to update user profile', 500);
+  }
+
+  const { password, ...safeProfile } = updatedProfile;
+  return safeProfile as UserProfile;
+};
+
+export const searchUsers = async (query: string) => {
+  if (!query || query.length < 2) return [];
+  return UserRepository.searchByUsername(query);
+};
+
+export const getPublicUser = async (userId: string): Promise<PublicUser> => {
+  const userProfile = await UserRepository.getUserProfileById(userId);
+  if (!userProfile) {
+    throw new AppError('User not found', 404);
+  }
+
+  return {
+    id: userProfile.id,
+    username: userProfile.username,
+    role: userProfile.role as unknown as PublicUser['role'],
+    vtuberProfile: userProfile.vtuberProfile as unknown as PublicUser['vtuberProfile'],
+  };
+};

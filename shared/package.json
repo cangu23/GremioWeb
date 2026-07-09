@@ -1,0 +1,19 @@
+{
+  "name": "@gremio-estelar/shared",
+  "version": "1.0.0",
+  "description": "Shared types, enums, and contracts for the Gremio Estelar project.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
