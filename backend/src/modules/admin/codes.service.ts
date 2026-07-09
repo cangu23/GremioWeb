@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import { prisma } from '../../database';
 import * as CodesRepository from './codes.repository';
 import * as AdminRepository from './admin.repository';
 import AppError from '../../errors/AppError';
@@ -149,11 +150,14 @@ export const redeemCode = async (rawCode: string, userId: string) => {
     throw new AppError('El código ha expirado', 410);
   }
 
-  // Update code as used (using relation field name for nested connect)
-  await CodesRepository.updateCode(matchedCode.id, {
-    status: 'USED',
-    usedBy: { connect: { id: userId } },
-    usedAt: new Date(),
+  // Update code as used (using scalar field name)
+  await prisma.roleCode.update({
+    where: { id: matchedCode.id },
+    data: {
+      status: 'USED',
+      usedById: userId,
+      usedAt: new Date(),
+    },
   });
 
   // Update user's role

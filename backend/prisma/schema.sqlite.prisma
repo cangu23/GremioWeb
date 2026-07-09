@@ -56,6 +56,12 @@ model User {
   // Notifications
   notifications Notification[]
 
+  // Codes & Requests
+  codesGenerated RoleCode[]    @relation("codeGenerator")
+  codesRedeemed  RoleCode[]    @relation("codeRedeemer")
+  vtuberRequests VtuberRequest[]
+  requestsReviewed VtuberRequest[] @relation("requestReviewer")
+
   // Admin
   adminLogs     AdminLog[]
   reportsMade   Report[]       @relation("reportReporter")
@@ -380,6 +386,9 @@ model RoleCode {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  generatedBy   User     @relation("codeGenerator", fields: [generatedById], references: [id])
+  usedBy        User?    @relation("codeRedeemer", fields: [usedById], references: [id])
+
   @@index([code])
   @@index([status])
   @@index([role])
@@ -398,6 +407,9 @@ model VtuberRequest {
   reviewedAt    DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy    User?    @relation("requestReviewer", fields: [reviewedById], references: [id])
 
   @@index([status])
   @@index([userId])

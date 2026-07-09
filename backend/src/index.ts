@@ -16,6 +16,10 @@ import chatRoutes from './modules/chat/chat.routes';
 import paymentRoutes from './modules/payments/payments.routes';
 import postRoutes from './modules/posts/posts.routes';
 import dmRoutes from './modules/posts/dm.routes';
+import uploadRoutes from './modules/uploads/uploads.routes';
+import statsRoutes from './modules/stats/stats.routes';
+import activityRoutes from './modules/activity/activity.routes';
+import vtuberRoutes from './modules/vtubers/vtubers.routes';
 
 const router = Router();
 
@@ -37,6 +41,10 @@ router.use('/chat', chatRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/posts', postRoutes);
 router.use('/dm', dmRoutes);
+router.use('/vtubers', vtuberRoutes);
+router.use('/uploads', uploadRoutes);
+router.use('/stats', statsRoutes);
+router.use('/activity', activityRoutes);
 
 // Also mount health at root for quick checks
 router.get('/', (req, res) => {

@@ -5,6 +5,7 @@ import { loginSchema, registerSchema, refreshTokenSchema, redeemCodeSchema } fro
 import { authenticate } from './authenticate';
 import * as CodesController from '../admin/codes.controller';
 import * as GoogleController from './google.controller';
+import * as DiscordController from './discord.controller';
 
 const router = Router();
 
@@ -20,5 +21,9 @@ router.post('/redeem-code', authenticate, validateRequest(redeemCodeSchema), Cod
 
 // 🔵 Google OAuth (Google Identity Services)
 router.post('/google', GoogleController.googleLogin);
+
+// 🎮 Discord OAuth
+router.get('/discord', DiscordController.redirectToDiscord);
+router.get('/discord/callback', DiscordController.handleDiscordCallback);
 
 export default router;

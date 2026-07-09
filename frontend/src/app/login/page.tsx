@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
 import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
+import DiscordLoginButton from '@/components/auth/DiscordLoginButton';
 
 function LoginForm() {
   const { login } = useAuth();
@@ -176,6 +177,11 @@ function LoginForm() {
       {/* Google Login Button */}
       <div style={{ marginBottom: '8px' }}>
         <GoogleLoginButton />
+      </div>
+
+      {/* Discord Login Button */}
+      <div>
+        <DiscordLoginButton />
       </div>
 
       <p

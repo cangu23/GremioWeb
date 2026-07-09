@@ -59,11 +59,14 @@ export const approveRequest = async (id: string, adminId: string) => {
   if (!request) throw new AppError('Solicitud no encontrada', 404);
   if (request.status !== 'PENDING') throw new AppError('La solicitud ya fue procesada', 400);
 
-  // Mark request as approved (relation field name for Prisma)
-  await RequestsRepository.updateRequest(id, {
-    status: 'APPROVED',
-    reviewedBy: { connect: { id: adminId } },
-    reviewedAt: new Date(),
+  // Mark request as approved (scalar field name)
+  await prisma.vtuberRequest.update({
+    where: { id },
+    data: {
+      status: 'APPROVED',
+      reviewedById: adminId,
+      reviewedAt: new Date(),
+    },
   });
 
   // Generate secure code for the VTuber role
@@ -138,11 +141,14 @@ export const rejectRequest = async (id: string, adminId: string, notes?: string)
   if (!request) throw new AppError('Solicitud no encontrada', 404);
   if (request.status !== 'PENDING') throw new AppError('La solicitud ya fue procesada', 400);
 
-  await RequestsRepository.updateRequest(id, {
-    status: 'REJECTED',
-    reviewedBy: { connect: { id: adminId } },
-    reviewedAt: new Date(),
-    notes: notes ?? null,
+  await prisma.vtuberRequest.update({
+    where: { id },
+    data: {
+      status: 'REJECTED',
+      reviewedById: adminId,
+      reviewedAt: new Date(),
+      notes: notes ?? null,
+    },
   });
 
   // Log admin action

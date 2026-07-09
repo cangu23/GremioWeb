@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
+import path from 'path';
 import AppError from './errors/AppError';
 import mainRouter from './index';
 
@@ -62,6 +63,10 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/google', authLimiter);
 
 app.use('/api', mainRouter);
+
+// ========== STATIC FILES ==========
+// Serve uploaded files (avatars, banners)
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // ========== ERROR HANDLING ==========
 

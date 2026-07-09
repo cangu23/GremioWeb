@@ -13,11 +13,14 @@ dotenv.config({ path: path.join(backendDir, '..', '.env') }); // root .env fallb
 interface EnvConfig {
   PORT: number;
   FRONTEND_URL: string;
+  BACKEND_URL: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_EXPIRES_IN: string;
   JWT_REFRESH_EXPIRES_IN: string;
   GOOGLE_CLIENT_ID: string;
+  DISCORD_CLIENT_ID: string;
+  DISCORD_CLIENT_SECRET: string;
 }
 
 const env: EnvConfig = {
@@ -28,12 +31,18 @@ const env: EnvConfig = {
   JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || '',
+  DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET || '',
+  BACKEND_URL: process.env.BACKEND_URL || `http://localhost:${parseInt(process.env.PORT || '4000', 10)}`,
 };
 
 // Validate required secrets (must be set via .env, never use defaults in production)
-// Warn if Google OAuth is not configured
+// Warn if OAuth providers are not configured
 if (!env.GOOGLE_CLIENT_ID) {
-  console.warn('⚠️  GOOGLE_CLIENT_ID not set — Google login will be disabled');
+  console.warn('⚠️  GOOGLE_CLIENT_ID not set — Google login disabled');
+}
+if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
+  console.warn('⚠️  DISCORD_CLIENT_ID/SECRET not set — Discord login disabled');
 }
 
 if (isNaN(env.PORT) || !env.JWT_ACCESS_SECRET || !env.JWT_REFRESH_SECRET) {

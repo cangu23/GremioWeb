@@ -1,19 +1,30 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { apiFetch } from '@/lib/api';
 
-interface Stat {
+interface PlatformStats {
+  totalVtubers: number;
+  totalEvents: number;
+  totalGuilds: number;
+  totalMessages: number;
+  totalPosts: number;
+  totalUsers: number;
+}
+
+interface StatDisplay {
   value: number;
   suffix: string;
   label: string;
   icon: string;
+  key: keyof PlatformStats;
 }
 
-const stats: Stat[] = [
-  { value: 10000, suffix: '+', label: 'VTubers Activos', icon: '🎭' },
-  { value: 500, suffix: '+', label: 'Eventos Realizados', icon: '📅' },
-  { value: 250, suffix: '+', label: 'Gremios Creados', icon: '🏰' },
-  { value: 100000, suffix: '+', label: 'Mensajes Enviados', icon: '💬' },
+const statConfigs: StatDisplay[] = [
+  { value: 0, suffix: '+', label: 'VTubers Registrados', icon: '🎭', key: 'totalVtubers' },
+  { value: 0, suffix: '+', label: 'Eventos Realizados', icon: '📅', key: 'totalEvents' },
+  { value: 0, suffix: '+', label: 'Gremios Creados', icon: '🏰', key: 'totalGuilds' },
+  { value: 0, suffix: '+', label: 'Mensajes Enviados', icon: '💬', key: 'totalMessages' },
 ];
 
 function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) {
@@ -26,6 +37,10 @@ function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) 
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
+          if (target === 0) {
+            setCount(0);
+            return;
+          }
           const duration = 2000;
           const steps = 60;
           const increment = target / steps;
@@ -57,6 +72,28 @@ function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) 
 }
 
 export default function StatsSection() {
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await apiFetch('/stats', {});
+        setStats(data);
+      } catch {
+        // Silently fail — stats section just won't animate
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const statsWithValues = statConfigs.map((config) => ({
+    ...config,
+    value: stats?.[config.key] ?? 0,
+  }));
+
   return (
     <section
       className="section"
@@ -79,48 +116,90 @@ export default function StatsSection() {
             border: '1px solid var(--glass-border)',
           }}
         >
-          {stats.map((stat, i) => (
-            <div
-              key={i}
-              style={{
-                padding: '40px 24px',
-                textAlign: 'center',
-                background: 'var(--card-bg)',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(138,43,226,0.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--card-bg)';
-              }}
-            >
-              <div style={{ fontSize: '2rem', marginBottom: '12px' }}>{stat.icon}</div>
+          {loading ? (
+            // Skeleton loading state
+            [0, 1, 2, 3].map((i) => (
               <div
+                key={i}
                 style={{
-                  fontSize: '2.5rem',
-                  fontWeight: 800,
-                  background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  marginBottom: '8px',
-                  lineHeight: 1.2,
+                  padding: '40px 24px',
+                  textAlign: 'center',
+                  background: 'var(--card-bg)',
                 }}
               >
-                <AnimatedNumber target={stat.value} suffix={stat.suffix} />
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.05)',
+                    margin: '0 auto 12px',
+                  }}
+                />
+                <div
+                  style={{
+                    width: '80px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.05)',
+                    margin: '0 auto 8px',
+                  }}
+                />
+                <div
+                  style={{
+                    width: '100px',
+                    height: '16px',
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.03)',
+                    margin: '0 auto',
+                  }}
+                />
               </div>
+            ))
+          ) : (
+            statsWithValues.map((stat, i) => (
               <div
+                key={i}
                 style={{
-                  fontSize: '0.95rem',
-                  color: 'var(--text-muted)',
-                  fontWeight: 500,
+                  padding: '40px 24px',
+                  textAlign: 'center',
+                  background: 'var(--card-bg)',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(138,43,226,0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--card-bg)';
                 }}
               >
-                {stat.label}
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>{stat.icon}</div>
+                <div
+                  style={{
+                    fontSize: '2.5rem',
+                    fontWeight: 800,
+                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    marginBottom: '8px',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  <AnimatedNumber target={stat.value} suffix={stat.suffix} />
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.95rem',
+                    color: 'var(--text-muted)',
+                    fontWeight: 500,
+                  }}
+                >
+                  {stat.label}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </section>

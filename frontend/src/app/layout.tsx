@@ -28,7 +28,18 @@ export default function RootLayout({
     <html lang="es">
       <body>
         <ParticlesBackground />
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        {GOOGLE_CLIENT_ID ? (
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <ToastProvider>
+              <AuthProvider>
+                <Navbar />
+                <main className="page">
+                  {children}
+                </main>
+              </AuthProvider>
+            </ToastProvider>
+          </GoogleOAuthProvider>
+        ) : (
           <ToastProvider>
             <AuthProvider>
               <Navbar />
@@ -37,7 +48,7 @@ export default function RootLayout({
               </main>
             </AuthProvider>
           </ToastProvider>
-        </GoogleOAuthProvider>
+        )}
       </body>
     </html>
   );
