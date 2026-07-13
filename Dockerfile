@@ -69,5 +69,16 @@ COPY --from=builder /app/shared/package.json ./shared/
 # Expose port for the Express API
 EXPOSE 4000
 
-# Start the backend API server (migrate DB first, then start)
-CMD ["sh", "-c", "npx prisma db push --schema backend/prisma/schema.prisma --skip-generate && node backend/dist/server.js"]
+# Start the backend API server (migrate DB first with retries, then start)
+CMD ["sh", "-c", "\
+  for i in 1 2 3 4 5; do \
+    echo \"Attempt $i: Running prisma db push...\" && \
+    npx prisma db push --schema backend/prisma/schema.prisma --skip-generate && \
+    echo \"Database sync successful!\" && \
+    break; \
+    echo \"Attempt $i failed, waiting 5s before retry...\" && \
+    sleep 5; \
+  done && \
+  echo \"Starting server...\" && \
+  node backend/dist/server.js\
+"
