@@ -177,8 +177,11 @@ function RegisterForm() {
                     transition: 'color 0.2s',
                   }}
                 >
-                  <span style={{ fontSize: '0.7rem' }}>
-                    {passed ? 'OK' : '--'}
+                  <span style={{ fontSize: '0.8rem', display: 'inline-flex' }}>
+                    {passed
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                    }
                   </span>
                   {label}
                 </div>
