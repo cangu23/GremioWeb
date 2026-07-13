@@ -64,7 +64,9 @@ export const refresh = async (
   try {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
-      return res.status(401).json({ status: 'error', message: 'No refresh token provided' });
+      // Return 200 with null accessToken instead of 401
+      // to avoid console noise for unauthenticated users
+      return res.status(200).json({ accessToken: null });
     }
 
     const tokens = await AuthService.refreshAccessToken({ refreshToken });
@@ -78,6 +80,9 @@ export const refresh = async (
 
     res.status(200).json({ accessToken: tokens.accessToken });
   } catch (error) {
-    next(error);
+    // Log the error server-side for debugging
+    console.error('[REQ] Refresh token error:', error instanceof Error ? error.message : error);
+    // Return null accessToken — the frontend handles this gracefully
+    return res.status(200).json({ accessToken: null });
   }
 };

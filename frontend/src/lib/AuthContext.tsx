@@ -24,9 +24,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loadUser = async () => {
       try {
         const session = await apiFetch('/auth/refresh', { method: 'POST' });
-        setAccessToken(session.accessToken);
-        const profile = await apiFetch('/users/me');
-        setUser(profile);
+        if (session?.accessToken) {
+          setAccessToken(session.accessToken);
+          const profile = await apiFetch('/users/me');
+          setUser(profile);
+        } else {
+          setAccessToken(null);
+          setUser(null);
+        }
       } catch (err) {
         setAccessToken(null);
         setUser(null);

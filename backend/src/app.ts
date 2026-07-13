@@ -42,6 +42,7 @@ const ALLOWED_ORIGINS = [
   'http://localhost:4000',
   'https://gremio-frontend.onrender.com',
   'https://gremio-backend.onrender.com',
+  'https://gremioweb.onrender.com',
 ];
 console.log(`${BOOT} CORS allowed origins:`, ALLOWED_ORIGINS);
 
@@ -57,7 +58,11 @@ console.log(`${BOOT} CORS configured ✅`);
 
 console.log(`${BOOT} Configuring Helmet...`);
 // Helmet: Set security-related HTTP headers (AFTER CORS to avoid conflicts)
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: false, // Allow Google Sign-In popup postMessage
+  originAgentCluster: false, // Disable origin-agent-cluster for Google compatibility
+}));
 console.log(`${BOOT} Helmet configured ✅`);
 
 // Rate Limiting: Protect API from abuse
