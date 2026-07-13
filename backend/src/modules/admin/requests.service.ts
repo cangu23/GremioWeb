@@ -3,6 +3,7 @@ import * as AdminRepository from './admin.repository';
 import { prisma } from '../../database';
 import AppError from '../../errors/AppError';
 import { generateCode } from './codes.service';
+import * as NotificationsService from '../notifications/notifications.service';
 
 /**
  * Submit a VTuber request
@@ -27,10 +28,19 @@ export const submitRequest = async (data: {
     throw new AppError('Ya eres un VTuber aprobado', 400);
   }
 
-  return RequestsRepository.createRequest({
+  const request = await RequestsRepository.createRequest({
     ...data,
     surveyAnswers: data.surveyAnswers ? JSON.stringify(data.surveyAnswers) : undefined,
   });
+
+  // Notify all admins about the new request (fire & forget)
+  NotificationsService.notifyNewVtuberRequest(
+    user!.username,
+    data.displayName,
+    request.id
+  ).catch(() => {});
+
+  return request;
 };
 
 /**

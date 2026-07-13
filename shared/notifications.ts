@@ -11,6 +11,7 @@ export const NOTIFICATION_TYPES = {
   ACHIEVEMENT: 'achievement',
   LEVEL_UP: 'level_up',
   DM: 'dm',
+  VTUBER_REQUEST: 'vtuber_request',
 } as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];

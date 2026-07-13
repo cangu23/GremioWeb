@@ -1,5 +1,6 @@
 import { NOTIFICATION_TYPES } from '@gremio-estelar/shared';
 import * as NotificationsRepository from './notifications.repository';
+import prisma from '../../database/prisma';
 
 export const getMyNotifications = async (userId: string, limit = 50) => {
   return NotificationsRepository.findNotificationsByUser(userId, limit);
@@ -98,6 +99,27 @@ export const notifyMention = async (mentionerUsername: string, postId: string, m
     message: `@${mentionerUsername} te mencionó en una publicación`,
     referenceId: postId,
   });
+};
+
+export const notifyNewVtuberRequest = async (requesterUsername: string, requesterDisplayName: string, requestId: string) => {
+  // Find all admin users
+  const admins = await prisma.user.findMany({
+    where: { role: 'ADMIN' },
+    select: { id: true },
+  });
+
+  // Notify each admin
+  const notifications = admins.map((admin) =>
+    NotificationsRepository.createNotification({
+      userId: admin.id,
+      type: NOTIFICATION_TYPES.VTUBER_REQUEST,
+      title: '📋 Nueva solicitud VTuber',
+      message: `${requesterDisplayName} (@${requesterUsername}) quiere ser VTuber oficial. Revisa sus respuestas en el panel admin.`,
+      referenceId: requestId,
+    })
+  );
+
+  await Promise.all(notifications);
 };
 
 export const notifyDM = async (senderUsername: string, senderId: string, receiverId: string) => {
