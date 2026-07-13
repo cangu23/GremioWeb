@@ -178,7 +178,7 @@ function RegisterForm() {
                   }}
                 >
                   <span style={{ fontSize: '0.7rem' }}>
-                    {passed ? '✓' : '○'}
+                    {passed ? 'OK' : '--'}
                   </span>
                   {label}
                 </div>
@@ -326,7 +326,7 @@ export default function RegisterPage() {
             }}
             className="animate-float"
           >
-            ◆
+
           </div>
           <h2
             className="gradient-text"

@@ -203,12 +203,12 @@ function DashboardContent() {
         }}
       >
         {[
-          { icon: '◆', label: 'Eventos', href: '/events', desc: 'Ver y crear eventos' },
-          { icon: '◇', label: 'Gremios', href: '/guilds', desc: 'Únete a un gremio' },
-          { icon: '○', label: 'Chat', href: '/chat', desc: 'Chatea en vivo' },
-          { icon: '△', label: 'Logros', href: '/achievements', desc: 'Tus logros' },
-          { icon: '●', label: 'Feed', href: '/feed', desc: 'Publicaciones' },
-          { icon: '□', label: 'VTubers', href: '/vtubers', desc: 'Explora perfiles' },
+          { icon: '', label: 'Eventos', href: '/events', desc: 'Ver y crear eventos' },
+          { icon: '', label: 'Gremios', href: '/guilds', desc: 'Unete a un gremio' },
+          { icon: '', label: 'Chat', href: '/chat', desc: 'Chatea en vivo' },
+          { icon: '', label: 'Logros', href: '/achievements', desc: 'Tus logros' },
+          { icon: '', label: 'Feed', href: '/feed', desc: 'Publicaciones' },
+          { icon: '', label: 'VTubers', href: '/vtubers', desc: 'Explora perfiles' },
         ].map((item) => (
           <Link
             key={item.href}
@@ -239,7 +239,7 @@ function DashboardContent() {
               e.currentTarget.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)';
             }}
           >
-            <span style={{ fontSize: '2rem' }}>{item.icon}</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>--</span>
             <span style={{ fontWeight: 700, fontSize: '1rem' }}>{item.label}</span>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.desc}</span>
           </Link>

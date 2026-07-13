@@ -161,7 +161,7 @@ function SupportContent() {
                 />
               )}
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '8px', fontWeight: 300 }}>{tier.badgeLabel || '◆'}</div>
+                <div style={{ width: '36px', height: '3px', borderRadius: '2px', background: tier.color || 'var(--primary)', margin: '0 auto 12px' }} />
                 <h3 style={{ margin: 0, fontSize: '1.3rem' }}>{tier.name}</h3>
                 <div style={{ marginTop: '8px' }}>
                   <span style={{ fontSize: '2rem', fontWeight: 800 }}>${tier.price}</span>

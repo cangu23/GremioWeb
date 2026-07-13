@@ -76,14 +76,13 @@ export default function CTASection() {
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div
               style={{
-                fontSize: '3rem',
-                marginBottom: '20px',
-                display: 'inline-block',
+                width: '60px',
+                height: '3px',
+                borderRadius: '2px',
+                background: 'linear-gradient(90deg, var(--primary), var(--secondary))',
+                margin: '0 auto 24px',
               }}
-              className="animate-float"
-            >
-              ◆
-            </div>
+            />
 
             <h2
               style={{

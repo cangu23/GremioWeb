@@ -77,14 +77,14 @@ function NotificationsContent() {
 
   const getTypeIcon = (type: string) => {
     const icons: Record<string, string> = {
-      follow: '◈',
-      event_attend: '◇',
-      event_created: '◇',
-      guild_joined: '□',
-      achievement: '△',
-      level_up: '▲',
+      follow: 'FL',
+      event_attend: 'EV',
+      event_created: 'EV',
+      guild_joined: 'GL',
+      achievement: 'AC',
+      level_up: 'LV',
     };
-    return icons[type] || '■';
+    return icons[type] || 'NT';
   };
 
   if (isLoading) {

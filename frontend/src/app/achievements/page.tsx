@@ -184,14 +184,14 @@ function AchievementsContent() {
 
 function getCategoryIcon(category: string): string {
   const icons: Record<string, string> = {
-    GENERAL: '◆',
-    XP: '△',
-    NIVEL: '▲',
-    EVENTOS: '◇',
-    GREMIOS: '□',
-    SOCIAL: '○',
+    GENERAL: 'GN',
+    XP: 'XP',
+    NIVEL: 'NL',
+    EVENTOS: 'EV',
+    GREMIOS: 'GR',
+    SOCIAL: 'SC',
   };
-  return icons[category] || '●';
+  return icons[category] || '--';
 }
 
 export default function AchievementsPage() {

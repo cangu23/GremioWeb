@@ -21,10 +21,10 @@ interface StatDisplay {
 }
 
 const statConfigs: StatDisplay[] = [
-  { value: 0, suffix: '+', label: 'VTubers Registrados', icon: '◆', key: 'totalVtubers' },
-  { value: 0, suffix: '+', label: 'Eventos Realizados', icon: '◇', key: 'totalEvents' },
-  { value: 0, suffix: '+', label: 'Gremios Creados', icon: '◈', key: 'totalGuilds' },
-  { value: 0, suffix: '+', label: 'Mensajes Enviados', icon: '○', key: 'totalMessages' },
+  { value: 0, suffix: '+', label: 'VTubers Registrados', icon: '', key: 'totalVtubers' },
+  { value: 0, suffix: '+', label: 'Eventos Realizados', icon: '', key: 'totalEvents' },
+  { value: 0, suffix: '+', label: 'Gremios Creados', icon: '', key: 'totalGuilds' },
+  { value: 0, suffix: '+', label: 'Mensajes Enviados', icon: '', key: 'totalMessages' },
 ];
 
 function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) {
@@ -173,7 +173,7 @@ export default function StatsSection() {
                   e.currentTarget.style.background = 'var(--card-bg)';
                 }}
               >
-                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>{stat.icon}</div>
+                <div style={{ width: '28px', height: '3px', borderRadius: '2px', background: 'var(--primary)', margin: '0 auto 16px' }} />
                 <div
                   style={{
                     fontSize: '2.5rem',

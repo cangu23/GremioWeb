@@ -759,8 +759,8 @@ function ProfileContent() {
                       display: 'flex', gap: '16px', borderTop: '1px solid var(--glass-border)',
                       paddingTop: '10px', fontSize: '0.8rem', color: 'var(--text-muted)',
                     }}>
-                      <span>♥ {post._count.likes}</span>
-                      <span>○ {post._count.comments}</span>
+                      <span>Likes {post._count.likes}</span>
+                      <span>Comments {post._count.comments}</span>
                     </div>
                   </div>
                 ))}

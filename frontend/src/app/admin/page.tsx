@@ -30,16 +30,16 @@ interface Activity {
 }
 
 const statCards = [
-  { key: 'totalUsers', label: 'Usuarios Registrados', icon: '◆', color: '#8a2be2' },
-  { key: 'activeUsers', label: 'Usuarios Activos', icon: '○', color: '#00e676' },
-  { key: 'totalVtubers', label: 'VTubers', icon: '◇', color: '#ff007f' },
-  { key: 'totalGuilds', label: 'Gremios', icon: '□', color: '#ff9800' },
-  { key: 'totalEvents', label: 'Eventos', icon: '◈', color: '#2196f3' },
-  { key: 'totalPosts', label: 'Publicaciones', icon: '△', color: '#9c27b0' },
-  { key: 'totalComments', label: 'Comentarios', icon: '○', color: '#00bcd4' },
-  { key: 'totalLikes', label: 'Likes', icon: '♥', color: '#f44336' },
-  { key: 'totalMessages', label: 'Mensajes', icon: '◎', color: '#4caf50' },
-  { key: 'pendingReports', label: 'Reportes Pendientes', icon: '▲', color: '#ff5722' },
+  { key: 'totalUsers', label: 'Usuarios Registrados', color: '#8a2be2' },
+  { key: 'activeUsers', label: 'Usuarios Activos', color: '#00e676' },
+  { key: 'totalVtubers', label: 'VTubers', color: '#ff007f' },
+  { key: 'totalGuilds', label: 'Gremios', color: '#ff9800' },
+  { key: 'totalEvents', label: 'Eventos', color: '#2196f3' },
+  { key: 'totalPosts', label: 'Publicaciones', color: '#9c27b0' },
+  { key: 'totalComments', label: 'Comentarios', color: '#00bcd4' },
+  { key: 'totalLikes', label: 'Likes', color: '#f44336' },
+  { key: 'totalMessages', label: 'Mensajes', color: '#4caf50' },
+  { key: 'pendingReports', label: 'Reportes Pendientes', color: '#ff5722' },
 ];
 
 const activityLabels: Record<string, string> = {
@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = `${card.color}44`; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = `${card.color}22`; }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>{card.icon}</div>
+            <div style={{ width: '30px', height: '3px', borderRadius: '2px', background: card.color, marginBottom: '16px' }} />
             <div style={{ fontSize: '1.8rem', fontWeight: 800, color: card.color, marginBottom: '4px' }}>
               {stats?.[card.key as keyof DashboardStats]?.toLocaleString() || '0'}
             </div>

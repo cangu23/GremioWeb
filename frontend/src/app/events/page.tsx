@@ -172,10 +172,10 @@ function EventsContent() {
   }, [filter]);
 
   const filters = [
-    { value: '', label: 'Todos', icon: '●' },
-    { value: 'UPCOMING', label: 'Proximos', icon: '◇' },
-    { value: 'ONGOING', label: 'En vivo', icon: '◆' },
-    { value: 'FINISHED', label: 'Finalizados', icon: '○' },
+    { value: '', label: 'Todos' },
+    { value: 'UPCOMING', label: 'Proximos' },
+    { value: 'ONGOING', label: 'En vivo' },
+    { value: 'FINISHED', label: 'Finalizados' },
   ];
 
   return (
@@ -237,7 +237,6 @@ function EventsContent() {
               if (filter !== f.value) e.currentTarget.style.background = 'transparent';
             }}
           >
-            <span>{f.icon}</span>
             <span>{f.label}</span>
           </button>
         ))}

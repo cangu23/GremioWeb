@@ -11,56 +11,56 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    icon: '◆',
+    icon: '',
     title: 'Perfiles VTuber',
     description:
       'Crea un perfil único con tu personaje. Añade lore, modelo Live2D o 3D, enlaces a tus redes, horario de streams y más.',
     gradient: 'linear-gradient(135deg, #8a2be2, #6a1cb0)',
   },
   {
-    icon: '◇',
+    icon: '',
     title: 'Eventos',
     description:
       'Organiza y descubre eventos de la comunidad. Desde colaboraciones hasta streams especiales, con RSVP y notificaciones.',
     gradient: 'linear-gradient(135deg, #ff007f, #cc0066)',
   },
   {
-    icon: '◈',
+    icon: '',
     title: 'Gremios',
     description:
       'Forma o únete a gremios de VTubers. Colabora, comparte recursos y construye una comunidad alrededor de tu grupo.',
     gradient: 'linear-gradient(135deg, #00d4ff, #0099cc)',
   },
   {
-    icon: '○',
+    icon: '',
     title: 'Chat en Vivo',
     description:
       'Chatea con la comunidad en tiempo real con Socket.IO. Salas globales, mensajes directos y estado de escritura.',
     gradient: 'linear-gradient(135deg, #ff6b35, #e0552a)',
   },
   {
-    icon: '△',
+    icon: '',
     title: 'Gamificación',
     description:
       'Gana XP, sube de nivel, desbloquea logros y compite en el ranking. Cada interacción te acerca a la cima.',
     gradient: 'linear-gradient(135deg, #f5af19, #f12711)',
   },
   {
-    icon: '♥',
+    icon: '',
     title: 'Apoyo y Monetización',
     description:
       'Recibe donaciones y suscripciones de tus seguidores. Niveles de suscripción con beneficios exclusivos.',
     gradient: 'linear-gradient(135deg, #e040fb, #7c4dff)',
   },
   {
-    icon: '◎',
+    icon: '',
     title: 'Feed Social',
     description:
       'Publica actualizaciones, comparte medios, crea encuestas. Comenta y reacciona a las publicaciones de otros.',
     gradient: 'linear-gradient(135deg, #00e676, #00c853)',
   },
   {
-    icon: '□',
+    icon: '',
     title: 'Moderación',
     description:
       'Sistema completo de reportes y moderación para mantener un ambiente seguro y acogedor para toda la comunidad.',
@@ -164,17 +164,17 @@ export default function FeaturesSection() {
                 }}
               />
 
-              {/* Icon */}
+              {/* Gradient accent bar */}
               <div
                 style={{
-                  fontSize: '2.5rem',
+                  width: '40px',
+                  height: '3px',
+                  borderRadius: '2px',
+                  background: feature.gradient,
                   marginBottom: '20px',
                   marginTop: '4px',
-                  display: 'inline-block',
                 }}
-              >
-                {feature.icon}
-              </div>
+              />
 
               {/* Title */}
               <h3

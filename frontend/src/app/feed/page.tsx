@@ -367,7 +367,7 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
             onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
             onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
           >
-            {post.isLikedByMe ? '♥' : '♡'} {post._count.likes}
+            {post.isLikedByMe ? 'Liked' : 'Like'} {post._count.likes}
           </button>
           <button
             onClick={toggleComments}
@@ -381,7 +381,7 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
             onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
             onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
           >
-            ○ {post._count.comments}
+            Comment {post._count.comments}
           </button>
         </div>
       </div>

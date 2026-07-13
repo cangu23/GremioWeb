@@ -237,7 +237,7 @@ export default function LoginPage() {
             }}
             className="animate-float"
           >
-            ◆
+
           </div>
           <h2
             className="gradient-text"

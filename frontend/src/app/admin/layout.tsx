@@ -11,31 +11,31 @@ const adminNavItems = [
   {
     section: 'Panel',
     items: [
-      { href: '/admin', label: 'Dashboard', icon: '◆' },
+      { href: '/admin', label: 'Dashboard', icon: '' },
     ],
   },
   {
     section: 'Gestion',
     items: [
-      { href: '/admin/users', label: 'Usuarios', icon: '○' },
-      { href: '/admin/vtubers', label: 'VTubers', icon: '◇' },
-      { href: '/admin/events', label: 'Eventos', icon: '□' },
-      { href: '/admin/guilds', label: 'Gremios', icon: '◈' },
-      { href: '/admin/posts', label: 'Publicaciones', icon: '△' },
+      { href: '/admin/users', label: 'Usuarios', icon: '' },
+      { href: '/admin/vtubers', label: 'VTubers', icon: '' },
+      { href: '/admin/events', label: 'Eventos', icon: '' },
+      { href: '/admin/guilds', label: 'Gremios', icon: '' },
+      { href: '/admin/posts', label: 'Publicaciones', icon: '' },
     ],
   },
   {
     section: 'Acceso',
     items: [
-      { href: '/admin/codes', label: 'Codigos', icon: '▽' },
-      { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: '▽' },
+      { href: '/admin/codes', label: 'Codigos', icon: '' },
+      { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: '' },
     ],
   },
   {
     section: 'Moderacion',
     items: [
-      { href: '/admin/reports', label: 'Reportes', icon: '▲' },
-      { href: '/admin/logs', label: 'Auditoria', icon: '▽' },
+      { href: '/admin/reports', label: 'Reportes', icon: '' },
+      { href: '/admin/logs', label: 'Auditoria', icon: '' },
     ],
   },
 ];
@@ -139,7 +139,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   return (
                     <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
                       style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', fontSize: '0.9rem', fontWeight: isActive ? 600 : 400, color: isActive ? '#fff' : 'rgba(255,255,255,0.6)', background: isActive ? 'rgba(138, 43, 226, 0.2)' : 'transparent', border: isActive ? '1px solid rgba(138, 43, 226, 0.3)' : '1px solid transparent', textDecoration: 'none', transition: 'all 0.2s ease' }}>
-                      <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
                       <span>{item.label}</span>
                     </Link>
                   );

@@ -57,9 +57,9 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 const TABS: { key: TabKey; icon: string; label: string }[] = [
-  { key: 'posts', icon: '◆', label: 'Publicaciones' },
-  { key: 'events', icon: '◇', label: 'Eventos' },
-  { key: 'vtubers', icon: '□', label: 'Nuevos VTubers' },
+  { key: 'posts', icon: '', label: 'Publicaciones' },
+  { key: 'events', icon: '', label: 'Eventos' },
+  { key: 'vtubers', icon: '', label: 'Nuevos VTubers' },
 ];
 
 export default function RecentActivitySection() {
@@ -238,7 +238,7 @@ export default function RecentActivitySection() {
 
 /* ===== POSTS TAB ===== */
 function ActivityPosts({ data }: { data: ActivityPost[] }) {
-  if (data.length === 0) return <EmptyTab icon="◆" text="No hay publicaciones recientes aún." />;
+  if (data.length === 0) return <EmptyTab icon="" text="No hay publicaciones recientes aun." />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -300,8 +300,8 @@ function ActivityPosts({ data }: { data: ActivityPost[] }) {
             paddingTop: '10px', borderTop: '1px solid var(--glass-border)',
             fontSize: '0.78rem', color: 'var(--text-muted)',
           }}>
-            <span>♥ {post._count.likes}</span>
-            <span>○ {post._count.comments}</span>
+            <span>Likes {post._count.likes}</span>
+            <span>Comments {post._count.comments}</span>
           </div>
         </Link>
       ))}
@@ -311,7 +311,7 @@ function ActivityPosts({ data }: { data: ActivityPost[] }) {
 
 /* ===== EVENTS TAB ===== */
 function ActivityEvents({ data }: { data: ActivityEvent[] }) {
-  if (data.length === 0) return <EmptyTab icon="◇" text="No hay eventos próximos." />;
+  if (data.length === 0) return <EmptyTab icon="" text="No hay eventos proximos." />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -378,7 +378,7 @@ function ActivityEvents({ data }: { data: ActivityEvent[] }) {
 
 /* ===== VTUBERS TAB ===== */
 function ActivityVtubers({ data }: { data: ActivityVTuber[] }) {
-  if (data.length === 0) return <EmptyTab icon="□" text="No hay nuevos VTubers aún." />;
+  if (data.length === 0) return <EmptyTab icon="" text="No hay nuevos VTubers aun." />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -424,7 +424,7 @@ function ActivityVtubers({ data }: { data: ActivityVTuber[] }) {
                 @{vtuber.user.username} · se unió {formatTimeAgo(vtuber.createdAt)}
               </div>
             </div>
-            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)' }}>◆</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>VT</span>
           </div>
         </Link>
       ))}

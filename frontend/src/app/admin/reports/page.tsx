@@ -29,11 +29,11 @@ const statusStyles: Record<string, { bg: string; color: string }> = {
 };
 
 const targetIcons: Record<string, string> = {
-  USER: '○',
-  POST: '△',
-  COMMENT: '○',
-  EVENT: '◇',
-  GUILD: '□',
+  USER: 'US',
+  POST: 'PO',
+  COMMENT: 'CM',
+  EVENT: 'EV',
+  GUILD: 'GL',
 };
 
 export default function AdminReportsPage() {
