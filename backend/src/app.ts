@@ -69,7 +69,7 @@ console.log(`${BOOT} Helmet configured ✅`);
 console.log(`${BOOT} Configuring rate limiters...`);
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 300, // limit each IP to 300 requests per windowMs (~20/min)
   standardHeaders: true,
   legacyHeaders: false,
   message: {
