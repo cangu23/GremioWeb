@@ -84,13 +84,13 @@ console.log(`${BOOT} General rate limiter applied to /api ✅`);
 
 // More strict rate limit for auth routes (applied BEFORE general limiter)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20, // 20 login/register attempts per 15 minutes
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 50, // 50 login/register attempts per 10 minutes
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     status: 'error',
-    message: 'Demasiados intentos de autenticación. Intenta de nuevo en 15 minutos.',
+    message: 'Demasiados intentos de autenticación. Intenta de nuevo en 10 minutos.',
   },
 });
 
