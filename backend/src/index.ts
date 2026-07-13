@@ -21,34 +21,75 @@ import statsRoutes from './modules/stats/stats.routes';
 import activityRoutes from './modules/activity/activity.routes';
 import vtuberRoutes from './modules/vtubers/vtubers.routes';
 
+const BOOT = '[BOOT]';
 const router = Router();
+
+console.log(`${BOOT} 🛤️  Registering API routes...`);
 
 // Module routes
 router.use('/health', healthRoutes);
+console.log(`${BOOT}   ✅ /api/health`);
+
 router.use('/auth', authRoutes);
+console.log(`${BOOT}   ✅ /api/auth (login, register, google, discord, refresh, logout)`);
+
 router.use('/admin', adminRoutes);
+console.log(`${BOOT}   ✅ /api/admin (auth admin routes)`);
+
 router.use('/admin', adminModuleRoutes);
+console.log(`${BOOT}   ✅ /api/admin (module admin routes)`);
+
 // 📋 VTuber request (authenticated users)
 router.post('/vtubers/request', authenticate, RequestsController.submitRequest);
+console.log(`${BOOT}   ✅ POST /api/vtubers/request`);
 
 router.use('/users', userRoutes);
+console.log(`${BOOT}   ✅ /api/users`);
+
 router.use('/social', socialRoutes);
+console.log(`${BOOT}   ✅ /api/social`);
+
 router.use('/events', eventRoutes);
+console.log(`${BOOT}   ✅ /api/events`);
+
 router.use('/guilds', guildRoutes);
+console.log(`${BOOT}   ✅ /api/guilds`);
+
 router.use('/gamification', gamificationRoutes);
+console.log(`${BOOT}   ✅ /api/gamification`);
+
 router.use('/notifications', notificationRoutes);
+console.log(`${BOOT}   ✅ /api/notifications`);
+
 router.use('/chat', chatRoutes);
+console.log(`${BOOT}   ✅ /api/chat`);
+
 router.use('/payments', paymentRoutes);
+console.log(`${BOOT}   ✅ /api/payments`);
+
 router.use('/posts', postRoutes);
+console.log(`${BOOT}   ✅ /api/posts`);
+
 router.use('/dm', dmRoutes);
+console.log(`${BOOT}   ✅ /api/dm`);
+
 router.use('/vtubers', vtuberRoutes);
+console.log(`${BOOT}   ✅ /api/vtubers`);
+
 router.use('/uploads', uploadRoutes);
+console.log(`${BOOT}   ✅ /api/uploads`);
+
 router.use('/stats', statsRoutes);
+console.log(`${BOOT}   ✅ /api/stats`);
+
 router.use('/activity', activityRoutes);
+console.log(`${BOOT}   ✅ /api/activity`);
 
 // Also mount health at root for quick checks
 router.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'gremio-estelar-api', timestamp: new Date().toISOString() });
 });
+
+console.log(`${BOOT} 🛤️  All API routes registered successfully ✅`);
 
 export default router;
