@@ -9,6 +9,7 @@ export const submitRequest = async (req: Request, res: Response, next: NextFunct
       description: req.body.description,
       avatarUrl: req.body.avatarUrl,
       lore: req.body.lore,
+      surveyAnswers: req.body.surveyAnswers,
     });
     res.status(201).json(result);
   } catch (err) { next(err); }

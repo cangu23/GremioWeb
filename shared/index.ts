@@ -16,3 +16,4 @@ export * from './notifications';
 export * from './chat';
 export * from './payments';
 export * from './posts';
+export * from './vtuber-survey';

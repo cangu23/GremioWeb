@@ -8,7 +8,7 @@ import { apiFetch, getAccessToken } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
-import { VTuberProfile } from '@gremio-estelar/shared';
+import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers } from '@gremio-estelar/shared';
 import Link from 'next/link';
 
 function VtuberProfileEditor() {
@@ -30,6 +30,11 @@ function VtuberProfileEditor() {
   const [contentType, setContentType] = useState('');
   const [streamSchedule, setStreamSchedule] = useState('');
   const [isLive, setIsLive] = useState(false);
+
+  // Survey / Request states
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers>({});
+  const [submittingRequest, setSubmittingRequest] = useState(false);
 
   // Upload states
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -729,22 +734,7 @@ function VtuberProfileEditor() {
                 background: 'linear-gradient(135deg, #ff007f, #ff9800)',
                 boxShadow: '0 0 30px rgba(255,0,127,0.2)',
               }}
-              onClick={async () => {
-                try {
-                  await apiFetch('/vtubers/request', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                      displayName: displayName || user.username,
-                      description: description || undefined,
-                      avatarUrl: avatarUrl || undefined,
-                      lore: lore || undefined,
-                    }),
-                  });
-                  showToast('🎉 Solicitud enviada. Recibirás un código cuando sea aprobada.', 'success');
-                } catch (err: unknown) {
-                  showToast(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
-                }
-              }}
+              onClick={() => setShowSurvey(true)}
             >
               🎤 Solicitar ser VTuber Oficial
             </button>
@@ -775,6 +765,100 @@ function VtuberProfileEditor() {
           Los cambios se guardarán en tu perfil y serán visibles inmediatamente para la comunidad.
         </p>
       </form>
+
+      {/* ===== SURVEY MODAL ===== */}
+      {showSurvey && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
+          <div className="glass" style={{
+            padding: '32px', borderRadius: '20px', width: '100%',
+            maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>📋 Cuestionario VTuber</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '4px' }}>
+                  Responde estas preguntas para que los admins evalúen tu solicitud
+                </p>
+              </div>
+              <button onClick={() => setShowSurvey(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginBottom: '24px' }}>
+              {VTUBER_SURVEY_QUESTIONS.map((q) => (
+                <div key={q.id} className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.95rem', marginBottom: '6px' }}>
+                    {q.question}
+                    {q.required && <span style={{ color: '#f44336', marginLeft: '4px' }}>*</span>}
+                  </label>
+                  {q.type === 'textarea' ? (
+                    <textarea
+                      className="input"
+                      value={surveyAnswers[q.id] || ''}
+                      onChange={(e) => setSurveyAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                      placeholder={q.placeholder}
+                      style={{ minHeight: '70px', resize: 'vertical', borderRadius: '10px' }}
+                    />
+                  ) : (
+                    <input
+                      className="input"
+                      value={surveyAnswers[q.id] || ''}
+                      onChange={(e) => setSurveyAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                      placeholder={q.placeholder}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowSurvey(false)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  // Validate required fields
+                  const missing = VTUBER_SURVEY_QUESTIONS
+                    .filter(q => q.required && !surveyAnswers[q.id]?.trim())
+                    .map(q => q.question);
+                  if (missing.length > 0) {
+                    showToast(`Responde: ${missing[0].substring(0, 50)}...`, 'error');
+                    return;
+                  }
+
+                  setSubmittingRequest(true);
+                  try {
+                    await apiFetch('/vtubers/request', {
+                      method: 'POST',
+                      body: JSON.stringify({
+                        displayName: displayName || user.username,
+                        description: description || undefined,
+                        avatarUrl: avatarUrl || undefined,
+                        lore: lore || undefined,
+                        surveyAnswers,
+                      }),
+                    });
+                    showToast('🎉 Solicitud enviada. Los admins la evaluarán y recibirás una notificación.', 'success');
+                    setSurveyAnswers({});
+                    setShowSurvey(false);
+                  } catch (err: unknown) {
+                    showToast(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
+                  } finally {
+                    setSubmittingRequest(false);
+                  }
+                }}
+                disabled={submittingRequest}
+                className="btn"
+                style={{
+                  background: 'linear-gradient(135deg, #ff007f, #ff9800)',
+                  boxShadow: '0 0 20px rgba(255,0,127,0.2)',
+                }}
+              >
+                {submittingRequest ? 'Enviando...' : '📤 Enviar Solicitud'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

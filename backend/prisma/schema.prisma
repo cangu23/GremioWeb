@@ -430,6 +430,7 @@ model VtuberRequest {
   description   String?
   avatarUrl     String?
   lore          String?
+  surveyAnswers String?                      // JSON con respuestas del cuestionario
   notes         String?                      // Notas del admin
   reviewedById  String?
   reviewedAt    DateTime?

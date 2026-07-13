@@ -7,6 +7,7 @@ export const createRequest = (data: {
   description?: string;
   avatarUrl?: string;
   lore?: string;
+  surveyAnswers?: string; // JSON string
 }) => {
   return prisma.vtuberRequest.create({ data });
 };

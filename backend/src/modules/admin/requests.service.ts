@@ -13,6 +13,7 @@ export const submitRequest = async (data: {
   description?: string;
   avatarUrl?: string;
   lore?: string;
+  surveyAnswers?: Record<string, string>;
 }) => {
   // Check if user already has a pending request
   const existing = await RequestsRepository.findUserRequestPending(data.userId);
@@ -26,7 +27,10 @@ export const submitRequest = async (data: {
     throw new AppError('Ya eres un VTuber aprobado', 400);
   }
 
-  return RequestsRepository.createRequest(data);
+  return RequestsRepository.createRequest({
+    ...data,
+    surveyAnswers: data.surveyAnswers ? JSON.stringify(data.surveyAnswers) : undefined,
+  });
 };
 
 /**

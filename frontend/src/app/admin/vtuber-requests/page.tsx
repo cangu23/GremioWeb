@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
+import { VTUBER_SURVEY_QUESTIONS, type SurveyAnswers } from '@gremio-estelar/shared';
 
 interface VtuberRequest {
   id: string;
@@ -14,6 +15,7 @@ interface VtuberRequest {
   avatarUrl: string | null;
   lore: string | null;
   notes: string | null;
+  surveyAnswers: string | null;
   createdAt: string;
   user: {
     id: string;
@@ -245,6 +247,39 @@ export default function AdminVtuberRequestsPage() {
                   <div style={{ fontSize: '0.9rem', lineHeight: 1.5, fontStyle: 'italic' }}>{selectedRequest.lore}</div>
                 </div>
               )}
+
+              {/* Survey Answers */}
+              {selectedRequest.surveyAnswers && (
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '8px' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    📋 Respuestas del Cuestionario
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {(() => {
+                      try {
+                        const answers: SurveyAnswers = JSON.parse(selectedRequest.surveyAnswers);
+                        return VTUBER_SURVEY_QUESTIONS.filter((q) => answers[q.id]).map((q) => (
+                            <div key={q.id} style={{
+                              background: 'rgba(138,43,226,0.05)',
+                              borderRadius: '10px', padding: '12px 14px',
+                              border: '1px solid rgba(138,43,226,0.1)',
+                            }}>
+                              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                {q.question}
+                              </div>
+                              <div style={{ fontSize: '0.9rem', lineHeight: 1.5, color: '#fff', whiteSpace: 'pre-wrap' }}>
+                                {answer}
+                              </div>
+                            </div>
+                          ));
+                      } catch {
+                        return <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>Error al cargar respuestas</div>;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+
               {selectedRequest.reviewedBy && (
                 <div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '2px' }}>Revisado por</div>
