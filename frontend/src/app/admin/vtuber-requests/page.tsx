@@ -268,7 +268,7 @@ export default function AdminVtuberRequestsPage() {
                                 {q.question}
                               </div>
                               <div style={{ fontSize: '0.9rem', lineHeight: 1.5, color: '#fff', whiteSpace: 'pre-wrap' }}>
-                                {answer}
+                                {answers[q.id]}
                               </div>
                             </div>
                           ));
