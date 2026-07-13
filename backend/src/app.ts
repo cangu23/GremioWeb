@@ -10,7 +10,7 @@ import mainRouter from './index';
 const BOOT = '[BOOT]';
 const REQ = '[REQ]';
 
-console.log(`${BOOT} [${new Date().toISOString()}] 🔧 Initializing Express app...`);
+console.log(`${BOOT} [${new Date().toISOString()}] Initializing Express app...`);
 
 const app = express();
 
@@ -52,7 +52,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
 }));
-console.log(`${BOOT} CORS configured ✅`);
+console.log(`${BOOT} CORS configured`);
 
 // ========== SECURITY MIDDLEWARE ==========
 
@@ -63,7 +63,7 @@ app.use(helmet({
   crossOriginOpenerPolicy: false, // Allow Google Sign-In popup postMessage
   originAgentCluster: false, // Disable origin-agent-cluster for Google compatibility
 }));
-console.log(`${BOOT} Helmet configured ✅`);
+console.log(`${BOOT} Helmet configured`);
 
 // Rate Limiting: Protect API from abuse
 console.log(`${BOOT} Configuring rate limiters...`);
@@ -82,7 +82,7 @@ const limiter = rateLimit({
 
 // Apply rate limiting to all /api routes
 app.use('/api', limiter);
-console.log(`${BOOT} General rate limiter applied to /api ✅`);
+console.log(`${BOOT} General rate limiter applied to /api`);
 
 // More strict rate limit for auth routes (applied BEFORE general limiter)
 const authLimiter = rateLimit({
@@ -102,7 +102,7 @@ console.log(`${BOOT} Configuring body parsers...`);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-console.log(`${BOOT} Body parsers configured ✅`);
+console.log(`${BOOT} Body parsers configured`);
 
 // ========== ROUTES ==========
 
@@ -112,11 +112,11 @@ console.log(`${BOOT} Mounting routes...`);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/google', authLimiter);
-console.log(`${BOOT} Auth rate limiters applied ✅`);
+console.log(`${BOOT} Auth rate limiters applied`);
 
 console.log(`${BOOT} Mounting main API router...`);
 app.use('/api', mainRouter);
-console.log(`${BOOT} Main API router mounted ✅`);
+console.log(`${BOOT} Main API router mounted`);
 
 // ========== STATIC FILES ==========
 // Serve uploaded files (avatars, banners)
@@ -145,7 +145,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-console.log(`${BOOT} Error handler registered ✅`);
-console.log(`${BOOT} [${new Date().toISOString()}] ✅ Express app initialization complete`);
+console.log(`${BOOT} Error handler registered`);
+console.log(`${BOOT} [${new Date().toISOString()}] Express app initialization complete`);
 
 export default app;

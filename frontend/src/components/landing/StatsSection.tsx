@@ -21,10 +21,10 @@ interface StatDisplay {
 }
 
 const statConfigs: StatDisplay[] = [
-  { value: 0, suffix: '+', label: 'VTubers Registrados', icon: '🎭', key: 'totalVtubers' },
-  { value: 0, suffix: '+', label: 'Eventos Realizados', icon: '📅', key: 'totalEvents' },
-  { value: 0, suffix: '+', label: 'Gremios Creados', icon: '🏰', key: 'totalGuilds' },
-  { value: 0, suffix: '+', label: 'Mensajes Enviados', icon: '💬', key: 'totalMessages' },
+  { value: 0, suffix: '+', label: 'VTubers Registrados', icon: '◆', key: 'totalVtubers' },
+  { value: 0, suffix: '+', label: 'Eventos Realizados', icon: '◇', key: 'totalEvents' },
+  { value: 0, suffix: '+', label: 'Gremios Creados', icon: '◈', key: 'totalGuilds' },
+  { value: 0, suffix: '+', label: 'Mensajes Enviados', icon: '○', key: 'totalMessages' },
 ];
 
 function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) {

@@ -135,7 +135,7 @@ export default function FeaturedVtubersSection() {
           transform: visible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
         }}>
-          ⭐ VTubers Destacados
+          VTubers Destacados
         </h2>
         <p className="section-subtitle" style={{
           opacity: visible ? 1 : 0,
@@ -333,7 +333,7 @@ export default function FeaturedVtubersSection() {
                       background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
                     }}
                   >
-                    ✦ Ver Perfil Completo
+                    Ver Perfil Completo
                   </Link>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     {activeVtuber.twitchUrl && (
@@ -350,7 +350,7 @@ export default function FeaturedVtubersSection() {
                         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(100,65,165,0.3)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(100,65,165,0.2)'; e.currentTarget.style.transform = 'scale(1)'; }}
                       >
-                        <span>📺</span>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>TW</span>
                       </a>
                     )}
                     {activeVtuber.youtubeUrl && (
@@ -367,7 +367,7 @@ export default function FeaturedVtubersSection() {
                         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,0,0,0.25)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,0,0,0.15)'; e.currentTarget.style.transform = 'scale(1)'; }}
                       >
-                        <span>▶️</span>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>YT</span>
                       </a>
                     )}
                     {activeVtuber.twitterUrl && (
@@ -384,7 +384,7 @@ export default function FeaturedVtubersSection() {
                         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(29,161,242,0.25)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(29,161,242,0.15)'; e.currentTarget.style.transform = 'scale(1)'; }}
                       >
-                        <span>🐦</span>
+                        <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>X</span>
                       </a>
                     )}
                   </div>
@@ -399,7 +399,7 @@ export default function FeaturedVtubersSection() {
                   padding: '40px', textAlign: 'center', borderRadius: '20px',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
                 }}>
-                  <span style={{ fontSize: '2rem' }}>📝</span>
+                  <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-muted)' }}>--</span>
                   <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
                     Este VTuber aún no ha publicado nada
                   </p>
@@ -411,7 +411,7 @@ export default function FeaturedVtubersSection() {
                     marginBottom: '4px',
                   }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      📰 Últimas Publicaciones
+                      Ultimas Publicaciones
                     </h3>
                     <Link
                       href={`/profile/${activeVtuber.userId}`}
@@ -518,8 +518,8 @@ export default function FeaturedVtubersSection() {
                         display: 'flex', gap: '16px', borderTop: '1px solid var(--glass-border)',
                         paddingTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)',
                       }}>
-                        <span>❤️ {post._count.likes}</span>
-                        <span>💬 {post._count.comments}</span>
+                        <span>♥ {post._count.likes}</span>
+                        <span>○ {post._count.comments}</span>
                       </div>
                     </div>
                   ))}
@@ -543,7 +543,7 @@ export default function FeaturedVtubersSection() {
               borderWidth: '2px',
             }}
           >
-            🎭 Explorar todos los VTubers
+            Explorar todos los VTubers
           </Link>
         </div>
       </div>

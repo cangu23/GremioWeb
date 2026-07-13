@@ -45,9 +45,9 @@ function LeaderboardContent() {
   }
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
+    if (rank === 1) return '#1';
+    if (rank === 2) return '#2';
+    if (rank === 3) return '#3';
     return `#${rank}`;
   };
 
@@ -58,7 +58,7 @@ function LeaderboardContent() {
 
   return (
     <>
-      <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>🏆 Clasificación</h1>
+      <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>Clasificación</h1>
       <p style={{ color: 'var(--muted)', marginBottom: '30px' }}>
         Los VTubers con más experiencia en Gremio Estelar
       </p>

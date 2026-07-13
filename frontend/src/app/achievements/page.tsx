@@ -72,7 +72,7 @@ function AchievementsContent() {
 
   return (
     <>
-      <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>⭐ Logros</h1>
+      <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>Logros</h1>
       <p style={{ color: 'var(--muted)', marginBottom: '30px' }}>
         Desbloquea logros realizando acciones en la plataforma
       </p>
@@ -115,9 +115,8 @@ function AchievementsContent() {
                       justifyContent: 'center',
                       fontSize: '1.5rem',
                       boxShadow: '0 4px 15px rgba(255,215,0,0.3)',
-                    }}
-                  >
-                    ✅
+                    }}                    >
+                    ✓
                   </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
@@ -185,14 +184,14 @@ function AchievementsContent() {
 
 function getCategoryIcon(category: string): string {
   const icons: Record<string, string> = {
-    GENERAL: '🌟',
-    XP: '⚡',
-    NIVEL: '📈',
-    EVENTOS: '📅',
-    GREMIOS: '🏰',
-    SOCIAL: '👥',
+    GENERAL: '◆',
+    XP: '△',
+    NIVEL: '▲',
+    EVENTOS: '◇',
+    GREMIOS: '□',
+    SOCIAL: '○',
   };
-  return icons[category] || '🏆';
+  return icons[category] || '●';
 }
 
 export default function AchievementsPage() {

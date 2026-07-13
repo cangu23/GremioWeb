@@ -8,21 +8,21 @@ const steps = [
     title: 'Crea tu cuenta',
     description:
       'Regístrate en segundos y configura tu perfil básico. Elige tu nombre de VTuber y empieza a construir tu presencia.',
-    icon: '📝',
+    icon: '01',
   },
   {
     number: '02',
     title: 'Configura tu personaje',
     description:
       'Completa tu perfil VTuber con tu lore, modelos, enlaces a redes sociales, horario de streams y más. Hazlo tuyo.',
-    icon: '✨',
+    icon: '02',
   },
   {
     number: '03',
     title: 'Conecta y crece',
     description:
       'Únete a gremios, participa en eventos, chatea con la comunidad y gana XP. Tu viaje comienza ahora.',
-    icon: '🚀',
+    icon: '03',
   },
 ];
 

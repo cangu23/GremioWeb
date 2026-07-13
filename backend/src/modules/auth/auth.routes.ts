@@ -16,13 +16,13 @@ router.post('/register', validateRequest(registerSchema), AuthController.registe
 router.post('/refresh', AuthController.refresh);
 router.post('/logout', AuthController.logout);
 
-// 🔐 Redeem an invitation code (authenticated users)
+// Redeem an invitation code (authenticated users)
 router.post('/redeem-code', authenticate, validateRequest(redeemCodeSchema), CodesController.redeemCode);
 
 // 🔵 Google OAuth (Google Identity Services)
 router.post('/google', GoogleController.googleLogin);
 
-// 🎮 Discord OAuth
+// Discord OAuth
 router.get('/discord', DiscordController.redirectToDiscord);
 router.get('/discord/callback', DiscordController.handleDiscordCallback);
 

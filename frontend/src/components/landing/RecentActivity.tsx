@@ -59,17 +59,17 @@ function formatDate(dateStr: string): string {
 }
 
 const NOTIFICATION_ICONS: Record<string, string> = {
-  follow: '👤',
-  like: '❤️',
-  comment: '💬',
+  follow: '◈',
+  like: '♥',
+  comment: '○',
   mention: '@',
-  event_created: '📅',
-  event_attend: '🎟️',
-  guild_joined: '🏰',
-  guild_request: '📋',
-  achievement: '🏆',
-  level_up: '⭐',
-  dm: '✉️',
+  event_created: '◇',
+  event_attend: '◆',
+  guild_joined: '□',
+  guild_request: '▽',
+  achievement: '△',
+  level_up: '▲',
+  dm: '◎',
 };
 
 export default function RecentActivity() {
@@ -133,9 +133,9 @@ export default function RecentActivity() {
   }
 
   const tabs = [
-    { key: 'notifications' as const, label: 'Notificaciones', icon: '🔔', count: notifications.filter((n) => !n.read).length },
-    { key: 'events' as const, label: 'Eventos', icon: '📅', count: events.length },
-    { key: 'achievements' as const, label: 'Logros', icon: '🏆', count: achievements.length },
+    { key: 'notifications' as const, label: 'Notificaciones', icon: '■', count: notifications.filter((n) => !n.read).length },
+    { key: 'events' as const, label: 'Eventos', icon: '◇', count: events.length },
+    { key: 'achievements' as const, label: 'Logros', icon: '△', count: achievements.length },
   ];
 
   return (
@@ -167,7 +167,7 @@ export default function RecentActivity() {
             gap: '10px',
           }}
         >
-          ⚡ Actividad Reciente
+          Actividad Reciente
         </h2>
 
         {/* Desktop tabs */}
@@ -258,7 +258,7 @@ export default function RecentActivity() {
         {activeTab === 'notifications' && (
           <div>
             {notifications.length === 0 ? (
-              <EmptyState icon="🔔" text="No tienes notificaciones recientes" />
+              <EmptyState icon="■" text="No tienes notificaciones recientes" />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {notifications.map((notif) => (
@@ -288,7 +288,7 @@ export default function RecentActivity() {
                     }}
                   >
                     <span style={{ fontSize: '1.2rem', flexShrink: 0, marginTop: '1px' }}>
-                      {NOTIFICATION_ICONS[notif.type] || '🔔'}
+                      {NOTIFICATION_ICONS[notif.type] || '■'}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
@@ -369,7 +369,7 @@ export default function RecentActivity() {
         {activeTab === 'events' && (
           <div>
             {events.length === 0 ? (
-              <EmptyState icon="📅" text="No tienes eventos próximos" action={{ label: 'Explorar eventos', href: '/events' }} />
+              <EmptyState icon="◇" text="No tienes eventos próximos" action={{ label: 'Explorar eventos', href: '/events' }} />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {events.slice(0, 5).map((item) => {
@@ -531,7 +531,7 @@ export default function RecentActivity() {
         {activeTab === 'achievements' && (
           <div>
             {achievements.length === 0 ? (
-              <EmptyState icon="🏆" text="Aún no has desbloqueado logros" action={{ label: 'Ver todos los logros', href: '/achievements' }} />
+              <EmptyState icon="△" text="Aún no has desbloqueado logros" action={{ label: 'Ver todos los logros', href: '/achievements' }} />
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
                 {achievements.map((item) => (
@@ -559,7 +559,7 @@ export default function RecentActivity() {
                         marginBottom: '8px',
                       }}
                     >
-                      {item.achievement.iconUrl || '🏅'}
+                      {item.achievement.iconUrl || '◆'}
                     </div>
                     <div
                       style={{

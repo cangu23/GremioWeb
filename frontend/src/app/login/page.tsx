@@ -78,7 +78,7 @@ function LoginForm() {
             animation: 'fadeIn 0.3s ease',
           }}
         >
-          <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+          <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>!</span>
           <span>{error}</span>
         </div>
       )}
@@ -155,7 +155,7 @@ function LoginForm() {
               Iniciando sesión...
             </span>
           ) : (
-            '✦ Entrar'
+            'Entrar'
           )}
         </button>
       </form>
@@ -237,7 +237,7 @@ export default function LoginPage() {
             }}
             className="animate-float"
           >
-            🌟
+            ◆
           </div>
           <h2
             className="gradient-text"
@@ -247,7 +247,7 @@ export default function LoginPage() {
               marginBottom: '8px',
             }}
           >
-            Bienvenido de vuelta
+            Bienvenido
           </h2>
           <p
             style={{

@@ -67,12 +67,12 @@ router.get('/reports', AdminController.listReports);
 router.post('/reports', validateRequest(createReportSchema), AdminController.createReport);
 router.patch('/reports/:id', validateRequest(resolveReportSchema), AdminController.resolveReport);
 
-// ========== 🔐 INVITATION CODES ==========
+// ========== INVITATION CODES ==========
 router.post('/codes/generate', CodesController.generateCode);
 router.get('/codes', CodesController.listCodes);
 router.delete('/codes/:id', CodesController.revokeCode);
 
-// ========== 📋 VTUBER REQUESTS ==========
+// ========== VTUBER REQUESTS ==========
 router.get('/vtuber-requests', RequestsController.listRequests);
 router.get('/vtuber-requests/:id', RequestsController.getRequestDetail);
 router.post('/vtuber-requests/:id/approve', RequestsController.approveRequest);

@@ -24,7 +24,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // STARTUP
 // ──────────────────────────────────────────────
 
-console.log(`${BOOT} [${new Date().toISOString()}] 🚀 Starting server...`);
+console.log(`${BOOT} [${new Date().toISOString()}] Starting server...`);
 console.log(`${BOOT} Node version: ${process.version}`);
 console.log(`${BOOT} Platform: ${process.platform}`);
 console.log(`${BOOT} NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
@@ -40,7 +40,7 @@ console.log(`${BOOT} Socket.IO attached`);
 
 console.log(`${BOOT} Attempting to listen on port ${env.PORT}...`);
 server.listen(env.PORT, () => {
-  console.log(`${BOOT} [${new Date().toISOString()}] ✅ Server running on port ${env.PORT}`);
+  console.log(`${BOOT} [${new Date().toISOString()}] Server running on port ${env.PORT}`);
   console.log(`${BOOT} Health check: http://localhost:${env.PORT}/api/health`);
 });
 

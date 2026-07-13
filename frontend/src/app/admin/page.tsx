@@ -30,16 +30,16 @@ interface Activity {
 }
 
 const statCards = [
-  { key: 'totalUsers', label: 'Usuarios Registrados', icon: '👥', color: '#8a2be2' },
-  { key: 'activeUsers', label: 'Usuarios Activos', icon: '✅', color: '#00e676' },
-  { key: 'totalVtubers', label: 'VTubers', icon: '🎤', color: '#ff007f' },
-  { key: 'totalGuilds', label: 'Gremios', icon: '🏰', color: '#ff9800' },
-  { key: 'totalEvents', label: 'Eventos', icon: '📅', color: '#2196f3' },
-  { key: 'totalPosts', label: 'Publicaciones', icon: '📝', color: '#9c27b0' },
-  { key: 'totalComments', label: 'Comentarios', icon: '💬', color: '#00bcd4' },
-  { key: 'totalLikes', label: 'Likes', icon: '❤️', color: '#f44336' },
-  { key: 'totalMessages', label: 'Mensajes', icon: '✉️', color: '#4caf50' },
-  { key: 'pendingReports', label: 'Reportes Pendientes', icon: '🚨', color: '#ff5722' },
+  { key: 'totalUsers', label: 'Usuarios Registrados', icon: '◆', color: '#8a2be2' },
+  { key: 'activeUsers', label: 'Usuarios Activos', icon: '○', color: '#00e676' },
+  { key: 'totalVtubers', label: 'VTubers', icon: '◇', color: '#ff007f' },
+  { key: 'totalGuilds', label: 'Gremios', icon: '□', color: '#ff9800' },
+  { key: 'totalEvents', label: 'Eventos', icon: '◈', color: '#2196f3' },
+  { key: 'totalPosts', label: 'Publicaciones', icon: '△', color: '#9c27b0' },
+  { key: 'totalComments', label: 'Comentarios', icon: '○', color: '#00bcd4' },
+  { key: 'totalLikes', label: 'Likes', icon: '♥', color: '#f44336' },
+  { key: 'totalMessages', label: 'Mensajes', icon: '◎', color: '#4caf50' },
+  { key: 'pendingReports', label: 'Reportes Pendientes', icon: '▲', color: '#ff5722' },
 ];
 
 const activityLabels: Record<string, string> = {
@@ -122,7 +122,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* New Registrations */}
-      <h2 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '16px' }}>📈 Nuevos Registros</h2>
+      <h2 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '16px' }}>Nuevos Registros</h2>
       <div style={{ display: 'flex', gap: '16px', marginBottom: '40px', flexWrap: 'wrap' }}>
         {[
           { label: 'Hoy', value: stats?.newUsersToday || 0, gradient: 'linear-gradient(135deg, #8a2be2, #ff007f)' },
@@ -149,7 +149,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      <h2 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '16px' }}>🕐 Actividad Reciente</h2>
+      <h2 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '16px' }}>Actividad Reciente</h2>
       <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden' }}>
         {activity.length === 0 ? (
           <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>

@@ -36,7 +36,7 @@ export default function GoogleLoginButton() {
           opacity: 0.5,
         }}
       >
-        <span style={{ fontSize: '1.2rem' }}>🔵</span>
+        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#4285F4' }}>G</span>
         Google (no configurado)
       </button>
     );
@@ -66,7 +66,7 @@ export default function GoogleLoginButton() {
         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,77,79,0.15)'; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,77,79,0.08)'; }}
       >
-        <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#ff4d4f' }}>!</span>
         Error al cargar Google — Reintentar
       </button>
     );
@@ -81,7 +81,7 @@ export default function GoogleLoginButton() {
             return;
           }
           await googleLogin(credentialResponse.credential);
-          showToast('¡Inicio de sesión con Google exitoso! 🎉', 'success');
+          showToast('Inicio de sesión con Google exitoso', 'success');
           router.push('/dashboard');
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : 'Error al iniciar sesión con Google';

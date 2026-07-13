@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
       if (editData.role !== selectedUser.role) payload.role = editData.role;
       if (editData.status !== selectedUser.status) payload.status = editData.status;
       await apiFetch(`/admin/users/${selectedUser.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
-      showToast('Usuario actualizado ✅', 'success');
+      showToast('Usuario actualizado', 'success');
       setSelectedUser(null);
       fetchUsers();
     } catch (err: any) {
@@ -123,7 +123,7 @@ export default function AdminUsersPage() {
           body: JSON.stringify({ status: action === 'restore' ? 'ACTIVE' : action.toUpperCase() }),
         });
       }
-      showToast(`Usuario ${label}do ✅`, 'success');
+      showToast(`Usuario ${label}do`, 'success');
       fetchUsers();
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>👥 Usuarios</h1>
+      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Usuarios</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Gestión completa de usuarios de la plataforma</p>
 
       {/* Search & Filters */}

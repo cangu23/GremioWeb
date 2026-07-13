@@ -133,7 +133,7 @@ export const approveRequest = async (id: string, adminId: string) => {
     data: {
       userId: request.userId,
       type: 'VTUBER_APPROVED',
-      title: '🎉 ¡Solicitud de VTuber Aprobada!',
+      title: 'Solicitud de VTuber Aprobada',
       message: `Tu solicitud para ser VTuber oficial ha sido aprobada. Usa tu código único: ${codeResult.rawCode}\n\nCanjéalo en tu perfil para activar tu rol.`,
       referenceId: request.id,
     },
@@ -182,7 +182,7 @@ export const rejectRequest = async (id: string, adminId: string, notes?: string)
     data: {
       userId: request.userId,
       type: 'VTUBER_REJECTED',
-      title: '📋 Solicitud de VTuber',
+      title: 'Solicitud de VTuber',
       message: `Tu solicitud para ser VTuber no fue aprobada en esta ocasión.${notes ? ` Motivo: ${notes}` : ' Puedes intentarlo de nuevo más tarde.'}`,
       referenceId: request.id,
     },

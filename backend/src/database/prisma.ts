@@ -5,8 +5,8 @@ const BOOT = '[BOOT]';
 
 const databaseUrl = process.env.DATABASE_URL;
 
-console.log(`${BOOT} 📦 Initializing Prisma client...`);
-console.log(`${BOOT} DATABASE_URL present: ${databaseUrl ? '✅ YES' : '❌ NO (using SQLite fallback)'}`);
+console.log(`${BOOT} Initializing Prisma client...`);
+console.log(`${BOOT} DATABASE_URL present: ${databaseUrl ? 'YES' : 'NO (using SQLite fallback)'}`);
 
 if (databaseUrl) {
   // Log database host without credentials for debugging
@@ -29,15 +29,15 @@ const prisma = databaseUrl
       },
     });
 
-console.log(`${BOOT} Prisma client instance created ✅`);
+console.log(`${BOOT} Prisma client instance created`);
 
 // Test database connection on startup (non-blocking)
 prisma.$connect()
   .then(() => {
-    console.log(`${BOOT} ✅ Database connection established successfully`);
+    console.log(`${BOOT} Database connection established successfully`);
   })
   .catch((err: Error) => {
-    console.error(`${BOOT} ❌ Database connection failed:`, err.message);
+    console.error(`${BOOT} Database connection failed:`, err.message);
     console.error(`${BOOT} This will cause issues when querying the database`);
   });
 

@@ -66,8 +66,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             }}
             onClick={() => removeToast(toast.id)}
           >
-            <span style={{ fontSize: '1.3rem' }}>
-              {toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'}
+            <span style={{ fontSize: '1.3rem', fontWeight: 700, lineHeight: 1 }}>
+              {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'i'}
             </span>
             <span style={{ fontSize: '0.9rem', flex: 1 }}>{toast.message}</span>
           </div>

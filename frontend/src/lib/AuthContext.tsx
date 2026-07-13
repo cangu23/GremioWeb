@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     setAccessToken(res.accessToken);
     setUser(res.user);
-    showToast('¡Bienvenido a Gremio Estelar! 🎉', 'success');
+    showToast('¡Bienvenido a Gremio Estelar!', 'success');
   };
 
   const logout = async () => {

@@ -77,14 +77,14 @@ function NotificationsContent() {
 
   const getTypeIcon = (type: string) => {
     const icons: Record<string, string> = {
-      follow: '👤',
-      event_attend: '📅',
-      event_created: '📅',
-      guild_joined: '🏰',
-      achievement: '⭐',
-      level_up: '📈',
+      follow: '◈',
+      event_attend: '◇',
+      event_created: '◇',
+      guild_joined: '□',
+      achievement: '△',
+      level_up: '▲',
     };
-    return icons[type] || '🔔';
+    return icons[type] || '■';
   };
 
   if (isLoading) {
@@ -101,7 +101,7 @@ function NotificationsContent() {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '2.5rem' }}>🔔 Notificaciones</h1>
+          <h1 style={{ margin: 0, fontSize: '2.5rem' }}>Notificaciones</h1>
           {unreadCount > 0 && (
             <p style={{ color: 'var(--muted)', margin: '4px 0 0 0' }}>
               Tienes {unreadCount} notificación{unreadCount !== 1 ? 'es' : ''} sin leer

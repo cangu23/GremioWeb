@@ -55,7 +55,7 @@ export default function AdminVtubersPage() {
     if (!window.confirm(`¿${currentValue ? 'Quitar' : 'Activar'} "${label}"?`)) return;
     try {
       await apiFetch(`/admin/vtubers/${id}`, { method: 'PATCH', body: JSON.stringify({ [field]: !currentValue }) });
-      showToast(`VTuber ${label.toLowerCase()} ${currentValue ? 'desactivado' : 'activado'} ✅`, 'success');
+      showToast(`VTuber ${label.toLowerCase()} ${currentValue ? 'desactivado' : 'activado'}`, 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
@@ -74,7 +74,7 @@ export default function AdminVtubersPage() {
     setSaving(true);
     try {
       await apiFetch(`/admin/vtubers/${selectedProfile.id}`, { method: 'PATCH', body: JSON.stringify(editData) });
-      showToast('Perfil actualizado ✅', 'success');
+      showToast('Perfil actualizado', 'success');
       setSelectedProfile(null);
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
@@ -83,7 +83,7 @@ export default function AdminVtubersPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>🎤 VTubers</h1>
+      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>VTubers</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Gestión de perfiles VTuber</p>
 
       <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px' }}>
@@ -143,17 +143,17 @@ export default function AdminVtubersPage() {
                       <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>@{profile.user?.username}</td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{ color: profile.isVerified ? '#00e676' : 'var(--text-muted)', fontSize: '1.2rem' }}>
-                          {profile.isVerified ? '✅' : '❌'}
+                          {profile.isVerified ? '✓' : '✕'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{ color: profile.isApproved ? '#00e676' : '#ff9800', fontSize: '1.2rem' }}>
-                          {profile.isApproved ? '✅' : '⏳'}
+                          {profile.isApproved ? '✓' : '...'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{ color: profile.isFeatured ? '#ff007f' : 'var(--text-muted)', fontSize: '1.2rem' }}>
-                          {profile.isFeatured ? '⭐' : '−'}
+                          {profile.isFeatured ? '★' : '−'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
@@ -171,7 +171,7 @@ export default function AdminVtubersPage() {
                             {profile.isApproved ? 'Desaprobar' : 'Aprobar'}
                           </button>
                           <button onClick={() => toggleFlag(profile.id, 'isFeatured', profile.isFeatured, 'Destacado')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.3)' }}>
-                            {profile.isFeatured ? 'Quitar ⭐' : 'Destacar'}
+                            {profile.isFeatured ? 'Quitar destacado' : 'Destacar'}
                           </button>
                           <button onClick={() => toggleFlag(profile.id, 'isHidden', profile.isHidden, 'Ocultar')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.3)' }}>
                             {profile.isHidden ? 'Mostrar' : 'Ocultar'}

@@ -11,31 +11,31 @@ const adminNavItems = [
   {
     section: 'Panel',
     items: [
-      { href: '/admin', label: 'Dashboard', icon: '📊' },
+      { href: '/admin', label: 'Dashboard', icon: '◆' },
     ],
   },
   {
-    section: 'Gestión',
+    section: 'Gestion',
     items: [
-      { href: '/admin/users', label: 'Usuarios', icon: '👥' },
-      { href: '/admin/vtubers', label: 'VTubers', icon: '🎤' },
-      { href: '/admin/events', label: 'Eventos', icon: '📅' },
-      { href: '/admin/guilds', label: 'Gremios', icon: '🏰' },
-      { href: '/admin/posts', label: 'Publicaciones', icon: '📝' },
+      { href: '/admin/users', label: 'Usuarios', icon: '○' },
+      { href: '/admin/vtubers', label: 'VTubers', icon: '◇' },
+      { href: '/admin/events', label: 'Eventos', icon: '□' },
+      { href: '/admin/guilds', label: 'Gremios', icon: '◈' },
+      { href: '/admin/posts', label: 'Publicaciones', icon: '△' },
     ],
   },
   {
     section: 'Acceso',
     items: [
-      { href: '/admin/codes', label: 'Códigos', icon: '🔐' },
-      { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: '📋' },
+      { href: '/admin/codes', label: 'Codigos', icon: '▽' },
+      { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: '▽' },
     ],
   },
   {
-    section: 'Moderación',
+    section: 'Moderacion',
     items: [
-      { href: '/admin/reports', label: 'Reportes', icon: '🚨' },
-      { href: '/admin/logs', label: 'Auditoría', icon: '📋' },
+      { href: '/admin/reports', label: 'Reportes', icon: '▲' },
+      { href: '/admin/logs', label: 'Auditoria', icon: '▽' },
     ],
   },
 ];
@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '12px' }}>⚡</div>
+          <div style={{ fontSize: '2rem', marginBottom: '12px', fontWeight: 300 }}>--</div>
           <p style={{ color: 'var(--text-muted)' }}>Cargando panel...</p>
         </div>
       </div>
@@ -124,7 +124,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         className="admin-sidebar"
       >
         <Link href="/admin" style={{ fontSize: '1.3rem', fontWeight: 800, background: 'linear-gradient(135deg, #8a2be2, #ff007f)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', padding: '8px 12px', textDecoration: 'none' }}>
-          ⚡ Admin Panel
+          Admin Panel
         </Link>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

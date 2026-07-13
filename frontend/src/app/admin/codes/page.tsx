@@ -97,11 +97,11 @@ export default function AdminCodesPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>🔐 Códigos de Invitación</h1>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Codigos de Invitacion</h1>
           <p style={{ color: 'var(--text-muted)' }}>Genera y administra códigos únicos para roles especiales</p>
         </div>
         <button onClick={() => { setShowGenerate(true); setNewCode(''); }} className="btn" style={{ padding: '12px 24px', fontSize: '0.9rem', background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>
-          ✨ Generar Código
+          Generar Codigo
         </button>
       </div>
 
@@ -112,8 +112,8 @@ export default function AdminCodesPage() {
             {newCode ? (
               <>
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
-                  <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '8px' }}>¡Código Generado!</h2>
+                  <div style={{ fontSize: '3rem', marginBottom: '12px', fontWeight: 300, color: 'var(--success)' }}>✓</div>
+                  <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '8px' }}>Codigo Generado!</h2>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Este código solo se muestra una vez. Cópialo ahora.</p>
                 </div>
                 <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '12px', padding: '20px', textAlign: 'center', marginBottom: '16px', border: '2px dashed rgba(255,0,127,0.3)' }}>
@@ -122,8 +122,8 @@ export default function AdminCodesPage() {
                     {form.name} · {form.role}
                   </div>
                 </div>
-                <button onClick={() => { navigator.clipboard.writeText(newCode); showToast('Código copiado 📋', 'success'); }} className="btn" style={{ width: '100%', padding: '12px', marginBottom: '8px' }}>
-                  📋 Copiar Código
+                <button onClick={() => { navigator.clipboard.writeText(newCode); showToast('Codigo copiado', 'success'); }} className="btn" style={{ width: '100%', padding: '12px', marginBottom: '8px' }}>
+                  Copiar Codigo
                 </button>
                 <button onClick={() => { setShowGenerate(false); setNewCode(''); }} className="btn" style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>
                   Cerrar
@@ -132,7 +132,7 @@ export default function AdminCodesPage() {
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                  <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>✨ Nuevo Código</h2>
+                  <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Nuevo Codigo</h2>
                   <button onClick={() => setShowGenerate(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
                 </div>
                 <form onSubmit={handleGenerate}>
@@ -145,16 +145,16 @@ export default function AdminCodesPage() {
                     <div className="form-group">
                       <label className="form-label">Rol</label>
                       <select className="input" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-                        <option value="VTUBER">🎤 VTuber</option>
-                        <option value="MODERATOR">🛡️ Moderador</option>
-                        <option value="ADMIN">👑 Admin</option>
+                        <option value="VTUBER">VTuber</option>
+                        <option value="MODERATOR">Moderador</option>
+                        <option value="ADMIN">Admin</option>
                       </select>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
                     <button type="button" onClick={() => setShowGenerate(false)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
                     <button type="submit" className="btn" disabled={generating || !form.name.trim()}>
-                      {generating ? 'Generando...' : '🔐 Generar Código'}
+                      {generating ? 'Generando...' : 'Generar Codigo'}
                     </button>
                   </div>
                 </form>
@@ -171,19 +171,19 @@ export default function AdminCodesPage() {
             <label className="form-label">Rol</label>
             <select className="input" value={filterRole} onChange={e => { setFilterRole(e.target.value); setPage(1); }} style={{ marginTop: '6px', minWidth: '130px' }}>
               <option value="">Todos</option>
-              <option value="VTUBER">🎤 VTuber</option>
-              <option value="MODERATOR">🛡️ Moderador</option>
-              <option value="ADMIN">👑 Admin</option>
+              <option value="VTUBER">VTuber</option>
+              <option value="MODERATOR">Moderador</option>
+              <option value="ADMIN">Admin</option>
             </select>
           </div>
           <div>
             <label className="form-label">Estado</label>
             <select className="input" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }} style={{ marginTop: '6px', minWidth: '130px' }}>
               <option value="">Todos</option>
-              <option value="ACTIVE">✅ Activo</option>
-              <option value="USED">✓ Usado</option>
-              <option value="EXPIRED">⏰ Expirado</option>
-              <option value="REVOKED">🔴 Revocado</option>
+              <option value="ACTIVE">Activo</option>
+              <option value="USED">Usado</option>
+              <option value="EXPIRED">Expirado</option>
+              <option value="REVOKED">Revocado</option>
             </select>
           </div>
         </div>
@@ -195,8 +195,8 @@ export default function AdminCodesPage() {
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando códigos...</div>
         ) : codes.length === 0 ? (
           <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔐</div>
-            <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>No hay códigos todavía</p>
+            <div style={{ fontSize: '3rem', marginBottom: '12px', fontWeight: 300, color: 'var(--text-muted)' }}>--</div>
+            <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>No hay codigos todavia</p>
             <p style={{ fontSize: '0.9rem' }}>Genera tu primer código para VTubers, Moderadores o Admins</p>
           </div>
         ) : (
@@ -263,8 +263,8 @@ export default function AdminCodesPage() {
       {/* Expiration info */}
       <div className="glass" style={{ padding: '16px 20px', borderRadius: '12px', marginTop: '20px', background: 'rgba(255,152,0,0.05)', border: '1px solid rgba(255,152,0,0.15)' }}>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          ⏰ Los códigos expiran automáticamente después de <strong>30 días</strong> si no son canjeados. 
-          Puedes revocar un código activo en cualquier momento.
+          Los codigos expiran automaticamente despues de <strong>30 dias</strong> si no son canjeados. 
+          Puedes revocar un codigo activo en cualquier momento.
         </p>
       </div>
     </div>

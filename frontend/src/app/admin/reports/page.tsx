@@ -29,11 +29,11 @@ const statusStyles: Record<string, { bg: string; color: string }> = {
 };
 
 const targetIcons: Record<string, string> = {
-  USER: '👤',
-  POST: '📝',
-  COMMENT: '💬',
-  EVENT: '📅',
-  GUILD: '🏰',
+  USER: '○',
+  POST: '△',
+  COMMENT: '○',
+  EVENT: '◇',
+  GUILD: '□',
 };
 
 export default function AdminReportsPage() {
@@ -63,14 +63,14 @@ export default function AdminReportsPage() {
         method: 'PATCH',
         body: JSON.stringify({ status, resolution: `Resuelto por un administrador` }),
       });
-      showToast(`Reporte ${status === 'RESOLVED' ? 'resuelto' : 'descartado'} ✅`, 'success');
+      showToast(`Reporte ${status === 'RESOLVED' ? 'resuelto' : 'descartado'}`, 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>🚨 Reportes</h1>
+      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Reportes</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Sistema de moderación de contenido</p>
 
       <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px' }}>
@@ -93,7 +93,7 @@ export default function AdminReportsPage() {
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando reportes...</div>
         ) : !data || data.data.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            {statusFilter === 'PENDING' ? '🎉 No hay reportes pendientes' : 'No se encontraron reportes'}
+            {statusFilter === 'PENDING' ? 'No hay reportes pendientes' : 'No se encontraron reportes'}
           </div>
         ) : (
           <>

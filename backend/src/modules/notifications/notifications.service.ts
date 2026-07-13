@@ -113,7 +113,7 @@ export const notifyNewVtuberRequest = async (requesterUsername: string, requeste
     NotificationsRepository.createNotification({
       userId: admin.id,
       type: NOTIFICATION_TYPES.VTUBER_REQUEST,
-      title: '📋 Nueva solicitud VTuber',
+      title: 'Nueva solicitud VTuber',
       message: `${requesterDisplayName} (@${requesterUsername}) quiere ser VTuber oficial. Revisa sus respuestas en el panel admin.`,
       referenceId: requestId,
     })

@@ -100,7 +100,7 @@ export default function AdminVtuberRequestsPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>📋 Solicitudes VTuber</h1>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Solicitudes VTuber</h1>
           <p style={{ color: 'var(--text-muted)' }}>Revisa y aprueba las solicitudes de nuevos VTubers oficiales</p>
         </div>
       </div>
@@ -109,8 +109,8 @@ export default function AdminVtuberRequestsPage() {
       {approvedCode && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => setApprovedCode('')}>
           <div className="glass" style={{ padding: '32px', borderRadius: '20px', width: '100%', maxWidth: '480px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '8px' }}>¡Solicitud Aprobada!</h2>
+            <div style={{ fontSize: '3rem', marginBottom: '12px', fontWeight: 300, color: 'var(--success)' }}>✓</div>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '8px' }}>Solicitud Aprobada!</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>
               El usuario recibirá una notificación con su código único.
             </p>
@@ -118,8 +118,8 @@ export default function AdminVtuberRequestsPage() {
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Código generado:</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'monospace', letterSpacing: '3px', color: '#00e676', wordBreak: 'break-all' }}>{approvedCode}</div>
             </div>
-            <button onClick={() => { navigator.clipboard.writeText(approvedCode); showToast('Código copiado 📋', 'success'); }} className="btn" style={{ width: '100%', padding: '12px', marginBottom: '8px' }}>
-              📋 Copiar Código
+            <button onClick={() => { navigator.clipboard.writeText(approvedCode); showToast('Codigo copiado', 'success'); }} className="btn" style={{ width: '100%', padding: '12px', marginBottom: '8px' }}>
+              Copiar Codigo
             </button>
             <button onClick={() => setApprovedCode('')} className="btn" style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cerrar</button>
           </div>
@@ -132,10 +132,10 @@ export default function AdminVtuberRequestsPage() {
           <div>
             <label className="form-label">Estado</label>
             <select className="input" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }} style={{ marginTop: '6px', minWidth: '150px' }}>
-              <option value="PENDING">⏳ Pendientes</option>
+              <option value="PENDING">Pendientes</option>
               <option value="">Todas</option>
-              <option value="APPROVED">✅ Aprobadas</option>
-              <option value="REJECTED">❌ Rechazadas</option>
+              <option value="APPROVED">Aprobadas</option>
+              <option value="REJECTED">Rechazadas</option>
             </select>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function AdminVtuberRequestsPage() {
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando solicitudes...</div>
         ) : requests.length === 0 ? (
           <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📋</div>
+            <div style={{ fontSize: '3rem', marginBottom: '12px', fontWeight: 300, color: 'var(--text-muted)' }}>--</div>
             <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>No hay solicitudes {filterStatus === 'PENDING' ? 'pendientes' : ''}</p>
           </div>
         ) : (
@@ -181,7 +181,7 @@ export default function AdminVtuberRequestsPage() {
                       <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{req.user.email}</td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, background: `${statusColors[req.status] || '#666'}22`, color: statusColors[req.status] || '#666' }}>
-                          {req.status === 'PENDING' ? '⏳ Pendiente' : req.status === 'APPROVED' ? '✅ Aprobada' : '❌ Rechazada'}
+                          {req.status === 'PENDING' ? 'Pendiente' : req.status === 'APPROVED' ? 'Aprobada' : 'Rechazada'}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
@@ -191,10 +191,10 @@ export default function AdminVtuberRequestsPage() {
                         {req.status === 'PENDING' && (
                           <div style={{ display: 'flex', gap: '4px' }}>
                             <button onClick={() => handleApprove(req.id)} className="btn" style={{ padding: '4px 12px', fontSize: '0.75rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.3)' }} disabled={processing}>
-                              ✅ Aprobar
+                              Aprobar
                             </button>
                             <button onClick={() => setSelectedRequest(req)} className="btn" style={{ padding: '4px 12px', fontSize: '0.75rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.3)' }}>
-                              ❌ Rechazar
+                              Rechazar
                             </button>
                           </div>
                         )}
@@ -220,7 +220,7 @@ export default function AdminVtuberRequestsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => { setSelectedRequest(null); setRejectNotes(''); }}>
           <div className="glass" style={{ padding: '32px', borderRadius: '20px', width: '100%', maxWidth: '520px' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>📋 Detalle de Solicitud</h2>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Detalle de Solicitud</h2>
               <button onClick={() => { setSelectedRequest(null); setRejectNotes(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
             </div>
 
@@ -252,7 +252,7 @@ export default function AdminVtuberRequestsPage() {
               {selectedRequest.surveyAnswers && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', marginTop: '8px' }}>
                   <div style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 700, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    📋 Respuestas del Cuestionario
+                    Respuestas del Cuestionario
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {(() => {
@@ -298,10 +298,10 @@ export default function AdminVtuberRequestsPage() {
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                   <button onClick={() => { setSelectedRequest(null); setRejectNotes(''); }} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
                   <button onClick={() => handleApprove(selectedRequest.id)} className="btn" disabled={processing} style={{ background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.3)' }}>
-                    {processing ? '...' : '✅ Aprobar'}
+                    {processing ? '...' : 'Aprobar'}
                   </button>
                   <button onClick={() => handleReject(selectedRequest.id)} className="btn" disabled={processing} style={{ background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.3)' }}>
-                    {processing ? '...' : '❌ Rechazar'}
+                    {processing ? '...' : 'Rechazar'}
                   </button>
                 </div>
               </div>

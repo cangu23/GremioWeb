@@ -82,7 +82,7 @@ export default function CTASection() {
               }}
               className="animate-float"
             >
-              ⭐
+              ◆
             </div>
 
             <h2
@@ -130,7 +130,7 @@ export default function CTASection() {
                   boxShadow: '0 0 40px rgba(138,43,226,0.3)',
                 }}
               >
-                ✦ Crear cuenta gratis
+                Crear cuenta gratis
               </Link>
               <Link
                 href="/vtubers"

@@ -100,11 +100,11 @@ function EventCard({ event }: { event: EventItem }) {
               </span>
             </div>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-              <span>📅 {eventDate.toLocaleDateString('es-ES', {
+              <span>{eventDate.toLocaleDateString('es-ES', {
                 day: 'numeric', month: 'long', year: 'numeric',
                 hour: '2-digit', minute: '2-digit',
               })}</span>
-              {event.location && <span>📍 {event.location}</span>}
+              {event.location && <span>{event.location}</span>}
             </div>
           </div>
         </div>
@@ -138,7 +138,7 @@ function EventCard({ event }: { event: EventItem }) {
             </span>
           </div>
           <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
-            🎟️ {event._count.attendees}{event.maxAttendees ? `/${event.maxAttendees}` : ''}
+            {event._count.attendees}{event.maxAttendees ? `/${event.maxAttendees}` : ''} asistentes
           </span>
         </div>
       </div>
@@ -172,10 +172,10 @@ function EventsContent() {
   }, [filter]);
 
   const filters = [
-    { value: '', label: 'Todos', icon: '🌐' },
-    { value: 'UPCOMING', label: 'Próximos', icon: '📅' },
-    { value: 'ONGOING', label: 'En vivo', icon: '🔴' },
-    { value: 'FINISHED', label: 'Finalizados', icon: '✅' },
+    { value: '', label: 'Todos', icon: '●' },
+    { value: 'UPCOMING', label: 'Proximos', icon: '◇' },
+    { value: 'ONGOING', label: 'En vivo', icon: '◆' },
+    { value: 'FINISHED', label: 'Finalizados', icon: '○' },
   ];
 
   return (
@@ -187,7 +187,7 @@ function EventsContent() {
       }}>
         <div>
           <h1 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '4px' }}>
-            📅 <span className="gradient-text">Eventos</span>
+            <span className="gradient-text">Eventos</span>
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
             Descubre y participa en eventos de la comunidad
@@ -198,7 +198,7 @@ function EventsContent() {
             padding: '12px 24px', borderRadius: '12px', fontWeight: 700,
             background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
           }}>
-            ✦ Crear Evento
+            Crear Evento
           </Link>
         )}
       </div>
@@ -250,7 +250,7 @@ function EventsContent() {
           border: '1px solid rgba(255,77,79,0.2)',
           background: 'rgba(255,77,79,0.03)',
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⚠️</div>
+          <div style={{ fontSize: '3rem', marginBottom: '16px', fontWeight: 700, color: 'var(--error)' }}>!</div>
           <p style={{ color: 'var(--error)', fontSize: '1.05rem', marginBottom: '8px', fontWeight: 600 }}>
             Error al cargar eventos
           </p>
@@ -261,7 +261,7 @@ function EventsContent() {
             padding: '12px 28px', borderRadius: '12px',
             display: 'inline-flex',
           }}>
-            🔄 Reintentar
+            Reintentar
           </button>
         </div>
       ) : loading ? (
@@ -283,7 +283,7 @@ function EventsContent() {
           padding: '60px 40px', textAlign: 'center', borderRadius: '20px',
           border: '1px solid var(--glass-border)',
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📭</div>
+          <div style={{ fontSize: '3rem', marginBottom: '16px', fontWeight: 300, color: 'var(--text-muted)' }}>--</div>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '4px' }}>
             No hay eventos {filter ? 'con este estado' : 'aún'}.
           </p>

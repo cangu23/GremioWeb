@@ -48,7 +48,7 @@ export default function AdminPostsPage() {
   const actionPost = async (id: string, payload: Record<string, unknown>, label: string) => {
     try {
       await apiFetch(`/admin/posts/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
-      showToast(`Publicación ${label} ✅`, 'success');
+      showToast(`Publicacion ${label}`, 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
@@ -57,7 +57,7 @@ export default function AdminPostsPage() {
     if (!window.confirm('¿Eliminar esta publicación permanentemente?')) return;
     try {
       await apiFetch(`/admin/posts/${id}`, { method: 'DELETE' });
-      showToast('Publicación eliminada ✅', 'success');
+      showToast('Publicacion eliminada', 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
@@ -65,14 +65,14 @@ export default function AdminPostsPage() {
   const restorePost = async (id: string) => {
     try {
       await apiFetch(`/admin/posts/${id}/restore`, { method: 'POST' });
-      showToast('Publicación restaurada ✅', 'success');
+      showToast('Publicacion restaurada', 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>📝 Publicaciones</h1>
+      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Publicaciones</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Moderación de contenido del feed</p>
 
       <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px' }}>
@@ -143,7 +143,7 @@ export default function AdminPostsPage() {
                           </button>
                           <button onClick={() => actionPost(post.id, { isFeatured: !post.isFeatured }, post.isFeatured ? 'no destacada' : 'destacada')}
                             className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.3)' }}>
-                            {post.isFeatured ? 'Quitar ⭐' : 'Destacar'}
+                            {post.isFeatured ? 'Quitar destacado' : 'Destacar'}
                           </button>
                           {post.isHidden && (
                             <button onClick={() => restorePost(post.id)} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.3)' }}>Restaurar</button>

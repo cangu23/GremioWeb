@@ -94,7 +94,7 @@ function RegisterForm() {
             animation: 'fadeIn 0.3s ease',
           }}
         >
-          <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+          <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>!</span>
           <span>{error}</span>
         </div>
       )}
@@ -244,7 +244,7 @@ function RegisterForm() {
               Creando cuenta...
             </span>
           ) : (
-            '✦ Crear cuenta'
+            'Crear cuenta'
           )}
         </button>
       </form>
@@ -326,7 +326,7 @@ export default function RegisterPage() {
             }}
             className="animate-float"
           >
-            ✨
+            ◆
           </div>
           <h2
             className="gradient-text"

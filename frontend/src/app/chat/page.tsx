@@ -136,13 +136,13 @@ function ChatContent() {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '2.5rem' }}>💬 Chat Global</h1>
+          <h1 style={{ margin: 0, fontSize: '2.5rem' }}>Chat Global</h1>
           <p style={{ color: 'var(--muted)', margin: '4px 0 0 0', fontSize: '0.85rem' }}>
-            {connected ? '🟢 Conectado' : '🔴 Desconectado'}
+            {connected ? 'Conectado' : 'Desconectado'}
           </p>
         </div>
         <Link href="/notifications" style={{ color: 'var(--primary)', fontSize: '0.9rem', textDecoration: 'none' }}>
-          🔔 Notificaciones
+          Notificaciones
         </Link>
       </div>
 

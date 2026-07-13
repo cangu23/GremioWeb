@@ -84,7 +84,7 @@ export default function AdminLogsPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>📋 Auditoría</h1>
+      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Auditoria</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Registro de todas las acciones administrativas</p>
 
       <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden' }}>

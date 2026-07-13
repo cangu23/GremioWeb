@@ -73,7 +73,7 @@ export default function AdminGuildsPage() {
     setSaving(true);
     try {
       await apiFetch(`/admin/guilds/${selectedGuild.id}`, { method: 'PATCH', body: JSON.stringify(editData) });
-      showToast('Gremio actualizado ✅', 'success');
+      showToast('Gremio actualizado', 'success');
       setSelectedGuild(null);
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
@@ -84,7 +84,7 @@ export default function AdminGuildsPage() {
     if (!window.confirm('¿Eliminar este gremio permanentemente? Esto eliminará todos sus miembros.')) return;
     try {
       await apiFetch(`/admin/guilds/${id}`, { method: 'DELETE' });
-      showToast('Gremio eliminado ✅', 'success');
+      showToast('Gremio eliminado', 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
@@ -92,14 +92,14 @@ export default function AdminGuildsPage() {
   const toggleSuspended = async (id: string, current: boolean) => {
     try {
       await apiFetch(`/admin/guilds/${id}`, { method: 'PATCH', body: JSON.stringify({ isSuspended: !current }) });
-      showToast(`Gremio ${current ? 'restaurado' : 'suspendido'} ✅`, 'success');
+      showToast(`Gremio ${current ? 'restaurado' : 'suspendido'}`, 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>🏰 Gremios</h1>
+      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Gremios</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Administración de gremios</p>
 
       <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px' }}>

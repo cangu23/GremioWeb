@@ -178,13 +178,13 @@ function ProfileContent() {
 
   // Social link configs
   const socialLinks = [
-    { url: vtuber?.twitchUrl, label: 'Twitch', icon: '📺', color: '#9146FF', bg: 'rgba(145,65,255,0.15)' },
-    { url: vtuber?.youtubeUrl, label: 'YouTube', icon: '▶️', color: '#FF0000', bg: 'rgba(255,0,0,0.12)' },
-    { url: vtuber?.kickUrl, label: 'Kick', icon: '🎬', color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
-    { url: vtuber?.tiktokUrl, label: 'TikTok', icon: '🎵', color: '#00f2ea', bg: 'rgba(0,242,234,0.12)' },
-    { url: vtuber?.twitterUrl, label: 'Twitter/X', icon: '🐦', color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)' },
-    { url: vtuber?.discordUrl, label: 'Discord', icon: '💬', color: '#5865F2', bg: 'rgba(88,101,242,0.12)' },
-    { url: vtuber?.websiteUrl, label: 'Sitio Web', icon: '🌐', color: 'var(--primary)', bg: 'rgba(138,43,226,0.1)' },
+    { url: vtuber?.twitchUrl, label: 'Twitch', icon: 'TW', color: '#9146FF', bg: 'rgba(145,65,255,0.15)' },
+    { url: vtuber?.youtubeUrl, label: 'YouTube', icon: 'YT', color: '#FF0000', bg: 'rgba(255,0,0,0.12)' },
+    { url: vtuber?.kickUrl, label: 'Kick', icon: 'KC', color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
+    { url: vtuber?.tiktokUrl, label: 'TikTok', icon: 'TK', color: '#00f2ea', bg: 'rgba(0,242,234,0.12)' },
+    { url: vtuber?.twitterUrl, label: 'Twitter/X', icon: 'X', color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)' },
+    { url: vtuber?.discordUrl, label: 'Discord', icon: 'DC', color: '#5865F2', bg: 'rgba(88,101,242,0.12)' },
+    { url: vtuber?.websiteUrl, label: 'Sitio Web', icon: 'WWW', color: 'var(--primary)', bg: 'rgba(138,43,226,0.1)' },
   ].filter(s => s.url);
 
   return (
@@ -282,7 +282,7 @@ function ProfileContent() {
               </span>
             )}
             {vtuber?.isFeatured && (
-              <span style={{ fontSize: '1.5rem' }}>⭐</span>
+              <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent)' }}>FEATURED</span>
             )}
             {vtuber?.isLive && (
               <span style={{
@@ -443,9 +443,8 @@ function ProfileContent() {
                   e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.borderColor = 'rgba(255,215,0,0.4)';
                   e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                💝 Donar
+                }}                >
+                Donar
               </button>
               <Link
                 href={`/chat?user=${profile.id}`}
@@ -465,9 +464,8 @@ function ProfileContent() {
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.borderColor = 'rgba(0,212,255,0.3)';
-                }}
-              >
-                💬 Mensaje
+                }}                >
+                Mensaje
               </Link>
             </>
           ) : (
@@ -501,7 +499,7 @@ function ProfileContent() {
                   fontSize: '1rem', fontWeight: 700, marginBottom: '12px',
                   display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
                 }}>
-                  📝 Descripción
+                  Descripción
                 </h3>
                 <p style={{
                   fontSize: '0.95rem', lineHeight: 1.8, color: 'var(--text)',
@@ -524,7 +522,7 @@ function ProfileContent() {
                   }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                    📜 Lore / Historia
+                    Lore / Historia
                   </span>
                   <span style={{
                     fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600,
@@ -558,7 +556,7 @@ function ProfileContent() {
                   fontSize: '1rem', fontWeight: 700, marginBottom: '16px',
                   display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
                 }}>
-                  🔗 Redes Sociales
+                  Redes Sociales
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {socialLinks.map((link) => (
@@ -601,7 +599,7 @@ function ProfileContent() {
                   fontSize: '1rem', fontWeight: 700, marginBottom: '16px',
                   display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
                 }}>
-                  📡 Información de Stream
+                  Información de Stream
                 </h3>
                 {vtuber?.streamSchedule && (
                   <div style={{ marginBottom: languagesList.length > 0 ? '14px' : 0 }}>
@@ -646,7 +644,7 @@ function ProfileContent() {
                 fontSize: '1.15rem', fontWeight: 700,
                 display: 'flex', alignItems: 'center', gap: '8px',
               }}>
-                📰 Publicaciones
+                Publicaciones
               </h3>
               <Link href={`/feed?user=${profile.id}`} style={{
                 fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600,
@@ -761,8 +759,8 @@ function ProfileContent() {
                       display: 'flex', gap: '16px', borderTop: '1px solid var(--glass-border)',
                       paddingTop: '10px', fontSize: '0.8rem', color: 'var(--text-muted)',
                     }}>
-                      <span>❤️ {post._count.likes}</span>
-                      <span>💬 {post._count.comments}</span>
+                      <span>♥ {post._count.likes}</span>
+                      <span>○ {post._count.comments}</span>
                     </div>
                   </div>
                 ))}
@@ -822,7 +820,7 @@ function ProfileContent() {
               <textarea className="input"
                 value={donateMessage}
                 onChange={e => setDonateMessage(e.target.value)}
-                placeholder="¡Sigue así! 💪"
+                placeholder="Escribe un mensaje..."
                 style={{ minHeight: '80px', resize: 'vertical' }} />
             </div>
 

@@ -75,7 +75,7 @@ function VtuberProfileEditor() {
     try {
       const url = await uploadImage(file, type);
       setUrl(url);
-      showToast('Imagen subida correctamente ✅', 'success');
+      showToast('Imagen subida correctamente', 'success');
     } catch (err: unknown) {
       showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir imagen'}`, 'error');
     } finally {
@@ -163,7 +163,7 @@ function VtuberProfileEditor() {
           hashtags: hashtags.length > 0 ? hashtags : undefined,
         }),
       });
-      showToast('Perfil VTuber actualizado ✅', 'success');
+      showToast('Perfil VTuber actualizado', 'success');
       setTimeout(() => window.location.reload(), 1500);
     } catch (err: unknown) {
       showToast(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
@@ -177,13 +177,13 @@ function VtuberProfileEditor() {
   try { if (languagesInput) languagesList = languagesInput.split(',').map(s => s.trim()).filter(Boolean); } catch {}
 
   const socialLinks = [
-    { url: twitchUrl, label: 'Twitch', icon: '📺', color: '#9146FF' },
-    { url: youtubeUrl, label: 'YouTube', icon: '▶️', color: '#FF0000' },
-    { url: kickUrl, label: 'Kick', icon: '🎬', color: '#53fc18' },
-    { url: tiktokUrl, label: 'TikTok', icon: '🎵', color: '#00f2ea' },
-    { url: twitterUrl, label: 'Twitter/X', icon: '🐦', color: '#1DA1F2' },
-    { url: discordUrl, label: 'Discord', icon: '💬', color: '#5865F2' },
-    { url: websiteUrl, label: 'Sitio Web', icon: '🌐', color: 'var(--primary)' },
+    { url: twitchUrl, label: 'Twitch', icon: 'TW', color: '#9146FF' },
+    { url: youtubeUrl, label: 'YouTube', icon: 'YT', color: '#FF0000' },
+    { url: kickUrl, label: 'Kick', icon: 'KC', color: '#53fc18' },
+    { url: tiktokUrl, label: 'TikTok', icon: 'TK', color: '#00f2ea' },
+    { url: twitterUrl, label: 'Twitter/X', icon: 'X', color: '#1DA1F2' },
+    { url: discordUrl, label: 'Discord', icon: 'DC', color: '#5865F2' },
+    { url: websiteUrl, label: 'Sitio Web', icon: 'WWW', color: 'var(--primary)' },
   ].filter(s => s.url);
 
   if (isLoading) return (
@@ -211,7 +211,7 @@ function VtuberProfileEditor() {
       }}>
         <div>
           <h1 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '4px' }}>
-            🎭 Perfil VTuber
+            Perfil VTuber
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
             Personaliza cómo te ve la comunidad
@@ -219,7 +219,7 @@ function VtuberProfileEditor() {
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <Link href={`/profile/${user.id}`} className="btn btn-outline" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
-            👁️ Ver perfil público
+            Ver perfil público
           </Link>
         </div>
       </div>
@@ -386,7 +386,7 @@ function VtuberProfileEditor() {
             fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            🖼️ Avatar y Banner
+            Avatar y Banner
           </h3>
 
           {/* Live preview of banner + avatar */}
@@ -452,7 +452,7 @@ function VtuberProfileEditor() {
                   }}
                   title="Subir imagen"
                 >
-                  {uploadingAvatar ? '⏳' : '📁'}
+                  {uploadingAvatar ? '...' : 'Subir'}
                 </button>
                 <input
                   ref={avatarInputRef}
@@ -490,7 +490,7 @@ function VtuberProfileEditor() {
                   }}
                   title="Subir imagen"
                 >
-                  {uploadingBanner ? '⏳' : '📁'}
+                  {uploadingBanner ? '...' : 'Subir'}
                 </button>
                 <input
                   ref={bannerInputRef}
@@ -510,40 +510,36 @@ function VtuberProfileEditor() {
             fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            📋 Información Básica
+            Información Basica
           </h3>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Nombre de VTuber</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem' }}>🎭</span>
                 <input className="input" value={displayName} onChange={e => setDisplayName(e.target.value)}
-                  placeholder="Ej: Sakura Chan" style={{ paddingLeft: '36px' }} />
+                  placeholder="Ej: Sakura Chan" />
               </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Nombre de Fans</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem' }}>🌟</span>
                 <input className="input" value={fanName} onChange={e => setFanName(e.target.value)}
-                  placeholder="Ej: Estrellitas" style={{ paddingLeft: '36px' }} />
+                  placeholder="Ej: Estrellitas" />
               </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Oshi Mark</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem' }}>💜</span>
                 <input className="input" value={oshiMark} onChange={e => setOshiMark(e.target.value)}
-                  placeholder="⭐" maxLength={20} style={{ paddingLeft: '36px' }} />
+                  placeholder="Oshi mark" maxLength={20} />
               </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Tipo de Contenido</label>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem' }}>🎮</span>
                 <input className="input" value={contentType} onChange={e => setContentType(e.target.value)}
-                  placeholder="Ej: Gaming, Música" style={{ paddingLeft: '36px' }} />
+                  placeholder="Ej: Gaming, Musica" />
               </div>
             </div>
           </div>
@@ -560,7 +556,7 @@ function VtuberProfileEditor() {
 
           <div className="form-group">
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              📜 Lore / Historia de tu personaje
+              Lore / Historia de tu personaje
               <span style={{
                 padding: '2px 8px', borderRadius: '8px',
                 background: 'rgba(138,43,226,0.1)',
@@ -581,7 +577,7 @@ function VtuberProfileEditor() {
             fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            🔗 Redes Sociales
+            Redes Sociales
             <span style={{
               fontSize: '0.75rem', fontWeight: 400, color: 'var(--text-muted)',
             }}>
@@ -591,37 +587,37 @@ function VtuberProfileEditor() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ color: '#9146FF' }}>📺 Twitch</label>
+              <label className="form-label" style={{ color: '#9146FF' }}>Twitch</label>
               <input className="input" value={twitchUrl} onChange={e => setTwitchUrl(e.target.value)}
                 placeholder="https://twitch.tv/tuusuario" style={{ borderColor: 'rgba(145,65,255,0.2)' }} />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ color: '#FF0000' }}>▶️ YouTube</label>
+              <label className="form-label" style={{ color: '#FF0000' }}>YouTube</label>
               <input className="input" value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)}
                 placeholder="https://youtube.com/@tuusuario" style={{ borderColor: 'rgba(255,0,0,0.2)' }} />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ color: '#53fc18' }}>🎬 Kick</label>
+              <label className="form-label" style={{ color: '#53fc18' }}>Kick</label>
               <input className="input" value={kickUrl} onChange={e => setKickUrl(e.target.value)}
                 placeholder="https://kick.com/tuusuario" style={{ borderColor: 'rgba(83,252,24,0.15)' }} />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ color: '#00f2ea' }}>🎵 TikTok</label>
+              <label className="form-label" style={{ color: '#00f2ea' }}>TikTok</label>
               <input className="input" value={tiktokUrl} onChange={e => setTiktokUrl(e.target.value)}
                 placeholder="https://tiktok.com/@tuusuario" style={{ borderColor: 'rgba(0,242,234,0.2)' }} />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ color: '#1DA1F2' }}>🐦 Twitter / X</label>
+              <label className="form-label" style={{ color: '#1DA1F2' }}>Twitter / X</label>
               <input className="input" value={twitterUrl} onChange={e => setTwitterUrl(e.target.value)}
                 placeholder="https://x.com/tuusuario" style={{ borderColor: 'rgba(29,161,242,0.2)' }} />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ color: '#5865F2' }}>💬 Discord</label>
+              <label className="form-label" style={{ color: '#5865F2' }}>Discord</label>
               <input className="input" value={discordUrl} onChange={e => setDiscordUrl(e.target.value)}
                 placeholder="https://discord.gg/tu-invitacion" style={{ borderColor: 'rgba(88,101,242,0.2)' }} />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ color: 'var(--primary)' }}>🌐 Sitio Web</label>
+              <label className="form-label" style={{ color: 'var(--primary)' }}>Sitio Web</label>
               <input className="input" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)}
                 placeholder="https://tusitio.com" style={{ borderColor: 'rgba(138,43,226,0.2)' }} />
             </div>
@@ -634,17 +630,17 @@ function VtuberProfileEditor() {
             fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            📡 Streaming y Más
+            Streaming y Mas
           </h3>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">📅 Horario de Streams</label>
+              <label className="form-label">Horario de Streams</label>
               <input className="input" value={streamSchedule} onChange={e => setStreamSchedule(e.target.value)}
                 placeholder="Ej: Lun-Mie 20:00 UTC" />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">🗣️ Idiomas</label>
+              <label className="form-label">Idiomas</label>
               <input className="input" value={languagesInput} onChange={e => setLanguagesInput(e.target.value)}
                 placeholder="Español, Inglés, Japonés" />
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -652,7 +648,7 @@ function VtuberProfileEditor() {
               </span>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">🏷️ Hashtags</label>
+              <label className="form-label">Hashtags</label>
               <input className="input" value={hashtagsInput} onChange={e => setHashtagsInput(e.target.value)}
                 placeholder="vtuber, español, gaming" />
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -672,7 +668,7 @@ function VtuberProfileEditor() {
                   style={{ width: '18px', height: '18px', accentColor: '#ff4444' }} />
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                    {isLive ? '🔴 En Directo' : '⚫ Offline'}
+                    {isLive ? 'En Directo' : 'Offline'}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     {isLive ? 'Aparecerás como EN VIVO en tu perfil' : 'Marca esta opción cuando estés en stream'}
@@ -706,7 +702,7 @@ function VtuberProfileEditor() {
                 Guardando...
               </span>
             ) : (
-              '💾 Guardar Perfil VTuber'
+              'Guardar Perfil VTuber'
             )}
           </button>
 
@@ -736,7 +732,7 @@ function VtuberProfileEditor() {
               }}
               onClick={() => setShowSurvey(true)}
             >
-              🎤 Solicitar ser VTuber Oficial
+              Solicitar ser VTuber Oficial
             </button>
           )}
 
@@ -753,7 +749,7 @@ function VtuberProfileEditor() {
                 gap: '8px', fontSize: '1rem', fontWeight: 600, color: '#00e676',
               }}
             >
-              ✅ Eres un VTuber Oficial
+              Eres un VTuber Oficial
             </div>
           )}
         </div>
@@ -775,7 +771,7 @@ function VtuberProfileEditor() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>📋 Cuestionario VTuber</h2>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Cuestionario VTuber</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '4px' }}>
                   Responde estas preguntas para que los admins evalúen tu solicitud
                 </p>
@@ -837,7 +833,7 @@ function VtuberProfileEditor() {
                         surveyAnswers,
                       }),
                     });
-                    showToast('🎉 Solicitud enviada. Los admins la evaluarán y recibirás una notificación.', 'success');
+                    showToast('Solicitud enviada. Los admins la evaluaran y recibiras una notificacion.', 'success');
                     setSurveyAnswers({});
                     setShowSurvey(false);
                   } catch (err: unknown) {
@@ -853,7 +849,7 @@ function VtuberProfileEditor() {
                   boxShadow: '0 0 20px rgba(255,0,127,0.2)',
                 }}
               >
-                {submittingRequest ? 'Enviando...' : '📤 Enviar Solicitud'}
+                {submittingRequest ? 'Enviando...' : 'Enviar Solicitud'}
               </button>
             </div>
           </div>

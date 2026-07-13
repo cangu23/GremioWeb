@@ -41,12 +41,12 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
       <Link href="/support" style={{ ...linkStyle, color: 'var(--primary)', fontWeight: 600 }} onClick={closeMenu}>Apoyar</Link>
       {user ? (
         <>
-          <Link href="/notifications" style={{ ...linkStyle, position: 'relative', fontSize: '1.2rem' }} onClick={closeMenu} title="Notificaciones">
-            🔔{unreadCount > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-8px', background: 'var(--primary)', color: '#fff', fontSize: '0.6rem', fontWeight: 700, minWidth: '16px', height: '16px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{unreadCount > 99 ? '99+' : unreadCount}</span>}
+          <Link href="/notifications" style={{ ...linkStyle, position: 'relative' }} onClick={closeMenu} title="Notificaciones">
+            Notif.{unreadCount > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-8px', background: 'var(--primary)', color: '#fff', fontSize: '0.6rem', fontWeight: 700, minWidth: '16px', height: '16px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>{unreadCount > 99 ? '99+' : unreadCount}</span>}
           </Link>
           {user.role === 'ADMIN' && (
-            <Link href="/admin" style={{ ...linkStyle, color: 'var(--primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }} onClick={closeMenu}>
-              ⚡ Admin
+            <Link href="/admin" style={{ ...linkStyle, color: 'var(--primary)', fontWeight: 700 }} onClick={closeMenu}>
+              Admin
             </Link>
           )}
           <Link href="/dashboard" className="btn" style={{ padding: '6px 14px', fontSize: '0.85rem', background: 'transparent', border: '1px solid var(--primary)' }} onClick={closeMenu}>Dashboard</Link>

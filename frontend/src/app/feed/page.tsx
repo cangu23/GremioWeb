@@ -129,7 +129,7 @@ function FeedContent() {
   return (
     <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px', maxWidth: '700px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '2.2rem', margin: 0 }}>📱 Feed</h1>
+        <h1 style={{ fontSize: '2.2rem', margin: 0 }}>Feed</h1>
         {user && (
           <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '4px' }}>
             <button onClick={() => { setFeedMode('global'); setPage(1); }} className="btn" style={{
@@ -207,7 +207,7 @@ function FeedContent() {
         {/* Sidebar - Trending Hashtags */}
         {trendingHashtags.length > 0 && (
           <div className="glass" style={{ padding: '20px', width: '260px', position: 'sticky', top: '100px', flexShrink: 0 }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>🔥 Tendencias</h3>
+            <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>Tendencias</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {trendingHashtags.map(tag => (
                 <Link
@@ -318,7 +318,7 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
               @{post.user.username} · {timeAgo(post.createdAt)}
             </div>
           </div>
-          {post.isPinned && <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--primary)' }}>📌 Fijado</span>}
+          {post.isPinned && <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--primary)' }}>Fijado</span>}
         </div>
 
         {/* Post content */}
@@ -367,7 +367,7 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
             onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
             onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
           >
-            {post.isLikedByMe ? '❤️' : '🤍'} {post._count.likes}
+            {post.isLikedByMe ? '♥' : '♡'} {post._count.likes}
           </button>
           <button
             onClick={toggleComments}
@@ -381,7 +381,7 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
             onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
             onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
           >
-            💬 {post._count.comments}
+            ○ {post._count.comments}
           </button>
         </div>
       </div>

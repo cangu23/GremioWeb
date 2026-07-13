@@ -76,7 +76,7 @@ export default function DiscordLoginButton() {
             </span>
           ) : (
             <>
-              <span style={{ fontSize: '1.2rem' }}>🎮</span>
+              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#5865F2' }}>D</span>
               Discord
             </>
           )}

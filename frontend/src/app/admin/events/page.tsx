@@ -62,7 +62,7 @@ export default function AdminEventsPage() {
     setSaving(true);
     try {
       await apiFetch(`/admin/events/${selectedEvent.id}`, { method: 'PATCH', body: JSON.stringify(editData) });
-      showToast('Evento actualizado ✅', 'success');
+      showToast('Evento actualizado', 'success');
       setSelectedEvent(null);
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
@@ -73,7 +73,7 @@ export default function AdminEventsPage() {
     if (!window.confirm('¿Eliminar este evento permanentemente?')) return;
     try {
       await apiFetch(`/admin/events/${id}`, { method: 'DELETE' });
-      showToast('Evento eliminado ✅', 'success');
+      showToast('Evento eliminado', 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
@@ -82,7 +82,7 @@ export default function AdminEventsPage() {
     if (!window.confirm('¿Cancelar este evento?')) return;
     try {
       await apiFetch(`/admin/events/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'CANCELLED' }) });
-      showToast('Evento cancelado ✅', 'success');
+      showToast('Evento cancelado', 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
@@ -90,7 +90,7 @@ export default function AdminEventsPage() {
   const toggleFeatured = async (id: string, current: boolean) => {
     try {
       await apiFetch(`/admin/events/${id}`, { method: 'PATCH', body: JSON.stringify({ isFeatured: !current }) });
-      showToast(`Evento ${current ? 'no destacado' : 'destacado'} ✅`, 'success');
+      showToast(`Evento ${current ? 'no destacado' : 'destacado'}`, 'success');
       fetchData();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
@@ -104,7 +104,7 @@ export default function AdminEventsPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>📅 Eventos</h1>
+      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Eventos</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Administración de eventos</p>
 
       <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px' }}>
@@ -165,7 +165,7 @@ export default function AdminEventsPage() {
                           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                             <button onClick={() => openEdit(event)} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(138,43,226,0.2)', color: '#8a2be2', border: '1px solid rgba(138,43,226,0.3)' }}>Editar</button>
                             <button onClick={() => toggleFeatured(event.id, event.isFeatured)} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.3)' }}>
-                              {event.isFeatured ? 'Quitar ⭐' : 'Destacar'}
+                              {event.isFeatured ? 'Quitar destacado' : 'Destacar'}
                             </button>
                             {event.status !== 'CANCELLED' && (
                               <button onClick={() => cancelEvent(event.id)} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.3)' }}>Cancelar</button>

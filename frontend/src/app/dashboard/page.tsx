@@ -203,12 +203,12 @@ function DashboardContent() {
         }}
       >
         {[
-          { icon: '📅', label: 'Eventos', href: '/events', desc: 'Ver y crear eventos' },
-          { icon: '🏰', label: 'Gremios', href: '/guilds', desc: 'Únete a un gremio' },
-          { icon: '💬', label: 'Chat', href: '/chat', desc: 'Chatea en vivo' },
-          { icon: '🏆', label: 'Logros', href: '/achievements', desc: 'Tus logros' },
-          { icon: '📡', label: 'Feed', href: '/feed', desc: 'Publicaciones' },
-          { icon: '🎭', label: 'VTubers', href: '/vtubers', desc: 'Explora perfiles' },
+          { icon: '◆', label: 'Eventos', href: '/events', desc: 'Ver y crear eventos' },
+          { icon: '◇', label: 'Gremios', href: '/guilds', desc: 'Únete a un gremio' },
+          { icon: '○', label: 'Chat', href: '/chat', desc: 'Chatea en vivo' },
+          { icon: '△', label: 'Logros', href: '/achievements', desc: 'Tus logros' },
+          { icon: '●', label: 'Feed', href: '/feed', desc: 'Publicaciones' },
+          { icon: '□', label: 'VTubers', href: '/vtubers', desc: 'Explora perfiles' },
         ].map((item) => (
           <Link
             key={item.href}
@@ -377,14 +377,14 @@ function DashboardContent() {
                 className="btn"
                 style={{ padding: '10px 20px', fontSize: '0.85rem', borderRadius: '10px' }}
               >
-                🏅 Logros ({gami.achievements.length})
+                Logros ({gami.achievements.length})
               </Link>
               <Link
                 href="/leaderboard"
                 className="btn btn-outline"
                 style={{ padding: '10px 20px', fontSize: '0.85rem', borderRadius: '10px' }}
               >
-                📊 Ranking
+                Ranking
               </Link>
             </div>
           </div>
@@ -409,7 +409,7 @@ function DashboardContent() {
               gap: '10px',
             }}
           >
-            🔐 Canjear Código
+            Canjear Código
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
             ¿Tienes un código de invitación? Canjéalo aquí para obtener un rol especial.
@@ -426,7 +426,7 @@ function DashboardContent() {
                 border: '1px solid rgba(0,230,118,0.2)',
               }}
             >
-              <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🎉</div>
+              <div style={{ fontSize: '2.5rem', marginBottom: '8px', fontWeight: 700, color: 'var(--success)' }}>✓</div>
               <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px', color: '#00e676' }}>{redeemResult.message}</div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 Código: {redeemResult.codeName}
@@ -451,7 +451,7 @@ function DashboardContent() {
                     body: JSON.stringify({ code: redeemCode.trim() }),
                   });
                   setRedeemResult(res);
-                  showToast(`🎉 ${res.message}`, 'success');
+                  showToast(`${res.message}`, 'success');
                 } catch (err: unknown) {
                   showToast(err instanceof Error ? err.message : 'Código inválido', 'error');
                 } finally {
@@ -507,7 +507,7 @@ function DashboardContent() {
                 background: 'linear-gradient(135deg, #ff007f, #8a2be2)',
               }}
             >
-              🔑 Tengo un Código
+              Tengo un Codigo
             </button>
           )}
         </div>
@@ -531,7 +531,7 @@ function DashboardContent() {
               gap: '10px',
             }}
           >
-            ✏️ Editar Perfil
+            Editar Perfil
           </h2>
 
           {message && (
@@ -554,7 +554,7 @@ function DashboardContent() {
                 animation: 'fadeIn 0.3s ease',
               }}
             >
-              <span>{message.startsWith('Error') ? '⚠️' : '✅'}</span>
+              <span style={{ fontWeight: 700 }}>{message.startsWith('Error') ? '!' : '✓'}</span>
               {message}
             </div>
           )}
@@ -689,7 +689,7 @@ function DashboardContent() {
                   Guardando...
                 </span>
               ) : (
-                '💾 Guardar Cambios'
+                'Guardar Cambios'
               )}
             </button>
           </form>

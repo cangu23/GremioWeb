@@ -80,7 +80,7 @@ function SupportContent() {
 
   return (
     <>
-      <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>🌟 Apoya a la Comunidad</h1>
+      <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>Apoya a la Comunidad</h1>
       <p style={{ color: 'var(--muted)', marginBottom: '30px', maxWidth: '600px' }}>
         Conviértete en miembro y obtén beneficios exclusivos mientras apoyas 
         a los VTubers de Gremio Estelar.
@@ -161,7 +161,7 @@ function SupportContent() {
                 />
               )}
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>{tier.badgeLabel || '⭐'}</div>
+                <div style={{ fontSize: '2.5rem', marginBottom: '8px', fontWeight: 300 }}>{tier.badgeLabel || '◆'}</div>
                 <h3 style={{ margin: 0, fontSize: '1.3rem' }}>{tier.name}</h3>
                 <div style={{ marginTop: '8px' }}>
                   <span style={{ fontSize: '2rem', fontWeight: 800 }}>${tier.price}</span>
@@ -200,7 +200,7 @@ function SupportContent() {
 
       {/* Donations info */}
       <div className="glass" style={{ padding: '24px' }}>
-        <h3 style={{ margin: '0 0 12px 0' }}>💝 Donaciones</h3>
+        <h3 style={{ margin: '0 0 12px 0' }}>Donaciones</h3>
         <p style={{ color: 'var(--muted)', margin: 0 }}>
           También puedes apoyar directamente a los VTubers que te gustan con donaciones.
           Ve a su perfil público y haz clic en {'"Donar"'}.
