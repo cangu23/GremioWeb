@@ -54,8 +54,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000
 
-# Install wget for health checks and openssl for Prisma
-RUN apk add --no-cache wget openssl
+# Install openssl (required by Prisma on Alpine)
+RUN apk add --no-cache openssl
 
 # Copy only what the backend needs to run
 COPY --from=builder /app/package.json ./
