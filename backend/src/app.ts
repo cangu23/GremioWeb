@@ -69,9 +69,11 @@ console.log(`${BOOT} Helmet configured ✅`);
 console.log(`${BOOT} Configuring rate limiters...`);
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // limit each IP to 300 requests per windowMs (~20/min)
+  max: 500, // limit each IP to 500 requests per windowMs (~33/min)
   standardHeaders: true,
   legacyHeaders: false,
+  // Exempt notification polling from rate limiting
+  skip: (req) => req.path.startsWith('/notifications'),
   message: {
     status: 'error',
     message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',

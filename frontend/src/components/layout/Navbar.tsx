@@ -17,7 +17,7 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
       try { const data = await apiFetch('/notifications/unread-count', {}); setUnreadCount(data.count); } catch {}
     };
     fetchUnread();
-    const interval = setInterval(fetchUnread, 30000);
+    const interval = setInterval(fetchUnread, 60000);
     return () => clearInterval(interval);
   }, [user]);
 
