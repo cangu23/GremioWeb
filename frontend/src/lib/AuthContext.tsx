@@ -21,28 +21,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
+    const attemptLogin = async (): Promise<boolean> => {
       try {
         const session = await apiFetch('/auth/refresh', { method: 'POST' });
         if (session?.accessToken) {
           setAccessToken(session.accessToken);
           const profile = await apiFetch('/users/me');
           setUser(profile);
-        } else {
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
+    const loadUser = async () => {
+      // Try once, then retry after 1s for transient errors
+      if (!(await attemptLogin())) {
+        await new Promise(r => setTimeout(r, 1000));
+        if (!(await attemptLogin())) {
           setAccessToken(null);
           setUser(null);
         }
-      } catch (err) {
-        setAccessToken(null);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
       }
+      setIsLoading(false);
     };
 
     loadUser();
 
-    const handleUnauthorized = () => setUser(null);
+    const handleUnauthorized = () => {
+      setAccessToken(null);
+      setUser(null);
+    };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);

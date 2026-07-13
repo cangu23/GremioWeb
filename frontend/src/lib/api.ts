@@ -36,6 +36,16 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
     if (refreshRes.ok) {
       const data = await refreshRes.json();
+      
+      // If refresh returned null accessToken, the user isn't logged in
+      if (!data?.accessToken) {
+        setAccessToken(null);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('auth:unauthorized'));
+        }
+        throw new Error('Session expired');
+      }
+
       setAccessToken(data.accessToken);
       
       // Retry original request
@@ -50,6 +60,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('auth:unauthorized'));
       }
+      throw new Error('Unable to refresh session');
     }
   }
 
