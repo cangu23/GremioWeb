@@ -69,16 +69,20 @@ COPY --from=builder /app/shared/package.json ./shared/
 # Expose port for the Express API
 EXPOSE 4000
 
-# Start the backend API server (migrate DB first with retries, then start)
-CMD ["sh", "-c", "\
-  for i in 1 2 3 4 5; do \
-    echo \"Attempt $i: Running prisma db push...\" && \
-    npx prisma db push --schema backend/prisma/schema.prisma --skip-generate && \
-    echo \"Database sync successful!\" && \
-    break; \
-    echo \"Attempt $i failed, waiting 5s before retry...\" && \
-    sleep 5; \
-  done && \
-  echo \"Starting server...\" && \
-  node backend/dist/server.js\
-"
+# Create startup script (avoids JSON escaping issues with multi-line CMD)
+RUN printf '#!/bin/sh\n\
+for i in 1 2 3 4 5; do\n\
+  echo "[BOOT] Attempt $i: Running prisma db push..."\n\
+  if npx prisma db push --schema backend/prisma/schema.prisma --skip-generate; then\n\
+    echo "[BOOT] Database sync successful!"\n\
+    break\n\
+  fi\n\
+  if [ "$i" -lt 5 ]; then\n\
+    echo "[BOOT] Attempt $i failed, waiting 5s before retry..."\n\
+    sleep 5\n\
+  fi\n\
+done\n\
+echo "[BOOT] Starting server..."\n\
+exec node backend/dist/server.js\n' > /start.sh && chmod +x /start.sh
+
+CMD ["/start.sh"]
