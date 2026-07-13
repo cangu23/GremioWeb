@@ -18,6 +18,15 @@ interface GamificationData {
   achievements: Array<{ id: string; name: string; description: string }>;
 }
 
+const SVG_ICONS: Record<string, string> = {
+  calendar: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  shield: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  chat: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  award: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>',
+  rss: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>',
+  star: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+};
+
 function DashboardContent() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -203,12 +212,12 @@ function DashboardContent() {
         }}
       >
         {[
-          { icon: '', label: 'Eventos', href: '/events', desc: 'Ver y crear eventos' },
-          { icon: '', label: 'Gremios', href: '/guilds', desc: 'Unete a un gremio' },
-          { icon: '', label: 'Chat', href: '/chat', desc: 'Chatea en vivo' },
-          { icon: '', label: 'Logros', href: '/achievements', desc: 'Tus logros' },
-          { icon: '', label: 'Feed', href: '/feed', desc: 'Publicaciones' },
-          { icon: '', label: 'VTubers', href: '/vtubers', desc: 'Explora perfiles' },
+          { icon: 'calendar', label: 'Eventos', href: '/events', desc: 'Ver y crear eventos' },
+          { icon: 'shield', label: 'Gremios', href: '/guilds', desc: 'Unete a un gremio' },
+          { icon: 'chat', label: 'Chat', href: '/chat', desc: 'Chatea en vivo' },
+          { icon: 'award', label: 'Logros', href: '/achievements', desc: 'Tus logros' },
+          { icon: 'rss', label: 'Feed', href: '/feed', desc: 'Publicaciones' },
+          { icon: 'star', label: 'VTubers', href: '/vtubers', desc: 'Explora perfiles' },
         ].map((item) => (
           <Link
             key={item.href}
@@ -239,7 +248,7 @@ function DashboardContent() {
               e.currentTarget.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)';
             }}
           >
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>--</span>
+            <div style={{ color: 'var(--primary)', marginBottom: '4px', opacity: 0.7 }} dangerouslySetInnerHTML={{ __html: SVG_ICONS[item.icon] }} />
             <span style={{ fontWeight: 700, fontSize: '1rem' }}>{item.label}</span>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.desc}</span>
           </Link>
