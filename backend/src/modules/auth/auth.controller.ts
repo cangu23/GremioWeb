@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import * as AuthService from './auth.service';
 
+// 30 days in milliseconds
+const REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { refreshToken, ...authResponse } = await AuthService.login(req.body);
@@ -9,7 +12,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: REFRESH_COOKIE_MAX_AGE // 30 days
     });
 
     res.status(200).json(authResponse);
@@ -34,7 +37,7 @@ export const register = async (
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: REFRESH_COOKIE_MAX_AGE // 30 days
     });
 
     res.status(201).json(authResponse);
@@ -74,7 +77,7 @@ export const refresh = async (
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: REFRESH_COOKIE_MAX_AGE
     });
 
     res.status(200).json({ accessToken: tokens.accessToken });

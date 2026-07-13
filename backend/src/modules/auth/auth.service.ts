@@ -57,7 +57,7 @@ export const login = async (input: LoginInput) => {
   // Persist the refresh token
   const hashedRefreshToken = hashToken(refreshToken);
   const expiresAt = new Date(
-    Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
+    Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
   );
 
   await AuthRepository.createRefreshToken(hashedRefreshToken, user.id, expiresAt);
@@ -125,7 +125,7 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
 
   // 7. Persist the new refresh token
   const newHashedRefreshToken = hashToken(newRefreshToken);
-  const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
   await AuthRepository.createRefreshToken(
     newHashedRefreshToken,
     payload.userId,
