@@ -33,6 +33,8 @@ export default function AdminVtubersPage() {
   const [page, setPage] = useState(1);
   const [unverifiedData, setUnverifiedData] = useState<AdminVtuber[]>([]);
   const [loadingUnverified, setLoadingUnverified] = useState(true);
+  const [unapprovedData, setUnapprovedData] = useState<AdminVtuber[]>([]);
+  const [loadingUnapproved, setLoadingUnapproved] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState<AdminVtuber | null>(null);
   const [editData, setEditData] = useState({ displayName: '', description: '', avatarUrl: '' });
   const [saving, setSaving] = useState(false);
@@ -59,8 +61,17 @@ export default function AdminVtubersPage() {
     finally { setLoadingUnverified(false); }
   };
 
+  const fetchUnapproved = async () => {
+    setLoadingUnapproved(true);
+    try {
+      const res = await apiFetch('/admin/vtubers?isApproved=false&limit=10');
+      setUnapprovedData(res.data || []);
+    } catch {}
+    finally { setLoadingUnapproved(false); }
+  };
+
   useEffect(() => { fetchData(); }, [page, filterVerified, filterApproved]);
-  useEffect(() => { fetchUnverified(); }, []);
+  useEffect(() => { fetchUnverified(); fetchUnapproved(); }, []);
   useEffect(() => { setPage(1); }, [search, filterVerified, filterApproved]);
 
   const openEdit = (profile: AdminVtuber) => {
@@ -84,7 +95,7 @@ export default function AdminVtubersPage() {
     finally { setSaving(false); }
   };
 
-  // Reload both lists after toggling
+  // Reload all lists after toggling
   const handleToggleFlag = async (id: string, field: string, currentValue: boolean, label: string) => {
     if (!window.confirm(`¿${currentValue ? 'Quitar' : 'Activar'} "${label}"?`)) return;
     try {
@@ -92,6 +103,7 @@ export default function AdminVtubersPage() {
       showToast(`VTuber ${label.toLowerCase()} ${currentValue ? 'desactivado' : 'activado'}`, 'success');
       fetchData();
       fetchUnverified();
+      fetchUnapproved();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
 
@@ -102,19 +114,37 @@ export default function AdminVtubersPage() {
           <h1 style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0 }}>VTubers</h1>
           <p style={{ color: 'var(--text-muted)', marginTop: '4px', marginBottom: 0 }}>Gestión de perfiles VTuber</p>
         </div>
-        {unverifiedData.length > 0 && (
-          <div style={{
-            padding: '10px 18px', borderRadius: '12px',
-            background: 'rgba(0,212,255,0.08)',
-            border: '1px solid rgba(0,212,255,0.2)',
-            display: 'flex', alignItems: 'center', gap: '8px',
-            fontSize: '0.9rem', fontWeight: 600, color: 'var(--accent)',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="8 12 11 15 16 9"/>
-            </svg>
-            {unverifiedData.length} pendientes de verificar
+        {(unverifiedData.length > 0 || unapprovedData.length > 0) && (
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {unverifiedData.length > 0 && (
+              <div style={{
+                padding: '10px 18px', borderRadius: '12px',
+                background: 'rgba(0,212,255,0.08)',
+                border: '1px solid rgba(0,212,255,0.2)',
+                display: 'flex', alignItems: 'center', gap: '8px',
+                fontSize: '0.9rem', fontWeight: 600, color: 'var(--accent)',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                {unverifiedData.length} pendientes de verificar
+              </div>
+            )}
+            {unapprovedData.length > 0 && (
+              <div style={{
+                padding: '10px 18px', borderRadius: '12px',
+                background: 'rgba(33,150,243,0.08)',
+                border: '1px solid rgba(33,150,243,0.2)',
+                display: 'flex', alignItems: 'center', gap: '8px',
+                fontSize: '0.9rem', fontWeight: 600, color: '#2196f3',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                {unapprovedData.length} pendientes de aprobar
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -196,7 +226,80 @@ export default function AdminVtubersPage() {
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
 
+      {/* ===== QUICK APPROVAL SECTION ===== */}
+      {!loadingUnapproved && unapprovedData.length > 0 && (
+        <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid rgba(33,150,243,0.15)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <div style={{
+              width: '36px', height: '36px', borderRadius: '10px',
+              background: 'rgba(33,150,243,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2196f3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: '#2196f3' }}>Aprobación Rápida</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+                Estas solicitudes están pendientes de aprobación. Al aprobar, se les otorgará el rol VTuber.
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {unapprovedData.map((profile) => (
+              <div key={profile.id} style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                padding: '12px 16px', borderRadius: '12px',
+                background: 'rgba(255,255,255,0.03)',
+                transition: 'background 0.2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  background: profile.avatarUrl
+                    ? `url(${profile.avatarUrl}) center/cover`
+                    : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                  flexShrink: 0, overflow: 'hidden',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontWeight: 'bold', fontSize: '0.9rem',
+                }}>
+                  {!profile.avatarUrl && profile.displayName.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                    {profile.displayName}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    @{profile.user?.username}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleFlag(profile.id, 'isApproved', false, 'Aprobación')}
+                  className="btn"
+                  style={{
+                    padding: '8px 20px', fontSize: '0.85rem', borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #00e676, #4caf50)',
+                    color: 'white', fontWeight: 700, border: 'none',
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 2px 12px rgba(0,230,118,0.3)',
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,230,118,0.4)'; }}
+                  onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,230,118,0.3)'; }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="8 12 11 15 16 9"/>
+                  </svg>
+                  Aprobar
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
