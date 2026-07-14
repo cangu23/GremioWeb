@@ -152,6 +152,17 @@ export const createSocketServer = (httpServer: HttpServer) => {
       console.log(`[Socket] ${username} left guild room: ${room}`);
     });
 
+    // Handle guild typing events
+    socket.on('guild:typing', (data: { guildId: string; channelId: string; isTyping: boolean }) => {
+      socket.to(`guild:${data.guildId}`).emit('guild:typing', {
+        userId,
+        username,
+        displayName: socket.data.displayName ?? null,
+        channelId: data.channelId,
+        isTyping: data.isTyping,
+      });
+    });
+
     // Send a message to a guild channel
     socket.on('guild:message', async (data: { guildId: string; channelId: string; content: string }) => {
       const content = data.content?.trim();

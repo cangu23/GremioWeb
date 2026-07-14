@@ -87,6 +87,10 @@ function GuildDetailContent() {
   const [editContent, setEditContent] = useState('');
   const [deletingMsgId, setDeletingMsgId] = useState<string | null>(null);
   const [hoverMsgId, setHoverMsgId] = useState<string | null>(null);
+  const [typingUsers, setTypingUsers] = useState<Record<string, { username: string; displayName: string | null }>>({});
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingEmitRef = useRef<number>(0);
+  const typingCleanupRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const socketRef = useRef<Socket | null>(null);
 
   const fetchGuild = useCallback(async () => {
@@ -138,6 +142,8 @@ function GuildDetailContent() {
     if (activeChannel) {
       fetchMessages(activeChannel);
     }
+    // Clear typing indicator when switching channels
+    setTypingUsers({});
   }, [activeChannel, fetchMessages]);
 
   // Socket connection for guild messaging (join/leave only, no activeChannel dep)
@@ -159,7 +165,7 @@ function GuildDetailContent() {
     };
   }, [user, id]);
 
-  // Socket message listener (separate effect to avoid re-joining guild on channel switch)
+  // Socket message & typing listener (separate effect to avoid re-joining guild on channel switch)
   useEffect(() => {
     const sock = socketRef.current;
     if (!sock) return;
@@ -178,9 +184,40 @@ function GuildDetailContent() {
       setMessages(prev => prev.map(m => m.id === msg.id ? msg : m));
     };
 
+    const onTyping = (data: { userId: string; username: string; displayName: string | null; channelId: string; isTyping: boolean }) => {
+      // Only show typing indicator for the active channel
+      if (data.channelId !== activeChannel) return;
+      // Don't show own typing
+      if (data.userId === user?.id) return;
+
+      setTypingUsers(prev => {
+        const next = { ...prev };
+        if (data.isTyping) {
+          next[data.userId] = { username: data.username, displayName: data.displayName };
+          // Auto-cleanup after 5s in case we miss the stop event
+          const existing = typingCleanupRef.current.get(data.userId);
+          if (existing) clearTimeout(existing);
+          typingCleanupRef.current.set(data.userId, setTimeout(() => {
+            setTypingUsers(p => {
+              const updated = { ...p };
+              delete updated[data.userId];
+              return updated;
+            });
+            typingCleanupRef.current.delete(data.userId);
+          }, 5000));
+        } else {
+          delete next[data.userId];
+          const existing = typingCleanupRef.current.get(data.userId);
+          if (existing) { clearTimeout(existing); typingCleanupRef.current.delete(data.userId); }
+        }
+        return next;
+      });
+    };
+
     sock.on('guild:message', onMessage);
     sock.on('guild:message:deleted', onMessageDeleted);
     sock.on('guild:message:updated', onMessageUpdated);
+    sock.on('guild:typing', onTyping);
     sock.on('guild:error', (err: { message: string }) => {
       console.warn('[Guild Socket]', err.message);
     });
@@ -189,24 +226,64 @@ function GuildDetailContent() {
       sock.off('guild:message', onMessage);
       sock.off('guild:message:deleted', onMessageDeleted);
       sock.off('guild:message:updated', onMessageUpdated);
+      sock.off('guild:typing', onTyping);
       sock.off('guild:error');
+      // Clean up typing timeouts
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingCleanupRef.current.forEach(t => clearTimeout(t));
+      typingCleanupRef.current.clear();
     };
-  }, [activeChannel]);
+  }, [activeChannel, user?.id]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async () => {
+  // Emit typing indicator with throttling
+  const emitTyping = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTypingEmitRef.current < 2500) return; // throttle every 2.5s
+    lastTypingEmitRef.current = now;
+    socketRef.current?.emit('guild:typing', {
+      guildId: id as string,
+      channelId: activeChannel,
+      isTyping: true,
+    });
+  }, [id, activeChannel]);
+
+  const handleSendMessage = () => {
     if (!input.trim() || !activeChannel || !socketRef.current) return;
     const content = input.trim();
     setInput('');
+    // Stop typing indicator on send
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    socketRef.current.emit('guild:typing', {
+      guildId: id as string,
+      channelId: activeChannel,
+      isTyping: false,
+    });
     socketRef.current.emit('guild:message', {
       guildId: id as string,
       channelId: activeChannel,
       content,
     });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    if (e.target.value.length > 0) {
+      emitTyping();
+      // After user stops typing for 3s, emit stop
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        socketRef.current?.emit('guild:typing', {
+          guildId: id as string,
+          channelId: activeChannel,
+          isTyping: false,
+        });
+      }, 3000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -701,6 +778,36 @@ function GuildDetailContent() {
             })
           )}
           <div ref={messagesEndRef} />
+
+          {/* Typing indicator */}
+          {Object.keys(typingUsers).length > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '4px 0', fontSize: '0.8rem', color: 'var(--text-muted)',
+            }}>
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                <span style={{
+                  width: '5px', height: '5px', borderRadius: '50%',
+                  background: 'var(--text-muted)',
+                  animation: 'typingBounce 1.4s ease-in-out infinite',
+                }} />
+                <span style={{
+                  width: '5px', height: '5px', borderRadius: '50%',
+                  background: 'var(--text-muted)',
+                  animation: 'typingBounce 1.4s ease-in-out infinite 0.2s',
+                }} />
+                <span style={{
+                  width: '5px', height: '5px', borderRadius: '50%',
+                  background: 'var(--text-muted)',
+                  animation: 'typingBounce 1.4s ease-in-out infinite 0.4s',
+                }} />
+              </div>
+              <span>
+                {Object.values(typingUsers).map(t => t.displayName || t.username).join(', ')}
+                {Object.keys(typingUsers).length === 1 ? ' está escribiendo...' : ' están escribiendo...'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Chat input */}
@@ -719,7 +826,7 @@ function GuildDetailContent() {
               <input
                 ref={chatInputRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={`Mensaje en #${activeChannelObj?.name || '...'}`}
                 style={{
