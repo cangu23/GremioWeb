@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { AuthProvider, Role } from '@gremio-estelar/shared';
+import { prisma } from '../../database/index.js';
 import * as UserRepository from '../users/user.repository';
 import * as AuthRepository from './auth.repository';
 import AppError from '../../errors/AppError.js';
@@ -62,8 +63,18 @@ export const login = async (input: LoginInput) => {
 
   await AuthRepository.createRefreshToken(hashedRefreshToken, user.id, expiresAt);
 
+  // Fetch full user with vtuberProfile (so avatarUrl is available immediately after login)
+  const fullUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: { vtuberProfile: true },
+  });
+
+  if (!fullUser) {
+    throw new AppError('User not found', 404);
+  }
+
   // Omit password from the session user object
-  const { password, ...sessionUser } = user;
+  const { password, ...sessionUser } = fullUser;
 
   return {
     accessToken,
