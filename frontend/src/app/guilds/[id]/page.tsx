@@ -94,6 +94,8 @@ function GuildDetailContent() {
   const typingCleanupRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
+  const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -149,6 +151,10 @@ function GuildDetailContent() {
     }
     // Clear typing indicator when switching channels
     setTypingUsers({});
+    // Clean up pending image preview when switching channels
+    if (pendingImagePreview) URL.revokeObjectURL(pendingImagePreview);
+    setPendingImageUrl(null);
+    setPendingImagePreview(null);
   }, [activeChannel, fetchMessages]);
 
   // Socket connection for guild messaging (join/leave only, no activeChannel dep)
@@ -265,7 +271,7 @@ function GuildDetailContent() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !activeChannel || !socketRef.current) return;
+    if (!file) return;
 
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
       setError('Formato no soportado. Usa JPEG, PNG, WebP o GIF.');
@@ -276,32 +282,45 @@ function GuildDetailContent() {
       return;
     }
 
+    // Show local preview immediately
+    const localPreview = URL.createObjectURL(file);
+    setPendingImagePreview(localPreview);
     setUploadingImage(true);
+
     try {
       const formData = new FormData();
       formData.append('image', file);
       const res = await fetch('/api/uploads/guild', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.url) {
-        socketRef.current.emit('guild:message', {
-          guildId: id as string,
-          channelId: activeChannel,
-          content: '',
-          imageUrl: data.url,
-        });
+        setPendingImageUrl(data.url);
+      } else {
+        setError('Error al subir la imagen');
+        setPendingImagePreview(null);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al subir imagen');
+      setPendingImagePreview(null);
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
+  const handleRemovePendingImage = () => {
+    if (pendingImagePreview) URL.revokeObjectURL(pendingImagePreview);
+    setPendingImageUrl(null);
+    setPendingImagePreview(null);
+  };
+
   const handleSendMessage = () => {
-    if (!input.trim() || !activeChannel || !socketRef.current) return;
+    if ((!input.trim() && !pendingImageUrl) || !activeChannel || !socketRef.current) return;
     const content = input.trim();
+    const imageUrl = pendingImageUrl;
     setInput('');
+    setPendingImageUrl(null);
+    if (pendingImagePreview) URL.revokeObjectURL(pendingImagePreview);
+    setPendingImagePreview(null);
     // Stop typing indicator on send
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     socketRef.current.emit('guild:typing', {
@@ -313,6 +332,7 @@ function GuildDetailContent() {
       guildId: id as string,
       channelId: activeChannel,
       content,
+      ...(imageUrl && { imageUrl }),
     });
   };
 
@@ -929,6 +949,45 @@ function GuildDetailContent() {
         {/* Chat input */}
         {activeChannel && (
           <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--glass-border)' }}>
+            {/* Image preview above input */}
+            {pendingImagePreview && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '8px 8px 8px 8px', marginBottom: '6px',
+                background: 'rgba(0,0,0,0.2)', borderRadius: '8px',
+                border: '1px solid var(--glass-border)',
+              }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '6px', overflow: 'hidden',
+                  background: 'rgba(0,0,0,0.3)', flexShrink: 0,
+                }}>
+                  <img
+                    src={pendingImagePreview}
+                    alt="Preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+                <span style={{ flex: 1, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  {uploadingImage ? 'Subiendo imagen...' : '1 imagen lista para enviar'}
+                </span>
+                {!uploadingImage && (
+                  <button
+                    onClick={handleRemovePendingImage}
+                    style={{
+                      background: 'none', border: 'none', color: 'var(--text-muted)',
+                      cursor: 'pointer', fontSize: '0.9rem', padding: '4px 6px',
+                      borderRadius: '4px', lineHeight: 1,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--error)'; e.currentTarget.style.background = 'rgba(255,77,79,0.1)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
+                    title="Quitar imagen"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            )}
+
             <div style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               background: 'rgba(0,0,0,0.25)', borderRadius: '10px',
@@ -949,17 +1008,18 @@ function GuildDetailContent() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingImage}
+                disabled={uploadingImage || !!pendingImageUrl}
                 style={{
-                  background: 'none', border: 'none', color: 'var(--text-muted)',
-                  cursor: 'pointer', fontSize: '1.1rem', padding: '6px 8px',
+                  background: 'none', border: 'none', color: pendingImageUrl ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: uploadingImage || pendingImageUrl ? 'default' : 'pointer',
+                  fontSize: '1.1rem', padding: '6px 8px',
                   borderRadius: '6px', lineHeight: 1, transition: 'all 0.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; e.currentTarget.style.background = 'rgba(138,43,226,0.1)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
-                title={uploadingImage ? 'Subiendo...' : 'Subir imagen'}
+                onMouseEnter={e => { if (!pendingImageUrl) { e.currentTarget.style.color = 'var(--primary)'; e.currentTarget.style.background = 'rgba(138,43,226,0.1)'; } }}
+                onMouseLeave={e => { if (!pendingImageUrl) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; } }}
+                title={uploadingImage ? 'Subiendo...' : pendingImageUrl ? 'Imagen lista' : 'Subir imagen'}
               >
-                {uploadingImage ? '⏳' : '📷'}
+                {uploadingImage ? '⏳' : pendingImageUrl ? '🖼️' : '📷'}
               </button>
 
               <input
@@ -975,15 +1035,15 @@ function GuildDetailContent() {
               />
               <button
                 onClick={handleSendMessage}
-                disabled={!input.trim()}
+                disabled={!input.trim() && !pendingImageUrl}
                 style={{
                   padding: '8px 16px', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem',
-                  background: input.trim() ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                  color: input.trim() ? 'white' : 'var(--text-muted)',
-                  border: 'none', cursor: input.trim() ? 'pointer' : 'default',
+                  background: (input.trim() || pendingImageUrl) ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                  color: (input.trim() || pendingImageUrl) ? 'white' : 'var(--text-muted)',
+                  border: 'none', cursor: (input.trim() || pendingImageUrl) ? 'pointer' : 'default',
                   transition: 'all 0.2s',
                 }}
-                onMouseOver={e => { if (input.trim()) { e.currentTarget.style.opacity = '0.9'; } }}
+                onMouseOver={e => { if (input.trim() || pendingImageUrl) { e.currentTarget.style.opacity = '0.9'; } }}
                 onMouseOut={e => { e.currentTarget.style.opacity = '1'; }}
               >
                 Enviar
