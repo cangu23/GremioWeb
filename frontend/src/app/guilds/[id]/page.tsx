@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getAccessToken } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { connectSocket, getSocket } from '@/lib/socket-client';
 import ClientOnly from '@/lib/ClientOnly';
@@ -288,9 +288,14 @@ function GuildDetailContent() {
     setUploadingImage(true);
 
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
       const formData = new FormData();
       formData.append('image', file);
-      const res = await fetch('/api/uploads/guild', { method: 'POST', body: formData });
+      const res = await fetch(`${baseUrl}/uploads/guild`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAccessToken()}` },
+        body: formData,
+      });
       const data = await res.json();
       if (data.url) {
         setPendingImageUrl(data.url);
