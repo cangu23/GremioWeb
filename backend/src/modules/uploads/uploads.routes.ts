@@ -10,4 +10,7 @@ router.post('/avatar', authenticate, UploadsController.uploadAvatar, UploadsCont
 // Upload banner (requires auth)
 router.post('/banner', authenticate, UploadsController.uploadBanner, UploadsController.handleUploadBanner);
 
+// Upload post image (requires auth)
+router.post('/post', authenticate, UploadsController.uploadPostImage, UploadsController.handleUploadPostImage);
+
 export default router;

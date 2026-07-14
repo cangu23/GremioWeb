@@ -7,7 +7,8 @@ import fs from 'fs';
 const uploadsDir = path.resolve(__dirname, '..', '..', '..', 'uploads');
 const avatarsDir = path.join(uploadsDir, 'avatars');
 const bannersDir = path.join(uploadsDir, 'banners');
-[uploadsDir, avatarsDir, bannersDir].forEach(dir => {
+const postsDir = path.join(uploadsDir, 'posts');
+[uploadsDir, avatarsDir, bannersDir, postsDir].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -44,6 +45,16 @@ const bannerStorage = multer.diskStorage({
   },
 });
 
+// Multer config for post images
+const postStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, postsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const name = `post-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, name);
+  },
+});
+
 export const uploadAvatar = multer({
   storage: avatarStorage,
   fileFilter,
@@ -52,6 +63,12 @@ export const uploadAvatar = multer({
 
 export const uploadBanner = multer({
   storage: bannerStorage,
+  fileFilter,
+  limits: { fileSize: MAX_FILE_SIZE },
+}).single('image');
+
+export const uploadPostImage = multer({
+  storage: postStorage,
   fileFilter,
   limits: { fileSize: MAX_FILE_SIZE },
 }).single('image');
@@ -94,6 +111,27 @@ export const handleUploadBanner = async (req: Request, res: Response, next: Next
 
     const baseUrl = getBaseUrl(req);
     const url = `${baseUrl}/uploads/banners/${req.file.filename}`;
+
+    res.json({
+      status: 'success',
+      url,
+      filename: req.file.filename,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Upload post image handler
+export const handleUploadPostImage = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ status: 'error', message: 'No se seleccionó ninguna imagen.' });
+      return;
+    }
+
+    const baseUrl = getBaseUrl(req);
+    const url = `${baseUrl}/uploads/posts/${req.file.filename}`;
 
     res.json({
       status: 'success',

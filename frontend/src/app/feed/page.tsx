@@ -36,6 +36,9 @@ function FeedContent() {
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState('');
   const [trendingHashtags, setTrendingHashtags] = useState<{ id: string; name: string; _count: { posts: number } }[]>([]);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -80,25 +83,77 @@ function FeedContent() {
     fetchHashtags();
   }, [fetchFeed, fetchHashtags]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      setError('Formato no soportado. Usa JPEG, PNG, WebP o GIF.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('La imagen es muy grande. Máximo 5 MB.');
+      return;
+    }
+    setSelectedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    setError('');
+  };
+
+  const removeImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setSelectedImage(null);
+    setImagePreview(null);
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'http://localhost:4000';
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const res = await fetch(`${baseUrl}/api/uploads/post`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Error al subir imagen' }));
+      throw new Error(err.message || 'Error al subir imagen');
+    }
+    const data = await res.json();
+    return data.url;
+  };
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { router.push('/login'); return; }
-    if (!newPost.trim()) return;
+    if (!newPost.trim() && !selectedImage) return;
     setPosting(true);
     setError('');
 
     try {
+      let mediaUrl = undefined;
+      if (selectedImage) {
+        setUploadingImage(true);
+        mediaUrl = await uploadImage(selectedImage);
+        setUploadingImage(false);
+      }
+
       const post = await apiFetch('/posts', {
         method: 'POST',
-        body: JSON.stringify({ content: newPost.trim() }),
+        body: JSON.stringify({
+          content: newPost.trim() || '(imagen)',
+          mediaUrl,
+        }),
       });
       setPosts(prev => [post, ...prev]);
       setNewPost('');
+      removeImage();
       fetchHashtags(); // Refresh trending
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al publicar');
     } finally {
       setPosting(false);
+      setUploadingImage(false);
     }
   };
 
@@ -165,12 +220,71 @@ function FeedContent() {
             disabled={!user}
             maxLength={2000}
           />
+
+          {/* Image preview */}
+          {imagePreview && (
+            <div style={{
+              position: 'relative', marginBottom: '12px', borderRadius: '12px', overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}>
+              <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', background: 'rgba(0,0,0,0.3)' }} />
+              <button
+                type="button"
+                onClick={removeImage}
+                style={{
+                  position: 'absolute', top: '8px', right: '8px', width: '32px', height: '32px',
+                  borderRadius: '50%', border: 'none', cursor: 'pointer',
+                  background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '1.1rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.2s',
+                }}
+                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,79,0.8)')}
+                onMouseOut={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.7)')}
+                title="Eliminar imagen"
+              >✕</button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {newPost.length}/2000 · Usa # para hashtags
-            </span>
-            <button type="submit" className="btn" disabled={!user || !newPost.trim() || posting} style={{ padding: '10px 24px' }}>
-              {posting ? 'Publicando...' : 'Publicar'}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {/* Image upload button */}
+              {user && (
+                <>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    id="post-image-input"
+                    style={{ display: 'none' }}
+                    onChange={handleImageSelect}
+                    disabled={posting || !!imagePreview}
+                  />
+                  <label
+                    htmlFor="post-image-input"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '6px 12px', borderRadius: '8px', cursor: imagePreview ? 'not-allowed' : 'pointer',
+                      color: imagePreview ? 'var(--text-muted)' : 'var(--text)',
+                      fontSize: '0.85rem', transition: 'all 0.2s', opacity: imagePreview ? 0.5 : 1,
+                      background: 'rgba(255,255,255,0.05)',
+                    }}
+                    onMouseOver={e => { if (!imagePreview) e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                    onMouseOut={e => { if (!imagePreview) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    Imagen
+                  </label>
+                </>
+              )}
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                {newPost.length}/2000 · #hashtags
+              </span>
+            </div>
+            <button type="submit" className="btn" disabled={!user || (!newPost.trim() && !selectedImage) || posting || uploadingImage} style={{ padding: '10px 24px' }}>
+              {uploadingImage ? 'Subiendo imagen...' : posting ? 'Publicando...' : 'Publicar'}
             </button>
           </div>
         </form>
