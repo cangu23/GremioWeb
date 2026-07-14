@@ -455,6 +455,18 @@ function GuildDetailContent() {
     finally { setActionLoading(false); }
   };
 
+  const handleJoin = async () => {
+    setActionLoading(true);
+    try {
+      await apiFetch(`/guilds/${id}/join`, { method: 'POST' });
+      await fetchGuild();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al unirse al gremio');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const [changingRoleId, setChangingRoleId] = useState<string | null>(null);
   const [openRoleMenuId, setOpenRoleMenuId] = useState<string | null>(null);
 
@@ -575,7 +587,7 @@ function GuildDetailContent() {
   const canManage = guild.myRole === 'LEADER' || guild.myRole === 'OFFICER';
 
   if (!guild.isMember) {
-    return <NonMemberView guild={guild} onJoin={() => fetchGuild().then() } />;
+    return <NonMemberView guild={guild} onJoin={handleJoin} />;
   }
 
   const activeChannelObj = channels.find(c => c.id === activeChannel);
