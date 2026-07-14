@@ -6,6 +6,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from '@/lib/AuthContext';
 import { ToastProvider } from '@/lib/ToastContext';
 import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import ParticlesBackground from '@/components/landing/ParticlesBackground';
 import './globals.css';
 
@@ -43,6 +44,7 @@ export default function RootLayout({
                 <main className="page">
                   {children}
                 </main>
+                <Footer />
               </AuthProvider>
             </ToastProvider>
           </GoogleOAuthProvider>
@@ -53,6 +55,7 @@ export default function RootLayout({
               <main className="page">
                 {children}
               </main>
+              <Footer />
             </AuthProvider>
           </ToastProvider>
         )}
