@@ -30,7 +30,10 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
 };
 
 export const searchUsers = async (query: string) => {
-  if (!query || query.length < 2) return [];
+  // If no query or too short, return all VTubers (for directory browsing)
+  if (!query || query.length < 2) {
+    return UserRepository.searchByUsername('');
+  }
   return UserRepository.searchByUsername(query);
 };
 

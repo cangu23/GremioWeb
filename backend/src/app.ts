@@ -16,6 +16,12 @@ const app = express();
 
 console.log(`${BOOT} Express app instance created`);
 
+// ========== TRUST PROXY ==========
+// Render and other cloud hosts use a proxy/load balancer.
+// This ensures req.protocol detects HTTPS via x-forwarded-proto header.
+app.set('trust proxy', 1);
+console.log(`${BOOT} Trust proxy enabled`);
+
 // ========== REQUEST LOGGING (first middleware) ==========
 app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();

@@ -24,10 +24,10 @@ function VtubersContent() {
   const [searched, setSearched] = useState(false);
 
   useEffect(() => {
-    // Load some recent users on mount
+    // Load all VTubers on mount for directory browsing
     if (query.length === 0 && !searched) {
       setLoading(true);
-      apiFetch('/users/search?q=a', {}).then(setRecentUsers).catch(() => {}).finally(() => setLoading(false));
+      apiFetch('/users/search', {}).then(setRecentUsers).catch(() => {}).finally(() => setLoading(false));
     }
   }, []);
 

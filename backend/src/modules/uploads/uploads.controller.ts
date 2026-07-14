@@ -74,9 +74,10 @@ export const uploadPostImage = multer({
 }).single('image');
 
 // GET base URL for constructing file URLs
+// Uses x-forwarded-proto to detect HTTPS behind Render's proxy
 const getBaseUrl = (req: Request) => {
   const host = req.get('host') || 'localhost:4000';
-  const protocol = req.protocol || 'http';
+  const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
   return `${protocol}://${host}`;
 };
 

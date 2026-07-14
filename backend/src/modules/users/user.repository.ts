@@ -28,17 +28,43 @@ export const createUser = async (data: CreateUserPayload) => {
 };
 
 export const searchByUsername = async (query: string) => {
+  // Build the VTuber filter (must be VTUBER role or approved)
+  const vtuberFilter = {
+    OR: [
+      { role: 'VTUBER' as const },
+      { vtuberProfile: { isApproved: true } },
+    ],
+  };
+
+  // If query is empty, just return all VTubers
+  const where = !query
+    ? { where: { AND: [vtuberFilter] } }
+    : {
+        where: {
+          AND: [
+            vtuberFilter,
+            {
+              OR: [
+                { username: { contains: query, mode: 'insensitive' } },
+                {
+                  vtuberProfile: {
+                    displayName: { contains: query, mode: 'insensitive' },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      };
+
   return prisma.user.findMany({
-    where: {
-      username: { contains: query },
-      role: { not: 'ADMIN' },
-    },
+    ...where,
     select: {
       id: true,
       username: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true } },
     },
-    take: 20,
+    take: 50,
     orderBy: { username: 'asc' },
   });
 };
