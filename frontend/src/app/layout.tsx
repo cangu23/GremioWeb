@@ -17,7 +17,12 @@ export const metadata: Metadata = {
     'Gremio Estelar es la plataforma definitiva para conectar creadores de contenido virtual. Gestiona tu perfil, interactúa con la comunidad y lleva tu carrera al siguiente nivel.',
   keywords: ['VTuber', 'comunidad', 'streaming', 'gremio', 'creadores de contenido'],
   icons: {
-    icon: '/logo.png',
+    icon: [
+      // SVG adaptable: cambia automáticamente entre negro (claro) y blanco (oscuro)
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      // PNG de respaldo para navegadores que no soporten SVG como favicon
+      { url: '/logo.png', type: 'image/png' },
+    ],
   },
 };
 
