@@ -595,6 +595,7 @@ export const getDashboardStats = async () => {
     newUsersToday,
     newUsersThisWeek,
     newUsersThisMonth,
+    pendingVerifications,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { status: 'ACTIVE' } }),
@@ -616,6 +617,7 @@ export const getDashboardStats = async () => {
     prisma.user.count({
       where: { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
     }),
+    prisma.vTuberProfile.count({ where: { isApproved: true, isVerified: false } }),
   ]);
 
   return {
@@ -633,6 +635,7 @@ export const getDashboardStats = async () => {
     newUsersToday,
     newUsersThisWeek,
     newUsersThisMonth,
+    pendingVerifications,
   };
 };
 

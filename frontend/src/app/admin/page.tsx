@@ -18,6 +18,7 @@ interface DashboardStats {
   totalMessages: number;
   pendingReports: number;
   pendingVtuberRequests: number;
+  pendingVerifications: number;
   newUsersToday: number;
   newUsersThisWeek: number;
   newUsersThisMonth: number;
@@ -57,6 +58,7 @@ const statCards = [
   { key: 'totalMessages', label: 'Mensajes', color: '#4caf50', icon: 'messages' },
   { key: 'pendingReports', label: 'Reportes Pendientes', color: '#ff5722', icon: 'reports' },
   { key: 'pendingVtuberRequests', label: 'Solicitudes VTuber', color: '#ff007f', icon: 'requests', link: '/admin/vtuber-requests' },
+  { key: 'pendingVerifications', label: 'Verificar VTubers', color: '#1d9bf0', icon: 'vtubers', link: '/admin/vtubers' },
 ];
 
 const activityLabels: Record<string, string> = {
