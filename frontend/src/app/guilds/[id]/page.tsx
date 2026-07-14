@@ -35,6 +35,7 @@ interface GuildDetail {
   name: string;
   description: string;
   logoUrl?: string | null;
+  coverUrl?: string | null;
   tags?: string | null;
   creatorId: string;
   creator: { id: string; username: string; vtuberProfile?: { displayName: string; avatarUrl: string | null } | null };
@@ -97,6 +98,12 @@ function GuildDetailContent() {
   const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsLogoUrl, setSettingsLogoUrl] = useState('');
+  const [settingsCoverUrl, setSettingsCoverUrl] = useState('');
+  const [settingsDescription, setSettingsDescription] = useState('');
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -502,6 +509,36 @@ function GuildDetailContent() {
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Error'); setActionLoading(false); }
   };
 
+  const handleOpenSettings = () => {
+    if (!guild) return;
+    setSettingsLogoUrl(guild.logoUrl || '');
+    setSettingsCoverUrl(guild.coverUrl || '');
+    setSettingsDescription(guild.description);
+    setSettingsError('');
+    setShowSettings(true);
+  };
+
+  const handleSaveSettings = async () => {
+    setSettingsSaving(true);
+    setSettingsError('');
+    try {
+      const updated = await apiFetch(`/guilds/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          description: settingsDescription,
+          logoUrl: settingsLogoUrl || undefined,
+          coverUrl: settingsCoverUrl || undefined,
+        }),
+      });
+      setGuild(prev => prev ? { ...prev, ...updated } : prev);
+      setShowSettings(false);
+    } catch (err: unknown) {
+      setSettingsError(err instanceof Error ? err.message : 'Error al guardar');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', height: 'calc(100vh - 80px)', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
@@ -568,9 +605,22 @@ function GuildDetailContent() {
           }}>
             {!guild.logoUrl && guild.name.charAt(0).toUpperCase()}
           </div>
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontWeight: 700, fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
             {guild.name}
           </span>
+          {canManage && (
+            <button onClick={handleOpenSettings} style={{
+              background: 'none', border: 'none', color: 'var(--text-muted)',
+              cursor: 'pointer', fontSize: '0.85rem', padding: '4px', borderRadius: '4px',
+              lineHeight: 1, flexShrink: 0, transition: 'all 0.15s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+              title="Ajustes del gremio"
+            >
+              ⚙
+            </button>
+          )}
         </div>
 
         {/* Channel list */}
@@ -721,6 +771,21 @@ function GuildDetailContent() {
 
       {/* ===== CENTER: Chat area ===== */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Cover banner */}
+        {guild.coverUrl && (
+          <div style={{
+            width: '100%', height: '160px',
+            background: `url(${guild.coverUrl}) center/cover`,
+            borderBottom: '1px solid var(--glass-border)',
+            position: 'relative', flexShrink: 0,
+          }}>
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.6))',
+            }} />
+          </div>
+        )}
+
         {/* Channel header */}
         <div style={{
           padding: '12px 20px', borderBottom: '1px solid var(--glass-border)',
@@ -1272,6 +1337,118 @@ function GuildDetailContent() {
             ✕
           </button>
         </div>
+      )}
+
+      {/* Settings modal */}
+      {showSettings && (
+        <>
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setShowSettings(false)}
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+            zIndex: 1000, width: '480px', maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto',
+            background: 'rgba(20,20,35,0.96)', backdropFilter: 'blur(16px)',
+            border: '1px solid var(--glass-border)', borderRadius: '16px',
+            padding: '32px', boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+            animation: 'fadeIn 0.2s ease',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>⚙ Ajustes del Gremio</h2>
+              <button onClick={() => setShowSettings(false)} style={{
+                background: 'none', border: 'none', color: 'var(--text-muted)',
+                cursor: 'pointer', fontSize: '1.2rem', padding: '4px 8px', borderRadius: '6px',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--text)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+              >✕</button>
+            </div>
+
+            {settingsError && (
+              <div style={{
+                padding: '10px 14px', borderRadius: '8px', marginBottom: '16px',
+                background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.2)',
+                color: 'var(--error)', fontSize: '0.85rem',
+              }}>⚠ {settingsError}</div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>Logo URL</label>
+                <input
+                  value={settingsLogoUrl}
+                  onChange={e => setSettingsLogoUrl(e.target.value)}
+                  placeholder="https://ejemplo.com/logo.png"
+                  type="url"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '8px',
+                    background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)',
+                    color: 'var(--text)', fontSize: '0.9rem', outline: 'none',
+                  }}
+                />
+                {settingsLogoUrl && (
+                  <div style={{ marginTop: '8px', width: '64px', height: '64px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+                    <img src={settingsLogoUrl} alt="Logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>Portada URL</label>
+                <input
+                  value={settingsCoverUrl}
+                  onChange={e => setSettingsCoverUrl(e.target.value)}
+                  placeholder="https://ejemplo.com/banner.png"
+                  type="url"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '8px',
+                    background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)',
+                    color: 'var(--text)', fontSize: '0.9rem', outline: 'none',
+                  }}
+                />
+                {settingsCoverUrl && (
+                  <div style={{ marginTop: '8px', width: '100%', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+                    <img src={settingsCoverUrl} alt="Cover preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>Descripción</label>
+                <textarea
+                  value={settingsDescription}
+                  onChange={e => setSettingsDescription(e.target.value)}
+                  rows={4}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '8px',
+                    background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)',
+                    color: 'var(--text)', fontSize: '0.9rem', outline: 'none', resize: 'vertical',
+                    fontFamily: 'inherit', lineHeight: 1.6,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '24px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowSettings(false)} style={{
+                padding: '10px 20px', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem',
+                background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)',
+                border: 'none', cursor: 'pointer',
+              }}>Cancelar</button>
+              <button onClick={handleSaveSettings} disabled={settingsSaving} style={{
+                padding: '10px 24px', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
+                background: 'linear-gradient(135deg, var(--secondary), var(--primary))',
+                color: 'white', border: 'none', cursor: 'pointer',
+                opacity: settingsSaving ? 0.7 : 1,
+              }}>
+                {settingsSaving ? 'Guardando...' : 'Guardar cambios'}
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

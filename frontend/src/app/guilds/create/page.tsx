@@ -14,6 +14,7 @@ function CreateGuildForm() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [tags, setTags] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -44,6 +45,7 @@ function CreateGuildForm() {
         body: JSON.stringify({
           name,
           description,
+          logoUrl: logoUrl || undefined,
           tags: tags || undefined,
         }),
       });
@@ -116,6 +118,34 @@ function CreateGuildForm() {
                 required
                 placeholder="Describe el propósito de tu gremio..."
               />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Logo URL (opcional)</label>
+              <input
+                className="input"
+                value={logoUrl}
+                onChange={e => setLogoUrl(e.target.value)}
+                placeholder="https://ejemplo.com/logo.png"
+                type="url"
+              />
+              {logoUrl && (
+                <div style={{
+                  marginTop: '8px', width: '80px', height: '80px',
+                  borderRadius: '12px', overflow: 'hidden',
+                  border: '1px solid var(--glass-border)',
+                }}>
+                  <img
+                    src={logoUrl}
+                    alt="Preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+              )}
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                Pega un enlace directo a una imagen para usarla como logo del gremio
+              </p>
             </div>
 
             <div className="form-group" style={{ marginBottom: '28px' }}>
