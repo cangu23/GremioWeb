@@ -16,6 +16,32 @@ interface AuthenticatedSocket extends Socket {
  */
 export const ioContext: { instance: Server | null } = { instance: null };
 
+// Track online users per guild for real-time member status
+const guildOnlineUsers = new Map<string, Set<string>>();
+
+function addOnlineUser(guildId: string, userId: string) {
+  if (!guildOnlineUsers.has(guildId)) {
+    guildOnlineUsers.set(guildId, new Set());
+  }
+  guildOnlineUsers.get(guildId)!.add(userId);
+}
+
+function removeOnlineUser(guildId: string, userId: string) {
+  const users = guildOnlineUsers.get(guildId);
+  if (users) {
+    users.delete(userId);
+    if (users.size === 0) {
+      guildOnlineUsers.delete(guildId);
+    }
+  }
+}
+
+function broadcastOnline(guildId: string) {
+  const users = guildOnlineUsers.get(guildId);
+  const onlineIds = users ? Array.from(users) : [];
+  ioContext.instance?.to(`guild:${guildId}`).emit('guild:online', { onlineIds });
+}
+
 export const createSocketServer = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
@@ -138,10 +164,16 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
     // ===== GUILD CHANNEL MESSAGING =====
 
+    // Track which guilds this socket has joined (for disconnect cleanup)
+    if (!socket.data.guilds) socket.data.guilds = new Set<string>();
+
     // Join a guild's channels for real-time messaging
     socket.on('guild:join', (data: { guildId: string }) => {
       const room = `guild:${data.guildId}`;
       socket.join(room);
+      (socket.data.guilds as Set<string>).add(data.guildId);
+      addOnlineUser(data.guildId, userId);
+      broadcastOnline(data.guildId);
       console.log(`[Socket] ${username} joined guild room: ${room}`);
     });
 
@@ -149,6 +181,9 @@ export const createSocketServer = (httpServer: HttpServer) => {
     socket.on('guild:leave', (data: { guildId: string }) => {
       const room = `guild:${data.guildId}`;
       socket.leave(room);
+      (socket.data.guilds as Set<string>).delete(data.guildId);
+      removeOnlineUser(data.guildId, userId);
+      broadcastOnline(data.guildId);
       console.log(`[Socket] ${username} left guild room: ${room}`);
     });
 
@@ -218,6 +253,15 @@ export const createSocketServer = (httpServer: HttpServer) => {
     });
 
     socket.on('disconnect', () => {
+      // Remove user from all guilds they were in
+      const guilds = socket.data.guilds as Set<string> | undefined;
+      if (guilds) {
+        guilds.forEach(guildId => {
+          removeOnlineUser(guildId, userId);
+          broadcastOnline(guildId);
+        });
+        guilds.clear();
+      }
       console.log(`[Socket] User disconnected: ${username} (${userId})`);
     });
   });

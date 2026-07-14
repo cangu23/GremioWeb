@@ -91,6 +91,7 @@ function GuildDetailContent() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingEmitRef = useRef<number>(0);
   const typingCleanupRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const socketRef = useRef<Socket | null>(null);
 
   const fetchGuild = useCallback(async () => {
@@ -184,6 +185,10 @@ function GuildDetailContent() {
       setMessages(prev => prev.map(m => m.id === msg.id ? msg : m));
     };
 
+    const onOnline = (data: { onlineIds: string[] }) => {
+      setOnlineUsers(new Set(data.onlineIds));
+    };
+
     const onTyping = (data: { userId: string; username: string; displayName: string | null; channelId: string; isTyping: boolean }) => {
       // Only show typing indicator for the active channel
       if (data.channelId !== activeChannel) return;
@@ -217,6 +222,7 @@ function GuildDetailContent() {
     sock.on('guild:message', onMessage);
     sock.on('guild:message:deleted', onMessageDeleted);
     sock.on('guild:message:updated', onMessageUpdated);
+    sock.on('guild:online', onOnline);
     sock.on('guild:typing', onTyping);
     sock.on('guild:error', (err: { message: string }) => {
       console.warn('[Guild Socket]', err.message);
@@ -226,6 +232,7 @@ function GuildDetailContent() {
       sock.off('guild:message', onMessage);
       sock.off('guild:message:deleted', onMessageDeleted);
       sock.off('guild:message:updated', onMessageUpdated);
+      sock.off('guild:online', onOnline);
       sock.off('guild:typing', onTyping);
       sock.off('guild:error');
       // Clean up typing timeouts
@@ -861,7 +868,12 @@ function GuildDetailContent() {
           borderLeft: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column',
         }}>
           <div style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Miembros — {guild.members.length}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Miembros — {guild.members.length}</span>
+              <span style={{ fontSize: '0.75rem', color: '#00e676', fontWeight: 600 }}>
+                🟢 {onlineUsers.size} online
+              </span>
+            </div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
             {(['LEADER', 'OFFICER', 'MEMBER'] as const).map(role => {
@@ -873,41 +885,52 @@ function GuildDetailContent() {
                   <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', padding: '4px 8px', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
                     {role === 'LEADER' ? `👑 ${rc.label}` : role === 'OFFICER' ? `⭐ ${rc.label}` : `👤 ${rc.label}`} — {roleMembers.length}
                   </div>
-                  {roleMembers.map(member => (
-                    <Link
-                      key={member.id}
-                      href={`/profile/${member.user.id}`}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '6px 8px', borderRadius: '8px', textDecoration: 'none',
-                        color: 'var(--text)', transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      <div style={{ position: 'relative' }}>
-                        <div style={{
-                          width: '32px', height: '32px', borderRadius: '50%',
-                          background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0,
-                        }}>
-                          {(member.user.vtuberProfile?.displayName || member.user.username).charAt(0).toUpperCase()}
+                  {roleMembers.map(member => {
+                    const isOnline = onlineUsers.has(member.user.id);
+                    return (
+                      <Link
+                        key={member.id}
+                        href={`/profile/${member.user.id}`}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '10px',
+                          padding: '6px 8px', borderRadius: '8px', textDecoration: 'none',
+                          color: 'var(--text)', transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        <div style={{ position: 'relative' }}>
+                          <div style={{
+                            width: '32px', height: '32px', borderRadius: '50%',
+                            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0,
+                            opacity: isOnline ? 1 : 0.5,
+                          }}>
+                            {(member.user.vtuberProfile?.displayName || member.user.username).charAt(0).toUpperCase()}
+                          </div>
+                          {/* Online/Offline indicator */}
+                          <div style={{
+                            position: 'absolute', bottom: '-1px', right: '-1px',
+                            width: '12px', height: '12px', borderRadius: '50%',
+                            background: isOnline ? '#00e676' : 'rgba(255,255,255,0.15)',
+                            border: isOnline ? '2px solid var(--bg)' : '2px solid var(--bg)',
+                            transition: 'background 0.3s ease',
+                          }} />
                         </div>
-                        {/* Online indicator */}
-                        <div style={{
-                          position: 'absolute', bottom: '-1px', right: '-1px',
-                          width: '12px', height: '12px', borderRadius: '50%',
-                          background: '#00e676', border: '2px solid var(--bg)',
-                        }} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {member.user.vtuberProfile?.displayName || member.user.username}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontSize: '0.85rem', fontWeight: 600,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            color: isOnline ? 'var(--text)' : 'var(--text-muted)',
+                            transition: 'color 0.3s ease',
+                          }}>
+                            {member.user.vtuberProfile?.displayName || member.user.username}
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               );
             })}
