@@ -39,6 +39,7 @@ function FeedContent() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -83,20 +84,53 @@ function FeedContent() {
     fetchHashtags();
   }, [fetchFeed, fetchHashtags]);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processImageFile = (file: File) => {
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
       setError('Formato no soportado. Usa JPEG, PNG, WebP o GIF.');
-      return;
+      return false;
     }
     if (file.size > 5 * 1024 * 1024) {
       setError('La imagen es muy grande. Máximo 5 MB.');
-      return;
+      return false;
     }
     setSelectedImage(file);
     setImagePreview(URL.createObjectURL(file));
     setError('');
+    return true;
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processImageFile(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!imagePreview) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    if (!user) { router.push('/login'); return; }
+    if (imagePreview) {
+      setError('Ya tienes una imagen seleccionada. Elimínala primero para arrastrar otra.');
+      return;
+    }
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    processImageFile(file);
   };
 
   const removeImage = () => {
@@ -209,12 +243,40 @@ function FeedContent() {
       )}
 
       {/* Create Post */}
-      <div className="glass" style={{ padding: '20px', marginBottom: '24px' }}>
-        <form onSubmit={handleCreatePost}>
+      <div className="glass" style={{ padding: '20px', marginBottom: '24px', position: 'relative' }}>
+        <form
+          onSubmit={handleCreatePost}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          style={{ position: 'relative' }}
+        >
+          {/* Drag & drop overlay */}
+          {isDragOver && (
+            <div style={{
+              position: 'absolute', inset: '-12px', zIndex: 10,
+              borderRadius: '16px',
+              border: '2px dashed var(--primary)',
+              background: 'rgba(255,0,127,0.08)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: '8px', pointerEvents: 'none',
+              backdropFilter: 'blur(2px)',
+              animation: 'fadeInUp 0.2s ease-out',
+            }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ff007f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem' }}>Suelta tu imagen aquí</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>JPEG, PNG, WebP o GIF · Máx 5 MB</span>
+            </div>
+          )}
           <textarea
             className="input"
             style={{ minHeight: '80px', resize: 'vertical', marginBottom: '12px', fontSize: '0.95rem' }}
-            placeholder={user ? '¿Qué está pasando? Comparte con la comunidad...' : 'Inicia sesión para publicar...'}
+            placeholder={user ? 'Arrastra una imagen o escribe algo... Comparte con la comunidad 📸' : 'Inicia sesión para publicar...'}
             value={newPost}
             onChange={e => setNewPost(e.target.value)}
             disabled={!user}
