@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
@@ -61,10 +62,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const user = auth.user;
   const isLoading = auth.isLoading;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted && user?.role === 'ADMIN') {
+      apiFetch('/admin/dashboard/stats').then((data) => {
+        if (data?.pendingVtuberRequests !== undefined) {
+          setPendingRequests(data.pendingVtuberRequests);
+        }
+      }).catch(() => {});
+    }
+  }, [mounted, user]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -154,6 +166,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', fontSize: '0.9rem', fontWeight: isActive ? 600 : 400, color: isActive ? '#fff' : 'rgba(255,255,255,0.6)', background: isActive ? 'rgba(138, 43, 226, 0.2)' : 'transparent', border: isActive ? '1px solid rgba(138, 43, 226, 0.3)' : '1px solid transparent', textDecoration: 'none', transition: 'all 0.2s ease' }}>
                       <span style={{ display: 'inline-flex', marginRight: '10px', opacity: 0.7 }}>{NAV_ICONS[item.icon]}</span>
                       <span>{item.label}</span>
+                      {item.href === '/admin/vtuber-requests' && pendingRequests > 0 && (
+                        <span style={{
+                          marginLeft: 'auto',
+                          minWidth: '20px',
+                          height: '20px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #ff007f, #ff9800)',
+                          color: '#fff',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 6px',
+                          lineHeight: 1,
+                        }}
+                        >
+                          {pendingRequests > 99 ? '99+' : pendingRequests}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
