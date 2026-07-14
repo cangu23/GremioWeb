@@ -21,6 +21,9 @@ interface EnvConfig {
   GOOGLE_CLIENT_ID: string;
   DISCORD_CLIENT_ID: string;
   DISCORD_CLIENT_SECRET: string;
+  CLOUDINARY_CLOUD_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
 }
 
 const env: EnvConfig = {
@@ -34,6 +37,9 @@ const env: EnvConfig = {
   DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || '',
   DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET || '',
   BACKEND_URL: process.env.BACKEND_URL || `http://localhost:${parseInt(process.env.PORT || '4000', 10)}`,
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
 };
 
 // Validate required secrets (must be set via .env, never use defaults in production)
@@ -43,6 +49,10 @@ if (!env.GOOGLE_CLIENT_ID) {
 }
 if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
   console.warn('⚠️  DISCORD_CLIENT_ID/SECRET not set — Discord login disabled');
+}
+
+if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) {
+  console.warn('⚠️  Cloudinary not configured — image uploads will fail');
 }
 
 if (isNaN(env.PORT) || !env.JWT_ACCESS_SECRET || !env.JWT_REFRESH_SECRET) {

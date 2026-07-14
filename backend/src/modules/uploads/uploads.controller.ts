@@ -1,17 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-
-// Ensure upload directories exist
-const uploadsDir = path.resolve(__dirname, '..', '..', '..', 'uploads');
-const avatarsDir = path.join(uploadsDir, 'avatars');
-const bannersDir = path.join(uploadsDir, 'banners');
-const postsDir = path.join(uploadsDir, 'posts');
-const guildDir = path.join(uploadsDir, 'guild');
-[uploadsDir, avatarsDir, bannersDir, postsDir, guildDir].forEach(dir => {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
+import cloudinary from '../../lib/cloudinary';
 
 // Allowed MIME types
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -26,76 +15,31 @@ const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFil
   }
 };
 
-// Multer config for avatars
-const avatarStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, avatarsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `avatar-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, name);
-  },
-});
+// Use memory storage so we can upload the buffer directly to Cloudinary
+const memoryStorage = multer.memoryStorage();
 
-// Multer config for banners
-const bannerStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, bannersDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `banner-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, name);
-  },
-});
-
-// Multer config for post images
-const postStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, postsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `post-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, name);
-  },
-});
-
-export const uploadAvatar = multer({
-  storage: avatarStorage,
+export const uploadImage = multer({
+  storage: memoryStorage,
   fileFilter,
   limits: { fileSize: MAX_FILE_SIZE },
 }).single('image');
 
-export const uploadBanner = multer({
-  storage: bannerStorage,
-  fileFilter,
-  limits: { fileSize: MAX_FILE_SIZE },
-}).single('image');
-
-export const uploadPostImage = multer({
-  storage: postStorage,
-  fileFilter,
-  limits: { fileSize: MAX_FILE_SIZE },
-}).single('image');
-
-// Multer config for guild chat images
-const guildStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, guildDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `guild-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, name);
-  },
-});
-
-export const uploadGuildImage = multer({
-  storage: guildStorage,
-  fileFilter,
-  limits: { fileSize: MAX_FILE_SIZE },
-}).single('image');
-
-// GET base URL for constructing file URLs
-// Uses x-forwarded-proto to detect HTTPS behind Render's proxy
-const getBaseUrl = (req: Request) => {
-  const host = req.get('host') || 'localhost:4000';
-  const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
-  return `${protocol}://${host}`;
+// Helper: upload buffer to Cloudinary
+const uploadToCloudinary = (buffer: Buffer, folder: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: `gremio-estelar/${folder}`,
+        resource_type: 'image',
+        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result!.secure_url);
+      }
+    );
+    uploadStream.end(buffer);
+  });
 };
 
 // Upload avatar handler
@@ -106,13 +50,12 @@ export const handleUploadAvatar = async (req: Request, res: Response, next: Next
       return;
     }
 
-    const baseUrl = getBaseUrl(req);
-    const url = `${baseUrl}/uploads/avatars/${req.file.filename}`;
+    const url = await uploadToCloudinary(req.file.buffer, 'avatars');
 
     res.json({
       status: 'success',
       url,
-      filename: req.file.filename,
+      filename: req.file.originalname,
     });
   } catch (err) {
     next(err);
@@ -127,13 +70,12 @@ export const handleUploadBanner = async (req: Request, res: Response, next: Next
       return;
     }
 
-    const baseUrl = getBaseUrl(req);
-    const url = `${baseUrl}/uploads/banners/${req.file.filename}`;
+    const url = await uploadToCloudinary(req.file.buffer, 'banners');
 
     res.json({
       status: 'success',
       url,
-      filename: req.file.filename,
+      filename: req.file.originalname,
     });
   } catch (err) {
     next(err);
@@ -148,13 +90,12 @@ export const handleUploadGuildImage = async (req: Request, res: Response, next: 
       return;
     }
 
-    const baseUrl = getBaseUrl(req);
-    const url = `${baseUrl}/uploads/guild/${req.file.filename}`;
+    const url = await uploadToCloudinary(req.file.buffer, 'guild');
 
     res.json({
       status: 'success',
       url,
-      filename: req.file.filename,
+      filename: req.file.originalname,
     });
   } catch (err) {
     next(err);
@@ -169,13 +110,12 @@ export const handleUploadPostImage = async (req: Request, res: Response, next: N
       return;
     }
 
-    const baseUrl = getBaseUrl(req);
-    const url = `${baseUrl}/uploads/posts/${req.file.filename}`;
+    const url = await uploadToCloudinary(req.file.buffer, 'posts');
 
     res.json({
       status: 'success',
       url,
-      filename: req.file.filename,
+      filename: req.file.originalname,
     });
   } catch (err) {
     next(err);
