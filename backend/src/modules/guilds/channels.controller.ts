@@ -3,7 +3,11 @@ import * as ChannelsService from './channels.service';
 
 export const createChannel = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await ChannelsService.createChannel(req.body, req.user!.id);
+    const result = await ChannelsService.createChannel({
+      guildId: String(req.params.guildId),
+      name: req.body.name,
+      type: req.body.type,
+    }, req.user!.id);
     res.status(201).json(result);
   } catch (err) { next(err); }
 };
