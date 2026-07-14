@@ -412,6 +412,7 @@ function FeedContent() {
 
 function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: string, isLiked: boolean) => void; currentUserId?: string }) {
   const [showComments, setShowComments] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   interface CommentData {
     id: string;
     content: string;
@@ -470,8 +471,77 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
     return new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   };
 
+  // Close lightbox on ESC
+  useEffect(() => {
+    if (!lightboxImage) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxImage(null);
+    };
+    window.addEventListener('keydown', handleKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
+    };
+  }, [lightboxImage]);
+
   return (
     <div className="glass" style={{ overflow: 'hidden' }}>
+      {/* Lightbox */}
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10000,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'zoom-out',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+        >
+          {/* Close button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxImage(null); }}
+            style={{
+              position: 'absolute', top: '20px', right: '20px',
+              width: '44px', height: '44px', borderRadius: '50%',
+              border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer',
+              background: 'rgba(0,0,0,0.5)', color: 'white',
+              fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s', zIndex: 1,
+            }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,0,127,0.6)'; e.currentTarget.style.borderColor = '#ff007f'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+            aria-label="Cerrar"
+          >✕</button>
+
+          {/* Image */}
+          <img
+            src={lightboxImage}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '90vw', maxHeight: '90vh',
+              borderRadius: '8px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              objectFit: 'contain', userSelect: 'none',
+              animation: 'lightboxZoomIn 0.3s ease-out',
+            }}
+          />
+
+          {/* Footer hint */}
+          <div style={{
+            position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+            color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem',
+            display: 'flex', alignItems: 'center', gap: '8px',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            </svg>
+            ESC para cerrar
+          </div>
+        </div>
+      )}
+
       {/* Post header */}
       <div style={{ padding: '20px 20px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -520,8 +590,41 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
 
         {/* Media */}
         {post.mediaUrl && (
-          <div style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '12px' }}>
-            <img src={post.mediaUrl} alt="" style={{ width: '100%', maxHeight: '400px', objectFit: 'cover' }} />
+          <div
+            style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '12px', cursor: 'zoom-in', position: 'relative' }}
+            onClick={() => setLightboxImage(post.mediaUrl!)}
+            onMouseOver={e => {
+              const img = e.currentTarget.querySelector('img');
+              const overlay = e.currentTarget.querySelector('.media-overlay');
+              if (img) img.style.transform = 'scale(1.02)';
+              if (overlay) (overlay as HTMLElement).style.opacity = '1';
+            }}
+            onMouseOut={e => {
+              const img = e.currentTarget.querySelector('img');
+              const overlay = e.currentTarget.querySelector('.media-overlay');
+              if (img) img.style.transform = 'scale(1)';
+              if (overlay) (overlay as HTMLElement).style.opacity = '0';
+            }}
+          >
+            <img
+              src={post.mediaUrl}
+              alt=""
+              style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', transition: 'transform 0.3s ease', display: 'block' }}
+            />
+            <div className="media-overlay" style={{
+              position: 'absolute', inset: 0, borderRadius: '12px',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 50%)',
+              opacity: 0, transition: 'opacity 0.3s',
+              display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '12px',
+              pointerEvents: 'none',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <line x1="11" y1="8" x2="11" y2="14"/>
+                <line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+            </div>
           </div>
         )}
 
