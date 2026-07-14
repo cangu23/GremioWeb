@@ -12,7 +12,7 @@ import Link from 'next/link';
 interface SocialUser {
   id: string;
   username: string;
-  vtuberProfile?: { displayName: string; avatarUrl: string | null } | null;
+  vtuberProfile?: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
 }
 
 interface Post {
@@ -281,13 +281,10 @@ function ProfileContent() {
               )}
             </h1>
             {vtuber?.isVerified && (
-              <span style={{
-                background: 'linear-gradient(135deg, var(--accent), #00aaff)',
-                color: '#fff', fontSize: '0.8rem', fontWeight: 700,
-                padding: '3px 10px', borderRadius: '20px',
-              }}>
-                ✓
-              </span>
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-label="Verificado" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             )}
             {vtuber?.isFeatured && (
               <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent)' }}>FEATURED</span>
@@ -891,7 +888,15 @@ function ProfileContent() {
                     {!f.vtuberProfile?.avatarUrl && (f.vtuberProfile?.displayName || f.username).charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{f.vtuberProfile?.displayName || f.username}</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {f.vtuberProfile?.displayName || f.username}
+                      {f.vtuberProfile?.isVerified && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado">
+                          <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                          <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{f.username}</div>
                   </div>
                 </Link>

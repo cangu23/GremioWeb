@@ -62,7 +62,8 @@ export const searchByUsername = async (query: string) => {
     select: {
       id: true,
       username: true,
-      vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+      role: true,
+      vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
     },
     take: 50,
     orderBy: { username: 'asc' },

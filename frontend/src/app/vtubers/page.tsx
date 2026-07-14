@@ -11,8 +11,10 @@ import ClientOnly from '@/lib/ClientOnly';
 interface VTuberCard {
   id: string;
   username: string;
+  role?: string;
   displayName?: string;
   avatarUrl?: string | null;
+  vtuberProfile?: { displayName?: string; avatarUrl?: string | null; isVerified?: boolean; isApproved?: boolean } | null;
 }
 
 function VtubersContent() {
@@ -95,13 +97,19 @@ function VtubersContent() {
                 }}>
                   {!v.avatarUrl && (v.displayName || v.username).charAt(0).toUpperCase()}
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: '1.05rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: '1.05rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {v.displayName || v.username}
+                    {v.vtuberProfile?.isVerified && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" aria-label="Verificado">
+                        <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                        <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
                   </div>
                   <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>@{v.username}</div>
                 </div>
-                <div style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '0.85rem' }}>
+                <div style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '0.85rem', flexShrink: 0 }}>
                   Ver perfil →
                 </div>
               </div>

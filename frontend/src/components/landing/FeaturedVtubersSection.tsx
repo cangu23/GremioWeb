@@ -215,7 +215,10 @@ export default function FeaturedVtubersSection() {
                 }} />
               )}
               {vtuber.isVerified && (
-                <span style={{ color: 'var(--accent)', fontSize: '0.8rem' }}>✓</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-label="Verificado">
+                  <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               )}
             </button>
           ))}
@@ -277,7 +280,10 @@ export default function FeaturedVtubersSection() {
                     {activeVtuber.displayName}
                   </h3>
                   {activeVtuber.isVerified && (
-                    <span style={{ color: 'var(--accent)', fontSize: '1.1rem' }}>✓</span>
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-label="Verificado">
+                      <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                      <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                   )}
                 </div>
                 <p style={{
