@@ -647,7 +647,7 @@ function ProfileContent() {
 
             {/* Stream Info */}
             {(vtuber?.streamSchedule || languagesList.length > 0) && (
-              <div className="glass" style={{ padding: '24px', borderRadius: '16px' }}>
+              <div className="glass" style={{ padding: '24px', borderRadius: '16px', borderLeft: `3px solid ${themeColor}` }}>
                 <h3 style={{
                   fontSize: '1rem', fontWeight: 700, marginBottom: '16px',
                   display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
@@ -688,7 +688,7 @@ function ProfileContent() {
           </div>
 
           {/* ===== RIGHT COLUMN — POSTS FEED ===== */}
-          <div>
+          <div style={{ borderLeft: `3px solid ${themeColor}`, paddingLeft: '16px' }}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               marginBottom: '16px',
