@@ -44,6 +44,10 @@ export const disconnectSocket = () => {
   }
 };
 
+export const NOTIFICATION_EVENTS = {
+  NEW: 'notification:new',
+} as const;
+
 export const CHAT_EVENTS = {
   MESSAGE: 'chat:message',
   HISTORY: 'chat:history',

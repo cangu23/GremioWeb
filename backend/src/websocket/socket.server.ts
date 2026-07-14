@@ -9,8 +9,11 @@ interface AuthenticatedSocket extends Socket {
   username?: string;
 }
 
+let io: Server;
+export { io };
+
 export const createSocketServer = (httpServer: HttpServer) => {
-  const io = new Server(httpServer, {
+  io = new Server(httpServer, {
     cors: {
       origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         // In development, allow all origins
@@ -45,6 +48,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
     // Join default global room
     socket.join('global');
+    // Join personal room for notifications & targeted events
+    socket.join(`user:${userId}`);
 
     // Send recent message history
     const recentMessages = await prisma.chatMessage.findMany({

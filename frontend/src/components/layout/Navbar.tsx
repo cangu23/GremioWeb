@@ -4,22 +4,62 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
+import { connectSocket, NOTIFICATION_EVENTS } from '@/lib/socket-client';
+import { useToast } from '@/lib/ToastContext';
 import ClientOnly from '@/lib/ClientOnly';
 import styles from './Navbar.module.css';
 
 function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!user) { setUnreadCount(0); return; }
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    // Fetch initial unread count
     const fetchUnread = async () => {
       try { const data = await apiFetch('/notifications/unread-count', {}); setUnreadCount(data.count); } catch {}
     };
     fetchUnread();
     const interval = setInterval(fetchUnread, 60000);
-    return () => clearInterval(interval);
-  }, [user]);
+
+    // Connect socket for real-time notifications
+    let sock: any;
+    const setupSocket = () => {
+      try {
+        sock = connectSocket();
+
+        // Listen for new notifications
+        sock.on(NOTIFICATION_EVENTS.NEW, (notification: {
+          id: string;
+          userId: string;
+          type: string;
+          title: string;
+          message: string;
+          referenceId: string | null;
+          read: boolean;
+          createdAt: string;
+        }) => {
+          setUnreadCount(prev => prev + 1);
+          showToast(`🔔 ${notification.title}`, 'success');
+        });
+      } catch (err) {
+        console.warn('[Socket] Could not connect for notifications:', err);
+      }
+    };
+    setupSocket();
+
+    return () => {
+      clearInterval(interval);
+      if (sock) {
+        sock.off(NOTIFICATION_EVENTS.NEW);
+      }
+    };
+  }, [user, showToast]);
 
   const linkStyle: React.CSSProperties = {
     color: 'var(--text-secondary)',
