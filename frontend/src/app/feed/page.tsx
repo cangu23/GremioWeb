@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch, getAccessToken } from '@/lib/api';
 import { useRouter } from 'next/navigation';
@@ -367,7 +367,7 @@ function FeedContent() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {posts.map(post => (
-                <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user?.id} />
+                <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user?.id} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
               ))}
               {hasMore && (
                 <button onClick={loadMore} disabled={loadingMore} className="btn" style={{
@@ -410,9 +410,59 @@ function FeedContent() {
   );
 }
 
-function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: string, isLiked: boolean) => void; currentUserId?: string }) {
+function PostCard({ post, onLike, currentUserId, onDelete }: { post: Post; onLike: (id: string, isLiked: boolean) => void; currentUserId?: string; onDelete?: (id: string) => void }) {
   const [showComments, setShowComments] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
+  const isOwner = currentUserId === post.userId;
+
+  const handleEdit = async () => {
+    if (!editContent.trim()) return;
+    setSaving(true);
+    try {
+      const updated = await apiFetch(`/posts/${post.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content: editContent.trim() }),
+      });
+      post.content = updated.content;
+      setEditing(false);
+      setMenuOpen(false);
+    } catch {
+      // Error handled silently
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await apiFetch(`/posts/${post.id}`, { method: 'DELETE' });
+      setShowDeleteConfirm(false);
+      onDelete?.(post.id);
+    } catch {
+      setDeleting(false);
+    }
+  };
   interface CommentData {
     id: string;
     content: string;
@@ -471,19 +521,22 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
     return new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   };
 
-  // Close lightbox on ESC
+  // Close lightbox or delete confirmation on ESC
   useEffect(() => {
-    if (!lightboxImage) return;
+    if (!lightboxImage && !showDeleteConfirm) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxImage(null);
+      if (e.key === 'Escape') {
+        setLightboxImage(null);
+        setShowDeleteConfirm(false);
+      }
     };
     window.addEventListener('keydown', handleKey);
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = lightboxImage ? 'hidden' : '';
     return () => {
       window.removeEventListener('keydown', handleKey);
       document.body.style.overflow = '';
     };
-  }, [lightboxImage]);
+  }, [lightboxImage, showDeleteConfirm]);
 
   return (
     <div className="glass" style={{ overflow: 'hidden' }}>
@@ -542,6 +595,75 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
         </div>
       )}
 
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div
+          onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10001,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            animation: 'fadeIn 0.15s ease-out',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '16px', padding: '28px', maxWidth: '400px', width: '90%',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              animation: 'lightboxZoomIn 0.2s ease-out',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{
+                width: '40px', height: '40px', borderRadius: '50%',
+                background: 'rgba(255,77,106,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Eliminar publicación</h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  ¿Estás seguro? Esta acción no se puede deshacer.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                style={{
+                  padding: '8px 20px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: '0.85rem',
+                  transition: 'all 0.2s',
+                }}
+                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+              >Cancelar</button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                style={{
+                  padding: '8px 20px', borderRadius: '8px', border: 'none',
+                  background: 'linear-gradient(135deg, #ff4d6a, #ff1a4f)',
+                  color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
+                  transition: 'all 0.2s',
+                }}
+                onMouseOver={e => (e.currentTarget.style.opacity = '0.9')}
+                onMouseOut={e => (e.currentTarget.style.opacity = '1')}
+              >{deleting ? 'Eliminando...' : 'Eliminar'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Post header */}
       <div style={{ padding: '20px 20px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -558,7 +680,7 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
               {!post.user.vtuberProfile?.avatarUrl && (post.user.vtuberProfile?.displayName || post.user.username).charAt(0).toUpperCase()}
             </div>
           </Link>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <Link href={`/profile/${post.user.id}`} style={{ color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               {post.user.vtuberProfile?.displayName || post.user.username}
               {(post.user.role === 'VTUBER' || post.user.vtuberProfile?.isApproved) && (
@@ -571,22 +693,116 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
               @{post.user.username} · {timeAgo(post.createdAt)}
             </div>
           </div>
-          {post.isPinned && <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--primary)' }}>Fijado</span>}
+          {post.isPinned && <span style={{ fontSize: '0.75rem', color: 'var(--primary)', marginRight: '8px' }}>Fijado</span>}
+          {/* Three-dot menu for post owner */}
+          {isOwner && (
+            <div ref={menuRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                style={{
+                  width: '32px', height: '32px', borderRadius: '50%',
+                  border: 'none', background: menuOpen ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  color: 'var(--text-muted)', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.2rem', transition: 'all 0.2s', flexShrink: 0,
+                }}
+                onMouseOver={e => { if (!menuOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                onMouseOut={e => { if (!menuOpen) e.currentTarget.style.background = 'transparent'; }}
+                aria-label="Opciones"
+              >⋮</button>
+              {menuOpen && (
+                <div style={{
+                  position: 'absolute', right: 0, top: '100%', marginTop: '4px',
+                  minWidth: '150px', zIndex: 100,
+                  background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px', padding: '4px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                  animation: 'fadeInUp 0.12s ease-out',
+                }}>
+                  <button
+                    onClick={() => { setEditContent(post.content); setEditing(true); setMenuOpen(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                      padding: '8px 12px', border: 'none', background: 'none',
+                      color: 'var(--text)', cursor: 'pointer', fontSize: '0.85rem',
+                      borderRadius: '6px', transition: 'background 0.15s',
+                    }}
+                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                    onMouseOut={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => { setShowDeleteConfirm(true); setMenuOpen(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                      padding: '8px 12px', border: 'none', background: 'none',
+                      color: '#ff4d6a', cursor: 'pointer', fontSize: '0.85rem',
+                      borderRadius: '6px', transition: 'background 0.15s',
+                    }}
+                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,106,0.1)')}
+                    onMouseOut={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                    Eliminar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Post content */}
-        <p style={{ fontSize: '0.95rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: '12px' }}>
-          {post.content.split(/(#\w+)/g).map((part, i) => {
-            if (part.startsWith('#')) {
-              return <Link key={i} href={`/feed?tag=${part.slice(1)}`} style={{ color: 'var(--primary)', fontWeight: 500 }}>{part}</Link>;
-            }
-            if (part.startsWith('@')) {
-              // Note: @mentions link to vtubers search since we don't resolve username→id in render
-              return <Link key={i} href={`/vtubers?q=${encodeURIComponent(part.slice(1))}`} style={{ color: 'var(--secondary)', fontWeight: 500 }}>{part}</Link>;
-            }
-            return part;
-          })}
-        </p>
+        {/* Post content or edit mode */}
+        {editing ? (
+          <div style={{ marginBottom: '12px' }}>
+            <textarea
+              className="input"
+              style={{ width: '100%', minHeight: '80px', fontSize: '0.95rem', lineHeight: 1.6, resize: 'vertical', marginBottom: '8px' }}
+              value={editContent}
+              onChange={e => setEditContent(e.target.value)}
+              maxLength={2000}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{editContent.length}/2000</span>
+              <button
+                onClick={() => { setEditing(false); setEditContent(post.content); }}
+                style={{
+                  padding: '6px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: '0.85rem',
+                  transition: 'all 0.2s',
+                }}
+                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+              >Cancelar</button>
+              <button
+                onClick={handleEdit}
+                disabled={saving || !editContent.trim()}
+                className="btn"
+                style={{ padding: '6px 16px', fontSize: '0.85rem' }}
+              >{saving ? 'Guardando...' : 'Guardar'}</button>
+            </div>
+          </div>
+        ) : (
+          <p style={{ fontSize: '0.95rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: '12px' }}>
+            {post.content.split(/(#\w+)/g).map((part, i) => {
+              if (part.startsWith('#')) {
+                return <Link key={i} href={`/feed?tag=${part.slice(1)}`} style={{ color: 'var(--primary)', fontWeight: 500 }}>{part}</Link>;
+              }
+              if (part.startsWith('@')) {
+                return <Link key={i} href={`/vtubers?q=${encodeURIComponent(part.slice(1))}`} style={{ color: 'var(--secondary)', fontWeight: 500 }}>{part}</Link>;
+              }
+              return part;
+            })}
+          </p>
+        )}
 
         {/* Media */}
         {post.mediaUrl && (
