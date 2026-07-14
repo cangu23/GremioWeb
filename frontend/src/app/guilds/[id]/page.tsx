@@ -512,6 +512,29 @@ function GuildDetailContent() {
     }
   };
 
+  const handleKickMember = async (memberId: string, targetUserId: string, username: string) => {
+    if (!confirm(`¿Expulsar a @${username} del gremio?`)) return;
+    setChangingRoleId(memberId);
+    setOpenRoleMenuId(null);
+    try {
+      await apiFetch(`/guilds/${id}/members/${targetUserId}`, { method: 'DELETE' });
+      // Remove member from local guild state
+      setGuild(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          _count: { ...prev._count, members: prev._count.members - 1 },
+          members: prev.members.filter(m => m.id !== memberId),
+        };
+      });
+      setError('');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al expulsar miembro');
+    } finally {
+      setChangingRoleId(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm('¿Eliminar el gremio para siempre?')) return;
     setActionLoading(true);
@@ -1299,6 +1322,23 @@ function GuildDetailContent() {
                                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                                   >
                                     👑 Transferir liderazgo
+                                  </button>
+
+                                  {/* Kick member */}
+                                  <button
+                                    onClick={() => handleKickMember(member.id, member.user.id, member.user.username)}
+                                    style={{
+                                      display: 'flex', alignItems: 'center', gap: '8px',
+                                      width: '100%', padding: '8px 12px', border: 'none',
+                                      background: 'transparent',
+                                      color: '#f44336', borderRadius: '6px', cursor: 'pointer',
+                                      fontSize: '0.8rem', textAlign: 'left', transition: 'all 0.1s',
+                                      fontWeight: 600,
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,67,54,0.1)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                  >
+                                    🚫 Expulsar
                                   </button>
                                 </div>
                               </>
