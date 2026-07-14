@@ -1,5 +1,5 @@
 import prisma from '../../database/prisma';
-import { io } from '../../websocket/socket.server';
+import { emitNotification } from './emit-notification';
 
 export const findNotificationsByUser = (userId: string, limit = 50) =>
   prisma.notification.findMany({
@@ -26,22 +26,7 @@ export const createNotification = async (data: {
   const notification = await prisma.notification.create({ data });
 
   // Emit real-time notification via Socket.IO to the user's personal room
-  try {
-    if (io) {
-      io.to(`user:${notification.userId}`).emit('notification:new', {
-        id: notification.id,
-        userId: notification.userId,
-        type: notification.type,
-        title: notification.title,
-        message: notification.message,
-        referenceId: notification.referenceId,
-        read: notification.read,
-        createdAt: notification.createdAt.toISOString(),
-      });
-    }
-  } catch (err) {
-    console.error('[Socket] Error emitting notification:', err);
-  }
+  emitNotification(notification);
 
   return notification;
 };

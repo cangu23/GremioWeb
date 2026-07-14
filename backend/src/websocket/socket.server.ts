@@ -9,11 +9,15 @@ interface AuthenticatedSocket extends Socket {
   username?: string;
 }
 
-let io: Server;
-export { io };
+/**
+ * Object wrapper for the Socket.IO server instance.
+ * We use an object so that CommonJS consumers get a mutable reference
+ * (exports.io = value copies the value; mutating a shared object works).
+ */
+export const ioContext: { instance: Server | null } = { instance: null };
 
 export const createSocketServer = (httpServer: HttpServer) => {
-  io = new Server(httpServer, {
+  const io = new Server(httpServer, {
     cors: {
       origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         // In development, allow all origins
@@ -39,6 +43,9 @@ export const createSocketServer = (httpServer: HttpServer) => {
       next(new Error('Invalid token'));
     }
   });
+
+  // Store the instance for cross-module access
+  ioContext.instance = io;
 
   io.on('connection', async (socket: AuthenticatedSocket) => {
     const userId = socket.userId!;
