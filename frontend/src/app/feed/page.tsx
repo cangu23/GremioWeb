@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getAccessToken } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
@@ -143,7 +143,7 @@ function FeedContent() {
     const formData = new FormData();
     formData.append('image', file);
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'http://localhost:4000';
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const token = getAccessToken();
     const res = await fetch(`${baseUrl}/api/uploads/post`, {
       method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
