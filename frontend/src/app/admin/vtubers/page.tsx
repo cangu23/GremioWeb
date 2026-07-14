@@ -35,12 +35,16 @@ export default function AdminVtubersPage() {
   const [loadingUnverified, setLoadingUnverified] = useState(true);
   const [unapprovedData, setUnapprovedData] = useState<AdminVtuber[]>([]);
   const [loadingUnapproved, setLoadingUnapproved] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+  const [quickVerifyError, setQuickVerifyError] = useState(false);
+  const [quickApprovalError, setQuickApprovalError] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<AdminVtuber | null>(null);
   const [editData, setEditData] = useState({ displayName: '', description: '', avatarUrl: '' });
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
+    setFetchError(false);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
       if (search) params.set('search', search);
@@ -48,25 +52,34 @@ export default function AdminVtubersPage() {
       if (filterApproved) params.set('isApproved', filterApproved);
       const res = await apiFetch(`/admin/vtubers?${params}`);
       setData(res);
-    } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
+    } catch (err: unknown) {
+      setFetchError(true);
+      showToast(err instanceof Error ? err.message : 'Error de conexión', 'error');
+    }
     finally { setLoading(false); }
   };
 
   const fetchUnverified = async () => {
     setLoadingUnverified(true);
+    setQuickVerifyError(false);
     try {
       const res = await apiFetch('/admin/vtubers?isVerified=false&limit=10');
       setUnverifiedData(res.data || []);
-    } catch {}
+    } catch {
+      setQuickVerifyError(true);
+    }
     finally { setLoadingUnverified(false); }
   };
 
   const fetchUnapproved = async () => {
     setLoadingUnapproved(true);
+    setQuickApprovalError(false);
     try {
       const res = await apiFetch('/admin/vtubers?isApproved=false&limit=10');
       setUnapprovedData(res.data || []);
-    } catch {}
+    } catch {
+      setQuickApprovalError(true);
+    }
     finally { setLoadingUnapproved(false); }
   };
 
@@ -150,7 +163,7 @@ export default function AdminVtubersPage() {
       </div>
 
       {/* ===== QUICK VERIFY SECTION ===== */}
-      {!loadingUnverified && unverifiedData.length > 0 && (
+      {!loadingUnverified && unverifiedData.length > 0 && !quickVerifyError && (
         <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid rgba(0,212,255,0.15)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <div style={{
@@ -230,8 +243,41 @@ export default function AdminVtubersPage() {
         </div>
       )}
 
+      {/* ===== QUICK VERIFY RETRY ===== */}
+      {!loadingUnverified && quickVerifyError && (
+        <div className="glass" style={{ padding: '24px', borderRadius: '16px', marginBottom: '24px', textAlign: 'center', border: '1px solid rgba(244,67,54,0.2)' }}>
+          <div style={{ color: '#f44336', fontSize: '0.9rem', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            No se pudieron cargar los VTubers pendientes de verificar
+          </div>
+          <button
+            onClick={fetchUnverified}
+            className="btn"
+            style={{
+              padding: '10px 24px', fontSize: '0.85rem', borderRadius: '10px',
+              background: 'rgba(29,155,240,0.15)', color: '#1d9bf0',
+              border: '1px solid rgba(29,155,240,0.3)', fontWeight: 600,
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              transition: 'all 0.2s',
+            }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(29,155,240,0.25)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'rgba(29,155,240,0.15)'; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* ===== QUICK APPROVAL SECTION ===== */}
-      {!loadingUnapproved && unapprovedData.length > 0 && (
+      {!loadingUnapproved && unapprovedData.length > 0 && !quickApprovalError && (
         <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid rgba(33,150,243,0.15)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <div style={{
@@ -333,6 +379,36 @@ export default function AdminVtubersPage() {
       <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando VTubers...</div>
+        ) : fetchError ? (
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <div style={{ color: '#f44336', fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              Error al cargar los VTubers
+            </div>
+            <button
+              onClick={fetchData}
+              className="btn"
+              style={{
+                padding: '10px 24px', fontSize: '0.9rem', borderRadius: '10px',
+                background: 'rgba(138,43,226,0.15)', color: '#8a2be2',
+                border: '1px solid rgba(138,43,226,0.3)', fontWeight: 600,
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.25)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.15)'; }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Reintentar
+            </button>
+          </div>
         ) : !data || data.data.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron VTubers</div>
         ) : (
