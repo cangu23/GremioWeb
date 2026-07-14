@@ -101,6 +101,18 @@ export const changeMemberRole = async (req: Request, res: Response, next: NextFu
   }
 };
 
+export const transferLeadership = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const requesterId = req.user!.id;
+    const guildId = String(req.params.id);
+    const targetUserId = String(req.params.userId);
+    const result = await GuildsService.transferLeadership(guildId, targetUserId, requesterId);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getMyGuilds = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;

@@ -172,6 +172,34 @@ export const changeMemberRole = async (guildId: string, targetUserId: string, ne
   return { message: `Rol actualizado a ${newRole}.`, member: updated };
 };
 
+export const transferLeadership = async (guildId: string, targetUserId: string, requesterId: string) => {
+  if (targetUserId === requesterId) {
+    throw new AppError('No puedes transferirte el liderazgo a ti mismo.', 400);
+  }
+
+  const requester = await GuildsRepository.findMember(guildId, requesterId);
+  if (!requester || requester.role !== 'LEADER') {
+    throw new AppError('Solo el líder puede transferir el liderazgo.', 403);
+  }
+
+  const target = await GuildsRepository.findMember(guildId, targetUserId);
+  if (!target) {
+    throw new AppError('El usuario no es miembro de este gremio.', 404);
+  }
+
+  // Swap roles: target → LEADER, requester → OFFICER
+  await GuildsRepository.updateMemberRole(guildId, targetUserId, 'LEADER');
+  await GuildsRepository.updateMemberRole(guildId, requesterId, 'OFFICER');
+
+  // Update guild creator to the new leader
+  await GuildsRepository.updateGuild(guildId, { creatorId: targetUserId });
+
+  return {
+    message: 'Liderazgo transferido correctamente.',
+    newLeaderId: targetUserId,
+  };
+};
+
 export const getMyGuilds = async (userId: string) => {
   return GuildsRepository.findGuildsByUser(userId);
 };

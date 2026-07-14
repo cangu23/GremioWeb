@@ -413,6 +413,22 @@ function GuildDetailContent() {
     }
   };
 
+  const handleTransferLeadership = async (memberId: string, targetUserId: string, username: string) => {
+    if (!confirm(`¿Transferir el liderazgo a @${username}? Te convertirás en Oficial.`)) return;
+    setChangingRoleId(memberId);
+    setOpenRoleMenuId(null);
+    try {
+      await apiFetch(`/guilds/${id}/members/${targetUserId}/transfer`, { method: 'POST' });
+      // Refetch guild to get full updated state
+      await fetchGuild();
+      setError('');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al transferir liderazgo');
+    } finally {
+      setChangingRoleId(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm('¿Eliminar el gremio para siempre?')) return;
     setActionLoading(true);
@@ -999,7 +1015,7 @@ function GuildDetailContent() {
                                   position: 'absolute', top: '100%', right: '0', zIndex: 100,
                                   background: 'rgba(20,20,30,0.95)', backdropFilter: 'blur(12px)',
                                   border: '1px solid var(--glass-border)',
-                                  borderRadius: '8px', padding: '4px', minWidth: '130px',
+                                  borderRadius: '8px', padding: '4px', minWidth: '150px',
                                   boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
                                 }}>
                                   {['OFFICER', 'MEMBER'].map(roleOption => (
@@ -1027,6 +1043,29 @@ function GuildDetailContent() {
                                       )}
                                     </button>
                                   ))}
+
+                                  {/* Divider */}
+                                  <div style={{
+                                    height: '1px', background: 'var(--glass-border)',
+                                    margin: '4px 0',
+                                  }} />
+
+                                  {/* Transfer leadership */}
+                                  <button
+                                    onClick={() => handleTransferLeadership(member.id, member.user.id, member.user.username)}
+                                    style={{
+                                      display: 'flex', alignItems: 'center', gap: '8px',
+                                      width: '100%', padding: '8px 12px', border: 'none',
+                                      background: 'transparent',
+                                      color: '#ff007f', borderRadius: '6px', cursor: 'pointer',
+                                      fontSize: '0.8rem', textAlign: 'left', transition: 'all 0.1s',
+                                      fontWeight: 600,
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,0,127,0.1)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                                  >
+                                    👑 Transferir liderazgo
+                                  </button>
                                 </div>
                               </>
                             )}
