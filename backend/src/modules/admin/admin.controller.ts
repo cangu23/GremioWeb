@@ -63,7 +63,14 @@ export const listVtubers = async (req: Request, res: Response, next: NextFunctio
   try {
     const result = await AdminService.listVtubers(req.query as unknown as AdminQueryInput);
     res.json(result);
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('[ADMIN VTUBERS] Error listing VTubers:', {
+      message: (err as Error)?.message,
+      stack: (err as Error)?.stack?.split('\n').slice(0, 5).join('\n'),
+      query: req.query,
+    });
+    next(err);
+  }
 };
 
 export const getVtuberDetail = async (req: Request, res: Response, next: NextFunction) => {
