@@ -76,9 +76,23 @@ export const getSocialProfile = async (userId: string, currentUserId?: string) =
 };
 
 export const getFollowers = async (userId: string) => {
-  return SocialRepository.getFollowers(userId);
+  const follows = await SocialRepository.getFollowers(userId);
+  return follows.map(f => ({
+    ...f.follower,
+    vtuberProfile: f.follower.vtuberProfile ? {
+      ...f.follower.vtuberProfile,
+      isVerified: f.follower.vtuberProfile.isVerified ?? false,
+    } : null,
+  }));
 };
 
 export const getFollowing = async (userId: string) => {
-  return SocialRepository.getFollowing(userId);
+  const follows = await SocialRepository.getFollowing(userId);
+  return follows.map(f => ({
+    ...f.following,
+    vtuberProfile: f.following.vtuberProfile ? {
+      ...f.following.vtuberProfile,
+      isVerified: f.following.vtuberProfile.isVerified ?? false,
+    } : null,
+  }));
 };

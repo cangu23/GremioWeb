@@ -43,6 +43,7 @@ export const getFollowers = (userId: string) => {
             select: {
               displayName: true,
               avatarUrl: true,
+              isVerified: true,
             },
           },
         },
@@ -64,6 +65,7 @@ export const getFollowing = (userId: string) => {
             select: {
               displayName: true,
               avatarUrl: true,
+              isVerified: true,
             },
           },
         },
