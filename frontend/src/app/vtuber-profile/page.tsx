@@ -270,7 +270,7 @@ function VtuberProfileEditor() {
             👁️ Así te ve la comunidad — Vista previa en vivo
           </div>
 
-          {/* Banner preview */}
+          {/* Banner preview - matches public profile exactly */}
           <div style={{
             position: 'relative', width: '100%',
             height: 'clamp(160px, 25vw, 280px)',
@@ -289,16 +289,18 @@ function VtuberProfileEditor() {
             }}>
               <div style={{
                 width: '90px', height: '90px', borderRadius: '50%',
-                background: avatarUrl
-                  ? `url(${avatarUrl}) center/cover`
-                  : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                background: avatarUrl ? 'transparent' : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                 border: '3px solid var(--background)',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '2rem', color: 'white', fontWeight: 'bold',
-                margin: '0 auto 12px', overflow: 'hidden',
+                margin: '0 auto 12px', overflow: 'hidden', position: 'relative',
               }}>
-                {!avatarUrl && (displayName || user.username).charAt(0).toUpperCase()}
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                ) : (
+                  (displayName || user.username).charAt(0).toUpperCase()
+                )}
               </div>
             </div>
           </div>

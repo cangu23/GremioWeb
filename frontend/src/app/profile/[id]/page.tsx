@@ -199,10 +199,26 @@ function ProfileContent() {
           : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
         overflow: 'hidden',
       }}>
+        {/* Decorative rings */}
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          width: 'min(80vw, 500px)', height: 'min(80vw, 500px)',
+          borderRadius: '50%',
+          border: '1px solid rgba(138,43,226,0.08)',
+          pointerEvents: 'none', zIndex: 0,
+        }} />
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          width: 'min(60vw, 380px)', height: 'min(60vw, 380px)',
+          borderRadius: '50%',
+          border: '1px solid rgba(138,43,226,0.06)',
+          pointerEvents: 'none', zIndex: 0,
+        }} />
+
         {/* Gradient overlay */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, transparent 40%, var(--background) 100%)',
+          background: 'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.3) 70%, var(--background) 100%)',
           zIndex: 1,
         }} />
 
@@ -210,7 +226,7 @@ function ProfileContent() {
         <div style={{
           position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
           width: '300px', height: '300px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(138,43,226,0.15), transparent 70%)',
+          background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent 70%)',
           pointerEvents: 'none', zIndex: 0,
         }} />
 
@@ -239,20 +255,31 @@ function ProfileContent() {
             height: 'clamp(100px, 15vw, 140px)',
             borderRadius: '50%',
             background: avatarUrl
-              ? `url(${avatarUrl}) center/cover`
+              ? 'transparent'
               : 'linear-gradient(135deg, var(--primary), var(--secondary))',
             border: '4px solid var(--background)',
             boxShadow: '0 8px 40px rgba(0,0,0,0.4), 0 0 40px rgba(138,43,226,0.15)',
             margin: '0 auto 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 'clamp(2rem, 4vw, 3.5rem)', color: 'white', fontWeight: 'bold',
-            overflow: 'hidden',
-            transition: 'transform 0.3s ease',
+            overflow: 'hidden', position: 'relative',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 12px 60px rgba(138,43,226,0.3), 0 0 60px rgba(138,43,226,0.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,0,0,0.4), 0 0 40px rgba(138,43,226,0.15)'; }}
           >
-            {!avatarUrl && displayName.charAt(0).toUpperCase()}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                style={{
+                  width: '100%', height: '100%', objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+            ) : (
+              displayName.charAt(0).toUpperCase()
+            )}
           </div>
         </div>
       </div>
@@ -334,46 +361,53 @@ function ProfileContent() {
         </div>
 
         {/* ===== STATS ROW ===== */}
-        <div className="glass" style={{
+        <div style={{
           maxWidth: '600px', margin: '0 auto 32px',
-          padding: '20px 24px', borderRadius: '16px',
-          display: 'flex', justifyContent: 'center', gap: '40px', flexWrap: 'wrap',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '0',
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: '16px',
+          border: '1px solid var(--glass-border)',
+          overflow: 'hidden',
         }}>
           <button onClick={loadFollowers} style={{
-            background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer',
-            textAlign: 'center', padding: '4px 16px', borderRadius: '10px',
-            transition: 'background 0.2s',
+            background: 'none', border: 'none', borderRight: '1px solid var(--glass-border)',
+            color: 'var(--text)', cursor: 'pointer',
+            textAlign: 'center', padding: '20px 8px',
+            transition: 'all 0.2s', position: 'relative',
           }}
-            onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-            onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--primary)' }}>
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile._count.followers}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Seguidores</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Seguidores</div>
           </button>
           <button onClick={loadFollowing} style={{
-            background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer',
-            textAlign: 'center', padding: '4px 16px', borderRadius: '10px',
-            transition: 'background 0.2s',
+            background: 'none', border: 'none', borderRight: '1px solid var(--glass-border)',
+            color: 'var(--text)', cursor: 'pointer',
+            textAlign: 'center', padding: '20px 8px',
+            transition: 'all 0.2s',
           }}
-            onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-            onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--primary)' }}>
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile._count.following}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Siguiendo</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Siguiendo</div>
           </button>
-          <div style={{ textAlign: 'center', padding: '4px 16px' }}>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--primary)' }}>
+          <div style={{ textAlign: 'center', padding: '20px 8px', borderRight: '1px solid var(--glass-border)' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile.level || 0}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Nivel</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Nivel</div>
           </div>
-          <div style={{ textAlign: 'center', padding: '4px 16px' }}>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--primary)' }}>
+          <div style={{ textAlign: 'center', padding: '20px 8px' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile.xp || 0}
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>XP</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>XP</div>
           </div>
         </div>
 
@@ -499,12 +533,16 @@ function ProfileContent() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Description */}
             {vtuber?.description && (
-              <div className="glass" style={{ padding: '24px', borderRadius: '16px' }}>
+              <div className="glass" style={{
+                padding: '24px', borderRadius: '16px',
+                borderLeft: '3px solid var(--primary)',
+              }}>
                 <h3 style={{
-                  fontSize: '1rem', fontWeight: 700, marginBottom: '12px',
-                  display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
+                  fontSize: '0.85rem', fontWeight: 700, marginBottom: '12px',
+                  textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)',
+                  display: 'flex', alignItems: 'center', gap: '8px',
                 }}>
-                  Descripción
+                  📝 Descripción
                 </h3>
                 <p style={{
                   fontSize: '0.95rem', lineHeight: 1.8, color: 'var(--text)',
@@ -517,7 +555,10 @@ function ProfileContent() {
 
             {/* Lore */}
             {vtuber?.lore && (
-              <div className="glass" style={{ padding: '24px', borderRadius: '16px' }}>
+              <div className="glass" style={{
+                padding: '24px', borderRadius: '16px',
+                borderLeft: '3px solid var(--secondary)',
+              }}>
                 <button
                   onClick={() => setShowLore(!showLore)}
                   style={{
@@ -527,7 +568,7 @@ function ProfileContent() {
                   }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                    Lore / Historia
+                    📖 Lore / Historia
                   </span>
                   <span style={{
                     fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600,
