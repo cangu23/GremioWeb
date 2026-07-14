@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
+import Link from 'next/link';
 
 interface DashboardStats {
   totalUsers: number;
@@ -16,6 +17,7 @@ interface DashboardStats {
   totalLikes: number;
   totalMessages: number;
   pendingReports: number;
+  pendingVtuberRequests: number;
   newUsersToday: number;
   newUsersThisWeek: number;
   newUsersThisMonth: number;
@@ -40,6 +42,7 @@ const ICONS = {
   likes: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
   messages: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
   reports: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+  requests: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
 };
 
 const statCards = [
@@ -53,6 +56,7 @@ const statCards = [
   { key: 'totalLikes', label: 'Likes', color: '#f44336', icon: 'likes' },
   { key: 'totalMessages', label: 'Mensajes', color: '#4caf50', icon: 'messages' },
   { key: 'pendingReports', label: 'Reportes Pendientes', color: '#ff5722', icon: 'reports' },
+  { key: 'pendingVtuberRequests', label: 'Solicitudes VTuber', color: '#ff007f', icon: 'requests', link: '/admin/vtuber-requests' },
 ];
 
 const activityLabels: Record<string, string> = {
@@ -111,27 +115,64 @@ export default function AdminDashboardPage() {
 
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '40px' }}>
-        {statCards.map((card) => (
-          <div
-            key={card.key}
-            className="glass"
-            style={{
-              padding: '20px',
-              borderRadius: '16px',
-              transition: 'all 0.3s ease',
-              cursor: 'default',
-              border: `1px solid ${card.color}22`,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = `${card.color}44`; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = `${card.color}22`; }}
-          >
-            <div style={{ color: card.color, marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} dangerouslySetInnerHTML={{ __html: ICONS[card.icon as keyof typeof ICONS] }} />
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: card.color, marginBottom: '4px' }}>
-              {stats?.[card.key as keyof DashboardStats]?.toLocaleString() || '0'}
+        {statCards.map((card) => {
+          const cardContent = (
+            <>
+              <div style={{ color: card.color, marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} dangerouslySetInnerHTML={{ __html: ICONS[card.icon as keyof typeof ICONS] }} />
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: card.color, marginBottom: '4px' }}>
+                {stats?.[card.key as keyof DashboardStats]?.toLocaleString() || '0'}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{card.label}</div>
+            </>
+          );
+
+          return card.link ? (
+            <Link
+              key={card.key}
+              href={card.link}
+              className="glass"
+              style={{
+                padding: '20px',
+                borderRadius: '16px',
+                transition: 'all 0.3s ease',
+                textDecoration: 'none',
+                border: `1px solid ${card.color}22`,
+                display: 'block',
+                position: 'relative',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = `${card.color}44`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = `${card.color}22`; }}
+            >
+              {cardContent}
+              {stats?.[card.key as keyof DashboardStats] ? (
+                <div style={{
+                  position: 'absolute', top: '10px', right: '10px',
+                  padding: '2px 8px', borderRadius: '10px',
+                  background: card.color, color: '#fff',
+                  fontSize: '0.7rem', fontWeight: 700,
+                }}>
+                  Pendientes
+                </div>
+              ) : null}
+            </Link>
+          ) : (
+            <div
+              key={card.key}
+              className="glass"
+              style={{
+                padding: '20px',
+                borderRadius: '16px',
+                transition: 'all 0.3s ease',
+                cursor: 'default',
+                border: `1px solid ${card.color}22`,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = `${card.color}44`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = `${card.color}22`; }}
+            >
+              {cardContent}
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{card.label}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* New Registrations */}
