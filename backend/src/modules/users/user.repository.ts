@@ -29,36 +29,38 @@ export const createUser = async (data: CreateUserPayload) => {
 
 export const searchByUsername = async (query: string) => {
   // Build the VTuber filter (must be VTUBER role or approved)
-  const vtuberFilter = {
+  // Build search filter (match username or displayName, case-insensitive)
+  const vtuberFilter: Prisma.UserWhereInput = {
     OR: [
-      { role: 'VTUBER' as const },
+      { role: 'VTUBER' },
       { vtuberProfile: { isApproved: true } },
     ],
   };
 
-  // If query is empty, just return all VTubers
-  const where = !query
-    ? { where: { AND: [vtuberFilter] } }
-    : {
-        where: {
-          AND: [
-            vtuberFilter,
-            {
-              OR: [
-                { username: { contains: query, mode: 'insensitive' } },
-                {
-                  vtuberProfile: {
-                    displayName: { contains: query, mode: 'insensitive' },
-                  },
-                },
-              ],
-            },
+  const insensitiveContains = (value: string) => ({
+    contains: value,
+    mode: Prisma.QueryMode.insensitive,
+  });
+
+  let where: Prisma.UserWhereInput;
+  if (!query) {
+    where = vtuberFilter;
+  } else {
+    where = {
+      AND: [
+        vtuberFilter,
+        {
+          OR: [
+            { username: insensitiveContains(query) },
+            { vtuberProfile: { displayName: insensitiveContains(query) } },
           ],
         },
-      };
+      ],
+    };
+  }
 
   return prisma.user.findMany({
-    ...where,
+    where,
     select: {
       id: true,
       username: true,
