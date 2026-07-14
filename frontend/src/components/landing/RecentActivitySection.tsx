@@ -11,7 +11,8 @@ interface ActivityPost {
   user: {
     id: string;
     username: string;
-    vtuberProfile?: { displayName: string; avatarUrl: string | null } | null;
+    role?: string;
+    vtuberProfile?: { displayName: string; avatarUrl: string | null; isApproved?: boolean } | null;
   };
   _count: { comments: number; likes: number };
 }
@@ -289,15 +290,21 @@ function ActivityPosts({ data }: { data: ActivityPost[] }) {
               overflow: 'hidden', flexShrink: 0,
             }}>
               {!post.user.vtuberProfile?.avatarUrl && (post.user.vtuberProfile?.displayName || post.user.username).charAt(0).toUpperCase()}
-            </div>
-            <div style={{ fontSize: '0.85rem' }}>
-              <span style={{ fontWeight: 600 }}>
-                {post.user.vtuberProfile?.displayName || post.user.username}
-              </span>
-              <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>
-                · {formatTimeAgo(post.createdAt)}
-              </span>
-            </div>
+            </div>              <div style={{ fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontWeight: 600 }}>
+                    {post.user.vtuberProfile?.displayName || post.user.username}
+                  </span>
+                  {(post.user.role === 'VTUBER' || post.user.vtuberProfile?.isApproved) && (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff007f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="VTuber Oficial">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                  )}
+                </div>
+                <span style={{ color: 'var(--text-muted)' }}>
+                  · {formatTimeAgo(post.createdAt)}
+                </span>
+              </div>
           </div>
           {/* Content preview */}
           <p style={{

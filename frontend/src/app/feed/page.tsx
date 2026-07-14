@@ -19,7 +19,8 @@ interface Post {
   user: {
     id: string;
     username: string;
-    vtuberProfile?: { displayName: string; avatarUrl: string | null } | null;
+    role?: string;
+    vtuberProfile?: { displayName: string; avatarUrl: string | null; isApproved?: boolean; isVerified?: boolean } | null;
   };
   _count: { comments: number; likes: number };
   isLikedByMe: boolean;
@@ -243,7 +244,8 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
     user: {
       id: string;
       username: string;
-      vtuberProfile?: { displayName: string; avatarUrl: string | null } | null;
+      role?: string;
+      vtuberProfile?: { displayName: string; avatarUrl: string | null; isApproved?: boolean } | null;
     };
   }
   const [comments, setComments] = useState<CommentData[]>([]);
@@ -311,8 +313,13 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
             </div>
           </Link>
           <div style={{ minWidth: 0 }}>
-            <Link href={`/profile/${post.user.id}`} style={{ color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem' }}>
+            <Link href={`/profile/${post.user.id}`} style={{ color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               {post.user.vtuberProfile?.displayName || post.user.username}
+              {(post.user.role === 'VTUBER' || post.user.vtuberProfile?.isApproved) && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff007f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="VTuber Oficial">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              )}
             </Link>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               @{post.user.username} · {timeAgo(post.createdAt)}
@@ -410,8 +417,13 @@ function PostCard({ post, onLike, currentUserId }: { post: Post; onLike: (id: st
                     </div>
                   </Link>
                   <div style={{ flex: 1 }}>
-                    <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)', textDecoration: 'none' }}>
+                    <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       {comment.user?.vtuberProfile?.displayName || comment.user?.username}
+                      {(comment.user?.role === 'VTUBER' || comment.user?.vtuberProfile?.isApproved) && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff007f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="VTuber Oficial">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                      )}
                     </Link>
                     <p style={{ margin: '2px 0 0', fontSize: '0.85rem', lineHeight: 1.4 }}>{comment.content}</p>
                   </div>
