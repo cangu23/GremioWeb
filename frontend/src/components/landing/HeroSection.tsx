@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const TITLE_PARTS = [
   { text: 'El', delay: 0 },
@@ -58,9 +59,12 @@ export default function HeroSection() {
           marginBottom: '24px',
         }}
       >
-        <img
+        <Image
           src="/logo.png"
           alt="Gremio Estelar"
+          width={0}
+          height={0}
+          sizes="100vw"
           style={{
             height: '100px',
             width: 'auto',

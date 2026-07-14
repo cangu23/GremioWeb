@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ActivityEvent {
   id: string;
@@ -575,7 +576,7 @@ export default function RecentActivity() {
                       }}
                     >
                       {item.achievement.iconUrl
-                        ? <img src={item.achievement.iconUrl} alt="" style={{ width: '28px', height: '28px' }} />
+                        ? <Image src={item.achievement.iconUrl} alt="" width={28} height={28} unoptimized />
                         : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
                       }
                     </div>

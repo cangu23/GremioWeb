@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
 
 interface FeaturedPost {
@@ -491,9 +492,13 @@ export default function FeaturedVtubersSection() {
                         <div style={{
                           borderRadius: '12px', overflow: 'hidden', marginBottom: '12px',
                         }}>
-                          <img
+                          <Image
                             src={post.mediaUrl}
                             alt=""
+                            width={0}
+                            height={0}
+                            sizes="100vw"
+                            unoptimized
                             style={{ width: '100%', maxHeight: '300px', objectFit: 'cover' }}
                           />
                         </div>

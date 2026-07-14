@@ -10,6 +10,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers } from '@gremio-estelar/shared';
 import Link from 'next/link';
+import Image from 'next/image';
 
 function VtuberProfileEditor() {
   const { user, isLoading } = useAuth();
@@ -312,7 +313,7 @@ function VtuberProfileEditor() {
                 margin: '0 auto 12px', overflow: 'hidden', position: 'relative',
               }}>
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <Image src={avatarUrl} alt="Avatar" width={0} height={0} sizes="100vw" unoptimized style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 ) : (
                   (displayName || user.username).charAt(0).toUpperCase()
                 )}

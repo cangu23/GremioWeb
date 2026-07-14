@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { connectSocket, NOTIFICATION_EVENTS } from '@/lib/socket-client';
@@ -355,7 +356,7 @@ export default function Navbar() {
     >
       <div className={styles.navContainer}>
         <Link href="/" className={styles.logo} onClick={() => setMenuOpen(false)}>
-          <img src="/logo.png" alt="Gremio Estelar" style={{ height: '30px', width: 'auto' }} />
+          <Image src="/logo.png" alt="Gremio Estelar" width={0} height={0} sizes="100vw" style={{ height: '30px', width: 'auto' }} />
         </Link>
 
         {/* Desktop nav */}

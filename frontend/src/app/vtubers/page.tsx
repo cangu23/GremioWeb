@@ -31,6 +31,7 @@ function VtubersContent() {
       setLoading(true);
       apiFetch('/users/search', {}).then(setRecentUsers).catch(() => {}).finally(() => setLoading(false));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = async (e: React.FormEvent) => {

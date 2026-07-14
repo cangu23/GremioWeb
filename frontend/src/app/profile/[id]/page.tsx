@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface SocialUser {
   id: string;
@@ -271,9 +272,13 @@ function ProfileContent() {
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,0,0,0.4), 0 0 40px rgba(138,43,226,0.15)'; }}
           >
             {avatarUrl ? (
-              <img
+              <Image
                 src={avatarUrl}
                 alt={displayName}
+                width={0}
+                height={0}
+                sizes="100vw"
+                unoptimized
                 style={{
                   width: '100%', height: '100%', objectFit: 'cover',
                   display: 'block',
@@ -785,7 +790,7 @@ function ProfileContent() {
                     {/* Media */}
                     {post.mediaUrl && (
                       <div style={{ borderRadius: '10px', overflow: 'hidden', marginBottom: '10px' }}>
-                        <img src={post.mediaUrl} alt="" style={{ width: '100%', maxHeight: '300px', objectFit: 'cover' }} />
+                        <Image src={post.mediaUrl} alt="" width={0} height={0} sizes="100vw" unoptimized style={{ width: '100%', maxHeight: '300px', objectFit: 'cover' }} />
                       </div>
                     )}
 
