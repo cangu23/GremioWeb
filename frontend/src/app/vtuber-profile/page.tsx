@@ -94,6 +94,19 @@ function VtuberProfileEditor() {
   const [discordUrl, setDiscordUrl] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
 
+  // Theme color
+  const THEME_COLORS = [
+    { name: 'Púrpura', color: '#8a2be2' },
+    { name: 'Rosa', color: '#ff007f' },
+    { name: 'Azul', color: '#2196f3' },
+    { name: 'Verde', color: '#00e676' },
+    { name: 'Naranja', color: '#ff9800' },
+    { name: 'Rojo', color: '#f44336' },
+    { name: 'Cian', color: '#00bcd4' },
+    { name: 'Oro', color: '#ffd700' },
+  ];
+  const [themeColor, setThemeColor] = useState('');
+
   // Arrays
   const [languagesInput, setLanguagesInput] = useState('');
   const [hashtagsInput, setHashtagsInput] = useState('');
@@ -111,6 +124,7 @@ function VtuberProfileEditor() {
       setLore(p.lore || '');
       setFanName(p.fanName || '');
       setOshiMark(p.oshiMark || '');
+      setThemeColor(p.themeColor || '');
       setContentType(p.contentType || '');
       setStreamSchedule(p.streamSchedule || '');
       setIsLive(p.isLive || false);
@@ -149,6 +163,7 @@ function VtuberProfileEditor() {
           lore: lore || undefined,
           fanName: fanName || undefined,
           oshiMark: oshiMark || undefined,
+          themeColor: themeColor || undefined,
           contentType: contentType || undefined,
           streamSchedule: streamSchedule || undefined,
           isLive,
@@ -543,6 +558,51 @@ function VtuberProfileEditor() {
                 <input className="input" value={contentType} onChange={e => setContentType(e.target.value)}
                   placeholder="Ej: Gaming, Musica" />
               </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label">
+                Tema de Color
+                <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.8rem', marginLeft: '4px' }}>
+                  (elige un color para tu perfil)
+                </span>
+              </label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {THEME_COLORS.map(tc => (
+                  <button
+                    key={tc.color}
+                    type="button"
+                    onClick={() => setThemeColor(themeColor === tc.color ? '' : tc.color)}
+                    title={tc.name}
+                    style={{
+                      width: '36px', height: '36px', borderRadius: '50%',
+                      background: tc.color,
+                      border: themeColor === tc.color ? '3px solid white' : '2px solid transparent',
+                      boxShadow: themeColor === tc.color ? `0 0 12px ${tc.color}80` : 'none',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      transform: themeColor === tc.color ? 'scale(1.15)' : 'scale(1)',
+                    }}
+                    onMouseEnter={e => { if (themeColor !== tc.color) e.currentTarget.style.transform = 'scale(1.1)'; }}
+                    onMouseLeave={e => { if (themeColor !== tc.color) e.currentTarget.style.transform = 'scale(1)'; }}
+                  />
+                ))}
+              </div>
+              {themeColor && (
+                <div style={{
+                  marginTop: '8px', fontSize: '0.8rem', color: 'var(--text-muted)',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                }}>
+                  <span style={{
+                    width: '14px', height: '14px', borderRadius: '4px',
+                    background: themeColor, display: 'inline-block',
+                  }} />
+                  {themeColor}
+                  <button type="button" onClick={() => setThemeColor('')} style={{
+                    background: 'none', border: 'none', color: 'var(--text-muted)',
+                    cursor: 'pointer', fontSize: '0.75rem', padding: '0',
+                    textDecoration: 'underline',
+                  }}>Quitar</button>
+                </div>
+              )}
             </div>
           </div>
 

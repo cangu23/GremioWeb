@@ -46,6 +46,7 @@ interface SocialProfile {
     contentType: string | null;
     streamSchedule: string | null;
     languages: string | null;
+    themeColor?: string | null;
     isLive: boolean;
     isVerified: boolean;
     isApproved: boolean;
@@ -171,6 +172,7 @@ function ProfileContent() {
   const avatarUrl = vtuber?.avatarUrl;
   const bannerUrl = vtuber?.bannerUrl;
   const displayName = vtuber?.displayName || profile.username;
+  const themeColor = vtuber?.themeColor || 'var(--primary)';
 
   // Parse languages
   let languagesList: string[] = [];
@@ -535,7 +537,7 @@ function ProfileContent() {
             {vtuber?.description && (
               <div className="glass" style={{
                 padding: '24px', borderRadius: '16px',
-                borderLeft: '3px solid var(--primary)',
+                borderLeft: `3px solid ${themeColor}`,
               }}>
                 <h3 style={{
                   fontSize: '0.85rem', fontWeight: 700, marginBottom: '12px',
@@ -557,7 +559,7 @@ function ProfileContent() {
             {vtuber?.lore && (
               <div className="glass" style={{
                 padding: '24px', borderRadius: '16px',
-                borderLeft: '3px solid var(--secondary)',
+                borderLeft: `3px solid ${themeColor}`,
               }}>
                 <button
                   onClick={() => setShowLore(!showLore)}
@@ -571,7 +573,7 @@ function ProfileContent() {
                     📖 Lore / Historia
                   </span>
                   <span style={{
-                    fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600,
+                    fontSize: '0.85rem', color: themeColor, fontWeight: 600,
                     transition: 'transform 0.3s',
                     transform: showLore ? 'rotate(180deg)' : 'rotate(0deg)',
                   }}>
@@ -597,7 +599,7 @@ function ProfileContent() {
 
             {/* Social Links */}
             {socialLinks.length > 0 && (
-              <div className="glass" style={{ padding: '24px', borderRadius: '16px' }}>
+              <div className="glass" style={{ padding: '24px', borderRadius: '16px', borderTop: `3px solid ${themeColor}` }}>
                 <h3 style={{
                   fontSize: '1rem', fontWeight: 700, marginBottom: '16px',
                   display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
@@ -645,7 +647,7 @@ function ProfileContent() {
                   fontSize: '1rem', fontWeight: 700, marginBottom: '16px',
                   display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
                 }}>
-                  Información de Stream
+                  📡 Información de Stream
                 </h3>
                 {vtuber?.streamSchedule && (
                   <div style={{ marginBottom: languagesList.length > 0 ? '14px' : 0 }}>

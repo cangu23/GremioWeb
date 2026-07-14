@@ -87,7 +87,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       'displayName', 'avatarUrl', 'bannerUrl', 'description', 'lore',
       'twitchUrl', 'youtubeUrl', 'kickUrl', 'tiktokUrl', 'twitterUrl',
       'discordUrl', 'websiteUrl', 'streamSchedule', 'contentType',
-      'live2dModel', 'model3d', 'fanName', 'oshiMark', 'isLive',
+      'live2dModel', 'model3d', 'fanName', 'oshiMark', 'themeColor', 'isLive',
     ];
     
     const dataRecord = data as unknown as Record<string, unknown>;

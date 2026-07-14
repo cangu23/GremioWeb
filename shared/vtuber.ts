@@ -21,6 +21,7 @@ export interface VTuberProfile {
   model3d?: string | null;
   fanName?: string | null;
   oshiMark?: string | null;
+  themeColor?: string | null;
   hashtags?: string | null;
   isLive?: boolean;
   isVerified?: boolean;
@@ -50,6 +51,7 @@ export interface UpdateVTuberProfilePayload {
   model3d?: string;
   fanName?: string;
   oshiMark?: string;
+  themeColor?: string;
   hashtags?: string[];
   isLive?: boolean;
 }

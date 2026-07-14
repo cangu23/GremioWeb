@@ -22,6 +22,7 @@ export const updateUserSchema = z.object({
     model3d: z.string().url().optional().or(z.literal('')),
     fanName: z.string().max(100).optional(),
     oshiMark: z.string().max(20).optional(),
+    themeColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Color hex inválido (ej: #8a2be2)').optional().or(z.literal('')),
     hashtags: z.array(z.string()).optional(),
     socialLinks: z.record(z.string().url()).optional(),
     isLive: z.boolean().optional(),
