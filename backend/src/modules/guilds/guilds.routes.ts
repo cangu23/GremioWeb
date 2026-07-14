@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as GuildsController from './guilds.controller';
 import { authenticate } from '../auth/authenticate';
 import { optionalAuth } from '../auth/optionalAuth';
+import channelsRouter from './channels.routes';
 
 const router = Router();
 
@@ -21,5 +22,8 @@ router.delete('/:id', authenticate, GuildsController.remove);
 router.post('/:id/join', authenticate, GuildsController.join);
 router.post('/:id/leave', authenticate, GuildsController.leave);
 router.delete('/:id/members/:userId', authenticate, GuildsController.kickMember);
+
+// Channels (nested under guild)
+router.use('/:guildId/channels', channelsRouter);
 
 export default router;

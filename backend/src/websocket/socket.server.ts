@@ -136,6 +136,76 @@ export const createSocketServer = (httpServer: HttpServer) => {
       console.log(`[Socket] ${username} joined room: ${data.room}`);
     });
 
+    // ===== GUILD CHANNEL MESSAGING =====
+
+    // Join a guild's channels for real-time messaging
+    socket.on('guild:join', (data: { guildId: string }) => {
+      const room = `guild:${data.guildId}`;
+      socket.join(room);
+      console.log(`[Socket] ${username} joined guild room: ${room}`);
+    });
+
+    // Leave a guild's channels
+    socket.on('guild:leave', (data: { guildId: string }) => {
+      const room = `guild:${data.guildId}`;
+      socket.leave(room);
+      console.log(`[Socket] ${username} left guild room: ${room}`);
+    });
+
+    // Send a message to a guild channel
+    socket.on('guild:message', async (data: { guildId: string; channelId: string; content: string }) => {
+      const content = data.content?.trim();
+      if (!content || content.length > 2000) return;
+
+      try {
+        // Verify membership
+        const member = await prisma.guildMember.findUnique({
+          where: { guildId_userId: { guildId: data.guildId, userId } },
+        });
+        if (!member) {
+          socket.emit('guild:error', { message: 'No eres miembro de este gremio.' });
+          return;
+        }
+
+        const message = await prisma.guildChannelMessage.create({
+          data: {
+            channelId: data.channelId,
+            guildId: data.guildId,
+            userId,
+            content,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
+              },
+            },
+          },
+        });
+
+        // Broadcast to all members in the guild room
+        io.to(`guild:${data.guildId}`).emit('guild:message', {
+          id: message.id,
+          channelId: message.channelId,
+          guildId: message.guildId,
+          content: message.content,
+          createdAt: message.createdAt.toISOString(),
+          user: {
+            id: message.user.id,
+            username: message.user.username,
+            displayName: message.user.vtuberProfile?.displayName ?? null,
+            avatarUrl: message.user.vtuberProfile?.avatarUrl ?? null,
+            isVerified: message.user.vtuberProfile?.isVerified ?? false,
+          },
+        });
+      } catch (err) {
+        console.error('[Socket] Error sending guild message:', err);
+        socket.emit('guild:error', { message: 'Error al enviar mensaje.' });
+      }
+    });
+
     socket.on('disconnect', () => {
       console.log(`[Socket] User disconnected: ${username} (${userId})`);
     });

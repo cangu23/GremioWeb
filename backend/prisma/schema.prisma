@@ -46,6 +46,7 @@ model User {
   guildsCreated Guild[]        @relation("guildCreator")
   guildMembers  GuildMember[]
   guildRequests GuildJoinRequest[]
+  guildChannelMessages GuildChannelMessage[]
 
   // Achievements
   achievements  UserAchievement[]
@@ -300,8 +301,41 @@ model Guild {
 
   members     GuildMember[]
   joinRequests GuildJoinRequest[]
+  channels    GuildChannel[]
 
   @@index([name])
+}
+
+model GuildChannel {
+  id        String   @id @default(cuid())
+  guildId   String
+  name      String                    // e.g. "general", "anuncios", "musica"
+  type      String   @default("TEXT") // TEXT or VOICE
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  messages  GuildChannelMessage[]
+
+  @@unique([guildId, name])
+  @@index([guildId, position])
+}
+
+model GuildChannelMessage {
+  id        String   @id @default(cuid())
+  channelId String
+  guildId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channel   GuildChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+  @@index([guildId, createdAt])
 }
 
 model GuildMember {
