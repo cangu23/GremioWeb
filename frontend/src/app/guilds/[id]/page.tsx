@@ -725,11 +725,14 @@ function GuildDetailContent() {
         }}>
           <div style={{
             width: '32px', height: '32px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+            background: user?.vtuberProfile?.avatarUrl
+              ? `url(${user.vtuberProfile.avatarUrl}) center/cover`
+              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'white', fontSize: '0.75rem', fontWeight: 'bold', flexShrink: 0,
+            overflow: 'hidden',
           }}>
-            {user?.username?.charAt(0).toUpperCase() || '?'}
+            {!user?.vtuberProfile?.avatarUrl && (user?.username?.charAt(0).toUpperCase() || '?')}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1174,12 +1177,14 @@ function GuildDetailContent() {
                           <div style={{ position: 'relative' }}>
                             <div style={{
                               width: '32px', height: '32px', borderRadius: '50%',
-                              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                              background: member.user.vtuberProfile?.avatarUrl
+                                ? `url(${member.user.vtuberProfile.avatarUrl}) center/cover`
+                                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0,
-                              opacity: isOnline ? 1 : 0.5,
+                              overflow: 'hidden', opacity: isOnline ? 1 : 0.5,
                             }}>
-                              {(member.user.vtuberProfile?.displayName || member.user.username).charAt(0).toUpperCase()}
+                              {!member.user.vtuberProfile?.avatarUrl && (member.user.vtuberProfile?.displayName || member.user.username).charAt(0).toUpperCase()}
                             </div>
                             {/* Online/Offline indicator */}
                             <div style={{
@@ -1482,8 +1487,8 @@ function NonMemberView({ guild, onJoin }: { guild: GuildDetail; onJoin: () => vo
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', marginBottom: '24px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--secondary), var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1rem', flexShrink: 0 }}>
-            {(guild.creator.vtuberProfile?.displayName || guild.creator.username).charAt(0).toUpperCase()}
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: guild.creator.vtuberProfile?.avatarUrl ? `url(${guild.creator.vtuberProfile.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--secondary), var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1rem', flexShrink: 0, overflow: 'hidden' }}>
+            {!guild.creator.vtuberProfile?.avatarUrl && (guild.creator.vtuberProfile?.displayName || guild.creator.username).charAt(0).toUpperCase()}
           </div>
           <div>
             <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{guild.creator.vtuberProfile?.displayName || guild.creator.username}</div>

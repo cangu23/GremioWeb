@@ -124,12 +124,14 @@ function EventCard({ event }: { event: EventItem }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '28px', height: '28px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+              background: event.creator.vtuberProfile?.avatarUrl
+                ? `url(${event.creator.vtuberProfile.avatarUrl}) center/cover`
+                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'white', fontWeight: 'bold', fontSize: '0.75rem',
-              flexShrink: 0,
+              flexShrink: 0, overflow: 'hidden',
             }}>
-              {(event.creator.vtuberProfile?.displayName || event.creator.username).charAt(0).toUpperCase()}
+              {!event.creator.vtuberProfile?.avatarUrl && (event.creator.vtuberProfile?.displayName || event.creator.username).charAt(0).toUpperCase()}
             </div>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               por <strong style={{ color: 'var(--text)' }}>
