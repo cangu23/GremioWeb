@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import prisma from '../../database/prisma';
 import * as AdminRepository from './admin.repository';
 import AppError from '../../errors/AppError';
 import { AdminQueryInput, PaginatedResponse } from './admin.types';
@@ -191,6 +192,39 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
       displayName: profile.displayName,
       changes,
     }, ip);
+  }
+
+  // Notify VTuber when approved or verified
+  try {
+    const updatedUser = updated.user;
+    if (!updatedUser) {
+      console.error('[Notifications] VTuber profile missing user relation for notification');
+    } else {
+      if (data.isApproved === true && profile.isApproved === false) {
+        await prisma.notification.create({
+          data: {
+            userId: updatedUser.id,
+            type: 'VTUBER_APPROVED',
+            title: '✅ ¡Felicidades, ahora eres VTuber oficial!',
+            message: `Tu perfil ha sido aprobado. ¡Bienvenido a la comunidad de VTubers! Ya puedes personalizar tu perfil, crear eventos y unirte a gremios.`,
+            referenceId: id,
+          },
+        });
+      }
+      if (data.isVerified === true && profile.isVerified === false) {
+        await prisma.notification.create({
+          data: {
+            userId: updatedUser.id,
+            type: 'VTUBER_VERIFIED',
+            title: '🔵 ¡Has sido verificado!',
+            message: `Tu cuenta ha sido verificada. Ahora lucirás la insignia azul de verificación en tu perfil, publicaciones y en toda la plataforma.`,
+            referenceId: id,
+          },
+        });
+      }
+    }
+  } catch (notifErr) {
+    console.error('[Notifications] Error sending VTuber notification:', notifErr);
   }
 
   return updated;
