@@ -17,8 +17,8 @@ function buildPaginationMeta(total: number, page: number, limit: number) {
 }
 
 function extractPagination(query: AdminQueryInput) {
-  const page = query.page || 1;
-  const limit = query.limit || 20;
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
   return { page, limit, skip: (page - 1) * limit };
 }
 
@@ -154,7 +154,7 @@ export const listVtubers = async (query: AdminQueryInput): Promise<PaginatedResp
       sortOrder: query.sortOrder,
       ...filters,
     }),
-    AdminRepository.countVtuberProfiles(filters),
+    AdminRepository.countVtuberProfiles({ search: query.search, ...filters }),
   ]);
 
   return { data, meta: buildPaginationMeta(total, page, limit) };
