@@ -42,7 +42,7 @@ const messageIncludes = {
     select: {
       id: true,
       username: true,
-      vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+      vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
     },
   },
 } as const;
@@ -68,6 +68,21 @@ export const findMessagesByChannel = (channelId: string, limit = 50, before?: st
     where,
     orderBy: { createdAt: 'desc' },
     take: limit,
+    include: messageIncludes,
+  });
+};
+
+export const findMessageById = (id: string) => {
+  return prisma.guildChannelMessage.findUnique({
+    where: { id },
+    include: messageIncludes,
+  });
+};
+
+export const updateMessage = (id: string, data: { content: string }) => {
+  return prisma.guildChannelMessage.update({
+    where: { id },
+    data: { content: data.content },
     include: messageIncludes,
   });
 };

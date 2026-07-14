@@ -83,6 +83,10 @@ function GuildDetailContent() {
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [newChannelName, setNewChannelName] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [deletingMsgId, setDeletingMsgId] = useState<string | null>(null);
+  const [hoverMsgId, setHoverMsgId] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const fetchGuild = useCallback(async () => {
@@ -160,19 +164,31 @@ function GuildDetailContent() {
     const sock = socketRef.current;
     if (!sock) return;
 
-    const handler = (msg: ChatMessage) => {
+    const onMessage = (msg: ChatMessage) => {
       if (msg.channelId === activeChannel) {
         setMessages(prev => [...prev, msg]);
       }
     };
 
-    sock.on('guild:message', handler);
+    const onMessageDeleted = (data: { messageId: string }) => {
+      setMessages(prev => prev.filter(m => m.id !== data.messageId));
+    };
+
+    const onMessageUpdated = (msg: ChatMessage) => {
+      setMessages(prev => prev.map(m => m.id === msg.id ? msg : m));
+    };
+
+    sock.on('guild:message', onMessage);
+    sock.on('guild:message:deleted', onMessageDeleted);
+    sock.on('guild:message:updated', onMessageUpdated);
     sock.on('guild:error', (err: { message: string }) => {
       console.warn('[Guild Socket]', err.message);
     });
 
     return () => {
-      sock.off('guild:message', handler);
+      sock.off('guild:message', onMessage);
+      sock.off('guild:message:deleted', onMessageDeleted);
+      sock.off('guild:message:updated', onMessageUpdated);
       sock.off('guild:error');
     };
   }, [activeChannel]);
@@ -215,6 +231,63 @@ function GuildDetailContent() {
       setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleEditMessage = async (messageId: string) => {
+    if (!editContent.trim()) return;
+    setActionLoading(true);
+    try {
+      await apiFetch(`/guilds/${id}/channels/${activeChannel}/messages/${messageId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ content: editContent.trim() }),
+      });
+      setEditingMessageId(null);
+      setEditContent('');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!confirm('¿Eliminar este mensaje?')) return;
+    setDeletingMsgId(messageId);
+    try {
+      await apiFetch(`/guilds/${id}/channels/${activeChannel}/messages/${messageId}`, {
+        method: 'DELETE',
+      });
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setDeletingMsgId(null);
+    }
+  };
+
+  const handleStartEdit = (msg: ChatMessage) => {
+    setEditingMessageId(msg.id);
+    setEditContent(msg.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditContent('');
+  };
+
+  const handleDeleteChannel = async (channelId: string, channelName: string) => {
+    if (!confirm(`¿Eliminar el canal #${channelName}? Todos los mensajes se perderán.`)) return;
+    try {
+      await apiFetch(`/guilds/${id}/channels/${channelId}`, { method: 'DELETE' });
+      const updatedChannels = channels.filter(c => c.id !== channelId);
+      setChannels(updatedChannels);
+      if (activeChannel === channelId) {
+        setActiveChannel(updatedChannels.length > 0 ? updatedChannels[0].id : null);
+        setMessages([]);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error');
     }
   };
 
@@ -352,23 +425,52 @@ function GuildDetailContent() {
           )}
 
           {channels.map(ch => (
-            <button
+            <div
               key={ch.id}
-              onClick={() => setActiveChannel(ch.id)}
               style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '8px 10px', borderRadius: '8px', fontSize: '0.85rem',
+                display: 'flex', alignItems: 'center', borderRadius: '8px', marginBottom: '2px',
                 background: activeChannel === ch.id ? 'rgba(138,43,226,0.15)' : 'transparent',
-                color: activeChannel === ch.id ? 'var(--primary)' : 'var(--text-muted)',
-                border: 'none', cursor: 'pointer', textAlign: 'left',
-                transition: 'all 0.15s', marginBottom: '2px',
+                transition: 'all 0.15s',
               }}
-              onMouseEnter={e => { if (activeChannel !== ch.id) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text)'; } }}
-              onMouseLeave={e => { if (activeChannel !== ch.id) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
             >
-              <span>#</span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.name}</span>
-            </button>
+              <button
+                onClick={() => setActiveChannel(ch.id)}
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '8px 10px', fontSize: '0.85rem',
+                  color: activeChannel === ch.id ? 'var(--primary)' : 'var(--text-muted)',
+                  border: 'none', cursor: 'pointer', textAlign: 'left',
+                  background: 'transparent',
+                  transition: 'color 0.15s', minWidth: 0,
+                }}
+                onMouseEnter={e => { if (activeChannel !== ch.id) { e.currentTarget.style.color = 'var(--text)'; } }}
+                onMouseLeave={e => { if (activeChannel !== ch.id) { e.currentTarget.style.color = 'var(--text-muted)'; } }}
+              >
+                <span>#</span>
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.name}</span>
+              </button>
+              {canManage && (
+                <button
+                  onClick={() => handleDeleteChannel(ch.id, ch.name)}
+                  style={{
+                    background: 'none', border: 'none', color: 'transparent',
+                    cursor: 'pointer', fontSize: '0.7rem', padding: '4px 6px', borderRadius: '4px',
+                    transition: 'all 0.15s', flexShrink: 0, lineHeight: 1,
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = '#f44336';
+                    e.currentTarget.style.background = 'rgba(244,67,54,0.12)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = 'transparent';
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                  title="Eliminar canal"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           ))}
         </div>
 
@@ -464,11 +566,17 @@ function GuildDetailContent() {
               const isSameUser = i > 0 && messages[i - 1].user.id === msg.user.id;
               const showAvatar = !isSameUser;
               const timeAgo = getTimeAgo(new Date(msg.createdAt));
+              const isOwn = user?.id === msg.user.id;
+              const canManageMsg = canManage || isOwn;
+              const isEditing = editingMessageId === msg.id;
+              const isDeleting = deletingMsgId === msg.id;
               return (
-                <div key={msg.id} style={{
-                  display: 'flex', gap: '12px', padding: '2px 0',
-                  marginTop: showAvatar ? '8px' : '0',
-                }}>
+                <div
+                  key={msg.id}
+                  style={{ display: 'flex', gap: '12px', padding: '2px 0', marginTop: showAvatar ? '8px' : '0', position: 'relative' }}
+                  onMouseEnter={() => setHoverMsgId(msg.id)}
+                  onMouseLeave={() => setHoverMsgId(null)}
+                >
                   {showAvatar ? (
                     <div style={{
                       width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0, marginTop: '2px',
@@ -499,10 +607,95 @@ function GuildDetailContent() {
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{timeAgo}</span>
                       </div>
                     )}
-                    <div style={{ fontSize: '0.9rem', lineHeight: 1.5, color: 'var(--text)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {msg.content}
-                    </div>
+
+                    {isEditing ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                        <textarea
+                          autoFocus
+                          value={editContent}
+                          onChange={e => setEditContent(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleEditMessage(msg.id);
+                            }
+                            if (e.key === 'Escape') handleCancelEdit();
+                          }}
+                          style={{
+                            width: '100%', padding: '10px 12px', borderRadius: '8px',
+                            background: 'rgba(0,0,0,0.3)', border: '1px solid var(--primary)',
+                            color: 'var(--text)', fontSize: '0.9rem', outline: 'none',
+                            resize: 'none', minHeight: '60px', fontFamily: 'inherit',
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => handleEditMessage(msg.id)}
+                            disabled={actionLoading || !editContent.trim()}
+                            style={{
+                              padding: '6px 16px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600,
+                              background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer',
+                            }}
+                          >
+                            {actionLoading ? 'Guardando...' : 'Guardar'}
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            style={{
+                              padding: '6px 16px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600,
+                              background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: 'none', cursor: 'pointer',
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.9rem', lineHeight: 1.5, color: 'var(--text)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {msg.content}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Hover actions: Edit / Delete */}
+                  {hoverMsgId === msg.id && canManageMsg && !isEditing && (
+                    <div style={{
+                      position: 'absolute', top: showAvatar ? '0' : '0', right: '0',
+                      display: 'flex', gap: '2px',
+                      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+                      borderRadius: '6px', padding: '2px',
+                    }}>
+                      {isOwn && (
+                        <button
+                          onClick={() => handleStartEdit(msg)}
+                          style={{
+                            background: 'none', border: 'none', color: 'var(--text-muted)',
+                            cursor: 'pointer', fontSize: '0.75rem', padding: '4px 7px', borderRadius: '4px',
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
+                          title="Editar mensaje"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        disabled={isDeleting}
+                        style={{
+                          background: 'none', border: 'none', color: 'var(--text-muted)',
+                          cursor: 'pointer', fontSize: '0.75rem', padding: '4px 7px', borderRadius: '4px',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#f44336'; e.currentTarget.style.background = 'rgba(244,67,54,0.15)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
+                        title="Eliminar mensaje"
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })

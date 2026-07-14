@@ -33,6 +33,38 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
   } catch (err) { next(err); }
 };
 
+export const updateMessage = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await ChannelsService.updateMessage(
+      String(req.params.messageId),
+      req.user!.id,
+      req.body.content,
+    );
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const deleteMessage = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await ChannelsService.deleteMessage(
+      String(req.params.messageId),
+      req.user!.id,
+    );
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const updateChannel = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await ChannelsService.updateChannel(
+      String(req.params.channelId),
+      req.body,
+      req.user!.id,
+    );
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
 export const getMessages = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = Math.min(100, Number(req.query.limit) || 50);
