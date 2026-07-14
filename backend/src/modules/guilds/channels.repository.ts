@@ -52,6 +52,7 @@ export const createMessage = (data: {
   guildId: string;
   userId: string;
   content: string;
+  imageUrl?: string;
 }) => {
   return prisma.guildChannelMessage.create({
     data,

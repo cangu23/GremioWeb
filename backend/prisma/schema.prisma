@@ -328,6 +328,7 @@ model GuildChannelMessage {
   guildId   String
   userId    String
   content   String
+  imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

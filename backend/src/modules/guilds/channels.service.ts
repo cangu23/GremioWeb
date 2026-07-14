@@ -69,7 +69,8 @@ export const deleteChannel = async (channelId: string, userId: string) => {
 export const sendMessage = async (data: {
   channelId: string;
   userId: string;
-  content: string;
+  content?: string;
+  imageUrl?: string;
 }) => {
   const channel = await ChannelsRepository.findChannelById(data.channelId);
   if (!channel) throw new AppError('Canal no encontrado.', 404);
@@ -77,14 +78,15 @@ export const sendMessage = async (data: {
   const member = await GuildsRepository.findMember(channel.guildId, data.userId);
   if (!member) throw new AppError('No eres miembro de este gremio.', 403);
 
-  if (!data.content?.trim()) throw new AppError('El mensaje no puede estar vacío.', 400);
-  if (data.content.length > 2000) throw new AppError('El mensaje es demasiado largo.', 400);
+  if (!data.content?.trim() && !data.imageUrl) throw new AppError('El mensaje no puede estar vacío.', 400);
+  if (data.content && data.content.length > 2000) throw new AppError('El mensaje es demasiado largo.', 400);
 
   return ChannelsRepository.createMessage({
     channelId: data.channelId,
     guildId: channel.guildId,
     userId: data.userId,
-    content: data.content.trim(),
+    content: data.content?.trim() || '',
+    imageUrl: data.imageUrl,
   });
 };
 

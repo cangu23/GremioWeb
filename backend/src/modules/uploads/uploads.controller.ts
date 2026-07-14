@@ -8,7 +8,8 @@ const uploadsDir = path.resolve(__dirname, '..', '..', '..', 'uploads');
 const avatarsDir = path.join(uploadsDir, 'avatars');
 const bannersDir = path.join(uploadsDir, 'banners');
 const postsDir = path.join(uploadsDir, 'posts');
-[uploadsDir, avatarsDir, bannersDir, postsDir].forEach(dir => {
+const guildDir = path.join(uploadsDir, 'guild');
+[uploadsDir, avatarsDir, bannersDir, postsDir, guildDir].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -73,6 +74,22 @@ export const uploadPostImage = multer({
   limits: { fileSize: MAX_FILE_SIZE },
 }).single('image');
 
+// Multer config for guild chat images
+const guildStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, guildDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const name = `guild-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, name);
+  },
+});
+
+export const uploadGuildImage = multer({
+  storage: guildStorage,
+  fileFilter,
+  limits: { fileSize: MAX_FILE_SIZE },
+}).single('image');
+
 // GET base URL for constructing file URLs
 // Uses x-forwarded-proto to detect HTTPS behind Render's proxy
 const getBaseUrl = (req: Request) => {
@@ -112,6 +129,27 @@ export const handleUploadBanner = async (req: Request, res: Response, next: Next
 
     const baseUrl = getBaseUrl(req);
     const url = `${baseUrl}/uploads/banners/${req.file.filename}`;
+
+    res.json({
+      status: 'success',
+      url,
+      filename: req.file.filename,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Upload guild chat image handler
+export const handleUploadGuildImage = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ status: 'error', message: 'No se seleccionó ninguna imagen.' });
+      return;
+    }
+
+    const baseUrl = getBaseUrl(req);
+    const url = `${baseUrl}/uploads/guild/${req.file.filename}`;
 
     res.json({
       status: 'success',

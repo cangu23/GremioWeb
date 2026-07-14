@@ -13,4 +13,7 @@ router.post('/banner', authenticate, UploadsController.uploadBanner, UploadsCont
 // Upload post image (requires auth)
 router.post('/post', authenticate, UploadsController.uploadPostImage, UploadsController.handleUploadPostImage);
 
+// Upload guild chat image (requires auth)
+router.post('/guild', authenticate, UploadsController.uploadGuildImage, UploadsController.handleUploadGuildImage);
+
 export default router;

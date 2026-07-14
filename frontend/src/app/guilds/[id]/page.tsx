@@ -50,6 +50,7 @@ interface ChatMessage {
   channelId: string;
   guildId: string;
   content: string;
+  imageUrl?: string;
   createdAt: string;
   user: {
     id: string;
@@ -92,6 +93,9 @@ function GuildDetailContent() {
   const lastTypingEmitRef = useRef<number>(0);
   const typingCleanupRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const fetchGuild = useCallback(async () => {
@@ -258,6 +262,41 @@ function GuildDetailContent() {
       isTyping: true,
     });
   }, [id, activeChannel]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeChannel || !socketRef.current) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      setError('Formato no soportado. Usa JPEG, PNG, WebP o GIF.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('La imagen es demasiado grande. Máximo 5MB.');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await fetch('/api/uploads/guild', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.url) {
+        socketRef.current.emit('guild:message', {
+          guildId: id as string,
+          channelId: activeChannel,
+          content: '',
+          imageUrl: data.url,
+        });
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al subir imagen');
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleSendMessage = () => {
     if (!input.trim() || !activeChannel || !socketRef.current) return;
@@ -780,9 +819,34 @@ function GuildDetailContent() {
                         </div>
                       </div>
                     ) : (
-                      <div style={{ fontSize: '0.9rem', lineHeight: 1.5, color: 'var(--text)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {msg.content}
-                      </div>
+                      <>
+                        <div style={{ fontSize: '0.9rem', lineHeight: 1.5, color: 'var(--text)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {msg.content}
+                        </div>
+                        {msg.imageUrl && (
+                          <div
+                            style={{
+                              marginTop: '6px', borderRadius: '8px', overflow: 'hidden',
+                              maxWidth: '400px', cursor: 'pointer',
+                              border: '1px solid var(--glass-border)',
+                              transition: 'opacity 0.2s',
+                            }}
+                            onClick={() => setLightboxImage(msg.imageUrl!)}
+                            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+                            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                          >
+                            <img
+                              src={msg.imageUrl}
+                              alt="Imagen del chat"
+                              style={{
+                                width: '100%', height: 'auto', maxHeight: '300px',
+                                objectFit: 'cover', display: 'block',
+                              }}
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -866,15 +930,38 @@ function GuildDetailContent() {
         {activeChannel && (
           <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--glass-border)' }}>
             <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
+              display: 'flex', alignItems: 'center', gap: '6px',
               background: 'rgba(0,0,0,0.25)', borderRadius: '10px',
-              padding: '4px 4px 4px 16px',
+              padding: '4px 4px 4px 8px',
               border: '1px solid var(--glass-border)',
               transition: 'border-color 0.2s',
             }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(138,43,226,0.3)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
             >
+              {/* Image upload button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingImage}
+                style={{
+                  background: 'none', border: 'none', color: 'var(--text-muted)',
+                  cursor: 'pointer', fontSize: '1.1rem', padding: '6px 8px',
+                  borderRadius: '6px', lineHeight: 1, transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; e.currentTarget.style.background = 'rgba(138,43,226,0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
+                title={uploadingImage ? 'Subiendo...' : 'Subir imagen'}
+              >
+                {uploadingImage ? '⏳' : '📷'}
+              </button>
+
               <input
                 ref={chatInputRef}
                 value={input}
@@ -1078,6 +1165,47 @@ function GuildDetailContent() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Lightbox for full-size image */}
+      {lightboxImage && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '40px', cursor: 'zoom-out',
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setLightboxImage(null)}
+        >
+          <img
+            src={lightboxImage}
+            alt="Imagen"
+            style={{
+              maxWidth: '90vw', maxHeight: '90vh',
+              borderRadius: '12px', objectFit: 'contain',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              animation: 'scaleIn 0.25s ease',
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setLightboxImage(null)}
+            style={{
+              position: 'absolute', top: '20px', right: '20px',
+              background: 'rgba(0,0,0,0.5)', border: 'none',
+              color: 'white', fontSize: '1.5rem', cursor: 'pointer',
+              width: '40px', height: '40px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; }}
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

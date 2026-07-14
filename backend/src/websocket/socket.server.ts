@@ -199,9 +199,10 @@ export const createSocketServer = (httpServer: HttpServer) => {
     });
 
     // Send a message to a guild channel
-    socket.on('guild:message', async (data: { guildId: string; channelId: string; content: string }) => {
+    socket.on('guild:message', async (data: { guildId: string; channelId: string; content?: string; imageUrl?: string }) => {
       const content = data.content?.trim();
-      if (!content || content.length > 2000) return;
+      if (!content && !data.imageUrl) return;
+      if (content && content.length > 2000) return;
 
       try {
         // Verify membership
@@ -218,7 +219,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
             channelId: data.channelId,
             guildId: data.guildId,
             userId,
-            content,
+            content: content || '',
+            imageUrl: data.imageUrl,
           },
           include: {
             user: {
@@ -237,6 +239,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
           channelId: message.channelId,
           guildId: message.guildId,
           content: message.content,
+          imageUrl: message.imageUrl,
           createdAt: message.createdAt.toISOString(),
           user: {
             id: message.user.id,
