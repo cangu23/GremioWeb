@@ -22,6 +22,7 @@ router.delete('/:id', authenticate, GuildsController.remove);
 router.post('/:id/join', authenticate, GuildsController.join);
 router.post('/:id/leave', authenticate, GuildsController.leave);
 router.delete('/:id/members/:userId', authenticate, GuildsController.kickMember);
+router.put('/:id/members/:userId/role', authenticate, GuildsController.changeMemberRole);
 
 // Channels (nested under guild)
 router.use('/:guildId/channels', channelsRouter);

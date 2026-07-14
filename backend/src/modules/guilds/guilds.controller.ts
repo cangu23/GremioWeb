@@ -88,6 +88,19 @@ export const kickMember = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+export const changeMemberRole = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const requesterId = req.user!.id;
+    const guildId = String(req.params.id);
+    const targetUserId = String(req.params.userId);
+    const { role } = req.body;
+    const result = await GuildsService.changeMemberRole(guildId, targetUserId, role, requesterId);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getMyGuilds = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;

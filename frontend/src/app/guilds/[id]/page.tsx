@@ -384,6 +384,35 @@ function GuildDetailContent() {
     finally { setActionLoading(false); }
   };
 
+  const [changingRoleId, setChangingRoleId] = useState<string | null>(null);
+  const [openRoleMenuId, setOpenRoleMenuId] = useState<string | null>(null);
+
+  const handleChangeRole = async (memberId: string, targetUserId: string, newRole: string) => {
+    setChangingRoleId(memberId);
+    setOpenRoleMenuId(null);
+    try {
+      const result = await apiFetch(`/guilds/${id}/members/${targetUserId}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ role: newRole }),
+      });
+      // Update local guild state
+      setGuild(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          members: prev.members.map(m =>
+            m.id === memberId ? { ...m, role: newRole } : m
+          ),
+        };
+      });
+      setError('');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cambiar rol');
+    } finally {
+      setChangingRoleId(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm('¿Eliminar el gremio para siempre?')) return;
     setActionLoading(true);
@@ -887,48 +916,123 @@ function GuildDetailContent() {
                   </div>
                   {roleMembers.map(member => {
                     const isOnline = onlineUsers.has(member.user.id);
+                    const isLeader = guild.myRole === 'LEADER';
+                    const canChangeRole = isLeader && member.role !== 'LEADER';
+                    const isRoleMenuOpen = openRoleMenuId === member.id;
+                    const isChanging = changingRoleId === member.id;
                     return (
-                      <Link
+                      <div
                         key={member.id}
-                        href={`/profile/${member.user.id}`}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: '10px',
-                          padding: '6px 8px', borderRadius: '8px', textDecoration: 'none',
-                          color: 'var(--text)', transition: 'background 0.15s',
+                          display: 'flex', alignItems: 'center', gap: '4px',
+                          padding: '6px 8px', borderRadius: '8px',
+                          transition: 'background 0.15s', position: 'relative',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                       >
-                        <div style={{ position: 'relative' }}>
-                          <div style={{
-                            width: '32px', height: '32px', borderRadius: '50%',
-                            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0,
-                            opacity: isOnline ? 1 : 0.5,
-                          }}>
-                            {(member.user.vtuberProfile?.displayName || member.user.username).charAt(0).toUpperCase()}
+                        <Link
+                          href={`/profile/${member.user.id}`}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '10px',
+                            textDecoration: 'none', color: 'var(--text)', flex: 1, minWidth: 0,
+                          }}
+                        >
+                          <div style={{ position: 'relative' }}>
+                            <div style={{
+                              width: '32px', height: '32px', borderRadius: '50%',
+                              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0,
+                              opacity: isOnline ? 1 : 0.5,
+                            }}>
+                              {(member.user.vtuberProfile?.displayName || member.user.username).charAt(0).toUpperCase()}
+                            </div>
+                            {/* Online/Offline indicator */}
+                            <div style={{
+                              position: 'absolute', bottom: '-1px', right: '-1px',
+                              width: '12px', height: '12px', borderRadius: '50%',
+                              background: isOnline ? '#00e676' : 'rgba(255,255,255,0.15)',
+                              border: isOnline ? '2px solid var(--bg)' : '2px solid var(--bg)',
+                              transition: 'background 0.3s ease',
+                            }} />
                           </div>
-                          {/* Online/Offline indicator */}
-                          <div style={{
-                            position: 'absolute', bottom: '-1px', right: '-1px',
-                            width: '12px', height: '12px', borderRadius: '50%',
-                            background: isOnline ? '#00e676' : 'rgba(255,255,255,0.15)',
-                            border: isOnline ? '2px solid var(--bg)' : '2px solid var(--bg)',
-                            transition: 'background 0.3s ease',
-                          }} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            fontSize: '0.85rem', fontWeight: 600,
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                            color: isOnline ? 'var(--text)' : 'var(--text-muted)',
-                            transition: 'color 0.3s ease',
-                          }}>
-                            {member.user.vtuberProfile?.displayName || member.user.username}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: '0.85rem', fontWeight: 600,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              color: isOnline ? 'var(--text)' : 'var(--text-muted)',
+                              transition: 'color 0.3s ease',
+                            }}>
+                              {member.user.vtuberProfile?.displayName || member.user.username}
+                            </div>
                           </div>
-                        </div>
-                      </Link>
+                        </Link>
+
+                        {/* Role management button (LEADER only, not on other leaders) */}
+                        {canChangeRole && (
+                          <div style={{ position: 'relative' }}>
+                            <button
+                              onClick={() => setOpenRoleMenuId(isRoleMenuOpen ? null : member.id)}
+                              disabled={isChanging}
+                              style={{
+                                background: 'none', border: 'none', color: 'var(--text-muted)',
+                                cursor: 'pointer', fontSize: '0.7rem', padding: '2px 6px',
+                                borderRadius: '4px', lineHeight: 1,
+                                transition: 'all 0.15s',
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
+                              title="Cambiar rol"
+                            >
+                              {isChanging ? '...' : '⚙'}
+                            </button>
+
+                            {/* Role dropdown */}
+                            {isRoleMenuOpen && (
+                              <>
+                                <div
+                                  style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+                                  onClick={() => setOpenRoleMenuId(null)}
+                                />
+                                <div style={{
+                                  position: 'absolute', top: '100%', right: '0', zIndex: 100,
+                                  background: 'rgba(20,20,30,0.95)', backdropFilter: 'blur(12px)',
+                                  border: '1px solid var(--glass-border)',
+                                  borderRadius: '8px', padding: '4px', minWidth: '130px',
+                                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                                }}>
+                                  {['OFFICER', 'MEMBER'].map(roleOption => (
+                                    <button
+                                      key={roleOption}
+                                      onClick={() => handleChangeRole(member.id, member.user.id, roleOption)}
+                                      style={{
+                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                        width: '100%', padding: '8px 12px', border: 'none',
+                                        background: member.role === roleOption ? 'rgba(138,43,226,0.15)' : 'transparent',
+                                        color: member.role === roleOption ? 'var(--primary)' : 'var(--text)',
+                                        borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem',
+                                        textAlign: 'left', transition: 'all 0.1s',
+                                        fontWeight: member.role === roleOption ? 700 : 400,
+                                      }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = member.role === roleOption ? 'rgba(138,43,226,0.15)' : 'transparent'; }}
+                                    >
+                                      <span style={{ fontSize: '0.9rem' }}>
+                                        {roleOption === 'OFFICER' ? '⭐' : '👤'}
+                                      </span>
+                                      <span>{roleOption === 'OFFICER' ? 'Oficial' : 'Miembro'}</span>
+                                      {member.role === roleOption && (
+                                        <span style={{ marginLeft: 'auto', color: 'var(--primary)' }}>✓</span>
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>

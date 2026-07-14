@@ -148,6 +148,30 @@ export const kickMember = async (guildId: string, targetUserId: string, requeste
   return { message: 'Miembro expulsado del gremio.' };
 };
 
+export const changeMemberRole = async (guildId: string, targetUserId: string, newRole: string, requesterId: string) => {
+  const requester = await GuildsRepository.findMember(guildId, requesterId);
+  if (!requester || requester.role !== 'LEADER') {
+    throw new AppError('Solo el líder puede cambiar roles.', 403);
+  }
+
+  const target = await GuildsRepository.findMember(guildId, targetUserId);
+  if (!target) {
+    throw new AppError('El usuario no es miembro de este gremio.', 404);
+  }
+
+  if (target.role === 'LEADER') {
+    throw new AppError('No puedes cambiar el rol del líder.', 400);
+  }
+
+  if (newRole !== 'OFFICER' && newRole !== 'MEMBER') {
+    throw new AppError('Rol inválido. Los roles permitidos son OFFICER y MEMBER.', 400);
+  }
+
+  const updated = await GuildsRepository.updateMemberRole(guildId, targetUserId, newRole);
+
+  return { message: `Rol actualizado a ${newRole}.`, member: updated };
+};
+
 export const getMyGuilds = async (userId: string) => {
   return GuildsRepository.findGuildsByUser(userId);
 };
