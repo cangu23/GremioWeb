@@ -90,16 +90,16 @@ function VtubersContent() {
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                 <div style={{
                   width: '56px', height: '56px', borderRadius: '50%',
-                  background: v.avatarUrl ? `url(${v.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                  background: v.vtuberProfile?.avatarUrl ? `url(${v.vtuberProfile.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '1.5rem', color: 'white', fontWeight: 'bold',
                   overflow: 'hidden', flexShrink: 0,
                 }}>
-                  {!v.avatarUrl && (v.displayName || v.username).charAt(0).toUpperCase()}
+                  {!v.vtuberProfile?.avatarUrl && (v.vtuberProfile?.displayName || v.username).charAt(0).toUpperCase()}
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: '1.05rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {v.displayName || v.username}
+                    {v.vtuberProfile?.displayName || v.username}
                     {v.vtuberProfile?.isVerified && (
                       <svg width="18" height="18" viewBox="0 0 24 24" aria-label="Verificado">
                         <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>

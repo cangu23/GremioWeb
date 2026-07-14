@@ -98,7 +98,17 @@ export const getMessages = async (channelId: string, userId: string, limit = 50,
   if (!member) throw new AppError('No eres miembro de este gremio.', 403);
 
   const messages = await ChannelsRepository.findMessagesByChannel(channelId, limit, before);
-  return messages.reverse();
+  // Flatten vtuberProfile data for consistency with socket messages
+  return messages.reverse().map(msg => ({
+    ...msg,
+    user: {
+      id: msg.user.id,
+      username: msg.user.username,
+      displayName: msg.user.vtuberProfile?.displayName ?? null,
+      avatarUrl: msg.user.vtuberProfile?.avatarUrl ?? null,
+      isVerified: msg.user.vtuberProfile?.isVerified ?? false,
+    },
+  }));
 };
 
 export const updateMessage = async (messageId: string, userId: string, content: string) => {
