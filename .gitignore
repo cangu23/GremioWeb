@@ -43,3 +43,4 @@ nul
 
 # Next.js auto-generated
 frontend/next-env.d.ts
+.aider*
