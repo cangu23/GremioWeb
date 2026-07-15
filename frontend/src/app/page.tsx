@@ -6,7 +6,6 @@ import StatsSection from '@/components/landing/StatsSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import LiveNowSection from '@/components/landing/LiveNowSection';
 import FeaturedVtubersSection from '@/components/landing/FeaturedVtubersSection';
-import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import PricingSection from '@/components/landing/PricingSection';
 import RecentActivitySection from '@/components/landing/RecentActivitySection';
 import CTASection from '@/components/landing/CTASection';
@@ -58,8 +57,6 @@ export default function HomePage() {
       <FeaturesSection />
       <SectionDivider />
       <FeaturedVtubersSection />
-      <SectionDivider />
-      <TestimonialsSection />
       <SectionDivider />
       <PricingSection />
       <SectionDivider />
