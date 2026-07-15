@@ -83,16 +83,82 @@ interface StreamCardProps {
 
 function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, formatTime }: StreamCardProps) {
   const embedUrl = getEmbedUrl(vtuber.twitchUrl || vtuber.youtubeUrl || '');
+  const cardRef = useRef<HTMLDivElement>(null);
+  const shineRef = useRef<HTMLDivElement>(null);
+  const tiltRef = useRef({ x: 0, y: 0 });
+  const isTilting = useRef(false);
+  const rafRef = useRef<number | null>(null);
 
   // Dynamic card style based on position
-  const getTransform = (): string => {
-    if (isActive) return 'translateX(0) translateY(0) scale(1) rotateY(0deg)';
+  const getBaseTransform = (): string => {
+    if (isActive) return '';
     const dir = relativeIndex > 0 ? 1 : -1;
     const xOffset = dir * (60 + Math.abs(relativeIndex) * 20);
     const scale = Math.max(0.6, 0.92 - Math.abs(relativeIndex) * 0.06);
     const yOffset = Math.abs(relativeIndex) * 15;
     return `translateX(${xOffset}px) translateY(${yOffset}px) scale(${scale}) rotateY(${dir * 15}deg)`;
   };
+
+  // 3D tilt effect - only for active card
+  const handleTilt = useCallback((clientX: number, clientY: number) => {
+    if (!cardRef.current || !isActive) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const deltaX = (clientX - centerX) / (rect.width / 2);
+    const deltaY = (clientY - centerY) / (rect.height / 2);
+
+    // Max tilt: 8 degrees
+    const rotateX = -deltaY * 8;
+    const rotateY = deltaX * 8;
+
+    tiltRef.current = { x: rotateX, y: rotateY };
+    isTilting.current = true;
+
+    // Fast transition for responsive tilt
+    if (cardRef.current) cardRef.current.style.transition = 'transform 0.08s linear';
+    if (shineRef.current) shineRef.current.style.transition = 'opacity 0.08s linear';
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (cardRef.current) {
+        const base = getBaseTransform();
+        cardRef.current.style.transform = `${base} rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      }
+      if (shineRef.current && isActive) {
+        const intensity = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        shineRef.current.style.opacity = String(Math.min(0.4, intensity * 0.3));
+        shineRef.current.style.background = `radial-gradient(circle at ${50 + deltaX * 30}% ${50 + deltaY * 30}%, rgba(255,255,255,0.12), transparent 60%)`;
+      }
+      rafRef.current = null;
+    });
+  }, [isActive]);
+
+  const resetTilt = useCallback(() => {
+    isTilting.current = false;
+    tiltRef.current = { x: 0, y: 0 };
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (cardRef.current) {
+        const base = getBaseTransform();
+        cardRef.current.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        cardRef.current.style.transform = base;
+        setTimeout(() => {
+          if (cardRef.current) cardRef.current.style.transition = '';
+        }, 500);
+      }
+      if (shineRef.current) {
+        shineRef.current.style.transition = 'opacity 0.5s ease';
+        shineRef.current.style.opacity = '0';
+        setTimeout(() => {
+          if (shineRef.current) shineRef.current.style.transition = '';
+        }, 500);
+      }
+      rafRef.current = null;
+    });
+  }, []);
+
+  const baseTransform = getBaseTransform();
 
   return (
     <div
@@ -108,6 +174,7 @@ function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, fo
       }}
     >
       <div
+        ref={cardRef}
         className="glass"
         style={{
           height: '100%',
@@ -115,9 +182,9 @@ function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, fo
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          transform: getTransform(),
+          transform: baseTransform,
           opacity: isActive ? 1 : Math.max(0.15, 0.5 - Math.abs(relativeIndex) * 0.15),
-          transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: isActive && !isTilting.current ? 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : undefined,
           border: isActive ? '1px solid rgba(255,68,68,0.3)' : '1px solid var(--glass-border)',
           boxShadow: isActive
             ? '0 8px 40px rgba(255,68,68,0.2), 0 0 80px rgba(255,68,68,0.06), inset 0 0 60px rgba(255,68,68,0.03)'
@@ -125,20 +192,31 @@ function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, fo
           cursor: isActive ? 'default' : 'pointer',
           filter: isActive ? 'brightness(1)' : 'brightness(0.6) saturate(0.6)',
           position: 'relative',
+          transformStyle: 'preserve-3d',
+          willChange: isActive ? 'transform' : undefined,
         }}
+        onMouseMove={(e) => { if (isActive) handleTilt(e.clientX, e.clientY); }}
+        onMouseLeave={() => { if (isActive) resetTilt(); }}
         onMouseEnter={(e) => {
           if (!isActive) {
-            e.currentTarget.style.transform = getTransform().replace(/scale\([^)]+\)/, 'scale(1.02)');
-            e.currentTarget.style.boxShadow = '0 8px 30px rgba(138,43,226,0.2)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.transform = getTransform();
-            e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+            cardRef.current!.style.transform = getBaseTransform().replace(/scale\([^)]+\)/, 'scale(1.02)');
+            cardRef.current!.style.boxShadow = '0 8px 30px rgba(138,43,226,0.2)';
           }
         }}
       >
+        {/* Shine overlay for 3D effect */}
+        {isActive && (
+          <div
+            ref={shineRef}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 5,
+              pointerEvents: 'none',
+              opacity: 0,
+              transition: 'opacity 0.15s ease',
+              borderRadius: '20px',
+            }}
+          />
+        )}
 
 
         {/* Embed / thumbnail area */}
@@ -244,36 +322,7 @@ function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, fo
             LIVE
           </div>
 
-          {/* Viewer count placeholder */}
-          {isActive && (
-            <div style={{
-              position: 'absolute', bottom: '12px', right: '12px',
-              padding: '3px 10px', borderRadius: '6px',
-              background: 'rgba(0,0,0,0.5)',
-              fontSize: '0.65rem', color: 'rgba(255,255,255,0.7)',
-              backdropFilter: 'blur(4px)',
-              display: 'flex', alignItems: 'center', gap: '4px',
-            }}>
-              <span>👁️</span>
-              <span>En vivo</span>
-            </div>
-          )}
 
-          {/* Watch timer overlay (center) */}
-          {isActive && watchSeconds > 0 && (
-            <div style={{
-              position: 'absolute', bottom: '12px', left: '12px',
-              padding: '4px 10px', borderRadius: '6px',
-              background: 'rgba(0,0,0,0.5)',
-              backdropFilter: 'blur(4px)',
-              fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)',
-              fontWeight: 600, fontVariantNumeric: 'tabular-nums',
-              display: 'flex', alignItems: 'center', gap: '5px',
-            }}>
-              <span>⏱️</span>
-              {formatTime(watchSeconds)}
-            </div>
-          )}
         </div>
 
         {/* ─── Info footer ─── */}
@@ -476,13 +525,45 @@ export default function LiveNowSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  // ─── Persist watch timer across page refreshes ───
+  const STORAGE_KEY = 'gremio_watch_timer';
+
+  // Load persisted data on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data && typeof data.seconds === 'number' && typeof data.xp === 'number') {
+          // Calculate time passed since last visit (capped at 10 min to prevent abuse)
+          const elapsedSinceSave = Math.min(
+            Math.floor((Date.now() - (data.timestamp || Date.now())) / 1000),
+            600
+          );
+          setWatchSeconds(data.seconds + elapsedSinceSave);
+          setXpEarnedThisSession(data.xp);
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Persist to localStorage whenever values change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        seconds: watchSeconds,
+        xp: xpEarnedThisSession,
+        timestamp: Date.now(),
+      }));
+    } catch { /* ignore */ }
+  }, [watchSeconds, xpEarnedThisSession]);
+
   // Watch timer
   useEffect(() => {
     if (!visible || !user) {
       if (watchIntervalRef.current) { clearInterval(watchIntervalRef.current); watchIntervalRef.current = null; }
       return;
     }
-    setWatchSeconds(0);
     watchIntervalRef.current = setInterval(() => {
       setWatchSeconds((prev) => {
         const ns = prev + 1;
