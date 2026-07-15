@@ -53,6 +53,9 @@ model User {
   // Achievements
   achievements  UserAchievement[]
 
+  // Shop
+  purchases     UserPurchase[]
+
   // Notifications
   notifications Notification[]
 
@@ -533,4 +536,40 @@ model Donation {
   @@index([donorId])
   @@index([recipientId])
   @@index([createdAt])
+}
+
+// ========== SHOP ==========
+
+model ShopItem {
+  id          String         @id @default(cuid())
+  name        String
+  description String
+  type        String
+  price       Int
+  imageUrl    String?
+  data        String?
+  active      Boolean        @default(true)
+  sortOrder   Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  purchases   UserPurchase[]
+
+  @@index([type])
+  @@index([active])
+}
+
+model UserPurchase {
+  id        String   @id @default(cuid())
+  userId    String
+  itemId    String
+  equipped  Boolean  @default(false)
+  remaining Int?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item      ShopItem @relation(fields: [itemId], references: [id])
+
+  @@index([userId])
+  @@index([itemId])
 }

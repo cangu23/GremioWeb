@@ -20,6 +20,7 @@ import uploadRoutes from './modules/uploads/uploads.routes';
 import statsRoutes from './modules/stats/stats.routes';
 import activityRoutes from './modules/activity/activity.routes';
 import vtuberRoutes from './modules/vtubers/vtubers.routes';
+import shopRoutes from './modules/shop/shop.routes';
 
 const BOOT = '[BOOT]';
 const router = Router();
@@ -84,6 +85,9 @@ console.log(`${BOOT}   [OK] /api/stats`);
 
 router.use('/activity', activityRoutes);
 console.log(`${BOOT}   [OK] /api/activity`);
+
+router.use('/shop', shopRoutes);
+console.log(`${BOOT}   [OK] /api/shop`);
 
 // Also mount health at root for quick checks
 router.get('/', (req, res) => {

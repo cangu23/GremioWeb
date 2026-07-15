@@ -14,6 +14,22 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
   const { user, logout } = useAuth();
   const { showToast } = useToast();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [equippedBadge, setEquippedBadge] = useState<{ icon: string; label: string } | null>(null);
+
+  useEffect(() => {
+    if (!user) { setEquippedBadge(null); return; }
+    (async () => {
+      try {
+        const badge = await apiFetch(`/shop/badge/${user.id}`, {});
+        if (badge?.item?.data) {
+          const data = JSON.parse(badge.item.data);
+          setEquippedBadge({ icon: data.icon || '🏅', label: data.label || '' });
+        } else {
+          setEquippedBadge(null);
+        }
+      } catch { setEquippedBadge(null); }
+    })();
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -134,8 +150,42 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
 
       <div style={navSeparator} />
 
+      {/* Group: Shop */}
+      <div style={navGroup}>
+        <Link href="/shop" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          🛒 Tienda
+        </Link>
+        <Link href="/inventory" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          🎒 Inventario
+        </Link>
+      </div>
+
+      <div style={navSeparator} />
+
       {user ? (
         <>
+          {/* Equipped badge */}
+          {equippedBadge && (
+            <span
+              title={`Insignia: ${equippedBadge.label}`}
+              style={{
+                fontSize: '1.1rem',
+                lineHeight: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '28px',
+                height: '28px',
+              }}
+            >
+              {equippedBadge.icon}
+            </span>
+          )}
+
           {/* Notifications */}
           <Link
             href="/notifications"
