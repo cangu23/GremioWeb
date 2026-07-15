@@ -34,9 +34,9 @@ export const findUserPurchases = (userId: string) =>
     orderBy: { createdAt: 'desc' },
   });
 
-export const findUserPurchase = (userId: string, itemId: string) =>
-  prisma.userPurchase.findUnique({
-    where: { userId_itemId: { userId, itemId } },
+export const findUserPurchase = async (userId: string, itemId: string) =>
+  prisma.userPurchase.findFirst({
+    where: { userId, itemId },
     include: { item: true },
   });
 
@@ -57,11 +57,17 @@ export const deletePurchase = (id: string) =>
 
 // ─── Equipping ───
 
-export const setItemEquipped = (userId: string, itemId: string, equipped: boolean) =>
-  prisma.userPurchase.update({
-    where: { userId_itemId: { userId, itemId } },
+export const setItemEquipped = async (userId: string, itemId: string, equipped: boolean) => {
+  // First find the purchase to get its ID, since we don't have a composite unique key
+  const purchase = await prisma.userPurchase.findFirst({
+    where: { userId, itemId },
+  });
+  if (!purchase) throw new Error('Purchase not found');
+  return prisma.userPurchase.update({
+    where: { id: purchase.id },
     data: { equipped },
   });
+};
 
 export const unequipAllByType = (userId: string, type: string) =>
   prisma.userPurchase.updateMany({
