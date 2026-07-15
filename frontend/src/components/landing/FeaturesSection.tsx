@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useParallaxChildren } from '@/lib/useScrollParallax';
 
 interface Feature {
   icon: React.ReactNode;
@@ -119,6 +120,8 @@ export default function FeaturesSection() {
   const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
   const sectionRef = useRef<HTMLDivElement>(null);
 
+  useParallaxChildren(sectionRef);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -150,6 +153,13 @@ export default function FeaturesSection() {
         background: 'linear-gradient(180deg, transparent 0%, rgba(138,43,226,0.03) 50%, transparent 100%)',
       }}
     >
+      {/* Decorative blob (with parallax) */}
+      <div data-parallax-speed="-0.08" style={{
+        position: 'absolute', top: '30%', left: '10%',
+        width: '350px', height: '350px', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(0,212,255,0.04), transparent 70%)',
+        pointerEvents: 'none', zIndex: -1, willChange: 'transform',
+      }} />
       {/* Section divider decorative */}
       <div className="section-accent-top" />
 

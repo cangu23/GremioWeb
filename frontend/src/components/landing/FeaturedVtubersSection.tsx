@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
+import { useParallaxChildren } from '@/lib/useScrollParallax';
 
 interface FeaturedPost {
   id: string;
@@ -74,6 +75,8 @@ export default function FeaturedVtubersSection() {
     fetchFeatured();
   }, []);
 
+  useParallaxChildren(sectionRef);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -122,12 +125,12 @@ export default function FeaturedVtubersSection() {
         background: 'linear-gradient(180deg, transparent 0%, rgba(255,0,127,0.02) 50%, transparent 100%)',
       }}
     >
-      {/* Decorative background */}
-      <div style={{
+      {/* Decorative background (with parallax) */}
+      <div data-parallax-speed="-0.12" style={{
         position: 'absolute', top: '20%', left: '10%',
         width: '400px', height: '400px', borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(138,43,226,0.06), transparent 70%)',
-        pointerEvents: 'none', zIndex: -1,
+        pointerEvents: 'none', zIndex: -1, willChange: 'transform',
       }} />
 
       <div className="container">

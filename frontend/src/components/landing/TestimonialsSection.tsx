@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useParallaxChildren } from '@/lib/useScrollParallax';
 
 interface Testimonial {
   quote: string;
@@ -61,6 +62,8 @@ export default function TestimonialsSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  useParallaxChildren(sectionRef);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -110,18 +113,18 @@ export default function TestimonialsSection() {
         background: 'linear-gradient(180deg, transparent 0%, rgba(255,0,127,0.02) 50%, transparent 100%)',
       }}
     >
-      {/* Decorative blobs */}
-      <div style={{
+      {/* Decorative blobs (with parallax) */}
+      <div data-parallax-speed="-0.1" style={{
         position: 'absolute', top: '10%', left: '5%',
         width: '350px', height: '350px', borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(138,43,226,0.06), transparent 70%)',
-        pointerEvents: 'none', zIndex: -1,
+        pointerEvents: 'none', zIndex: -1, willChange: 'transform',
       }} />
-      <div style={{
+      <div data-parallax-speed="-0.07" style={{
         position: 'absolute', bottom: '20%', right: '10%',
         width: '250px', height: '250px', borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(0,212,255,0.05), transparent 70%)',
-        pointerEvents: 'none', zIndex: -1,
+        pointerEvents: 'none', zIndex: -1, willChange: 'transform',
       }} />
 
       <div className="container">

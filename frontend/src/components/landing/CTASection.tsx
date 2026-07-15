@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
+import { useParallaxChildren } from '@/lib/useScrollParallax';
 
 export default function CTASection() {
   const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+
+  useParallaxChildren(sectionRef);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -49,8 +52,9 @@ export default function CTASection() {
             transition: 'all 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
           }}
         >
-          {/* Decorative elements */}
+          {/* Decorative elements (with parallax) */}
           <div
+            data-parallax-speed="-0.1"
             style={{
               position: 'absolute',
               top: '-100px',
@@ -60,9 +64,11 @@ export default function CTASection() {
               borderRadius: '50%',
               background: 'radial-gradient(circle, rgba(138,43,226,0.15), transparent)',
               pointerEvents: 'none',
+              willChange: 'transform',
             }}
           />
           <div
+            data-parallax-speed="-0.06"
             style={{
               position: 'absolute',
               bottom: '-80px',
@@ -72,6 +78,7 @@ export default function CTASection() {
               borderRadius: '50%',
               background: 'radial-gradient(circle, rgba(255,0,127,0.1), transparent)',
               pointerEvents: 'none',
+              willChange: 'transform',
             }}
           />
 

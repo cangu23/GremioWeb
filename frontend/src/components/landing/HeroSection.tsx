@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/AuthContext';
+import { useParallaxChildren } from '@/lib/useScrollParallax';
 
 const TITLE_PARTS = [
   { text: 'El', delay: 0 },
@@ -53,6 +54,9 @@ export default function HeroSection() {
   const glowRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const typeIndexRef = useRef(0);
+
+  // Parallax on background elements
+  useParallaxChildren(sectionRef);
 
   useEffect(() => {
     setVisible(true);
@@ -113,27 +117,33 @@ export default function HeroSection() {
       }}
     >
       {/* ===== STARFIELD BACKGROUND ===== */}
-      {STARS.map((star, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            borderRadius: '50%',
-            background: star.size > 2.5
-              ? 'radial-gradient(circle, rgba(255,255,255,0.8), rgba(138,43,226,0.3))'
-              : 'rgba(255,255,255,0.6)',
-            boxShadow: star.size > 2.5 ? '0 0 6px rgba(138,43,226,0.4), 0 0 12px rgba(138,43,226,0.2)' : 'none',
-            pointerEvents: 'none',
-            zIndex: 0,
-            animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
-            opacity: 0.2,
-          }}
-        />
-      ))}
+      {/* Stars with parallax depth: bigger stars = closer = faster */}
+      {STARS.map((star, i) => {
+        const parallaxSpeed = -(0.02 + (star.size / 4) * 0.04); // -0.02 to -0.05 based on size
+        return (
+          <div
+            key={i}
+            data-parallax-speed={parallaxSpeed}
+            style={{
+              position: 'absolute',
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              borderRadius: '50%',
+              background: star.size > 2.5
+                ? 'radial-gradient(circle, rgba(255,255,255,0.8), rgba(138,43,226,0.3))'
+                : 'rgba(255,255,255,0.6)',
+              boxShadow: star.size > 2.5 ? '0 0 6px rgba(138,43,226,0.4), 0 0 12px rgba(138,43,226,0.2)' : 'none',
+              pointerEvents: 'none',
+              zIndex: 0,
+              animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
+              opacity: 0.2,
+              willChange: 'transform',
+            }}
+          />
+        );
+      })}
 
       {/* ===== COMETS ===== */}
       {COMETS.map((comet, i) => (
@@ -198,10 +208,11 @@ export default function HeroSection() {
         }}
       />
 
-      {/* ===== FLOATING SHAPES ===== */}
+      {/* ===== FLOATING SHAPES (with parallax) ===== */}
       {FLOATING_SHAPES.map((shape, i) => (
         <div
           key={i}
+          data-parallax-speed={-0.08 - i * 0.02}
           style={{
             position: 'absolute',
             left: shape.x,
@@ -215,6 +226,7 @@ export default function HeroSection() {
             zIndex: 0,
             animation: `floatShape ${shape.duration}s ease-in-out ${shape.delay}s infinite`,
             opacity: 0.6,
+            willChange: 'transform',
           }}
         />
       ))}

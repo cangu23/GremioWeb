@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useParallaxChildren } from '@/lib/useScrollParallax';
 
 interface PlanFeature {
   text: string;
@@ -115,6 +116,8 @@ export default function PricingSection() {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
+  useParallaxChildren(sectionRef);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -147,18 +150,18 @@ export default function PricingSection() {
         background: 'linear-gradient(180deg, transparent 0%, rgba(255,0,127,0.02) 50%, transparent 100%)',
       }}
     >
-      {/* Decorative background blobs */}
-      <div style={{
+      {/* Decorative background blobs (with parallax) */}
+      <div data-parallax-speed="-0.1" style={{
         position: 'absolute', top: '10%', left: '5%',
         width: '300px', height: '300px', borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(138,43,226,0.06), transparent 70%)',
-        pointerEvents: 'none', zIndex: -1,
+        pointerEvents: 'none', zIndex: -1, willChange: 'transform',
       }} />
-      <div style={{
+      <div data-parallax-speed="-0.08" style={{
         position: 'absolute', bottom: '20%', right: '10%',
         width: '250px', height: '250px', borderRadius: '50%',
         background: 'radial-gradient(circle, rgba(255,0,127,0.05), transparent 70%)',
-        pointerEvents: 'none', zIndex: -1,
+        pointerEvents: 'none', zIndex: -1, willChange: 'transform',
       }} />
 
       <div className="container">

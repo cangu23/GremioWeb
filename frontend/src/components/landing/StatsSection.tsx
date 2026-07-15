@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api';
+import { useScrollParallax } from '@/lib/useScrollParallax';
 
 interface PlatformStats {
   totalVtubers: number;
@@ -74,6 +75,8 @@ function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) 
 export default function StatsSection() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const { childRef: glassParallaxRef } = useScrollParallax(0.04);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -96,6 +99,7 @@ export default function StatsSection() {
 
   return (
     <section
+      ref={sectionRef}
       className="section"
       style={{
         position: 'relative',
@@ -104,6 +108,7 @@ export default function StatsSection() {
     >
       <div className="container">
         <div
+          ref={glassParallaxRef}
           className="glass"
           style={{
             display: 'grid',
