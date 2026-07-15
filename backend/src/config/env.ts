@@ -24,6 +24,8 @@ interface EnvConfig {
   CLOUDINARY_CLOUD_NAME: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
+  TWITCH_CLIENT_ID: string;
+  TWITCH_CLIENT_SECRET: string;
 }
 
 const env: EnvConfig = {
@@ -40,6 +42,8 @@ const env: EnvConfig = {
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
+  TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID || '',
+  TWITCH_CLIENT_SECRET: process.env.TWITCH_CLIENT_SECRET || '',
 };
 
 // Validate required secrets (must be set via .env, never use defaults in production)
@@ -53,6 +57,10 @@ if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
 
 if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) {
   console.warn('⚠️  Cloudinary not configured — image uploads will fail');
+}
+
+if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) {
+  console.warn('⚠️  TWITCH_CLIENT_ID/SECRET not set — automatic live detection disabled');
 }
 
 if (isNaN(env.PORT) || !env.JWT_ACCESS_SECRET || !env.JWT_REFRESH_SECRET) {

@@ -2,6 +2,7 @@ import http from 'http';
 import app from './app';
 import env from './config/env';
 import { createSocketServer } from './websocket/socket.server';
+import { startStreamMonitor } from './modules/vtubers/stream-monitor.service';
 
 const BOOT = '[BOOT]';
 
@@ -37,6 +38,9 @@ console.log(`${BOOT} HTTP server created`);
 console.log(`${BOOT} Attaching Socket.IO...`);
 createSocketServer(server);
 console.log(`${BOOT} Socket.IO attached`);
+
+// Start automatic live stream detection
+startStreamMonitor();
 
 console.log(`${BOOT} Attempting to listen on port ${env.PORT}...`);
 server.listen(env.PORT, () => {

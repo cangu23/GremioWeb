@@ -30,7 +30,6 @@ function VtuberProfileEditor() {
   const [oshiMark, setOshiMark] = useState('');
   const [contentType, setContentType] = useState('');
   const [streamSchedule, setStreamSchedule] = useState('');
-  const [isLive, setIsLive] = useState(false);
 
   // Survey / Request states
   const [showSurvey, setShowSurvey] = useState(false);
@@ -128,7 +127,6 @@ function VtuberProfileEditor() {
       setThemeColor(p.themeColor || '');
       setContentType(p.contentType || '');
       setStreamSchedule(p.streamSchedule || '');
-      setIsLive(p.isLive || false);
       setTwitchUrl(p.twitchUrl || '');
       setYoutubeUrl(p.youtubeUrl || '');
       setKickUrl(p.kickUrl || '');
@@ -167,7 +165,6 @@ function VtuberProfileEditor() {
           themeColor: themeColor || undefined,
           contentType: contentType || undefined,
           streamSchedule: streamSchedule || undefined,
-          isLive,
           twitchUrl: twitchUrl || undefined,
           youtubeUrl: youtubeUrl || undefined,
           kickUrl: kickUrl || undefined,
@@ -717,27 +714,6 @@ function VtuberProfileEditor() {
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                 Separados por coma, sin #
               </span>
-            </div>
-            <div className="form-group" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-              <label className="form-label">Estado</label>
-              <label style={{
-                display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer',
-                padding: '12px 16px', borderRadius: '10px',
-                background: isLive ? 'rgba(255,68,68,0.08)' : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${isLive ? 'rgba(255,68,68,0.2)' : 'var(--glass-border)'}`,
-                transition: 'all 0.2s',
-              }}>
-                <input type="checkbox" checked={isLive} onChange={e => setIsLive(e.target.checked)}
-                  style={{ width: '18px', height: '18px', accentColor: '#ff4444' }} />
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                    {isLive ? 'En Directo' : 'Offline'}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {isLive ? 'Aparecerás como EN VIVO en tu perfil' : 'Marca esta opción cuando estés en stream'}
-                  </div>
-                </div>
-              </label>
             </div>
           </div>
         </div>
