@@ -83,11 +83,21 @@ interface StreamCardProps {
 
 function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, formatTime }: StreamCardProps) {
   const embedUrl = getEmbedUrl(vtuber.twitchUrl || vtuber.youtubeUrl || '');
+  const [hasLoaded, setHasLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const shineRef = useRef<HTMLDivElement>(null);
   const tiltRef = useRef({ x: 0, y: 0 });
   const isTilting = useRef(false);
   const rafRef = useRef<number | null>(null);
+
+  // Only load the iframe src when the card becomes active for the first time.
+  // This way Twitch/YouTube see a visible viewport and can autoplay.
+  // Once loaded, the iframe stays mounted to avoid re-creating players on card switches.
+  useEffect(() => {
+    if (isActive && !hasLoaded && embedUrl) {
+      setHasLoaded(true);
+    }
+  }, [isActive, hasLoaded, embedUrl]);
 
   // Dynamic card style based on position
   const getBaseTransform = (): string => {
@@ -230,73 +240,82 @@ function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, fo
             flexShrink: 0,
           }}
         >
-          {/* Animated background for non-active / no-embed */}
-          {(!embedUrl || !isActive) && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: vtuber.bannerUrl
-                  ? `url(${vtuber.bannerUrl}) center/cover`
-                  : undefined,
-              }}
-            >
-              {vtuber.bannerUrl && (
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: 'linear-gradient(135deg, rgba(0,0,0,0.5), rgba(0,0,0,0.3))',
-                }} />
-              )}
-            </div>
-          )}
+          {/* Background layer — banner or gradient (always present) */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: vtuber.bannerUrl
+              ? `url(${vtuber.bannerUrl}) center/cover`
+              : 'linear-gradient(135deg, #1a1040, #302b63)',
+          }}>
+            {vtuber.bannerUrl && (
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(135deg, rgba(0,0,0,0.5), rgba(0,0,0,0.3))',
+              }} />
+            )}
+          </div>
 
-          {/* Iframe embed (active only) */}
-          {embedUrl && isActive ? (
+          {/* Iframe embed — rendered once when embedUrl exists, never unmounted.
+              We toggle visibility with opacity/z-index to prevent Twitch/YouTube
+              from creating a new player (and accumulating event listeners) each
+              time the user switches cards.
+              The src is only set on first activation (hasLoaded), so Twitch sees
+              a visible viewport and can autoplay successfully. */}
+          {embedUrl && (
             <iframe
-              src={embedUrl}
+              src={hasLoaded ? embedUrl : undefined}
               title={`${vtuber.displayName}`}
               style={{
                 position: 'absolute', top: 0, left: 0,
                 width: '100%', height: '100%', border: 'none',
+                opacity: isActive ? 1 : 0,
+                zIndex: isActive ? 2 : 0,
+                pointerEvents: isActive ? 'auto' : 'none',
+                transition: 'opacity 0.4s ease',
               }}
               allow="autoplay; fullscreen"
               allowFullScreen
             />
-          ) : (
-            /* Fallback content for non-active cards */
+          )}
+
+          {/* Fallback overlay — pulsing circle, shown only when NOT active */}
+          {!isActive && (
             <div style={{
               position: 'absolute', inset: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexDirection: 'column', gap: '10px',
+              zIndex: embedUrl ? 1 : 2,
             }}>
-              {/* Animated pulsing circle */}
-              <div style={{
-                width: '64px', height: '64px', borderRadius: '50%',
-                background: 'rgba(255,68,68,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                animation: isActive ? 'none' : 'livePulse 2s ease-in-out infinite',
-                position: 'relative', zIndex: 1,
-              }}>
+              {embedUrl ? (
+                /* Small preview indicator for cards with stream URL */
                 <div style={{
-                  width: '32px', height: '32px', borderRadius: '50%',
-                  background: '#ff4444',
-                  boxShadow: '0 0 30px rgba(255,68,68,0.4)',
-                  animation: 'livePulse 1.5s ease-in-out infinite',
-                }} />
-              </div>
-              {isActive && (
-                <span style={{
-                  color: '#ff4444', fontWeight: 700, fontSize: '1.1rem',
-                  position: 'relative', zIndex: 1,
-                  display: 'flex', alignItems: 'center', gap: '8px',
+                  width: '48px', height: '48px', borderRadius: '50%',
+                  background: 'rgba(255,68,68,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <span style={{
-                    width: '8px', height: '8px', borderRadius: '50%',
+                  <div style={{
+                    width: '20px', height: '20px', borderRadius: '50%',
                     background: '#ff4444',
+                    boxShadow: '0 0 20px rgba(255,68,68,0.3)',
                     animation: 'livePulse 1.5s ease-in-out infinite',
                   }} />
-                  EN VIVO
-                </span>
+                </div>
+              ) : (
+                /* Big pulsing circle for cards without stream URL */
+                <div style={{
+                  width: '64px', height: '64px', borderRadius: '50%',
+                  background: 'rgba(255,68,68,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  animation: 'livePulse 2s ease-in-out infinite',
+                  position: 'relative', zIndex: 1,
+                }}>
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    background: '#ff4444',
+                    boxShadow: '0 0 30px rgba(255,68,68,0.4)',
+                    animation: 'livePulse 1.5s ease-in-out infinite',
+                  }} />
+                </div>
               )}
             </div>
           )}
