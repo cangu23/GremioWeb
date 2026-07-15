@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/lib/AuthContext';
+import { useToast } from '@/lib/ToastContext';
 
 interface LiveVTuber {
   id: string;
@@ -335,6 +337,14 @@ export default function LiveNowSection() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
+  // Watch timer state
+  const [watchSeconds, setWatchSeconds] = useState(0);
+  const [xpEarnedThisSession, setXpEarnedThisSession] = useState(0);
+  const watchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastClaimRef = useRef<number>(0);
+  const { user } = useAuth();
+  const { showToast } = useToast();
+
   useEffect(() => {
     const fetchLiveVtubers = async () => {
       try {
@@ -392,6 +402,66 @@ export default function LiveNowSection() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // Watch timer: count seconds while visible and user is logged in
+  useEffect(() => {
+    if (!visible || !user) {
+      if (watchIntervalRef.current) {
+        clearInterval(watchIntervalRef.current);
+        watchIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Reset timer on mount
+    setWatchSeconds(0);
+    lastClaimRef.current = Date.now();
+
+    watchIntervalRef.current = setInterval(() => {
+      setWatchSeconds((prev) => {
+        const newSeconds = prev + 1;
+
+        // Claim XP every 10 minutes (600 seconds)
+        if (newSeconds > 0 && newSeconds % 600 === 0) {
+          claimStreamXp(newSeconds);
+        }
+
+        return newSeconds;
+      });
+    }, 1000);
+
+    return () => {
+      if (watchIntervalRef.current) {
+        clearInterval(watchIntervalRef.current);
+        watchIntervalRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, user]);
+
+  const claimStreamXp = async (elapsedSeconds: number) => {
+    const minutes = Math.floor(elapsedSeconds / 60);
+    try {
+      const res = await apiFetch('/gamification/stream-xp', {
+        method: 'POST',
+        body: JSON.stringify({ minutes }),
+      });
+      if (res.xpAwarded) {
+        setXpEarnedThisSession((prev) => prev + res.xpAwarded);
+        const displayName = activeLive?.displayName || 'stream';
+        showToast(`+${res.xpAwarded} XP por ver ${displayName} por ${minutes} min! `, 'success');
+      }
+    } catch {
+      // Rate limited or not logged in — silently ignore
+    }
+  };
+
+  // Format seconds to mm:ss
+  const formatTime = (totalSeconds: number): string => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const activeLive = liveVtubers[activeIndex];
 
@@ -706,6 +776,53 @@ export default function LiveNowSection() {
           }}>
             {activeIndex + 1} / {liveVtubers.length}
           </div>
+
+          {/* Watch timer - only when logged in */}
+          {user && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: '12px', marginTop: '14px',
+            }}>
+              {/* Timer badge */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '8px 16px', borderRadius: '20px',
+                background: 'rgba(138,43,226,0.08)',
+                border: '1px solid rgba(138,43,226,0.2)',
+                fontSize: '0.85rem', color: 'var(--primary)',
+                fontWeight: 600,
+              }}>
+                <span>⏱️</span>
+                <span style={{ fontVariantNumeric: 'tabular-nums', minWidth: '44px' }}>
+                  {formatTime(watchSeconds)}
+                </span>
+              </div>
+
+              {/* XP earned badge */}
+              {xpEarnedThisSession > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '8px 14px', borderRadius: '20px',
+                  background: 'rgba(0,230,118,0.08)',
+                  border: '1px solid rgba(0,230,118,0.2)',
+                  fontSize: '0.8rem', color: '#00e676',
+                  fontWeight: 600,
+                }}>
+                  <span>✦</span>
+                  <span>+{xpEarnedThisSession} XP hoy</span>
+                </div>
+              )}
+
+              {/* Next reward hint */}
+              {watchSeconds > 0 && (
+                <div style={{
+                  fontSize: '0.75rem', color: 'var(--text-muted)',
+                }}>
+                  +5 XP cada 10 min
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Arrow key hint */}

@@ -42,7 +42,18 @@ export const getAllAchievements = async () => {
 export const awardXpForAction = async (userId: string, action: keyof typeof XP_REWARDS) => {
   const xpAmount = XP_REWARDS[action];
   if (!xpAmount) throw new AppError(`Acción '${action}' no tiene XP configurado`, 400);
+  return awardXpBase(userId, xpAmount);
+};
 
+/**
+ * Award a custom amount of XP (not tied to a specific action)
+ */
+export const awardCustomXp = async (userId: string, amount: number) => {
+  if (amount <= 0) throw new AppError('La cantidad de XP debe ser positiva', 400);
+  return awardXpBase(userId, amount);
+};
+
+async function awardXpBase(userId: string, xpAmount: number) {
   const user = await GamificationRepository.getUserGamificationProfile(userId);
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
@@ -94,7 +105,7 @@ export const awardXpForAction = async (userId: string, action: keyof typeof XP_R
     levelUp,
     newAchievements,
   };
-};
+}
 
 // Check various achievement criteria
 async function checkAchievementCriteria(

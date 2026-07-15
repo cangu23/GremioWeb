@@ -12,6 +12,7 @@ router.get('/leaderboard', optionalAuth, GamificationController.getLeaderboard);
 // Protected
 router.get('/me', authenticate, GamificationController.getMyProfile);
 router.post('/xp', authenticate, GamificationController.awardXp);
+router.post('/stream-xp', authenticate, GamificationController.awardStreamXp);
 
 // Admin - seed achievements
 router.post('/seed', authenticate, GamificationController.seed);
