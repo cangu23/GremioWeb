@@ -11,7 +11,6 @@ import ClientOnly from '@/lib/ClientOnly';
 import styles from './Navbar.module.css';
 
 function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
-  const isMobile = !!closeMenu;
   const { user, logout } = useAuth();
   const { showToast } = useToast();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -71,65 +70,69 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
     fontWeight: 500,
     whiteSpace: 'nowrap',
     transition: 'color 0.2s ease',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px',
   };
 
   const navGroup: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    gap: '0',
+    gap: '6px',
   };
 
   const navSeparator: React.CSSProperties = {
     width: '1px',
-    height: '18px',
-    background: 'rgba(255,255,255,0.08)',
-    margin: '0 4px',
-    flexShrink: 0,
+    height: '20px',
+    background: 'var(--glass-border)',
+    margin: '0 8px',
   };
-
-  const starStyle: React.CSSProperties = {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: '0.55rem',
-    lineHeight: 1,
-  };
-
-  const navLink = (href: string, label: string) => (
-    <Link href={href} style={linkStyle} onClick={closeMenu}
-      onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
-      <span style={starStyle}>✦</span>
-      {label}
-    </Link>
-  );
 
   return (
     <>
       {/* Group: Discover */}
       <div style={navGroup}>
-        {navLink('/events', 'Eventos')}
-        {!isMobile && <div style={navSeparator} />}
-        {navLink('/guilds', 'Gremios')}
-        {!isMobile && <div style={navSeparator} />}
-        {navLink('/vtubers', 'VTubers')}
+        <Link href="/events" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          Eventos
+        </Link>
+        <Link href="/guilds" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          Gremios
+        </Link>
+        <Link href="/vtubers" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          VTubers
+        </Link>
       </div>
 
-      {!isMobile && <div style={{ ...navSeparator, margin: '0 8px', height: '22px', background: 'var(--glass-border)' }} />}
+      <div style={navSeparator} />
 
       {/* Group: Social */}
       <div style={navGroup}>
-        {navLink('/feed', 'Feed')}
-        {!isMobile && <div style={navSeparator} />}
-        {navLink('/chat', 'Chat')}
-        {!isMobile && <div style={navSeparator} />}
-        {navLink('/leaderboard', 'Ranking')}
-        {!isMobile && <div style={navSeparator} />}
-        {navLink('/achievements', 'Logros')}
+        <Link href="/feed" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          Feed
+        </Link>
+        <Link href="/chat" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          Chat
+        </Link>
+        <Link href="/leaderboard" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          Ranking
+        </Link>
+        <Link href="/achievements" style={linkStyle} onClick={closeMenu}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+          Logros
+        </Link>
       </div>
 
-      {!isMobile && <div style={{ ...navSeparator, margin: '0 8px', height: '22px', background: 'var(--glass-border)' }} />}
+      <div style={navSeparator} />
 
       {user ? (
         <>
