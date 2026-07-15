@@ -9,3 +9,12 @@ export const getFeaturedVtubers = async (_req: Request, res: Response, next: Nex
     next(err);
   }
 };
+
+export const getLiveVtubers = async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const live = await VTubersService.getLiveVtubers();
+    res.json(live);
+  } catch (err) {
+    next(err);
+  }
+};

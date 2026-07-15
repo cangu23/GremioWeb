@@ -25,6 +25,41 @@ const postIncludes = {
   },
 };
 
+export const getLiveVtubers = async () => {
+  const profiles = await prisma.vTuberProfile.findMany({
+    where: { isLive: true },
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          role: true,
+        },
+      },
+    },
+  });
+
+  return profiles.map((profile) => ({
+    id: profile.id,
+    userId: profile.userId,
+    displayName: profile.displayName,
+    avatarUrl: profile.avatarUrl,
+    bannerUrl: profile.bannerUrl,
+    description: profile.description,
+    isLive: profile.isLive,
+    isVerified: profile.isVerified,
+    twitchUrl: profile.twitchUrl,
+    youtubeUrl: profile.youtubeUrl,
+    kickUrl: profile.kickUrl,
+    tiktokUrl: profile.tiktokUrl,
+    twitterUrl: profile.twitterUrl,
+    discordUrl: profile.discordUrl,
+    websiteUrl: profile.websiteUrl,
+    user: profile.user,
+  }));
+};
+
 export const getFeaturedVtubers = async () => {
   // Get up to 6 featured VTubers
   const profiles = await prisma.vTuberProfile.findMany({
