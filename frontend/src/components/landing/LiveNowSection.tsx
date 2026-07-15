@@ -139,21 +139,7 @@ function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, fo
           }
         }}
       >
-        {/* Animated glowing border (active card) */}
-        {isActive && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: -1,
-              borderRadius: '21px',
-              zIndex: -1,
-              background: 'linear-gradient(135deg, #ff4444, #ff8800, #ff4444, #ff0044)',
-              backgroundSize: '300% 300%',
-              animation: 'liveBorderGlow 3s ease infinite',
-              opacity: 0.6,
-            }}
-          />
-        )}
+
 
         {/* Embed / thumbnail area */}
         <div
@@ -358,60 +344,64 @@ function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, fo
             </div>
           </Link>
 
-          {/* Watch / profile button */}
-          {isActive && vtuber.twitchUrl && (
-            <a
-              href={vtuber.twitchUrl}
-              target="_blank" rel="noopener noreferrer"
-              style={{
-                padding: '9px 18px', borderRadius: '10px', fontSize: '0.8rem',
-                fontWeight: 700, background: 'linear-gradient(135deg, #9146FF, #7c3aed)',
-                color: 'white', whiteSpace: 'nowrap', textDecoration: 'none',
-                display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 15px rgba(145,66,255,0.3)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 6px 25px rgba(145,66,255,0.4)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(145,66,255,0.3)'; }}
-            >
-              ▶ Ver
-            </a>
-          )}
-          {isActive && !vtuber.twitchUrl && vtuber.youtubeUrl && (
-            <a
-              href={vtuber.youtubeUrl}
-              target="_blank" rel="noopener noreferrer"
-              style={{
-                padding: '9px 18px', borderRadius: '10px', fontSize: '0.8rem',
-                fontWeight: 700, background: 'linear-gradient(135deg, #FF0000, #cc0000)',
-                color: 'white', whiteSpace: 'nowrap', textDecoration: 'none',
-                display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 15px rgba(255,0,0,0.3)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-            >
-              ▶ Ver
-            </a>
-          )}
-          {isActive && !vtuber.twitchUrl && !vtuber.youtubeUrl && (
-            <Link
-              href={`/profile/${vtuber.userId}`}
-              style={{
-                padding: '9px 18px', borderRadius: '10px', fontSize: '0.8rem',
-                fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap',
-                border: '1px solid var(--glass-border)', color: 'var(--text)',
-                transition: 'all 0.2s', flexShrink: 0,
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              Perfil →
-            </Link>
+          {/* Action buttons */}
+          {isActive && (
+            <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+              {/* Watch button (Twitch or YouTube) */}
+              {vtuber.twitchUrl && (
+                <a
+                  href={vtuber.twitchUrl}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    padding: '9px 16px', borderRadius: '10px', fontSize: '0.78rem',
+                    fontWeight: 700, background: 'linear-gradient(135deg, #9146FF, #7c3aed)',
+                    color: 'white', whiteSpace: 'nowrap', textDecoration: 'none',
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 15px rgba(145,66,255,0.3)',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 6px 25px rgba(145,66,255,0.4)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(145,66,255,0.3)'; }}
+                >
+                  ▶ Twitch
+                </a>
+              )}
+              {!vtuber.twitchUrl && vtuber.youtubeUrl && (
+                <a
+                  href={vtuber.youtubeUrl}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    padding: '9px 16px', borderRadius: '10px', fontSize: '0.78rem',
+                    fontWeight: 700, background: 'linear-gradient(135deg, #FF0000, #cc0000)',
+                    color: 'white', whiteSpace: 'nowrap', textDecoration: 'none',
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 15px rgba(255,0,0,0.3)',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                >
+                  ▶ YouTube
+                </a>
+              )}
+              {/* Profile button - always visible */}
+              <Link
+                href={`/profile/${vtuber.userId}`}
+                style={{
+                  padding: '9px 14px', borderRadius: '10px', fontSize: '0.78rem',
+                  fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap',
+                  border: '1px solid var(--glass-border)', color: 'var(--text)',
+                  transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '4px',
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
+              >
+                Perfil →
+              </Link>
+            </div>
           )}
         </div>
 
@@ -751,11 +741,6 @@ export default function LiveNowSection() {
         @keyframes livePulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.7; transform: scale(1.1); }
-        }
-        @keyframes liveBorderGlow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
         }
         @keyframes liveParticle {
           0% { transform: translate(0, 0) scale(1); opacity: 0; }
