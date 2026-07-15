@@ -56,14 +56,8 @@ async function checkAllVTubers(): Promise<number> {
     if (channelNames.length === 0) return 0;
 
     // Check which channels are live via Twitch API
+    // If this throws, the catch block handles it — we skip offline updates on API failure.
     const liveChannels = await checkLiveChannels(channelNames);
-
-    // If the API returned nothing at all, don't touch offline statuses
-    // (could be a transient API error). Only set LIVE profiles confirmed by the API.
-    if (liveChannels.length === 0) {
-      console.log('[StreamMonitor] API returned 0 live channels — skipping offline updates to avoid wiping live statuses on transient error.');
-      return 0;
-    }
 
     // Channels confirmed live by the API: set isLive = true
     const liveProfileIds = liveChannels

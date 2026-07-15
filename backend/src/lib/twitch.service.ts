@@ -102,7 +102,7 @@ export async function checkLiveChannels(channelNames: string[]): Promise<string[
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[TwitchAPI] Failed to check streams:', response.status, errorText);
-      return [];
+      throw new Error(`Twitch API error: ${response.status} - ${errorText}`);
     }
 
     const data: TwitchStreamsResponse = await response.json();
