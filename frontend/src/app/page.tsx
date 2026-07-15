@@ -5,6 +5,7 @@ import HowItWorksSection from '@/components/landing/HowItWorksSection';
 import StatsSection from '@/components/landing/StatsSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import FeaturedVtubersSection from '@/components/landing/FeaturedVtubersSection';
+import PricingSection from '@/components/landing/PricingSection';
 import RecentActivitySection from '@/components/landing/RecentActivitySection';
 import CTASection from '@/components/landing/CTASection';
 import Footer from '@/components/landing/Footer';
@@ -17,6 +18,7 @@ export default function HomePage() {
       <StatsSection />
       <FeaturesSection />
       <FeaturedVtubersSection />
+      <PricingSection />
       <RecentActivitySection />
       <CTASection />
       <Footer />

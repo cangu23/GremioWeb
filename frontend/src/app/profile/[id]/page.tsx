@@ -98,6 +98,9 @@ function ProfileContent() {
   const [following, setFollowing] = useState<SocialUser[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
+  const [mediaPosts, setMediaPosts] = useState<Post[]>([]);
+  const [mediaPostsLoading, setMediaPostsLoading] = useState(true);
+  const [galleryImage, setGalleryImage] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -118,10 +121,21 @@ function ProfileContent() {
     }
   }, [id]);
 
+  const fetchMediaPosts = useCallback(async () => {
+    try {
+      const data = await apiFetch(`/posts/user/${id}?limit=50`, {});
+      setMediaPosts(data.filter((p: Post) => p.mediaUrl));
+    } catch {
+    } finally {
+      setMediaPostsLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchProfile();
     fetchPosts();
-  }, [fetchProfile, fetchPosts]);
+    fetchMediaPosts();
+  }, [fetchProfile, fetchPosts, fetchMediaPosts]);
 
   const handleFollow = async () => {
     if (!currentUser) { router.push('/login'); return; }
@@ -822,6 +836,141 @@ function ProfileContent() {
           </div>
         </div>
       </div>
+
+      {/* ===== GALLERY SECTION ===== */}
+      {(mediaPosts.length > 0 || mediaPostsLoading) && (
+        <div className="container" style={{ paddingTop: '0', paddingBottom: '0', marginTop: '40px' }}>
+          <div style={{ borderLeft: `3px solid ${themeColor}`, paddingLeft: '16px' }}>
+            <h3 style={{
+              fontSize: '1.15rem', fontWeight: 700,
+              marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px',
+            }}>
+              🖼️ Galería
+              {!mediaPostsLoading && (
+                <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-muted)' }}>
+                  {mediaPosts.length} {mediaPosts.length === 1 ? 'imagen' : 'imágenes'}
+                </span>
+              )}
+            </h3>
+
+            {mediaPostsLoading ? (
+              <div style={{
+                display: 'flex', justifyContent: 'center', padding: '40px',
+              }}>
+                <span style={{
+                  width: '20px', height: '20px',
+                  border: '2px solid rgba(255,255,255,0.1)',
+                  borderTopColor: 'var(--primary)',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }} />
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: '12px',
+              }}>
+                {mediaPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    onClick={() => setGalleryImage(post.mediaUrl!)}
+                    style={{
+                      position: 'relative',
+                      aspectRatio: '1',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      border: '1px solid var(--glass-border)',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.03)';
+                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(138,43,226,0.25)';
+                      e.currentTarget.style.borderColor = 'var(--primary)';
+                      const overlay = e.currentTarget.querySelector('.g-overlay') as HTMLElement;
+                      if (overlay) overlay.style.opacity = '1';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.borderColor = 'var(--glass-border)';
+                      const overlay = e.currentTarget.querySelector('.g-overlay') as HTMLElement;
+                      if (overlay) overlay.style.opacity = '0';
+                    }}
+                  >
+                    <Image
+                      src={post.mediaUrl!}
+                      alt=""
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      unoptimized
+                      style={{ objectFit: 'cover' }}
+                    />
+                    {/* Hover overlay */}
+                    <div className="g-overlay" style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(0,0,0,0.3)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontSize: '1.2rem', fontWeight: 600,
+                      pointerEvents: 'none',
+                    }}>
+                      🔍
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== GALLERY LIGHTBOX ===== */}
+      {galleryImage && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 2000,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '40px', cursor: 'zoom-out',
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setGalleryImage(null)}
+        >
+          <Image
+            src={galleryImage}
+            alt="Galería"
+            width={0}
+            height={0}
+            sizes="90vw"
+            unoptimized
+            style={{
+              maxWidth: '90vw', maxHeight: '90vh',
+              borderRadius: '12px', objectFit: 'contain',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              animation: 'scaleIn 0.25s ease',
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setGalleryImage(null)}
+            style={{
+              position: 'absolute', top: '20px', right: '20px',
+              background: 'rgba(0,0,0,0.5)', border: 'none',
+              color: 'white', fontSize: '1.5rem', cursor: 'pointer',
+              width: '40px', height: '40px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* ===== DONATE MODAL ===== */}
       {showDonate && (
