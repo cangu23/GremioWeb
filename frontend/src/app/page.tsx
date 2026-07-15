@@ -9,7 +9,6 @@ import FeaturedVtubersSection from '@/components/landing/FeaturedVtubersSection'
 import PricingSection from '@/components/landing/PricingSection';
 import RecentActivitySection from '@/components/landing/RecentActivitySection';
 import CTASection from '@/components/landing/CTASection';
-import Footer from '@/components/landing/Footer';
 
 function SectionDivider() {
   return (
@@ -63,7 +62,6 @@ export default function HomePage() {
       <RecentActivitySection />
       <SectionDivider />
       <CTASection />
-      <Footer />
     </>
   );
 }

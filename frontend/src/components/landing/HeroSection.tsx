@@ -267,18 +267,7 @@ export default function HeroSection() {
           position: 'relative',
         }}
       >
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '160px',
-          height: '160px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent 70%)',
-          animation: 'glow-pulse 3s ease-in-out infinite 0.5s',
-          pointerEvents: 'none',
-        }} />
+
         <Image
           src="/logo.png"
           alt="Gremio Estelar"
