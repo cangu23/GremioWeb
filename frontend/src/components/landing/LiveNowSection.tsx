@@ -480,7 +480,7 @@ function StreamCard({ vtuber, isActive, relativeIndex, onClick, watchSeconds, fo
             position: 'relative', overflow: 'hidden',
           }}>
             <div style={{
-              height: '100%', width: `${((watchSeconds % 600) / 600) * 100}%`,
+              height: '100%', width: `${((watchSeconds % 300) / 300) * 100}%`,
               background: 'linear-gradient(90deg, var(--primary), #ff4444)',
               borderRadius: '0 3px 3px 0',
               transition: 'width 1s linear',
@@ -554,10 +554,10 @@ export default function LiveNowSection() {
       if (saved) {
         const data = JSON.parse(saved);
         if (data && typeof data.seconds === 'number' && typeof data.xp === 'number') {
-          // Calculate time passed since last visit (capped at 10 min to prevent abuse)
+          // Calculate time passed since last visit (capped at 5 min to prevent abuse)
           const elapsedSinceSave = Math.min(
             Math.floor((Date.now() - (data.timestamp || Date.now())) / 1000),
-            600
+            300
           );
           setWatchSeconds(data.seconds + elapsedSinceSave);
           setXpEarnedThisSession(data.xp);
@@ -577,19 +577,41 @@ export default function LiveNowSection() {
     } catch { /* ignore */ }
   }, [watchSeconds, xpEarnedThisSession]);
 
+  // Pause/resume watch timer when tab visibility changes
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden && watchIntervalRef.current) {
+        clearInterval(watchIntervalRef.current);
+        watchIntervalRef.current = null;
+      } else if (!document.hidden && visible && user && !watchIntervalRef.current) {
+        watchIntervalRef.current = setInterval(() => {
+          setWatchSeconds((prev) => {
+            const ns = prev + 1;
+            if (ns > 0 && ns % 300 === 0) claimStreamXp(ns);
+            return ns;
+          });
+        }, 1000);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [visible, user]);
+
   // Watch timer
   useEffect(() => {
-    if (!visible || !user) {
+    if (!visible || !user || document.hidden) {
       if (watchIntervalRef.current) { clearInterval(watchIntervalRef.current); watchIntervalRef.current = null; }
       return;
     }
-    watchIntervalRef.current = setInterval(() => {
-      setWatchSeconds((prev) => {
-        const ns = prev + 1;
-        if (ns > 0 && ns % 600 === 0) claimStreamXp(ns);
-        return ns;
-      });
-    }, 1000);
+    if (!watchIntervalRef.current) {
+      watchIntervalRef.current = setInterval(() => {
+        setWatchSeconds((prev) => {
+          const ns = prev + 1;
+          if (ns > 0 && ns % 300 === 0) claimStreamXp(ns);
+          return ns;
+        });
+      }, 1000);
+    }
     return () => { if (watchIntervalRef.current) { clearInterval(watchIntervalRef.current); watchIntervalRef.current = null; } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, user]);
@@ -790,7 +812,7 @@ export default function LiveNowSection() {
                 <svg width="16" height="16" viewBox="0 0 16 16" style={{ transform: 'rotate(-90deg)' }}>
                   <circle cx="8" cy="8" r="6" fill="none" stroke="rgba(138,43,226,0.1)" strokeWidth="2" />
                   <circle cx="8" cy="8" r="6" fill="none" stroke="var(--primary)" strokeWidth="2"
-                    strokeDasharray={`${((watchSeconds % 600) / 600) * 37.68} 37.68`}
+                    strokeDasharray={`${((watchSeconds % 300) / 300) * 37.68} 37.68`}
                     strokeLinecap="round" style={{ transition: 'stroke-dasharray 1s linear' }} />
                 </svg>
               </div>
@@ -813,7 +835,7 @@ export default function LiveNowSection() {
                 display: 'flex', alignItems: 'center', gap: '4px',
               }}>
                 <span>🎯</span>
-                +5 XP cada 10 min
+                20 pts cada 5 min
               </span>
             </div>
           )}

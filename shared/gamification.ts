@@ -52,7 +52,7 @@ export const XP_REWARDS = {
   GET_FOLLOWER: 10,
   JOIN_GUILD: 15,
   LOGIN_STREAK: 20,
-  WATCH_STREAM: 5,
+  WATCH_STREAM: 20,
 } as const;
 
 export interface AchievementData {

@@ -3,7 +3,7 @@ import * as GamificationService from './gamification.service';
 
 // Simple in-memory rate limit: user -> last claim timestamp
 const streamXpCooldowns = new Map<string, number>();
-const STREAM_XP_COOLDOWN_MS = 8 * 60 * 1000; // 8 minutes (slightly less than 10 to allow margin)
+const STREAM_XP_COOLDOWN_MS = 4 * 60 * 1000; // 4 minutes (slightly less than 5 to allow margin)
 
 export const getMyProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -62,12 +62,12 @@ export const awardStreamXp = async (req: Request, res: Response, next: NextFunct
       return;
     }
 
-    // Calculate XP: 5 XP per 10 minutes watched
-    const xpUnits = Math.floor(watchMinutes / 10);
-    const xpAmount = xpUnits * 5;
+    // Calculate points: 20 pts per 5 minutes watched
+    const xpUnits = Math.floor(watchMinutes / 5);
+    const xpAmount = xpUnits * 20;
 
     if (xpAmount <= 0) {
-      res.status(400).json({ message: 'Debes ver al menos 10 minutos para ganar XP' });
+      res.status(400).json({ message: 'Debes ver al menos 5 minutos para ganar puntos' });
       return;
     }
 
