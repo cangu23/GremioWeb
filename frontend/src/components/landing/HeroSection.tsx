@@ -12,15 +12,34 @@ const TITLE_PARTS = [
   { text: 'VTubers', delay: 0.36, highlight: true },
 ];
 
-// Floating background shapes
+const SUBTITLE_TEXT = 'La plataforma definitiva para creadores de contenido virtual. Gestiona tu perfil, muestra tu personalidad, organiza eventos y haz crecer tu comunidad en un solo lugar.';
+
+const generateStars = () => {
+  const arr: { x: number; y: number; size: number; delay: number; duration: number }[] = [];
+  for (let i = 0; i < 80; i++) {
+    arr.push({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      delay: Math.random() * 5,
+      duration: Math.random() * 3 + 2,
+    });
+  }
+  return arr;
+};
+const STARS = generateStars();
+
+const COMETS = [
+  { top: '15%', delay: 0, duration: 4 },
+  { top: '45%', delay: 3, duration: 5 },
+  { top: '70%', delay: 7, duration: 4.5 },
+];
+
+// Floating background shapes (reduced count for cleaner look)
 const FLOATING_SHAPES = [
   { type: 'circle', size: 60, x: '15%', y: '20%', duration: 20, delay: 0, color: 'rgba(138,43,226,0.08)' },
   { type: 'square', size: 40, x: '80%', y: '30%', duration: 25, delay: 2, color: 'rgba(255,0,127,0.06)' },
-  { type: 'triangle', size: 50, x: '65%', y: '60%', duration: 18, delay: 4, color: 'rgba(0,212,255,0.06)' },
   { type: 'circle', size: 30, x: '25%', y: '70%', duration: 22, delay: 1, color: 'rgba(138,43,226,0.05)' },
-  { type: 'square', size: 70, x: '45%', y: '15%', duration: 28, delay: 3, color: 'rgba(255,0,127,0.04)' },
-  { type: 'circle', size: 20, x: '90%', y: '50%', duration: 15, delay: 5, color: 'rgba(0,212,255,0.08)' },
-  { type: 'square', size: 45, x: '10%', y: '45%', duration: 24, delay: 2, color: 'rgba(138,43,226,0.06)' },
   { type: 'circle', size: 80, x: '50%', y: '75%', duration: 30, delay: 0, color: 'rgba(255,0,127,0.03)' },
 ];
 
@@ -28,13 +47,31 @@ export default function HeroSection() {
   const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [typedText, setTypedText] = useState('');
+  const [showCursor, setShowCursor] = useState(true);
   const sectionRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+  const typeIndexRef = useRef(0);
 
   useEffect(() => {
     setVisible(true);
   }, []);
+
+  // Typewriter effect
+  useEffect(() => {
+    if (!visible) return;
+    const interval = setInterval(() => {
+      if (typeIndexRef.current < SUBTITLE_TEXT.length) {
+        setTypedText(SUBTITLE_TEXT.slice(0, typeIndexRef.current + 1));
+        typeIndexRef.current++;
+      } else {
+        clearInterval(interval);
+        setShowCursor(false);
+      }
+    }, 25);
+    return () => clearInterval(interval);
+  }, [visible]);
 
   // Smooth mouse parallax effect for the background glow
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -75,18 +112,73 @@ export default function HeroSection() {
         overflow: 'hidden',
       }}
     >
+      {/* ===== STARFIELD BACKGROUND ===== */}
+      {STARS.map((star, i) => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            left: `${star.x}%`,
+            top: `${star.y}%`,
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+            borderRadius: '50%',
+            background: star.size > 2.5
+              ? 'radial-gradient(circle, rgba(255,255,255,0.8), rgba(138,43,226,0.3))'
+              : 'rgba(255,255,255,0.6)',
+            boxShadow: star.size > 2.5 ? '0 0 6px rgba(138,43,226,0.4), 0 0 12px rgba(138,43,226,0.2)' : 'none',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
+            opacity: 0.2,
+          }}
+        />
+      ))}
+
+      {/* ===== COMETS ===== */}
+      {COMETS.map((comet, i) => (
+        <div
+          key={`comet-${i}`}
+          style={{
+            position: 'absolute',
+            top: comet.top,
+            left: '-100px',
+            width: '2px',
+            height: '2px',
+            borderRadius: '50%',
+            background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.8), rgba(138,43,226,0.6))',
+            boxShadow: '0 0 4px rgba(138,43,226,0.3), 0 0 8px rgba(138,43,226,0.1)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: `comet ${comet.duration}s linear ${comet.delay}s infinite`,
+            opacity: 0,
+          }}
+        >
+          {/* Comet tail */}
+          <div style={{
+            position: 'absolute',
+            top: '-1px',
+            right: '2px',
+            width: '80px',
+            height: '2px',
+            background: 'linear-gradient(to left, rgba(138,43,226,0.4), transparent)',
+            borderRadius: '1px',
+          }} />
+        </div>
+      ))}
+
       {/* ===== DECORATIVE GRID OVERLAY ===== */}
       <div style={{
         position: 'absolute',
         inset: 0,
         backgroundImage: `
-          linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
+          linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)
         `,
-        backgroundSize: '60px 60px',
+        backgroundSize: '80px 80px',
         pointerEvents: 'none',
         zIndex: 0,
-        opacity: 0.5,
+        opacity: 0.4,
       }} />
 
       {/* ===== MAIN GLOW (with mouse parallax) ===== */}
@@ -96,42 +188,15 @@ export default function HeroSection() {
           position: 'absolute',
           top: '50%',
           left: '50%',
-          width: '700px',
-          height: '700px',
+          width: '800px',
+          height: '800px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(138,43,226,0.15) 0%, rgba(255,0,127,0.08) 30%, rgba(0,212,255,0.04) 50%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(138,43,226,0.12) 0%, rgba(255,0,127,0.06) 30%, rgba(0,212,255,0.03) 50%, transparent 70%)',
           pointerEvents: 'none',
           zIndex: -1,
-          transition: 'width 0.5s ease, height 0.5s ease',
           willChange: 'transform',
         }}
       />
-
-      {/* ===== SECONDARY GLOW (static orbital) ===== */}
-      <div style={{
-        position: 'absolute',
-        top: '30%',
-        left: '20%',
-        width: '400px',
-        height: '400px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(0,212,255,0.06), transparent 70%)',
-        pointerEvents: 'none',
-        zIndex: -1,
-        animation: 'floatOrb 12s ease-in-out infinite',
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '20%',
-        right: '15%',
-        width: '350px',
-        height: '350px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,0,127,0.05), transparent 70%)',
-        pointerEvents: 'none',
-        zIndex: -1,
-        animation: 'floatOrb 15s ease-in-out infinite 3s',
-      }} />
 
       {/* ===== FLOATING SHAPES ===== */}
       {FLOATING_SHAPES.map((shape, i) => (
@@ -141,8 +206,8 @@ export default function HeroSection() {
             position: 'absolute',
             left: shape.x,
             top: shape.y,
-            width: shape.type === 'circle' ? shape.size : shape.type === 'triangle' ? 0 : shape.size,
-            height: shape.type === 'triangle' ? 0 : shape.size,
+            width: shape.type === 'circle' ? shape.size : shape.size,
+            height: shape.size,
             borderRadius: shape.type === 'circle' ? '50%' : shape.type === 'square' ? '6px' : '0',
             background: shape.color,
             border: shape.type === 'square' ? `1px solid ${shape.color.replace('0.0', '0.1')}` : 'none',
@@ -150,17 +215,8 @@ export default function HeroSection() {
             zIndex: 0,
             animation: `floatShape ${shape.duration}s ease-in-out ${shape.delay}s infinite`,
             opacity: 0.6,
-            transform: shape.type === 'triangle'
-              ? 'rotate(0deg)'
-              : 'none',
           }}
-        >
-          {shape.type === 'triangle' && (
-            <svg width={shape.size} height={shape.size} viewBox="0 0 50 50" style={{ position: 'absolute', top: '-25px', left: '-25px' }}>
-              <polygon points="25,0 50,50 0,50" fill={shape.color} stroke={shape.color.replace('0.0', '0.12')} strokeWidth="1" />
-            </svg>
-          )}
-        </div>
+        />
       ))}
 
       {/* ===== TOP BADGE ROW ===== */}
@@ -170,7 +226,7 @@ export default function HeroSection() {
         alignItems: 'center',
         flexWrap: 'wrap',
         justifyContent: 'center',
-        marginBottom: '32px',
+        marginBottom: '28px',
         opacity: 0,
         animation: visible ? 'fadeInUp 0.6s ease 0.05s forwards' : 'none',
       }}>
@@ -183,7 +239,7 @@ export default function HeroSection() {
             color: 'var(--accent)',
             border: '1px solid rgba(0, 212, 255, 0.2)',
             background: 'rgba(0, 212, 255, 0.05)',
-            animation: visible ? 'pulseGlow 3s ease-in-out infinite' : 'none',
+            animation: visible ? 'glow-pulse 3s ease-in-out infinite' : 'none',
           }}
         >
           ✦ Comunidad para Creadores de Contenido Virtual
@@ -195,21 +251,20 @@ export default function HeroSection() {
         style={{
           opacity: 0,
           animation: visible ? 'fadeInUp 0.8s ease 0.1s forwards' : 'none',
-          marginBottom: '24px',
+          marginBottom: '20px',
           position: 'relative',
         }}
       >
-        {/* Logo glow ring */}
         <div style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '140px',
-          height: '140px',
+          width: '160px',
+          height: '160px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(138,43,226,0.15), transparent 70%)',
-          animation: 'pulseGlow 3s ease-in-out infinite 0.5s',
+          background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent 70%)',
+          animation: 'glow-pulse 3s ease-in-out infinite 0.5s',
           pointerEvents: 'none',
         }} />
         <Image
@@ -219,9 +274,9 @@ export default function HeroSection() {
           height={0}
           sizes="100vw"
           style={{
-            height: '100px',
+            height: '90px',
             width: 'auto',
-            filter: 'drop-shadow(0 0 30px rgba(138,43,226,0.4))',
+            filter: 'drop-shadow(0 0 40px rgba(138,43,226,0.5))',
             position: 'relative',
             zIndex: 1,
           }}
@@ -234,7 +289,7 @@ export default function HeroSection() {
           fontSize: 'clamp(2.5rem, 8vw, 5.5rem)',
           fontWeight: 800,
           lineHeight: 1.1,
-          marginBottom: '20px',
+          marginBottom: '16px',
           letterSpacing: '-0.03em',
         }}
       >
@@ -263,22 +318,36 @@ export default function HeroSection() {
         ))}
       </h1>
 
-      {/* ===== DESCRIPTION ===== */}
-      <p
+      {/* ===== TYPEWRITER DESCRIPTION ===== */}
+      <div
         style={{
-          fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+          fontSize: 'clamp(0.95rem, 1.8vw, 1.15rem)',
           color: 'var(--text-muted)',
-          maxWidth: '650px',
-          marginBottom: '48px',
+          maxWidth: '680px',
+          marginBottom: '40px',
           lineHeight: 1.8,
+          minHeight: '3.6em',
           opacity: 0,
-          animation: visible ? 'fadeInUp 0.6s ease 0.6s forwards' : 'none',
+          animation: visible ? 'fadeIn 0.4s ease 0.5s forwards' : 'none',
         }}
       >
-        <span style={{ color: 'var(--text)', fontWeight: 500 }}>Gremio Estelar</span> es la plataforma
-        definitiva para conectar creadores de contenido virtual. Gestiona tu perfil, muestra tu
-        personalidad, organiza eventos y haz crecer tu comunidad en un solo lugar.
-      </p>
+        <span style={{ color: 'var(--text)', fontWeight: 500 }}>Gremio Estelar</span>
+        <span> </span>
+        {typedText}
+        {showCursor && (
+          <span
+            style={{
+              display: 'inline-block',
+              width: '2px',
+              height: '1.2em',
+              background: 'var(--primary)',
+              marginLeft: '2px',
+              verticalAlign: 'text-bottom',
+              animation: 'typewriter-cursor 0.8s step-end infinite',
+            }}
+          />
+        )}
+      </div>
 
       {/* ===== CTA BUTTONS ===== */}
       <div
@@ -398,42 +467,80 @@ export default function HeroSection() {
         )}
       </div>
 
+      {/* ===== MINI STAT TICKER ===== */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '32px',
+          alignItems: 'center',
+          marginTop: '48px',
+          opacity: 0,
+          animation: visible ? 'fadeIn 0.6s ease 1.4s forwards' : 'none',
+        }}
+      >
+        {[
+          { value: 'Comunidad', label: 'Activa' },
+          { value: 'VTubers', label: 'Registrados' },
+          { value: 'Eventos', label: 'Colaborativos' },
+        ].map((item, i) => (
+          <div key={i} style={{ textAlign: 'center', position: 'relative' }}>
+            {i > 0 && (
+              <div style={{
+                position: 'absolute',
+                left: '-16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '1px',
+                height: '24px',
+                background: 'rgba(255,255,255,0.08)',
+              }} />
+            )}
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              {item.value}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+              {item.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* ===== SCROLL INDICATOR ===== */}
       <div
         style={{
           position: 'absolute',
-          bottom: '32px',
+          bottom: '28px',
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
           color: 'var(--text-muted)',
           fontSize: '0.8rem',
           opacity: 0,
-          animation: visible ? 'fadeIn 0.6s ease 1.2s forwards' : 'none',
+          animation: visible ? 'fadeIn 0.6s ease 1.6s forwards' : 'none',
         }}
       >
-        <span style={{ letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.7rem' }}>
+        <span style={{ letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.65rem' }}>
           Descubre más
         </span>
         <div
           style={{
-            width: '20px',
-            height: '32px',
-            border: '2px solid rgba(255,255,255,0.2)',
+            width: '18px',
+            height: '28px',
+            border: '2px solid rgba(255,255,255,0.15)',
             borderRadius: '10px',
             display: 'flex',
             justifyContent: 'center',
-            paddingTop: '6px',
+            paddingTop: '5px',
             animation: 'float 2s ease-in-out infinite',
           }}
         >
           <div
             style={{
               width: '2px',
-              height: '8px',
+              height: '7px',
               background: 'var(--primary)',
               borderRadius: '2px',
               animation: 'scrollDot 1.5s ease-in-out infinite',
@@ -442,7 +549,7 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* ===== KEYFRAMES (injected via style tag) ===== */}
+      {/* ===== KEYFRAMES ===== */}
       <style>{`
         @keyframes floatOrb {
           0%, 100% { transform: translate(0, 0); }
@@ -460,17 +567,13 @@ export default function HeroSection() {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
         }
-        @keyframes pulseGlow {
-          0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        }
         @keyframes float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-6px); }
         }
         @keyframes scrollDot {
           0%, 100% { opacity: 1; transform: translateY(0); }
-          50% { opacity: 0.3; transform: translateY(6px); }
+          50% { opacity: 0.3; transform: translateY(5px); }
         }
       `}</style>
     </section>

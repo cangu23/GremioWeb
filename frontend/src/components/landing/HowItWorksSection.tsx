@@ -2,27 +2,46 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const steps = [
+const STEPS = [
   {
     number: '01',
     title: 'Crea tu cuenta',
-    description:
-      'Regístrate en segundos y configura tu perfil básico. Elige tu nombre de VTuber y empieza a construir tu presencia.',
-    icon: '01',
+    description: 'Regístrate en segundos y configura tu perfil básico. Elige tu nombre de VTuber y empieza a construir tu presencia.',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="8.5" cy="7" r="4" />
+        <polyline points="17 11 19 13 23 9" />
+      </svg>
+    ),
+    gradient: 'var(--primary)',
   },
   {
     number: '02',
     title: 'Configura tu personaje',
-    description:
-      'Completa tu perfil VTuber con tu lore, modelos, enlaces a redes sociales, horario de streams y más. Hazlo tuyo.',
-    icon: '02',
+    description: 'Completa tu perfil VTuber con tu lore, modelos, enlaces a redes sociales, horario de streams y más. Hazlo tuyo.',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+        <path d="M12 11l-2 3h4l-2 3" />
+      </svg>
+    ),
+    gradient: 'var(--secondary)',
   },
   {
     number: '03',
     title: 'Conecta y crece',
-    description:
-      'Únete a gremios, participa en eventos, chatea con la comunidad y gana XP. Tu viaje comienza ahora.',
-    icon: '03',
+    description: 'Únete a gremios, participa en eventos, chatea con la comunidad y gana XP. Tu viaje comienza ahora.',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+    gradient: 'var(--accent)',
   },
 ];
 
@@ -38,16 +57,15 @@ export default function HowItWorksSection() {
             const index = Number(entry.target.getAttribute('data-index'));
             setTimeout(() => {
               setVisibleSteps((prev) => new Set(prev).add(index));
-            }, index * 200);
+            }, index * 300);
           }
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.4 }
     );
 
     const cards = sectionRef.current?.querySelectorAll('.step-card');
     cards?.forEach((card) => observer.observe(card));
-
     return () => observer.disconnect();
   }, []);
 
@@ -62,8 +80,18 @@ export default function HowItWorksSection() {
       }}
     >
       <div className="container">
-        <h2 className="section-title">Cómo empezar</h2>
-        <p className="section-subtitle">
+        <h2 className="section-title" style={{
+          opacity: visibleSteps.size > 0 ? 1 : 0,
+          transform: visibleSteps.size > 0 ? 'translateY(0)' : 'translateY(20px)',
+          transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}>
+          Cómo empezar
+        </h2>
+        <p className="section-subtitle" style={{
+          opacity: visibleSteps.size > 0 ? 1 : 0,
+          transform: visibleSteps.size > 0 ? 'translateY(0)' : 'translateY(20px)',
+          transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s',
+        }}>
           En solo tres pasos puedes unirte a la comunidad y empezar a construir tu legado como creador
           de contenido virtual.
         </p>
@@ -76,99 +104,118 @@ export default function HowItWorksSection() {
             position: 'relative',
           }}
         >
-          {/* Connecting line (desktop) */}
-          <div
-            className="step-line"
-            style={{
-              position: 'absolute',
-              top: '60px',
-              left: 'calc(16.67% + 40px)',
-              right: 'calc(16.67% + 40px)',
-              height: '2px',
-              background:
-                'linear-gradient(90deg, var(--primary), var(--secondary), var(--accent))',
-              opacity: 0.3,
-              display: 'none',
-            }}
-          />
-
-          {steps.map((step, index) => (
-            <div
-              key={index}
-              className="step-card"
-              data-index={index}
-              style={{
-                textAlign: 'center',
-                padding: '40px 24px',
-                opacity: visibleSteps.has(index) ? 1 : 0,
-                transform: visibleSteps.has(index)
-                  ? 'translateY(0)'
-                  : 'translateY(40px)',
-                transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
-              }}
-            >
-              {/* Number */}
+          {STEPS.map((step, index) => {
+            const isVisible = visibleSteps.has(index);
+            return (
               <div
+                key={index}
+                className="step-card"
+                data-index={index}
                 style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background:
-                    'linear-gradient(135deg, rgba(138,43,226,0.2), rgba(255,0,127,0.1))',
-                  border: '2px solid rgba(138,43,226,0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 24px',
-                  fontSize: '1.5rem',
-                  fontWeight: 800,
-                  color: 'var(--primary)',
-                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  padding: '40px 24px',
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible
+                    ? 'translateY(0)'
+                    : 'translateY(40px)',
+                  transition: 'all 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
                   position: 'relative',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.borderColor = 'var(--primary)';
-                  e.currentTarget.style.boxShadow = '0 0 30px rgba(138,43,226,0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.borderColor = 'rgba(138,43,226,0.3)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
               >
-                {step.number}
-              </div>
 
-              {/* Icon */}
-              <div style={{ fontSize: '2rem', marginBottom: '16px' }}>{step.icon}</div>
+                {/* Step number circle */}
+                <div
+                  style={{
+                    width: '88px',
+                    height: '88px',
+                    borderRadius: '50%',
+                    background: isVisible
+                      ? `radial-gradient(circle at 30% 30%, ${step.gradient}40, ${step.gradient}15)`
+                      : 'rgba(255,255,255,0.03)',
+                    border: isVisible
+                      ? `2px solid ${step.gradient}50`
+                      : '2px solid rgba(255,255,255,0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 24px',
+                    position: 'relative',
+                    transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+                    color: isVisible ? step.gradient : 'var(--text-muted)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isVisible) {
+                      e.currentTarget.style.transform = 'scale(1.08)';
+                      e.currentTarget.style.boxShadow = `0 0 40px ${step.gradient}30`;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  {/* Glow ring */}
+                  {isVisible && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: '-6px',
+                      borderRadius: '50%',
+                      border: `1px solid ${step.gradient}20`,
+                      animation: 'glow-pulse 3s ease-in-out infinite',
+                    }} />
+                  )}
+                  {isVisible ? step.icon : (
+                    <span style={{ fontSize: '1.8rem', fontWeight: 800 }}>
+                      {step.number}
+                    </span>
+                  )}
+                </div>
 
-              {/* Title */}
-              <h3
-                style={{
-                  fontSize: '1.3rem',
+                {/* Step number label */}
+                <div style={{
+                  display: 'inline-block',
+                  padding: '3px 14px',
+                  borderRadius: '20px',
+                  background: isVisible ? `${step.gradient}15` : 'rgba(255,255,255,0.03)',
+                  color: isVisible ? step.gradient : 'var(--text-muted)',
+                  fontSize: '0.7rem',
                   fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   marginBottom: '12px',
-                  color: 'var(--text)',
-                }}
-              >
-                {step.title}
-              </h3>
+                  transition: 'all 0.4s ease',
+                }}>
+                  Paso {step.number}
+                </div>
 
-              {/* Description */}
-              <p
-                style={{
-                  fontSize: '0.95rem',
-                  color: 'var(--text-muted)',
-                  lineHeight: 1.7,
-                  maxWidth: '320px',
-                  margin: '0 auto',
-                }}
-              >
-                {step.description}
-              </p>
-            </div>
-          ))}
+                {/* Title */}
+                <h3
+                  style={{
+                    fontSize: '1.3rem',
+                    fontWeight: 700,
+                    marginBottom: '12px',
+                    color: isVisible ? 'var(--text)' : 'var(--text-muted)',
+                    transition: 'color 0.4s ease',
+                  }}
+                >
+                  {step.title}
+                </h3>
+
+                {/* Description */}
+                <p
+                  style={{
+                    fontSize: '0.95rem',
+                    color: 'var(--text-muted)',
+                    lineHeight: 1.7,
+                    maxWidth: '320px',
+                    margin: '0 auto',
+                  }}
+                >
+                  {step.description}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

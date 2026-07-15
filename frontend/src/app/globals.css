@@ -577,6 +577,102 @@ textarea.input {
   to   { transform: rotate(360deg); }
 }
 
+@keyframes comet {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(0deg);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100vw) translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes typewriter-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes constellation-line {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reveal-left {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(138,43,226,0.15), 0 0 40px rgba(138,43,226,0.05);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(138,43,226,0.3), 0 0 60px rgba(138,43,226,0.1);
+  }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+
+@keyframes orbit-reverse {
+  from { transform: rotate(0deg) translateX(80px) rotate(0deg); }
+  to   { transform: rotate(-360deg) translateX(80px) rotate(360deg); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-15px) rotate(1deg); }
+  66% { transform: translateY(-8px) rotate(-1deg); }
+}
+
+@keyframes section-divider-pulse {
+  0%, 100% { opacity: 0.3; transform: scaleX(1); }
+  50% { opacity: 0.6; transform: scaleX(1.2); }
+}
+
 @keyframes typingBounce {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40%           { transform: scale(1);   opacity: 1; }
