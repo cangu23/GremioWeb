@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuth } from '@/lib/AuthContext';
 
 const TITLE_PARTS = [
   { text: 'El', delay: 0 },
@@ -24,6 +25,7 @@ const FLOATING_SHAPES = [
 ];
 
 export default function HeroSection() {
+  const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -289,55 +291,111 @@ export default function HeroSection() {
           animation: visible ? 'fadeInUp 0.6s ease 0.8s forwards' : 'none',
         }}
       >
-        <Link
-          href="/register"
-          className="btn"
-          style={{
-            padding: '18px 36px',
-            fontSize: '1.1rem',
-            fontWeight: 700,
-            borderRadius: '14px',
-            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            boxShadow: '0 0 30px rgba(138,43,226,0.3)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-            e.currentTarget.style.boxShadow = '0 0 50px rgba(138,43,226,0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0) scale(1)';
-            e.currentTarget.style.boxShadow = '0 0 30px rgba(138,43,226,0.3)';
-          }}
-        >
-          ✦ Unirse al Gremio
-        </Link>
-        <Link
-          href="/login"
-          className="btn btn-outline"
-          style={{
-            padding: '18px 36px',
-            fontSize: '1.1rem',
-            fontWeight: 600,
-            borderRadius: '14px',
-            border: '2px solid var(--glass-border)',
-            transition: 'all 0.3s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--primary)';
-            e.currentTarget.style.background = 'rgba(138,43,226,0.08)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--glass-border)';
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >
-          Ya soy miembro
-        </Link>
+        {user ? (
+          <>
+            <Link
+              href="/dashboard"
+              className="btn"
+              style={{
+                padding: '18px 36px',
+                fontSize: '1.1rem',
+                fontWeight: 700,
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                boxShadow: '0 0 30px rgba(138,43,226,0.3)',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 0 50px rgba(138,43,226,0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 0 30px rgba(138,43,226,0.3)';
+              }}
+            >
+              Ir al Dashboard
+            </Link>
+            <Link
+              href="/vtubers"
+              className="btn btn-outline"
+              style={{
+                padding: '18px 36px',
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                borderRadius: '14px',
+                border: '2px solid var(--glass-border)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.background = 'rgba(138,43,226,0.08)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--glass-border)';
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              Explorar VTubers
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/register"
+              className="btn"
+              style={{
+                padding: '18px 36px',
+                fontSize: '1.1rem',
+                fontWeight: 700,
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                boxShadow: '0 0 30px rgba(138,43,226,0.3)',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 0 50px rgba(138,43,226,0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 0 30px rgba(138,43,226,0.3)';
+              }}
+            >
+              ✦ Unirse al Gremio
+            </Link>
+            <Link
+              href="/login"
+              className="btn btn-outline"
+              style={{
+                padding: '18px 36px',
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                borderRadius: '14px',
+                border: '2px solid var(--glass-border)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.background = 'rgba(138,43,226,0.08)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--glass-border)';
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              Ya soy miembro
+            </Link>
+          </>
+        )}
       </div>
 
       {/* ===== SCROLL INDICATOR ===== */}

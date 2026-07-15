@@ -2,28 +2,34 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-
-const footerLinks = {
-  Plataforma: [
-    { href: '/vtubers', label: 'VTubers' },
-    { href: '/events', label: 'Eventos' },
-    { href: '/guilds', label: 'Gremios' },
-    { href: '/feed', label: 'Feed' },
-    { href: '/leaderboard', label: 'Ranking' },
-  ],
-  Comunidad: [
-    { href: '/chat', label: 'Chat Global' },
-    { href: '/achievements', label: 'Logros' },
-    { href: '/support', label: 'Apoyar' },
-  ],
-  Cuenta: [
-    { href: '/login', label: 'Iniciar Sesión' },
-    { href: '/register', label: 'Unirse Gratis' },
-    { href: '/dashboard', label: 'Dashboard' },
-  ],
-};
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Footer() {
+  const { user } = useAuth();
+
+  const footerLinks = {
+    Plataforma: [
+      { href: '/vtubers', label: 'VTubers' },
+      { href: '/events', label: 'Eventos' },
+      { href: '/guilds', label: 'Gremios' },
+      { href: '/feed', label: 'Feed' },
+      { href: '/leaderboard', label: 'Ranking' },
+    ],
+    Comunidad: [
+      { href: '/chat', label: 'Chat Global' },
+      { href: '/achievements', label: 'Logros' },
+      { href: '/support', label: 'Apoyar' },
+    ],
+    Cuenta: user
+      ? [
+          { href: '/dashboard', label: 'Dashboard' },
+          { href: '/profile/' + user.id, label: 'Mi Perfil' },
+        ]
+      : [
+          { href: '/login', label: 'Iniciar Sesión' },
+          { href: '/register', label: 'Unirse Gratis' },
+        ],
+  };
   const currentYear = new Date().getFullYear();
 
   return (

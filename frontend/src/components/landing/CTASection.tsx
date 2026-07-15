@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function CTASection() {
+  const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
@@ -117,20 +119,37 @@ export default function CTASection() {
                 justifyContent: 'center',
               }}
             >
-              <Link
-                href="/register"
-                className="btn"
-                style={{
-                  padding: '18px 40px',
-                  fontSize: '1.15rem',
-                  fontWeight: 700,
-                  borderRadius: '14px',
-                  background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                  boxShadow: '0 0 40px rgba(138,43,226,0.3)',
-                }}
-              >
-                Crear cuenta gratis
-              </Link>
+              {user ? (
+                <Link
+                  href="/dashboard"
+                  className="btn"
+                  style={{
+                    padding: '18px 40px',
+                    fontSize: '1.15rem',
+                    fontWeight: 700,
+                    borderRadius: '14px',
+                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    boxShadow: '0 0 40px rgba(138,43,226,0.3)',
+                  }}
+                >
+                  Ir al Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/register"
+                  className="btn"
+                  style={{
+                    padding: '18px 40px',
+                    fontSize: '1.15rem',
+                    fontWeight: 700,
+                    borderRadius: '14px',
+                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    boxShadow: '0 0 40px rgba(138,43,226,0.3)',
+                  }}
+                >
+                  Crear cuenta gratis
+                </Link>
+              )}
               <Link
                 href="/vtubers"
                 className="btn btn-outline"
