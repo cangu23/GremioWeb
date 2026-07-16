@@ -37,20 +37,16 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
       return;
     }
 
-    // Fetch initial unread count
     const fetchUnread = async () => {
       try { const data = await apiFetch('/notifications/unread-count', {}); setUnreadCount(data.count); } catch { }
     };
     fetchUnread();
     const interval = setInterval(fetchUnread, 60000);
 
-    // Connect socket for real-time notifications
     let sock: any;
     const setupSocket = () => {
       try {
         sock = connectSocket();
-
-        // Listen for new notifications
         sock.on(NOTIFICATION_EVENTS.NEW, (notification: {
           id: string;
           userId: string;
@@ -78,89 +74,72 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
     };
   }, [user, showToast]);
 
-  const linkStyle: React.CSSProperties = {
-    color: 'var(--text-secondary)',
+  const linkBase: React.CSSProperties = {
+    color: 'var(--text-muted)',
     textDecoration: 'none',
-    padding: '8px 0',
-    fontSize: '0.9rem',
+    padding: '6px 12px',
+    fontSize: '0.82rem',
     fontWeight: 500,
     whiteSpace: 'nowrap',
-    transition: 'color 0.2s ease',
+    borderRadius: '6px',
+    transition: 'all 0.2s ease',
   };
 
   const navGroup: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: '2px',
   };
 
   const navSeparator: React.CSSProperties = {
     width: '1px',
-    height: '20px',
+    height: '16px',
     background: 'var(--glass-border)',
     margin: '0 8px',
   };
 
   return (
     <>
-      {/* Group: Discover */}
       <div style={navGroup}>
-        <Link href="/events" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+        <Link href="/events" style={linkBase} onClick={closeMenu}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
           Eventos
         </Link>
-        <Link href="/guilds" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+        <Link href="/guilds" style={linkBase} onClick={closeMenu}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
           Gremios
         </Link>
-        <Link href="/vtubers" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+        <Link href="/vtubers" style={linkBase} onClick={closeMenu}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
           VTubers
         </Link>
       </div>
 
       <div style={navSeparator} />
 
-      {/* Group: Social */}
       <div style={navGroup}>
-        <Link href="/feed" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+        <Link href="/feed" style={linkBase} onClick={closeMenu}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
           Feed
         </Link>
-        <Link href="/chat" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+        <Link href="/chat" style={linkBase} onClick={closeMenu}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
           Chat
         </Link>
-        <Link href="/leaderboard" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+        <Link href="/leaderboard" style={linkBase} onClick={closeMenu}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
           Ranking
         </Link>
-        <Link href="/achievements" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
-          Logros
-        </Link>
-      </div>
-
-      <div style={navSeparator} />
-
-      {/* Group: Shop */}
-      <div style={navGroup}>
-        <Link href="/shop" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
-          🛒 Tienda
-        </Link>
-        <Link href="/inventory" style={linkStyle} onClick={closeMenu}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
-          🎒 Inventario
+        <Link href="/shop" style={{...linkBase, color: 'var(--warm)'}} onClick={closeMenu}
+          onMouseEnter={e => { e.currentTarget.style.color = '#f4a261'; e.currentTarget.style.background = 'rgba(244,162,97,0.08)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--warm)'; e.currentTarget.style.background = 'transparent'; }}>
+          Tienda
         </Link>
       </div>
 
@@ -168,212 +147,85 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
 
       {user ? (
         <>
-          {/* Equipped badge */}
           {equippedBadge && (
-            <span
-              title={`Insignia: ${equippedBadge.label}`}
-              style={{
-                fontSize: '1.1rem',
-                lineHeight: 1,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-              }}
-            >
+            <span title={`Insignia: ${equippedBadge.label}`} style={{ fontSize: '1rem', lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
               {equippedBadge.icon}
             </span>
           )}
 
-          {/* Notifications */}
-          <Link
-            href="/notifications"
-            style={{
-              ...linkStyle,
-              position: 'relative',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              padding: 0,
-              background: unreadCount > 0 ? 'var(--primary-subtle)' : 'transparent',
-            }}
-            onClick={closeMenu}
-            title="Notificaciones"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = unreadCount > 0 ? 'var(--primary-subtle)' : 'transparent'; }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <Link href="/notifications" style={{ ...linkBase, position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', padding: 0, background: unreadCount > 0 ? 'var(--primary-subtle)' : 'transparent', borderRadius: '6px' }} onClick={closeMenu} title="Notificaciones">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
             {unreadCount > 0 && (
               <span style={{
-                position: 'absolute',
-                top: '-2px',
-                right: '-2px',
-                background: 'var(--primary)',
-                color: '#fff',
-                fontSize: '0.55rem',
-                fontWeight: 700,
-                minWidth: '14px',
-                height: '14px',
-                borderRadius: '7px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 3px',
-                boxShadow: '0 2px 6px rgba(138,43,226,0.4)',
+                position: 'absolute', top: '-1px', right: '-1px',
+                background: 'var(--primary)', color: '#fff',
+                fontSize: '0.5rem', fontWeight: 700,
+                minWidth: '12px', height: '12px', borderRadius: '6px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '0 2px',
+                boxShadow: '0 2px 6px rgba(230,57,70,0.4)',
               }}>
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </Link>
 
-          {/* Admin */}
           {user.role === 'ADMIN' && (
-            <Link
-              href="/admin"
-              style={{
-                color: 'var(--primary)',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                textDecoration: 'none',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                background: 'var(--primary-subtle)',
-                border: '1px solid rgba(138,43,226,0.2)',
-                transition: 'all 0.2s ease',
-              }}
-              onClick={closeMenu}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(138,43,226,0.2)';
-                e.currentTarget.style.borderColor = 'rgba(138,43,226,0.3)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'var(--primary-subtle)';
-                e.currentTarget.style.borderColor = 'rgba(138,43,226,0.2)';
-              }}
-            >
+            <Link href="/admin" style={{ ...linkBase, color: 'var(--primary)', fontWeight: 600, background: 'var(--primary-subtle)', border: '1px solid rgba(230,57,70,0.15)' }} onClick={closeMenu}>
               Admin
             </Link>
           )}
 
-          {/* Dashboard */}
-          <Link
-            href="/dashboard"
-            style={{
-              padding: '7px 16px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-              color: '#fff',
-              textDecoration: 'none',
-              boxShadow: '0 2px 12px rgba(138,43,226,0.3)',
-              transition: 'all 0.2s ease',
-            }}
-            onClick={closeMenu}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(138,43,226,0.4)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 12px rgba(138,43,226,0.3)';
-            }}
-          >
+          <Link href="/dashboard" style={{
+            padding: '6px 16px', fontSize: '0.82rem', fontWeight: 600,
+            borderRadius: '6px',
+            background: 'var(--primary)', color: '#fff', textDecoration: 'none',
+            transition: 'all 0.2s ease',
+          }} onClick={closeMenu}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-hover)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(230,57,70,0.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.boxShadow = 'none'; }}>
             Dashboard
           </Link>
 
-          {/* Logout */}
-          <button
-            onClick={() => { logout(); closeMenu?.(); }}
-            style={{
-              padding: '7px 14px',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              borderRadius: '8px',
-              background: 'transparent',
-              border: '1px solid var(--glass-border)',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = 'var(--text-muted)';
-            }}
-          >
-            Cerrar Sesión
+          <button onClick={() => { logout(); closeMenu?.(); }} style={{
+            padding: '6px 12px', fontSize: '0.8rem', fontWeight: 500,
+            borderRadius: '6px', background: 'transparent',
+            border: '1px solid var(--glass-border)', color: 'var(--text-muted)',
+            cursor: 'pointer', transition: 'all 0.2s ease',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}>
+            Salir
           </button>
         </>
       ) : (
         <>
-          <Link
-            href="/login"
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.9rem',
-              fontWeight: 500,
-              textDecoration: 'none',
-              padding: '7px 14px',
-              borderRadius: '8px',
-              transition: 'all 0.2s ease',
-            }}
-            onClick={closeMenu}
+          <Link href="/login" style={{
+            color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 500,
+            textDecoration: 'none', padding: '6px 12px', borderRadius: '6px', transition: 'all 0.2s ease',
+          }} onClick={closeMenu}
             onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
-          >
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
             Iniciar Sesión
           </Link>
-          <Link
-            href="/support"
-            style={{
-              color: 'var(--secondary)',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-              padding: '7px 14px',
-              borderRadius: '8px',
-              transition: 'all 0.2s ease',
-            }}
-            onClick={closeMenu}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--secondary-subtle)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
+          <Link href="/support" style={{
+            color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 500,
+            textDecoration: 'none', padding: '6px 12px', borderRadius: '6px', transition: 'all 0.2s ease',
+          }} onClick={closeMenu}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}>
             Apoyar
           </Link>
-          <Link
-            href="/register"
-            style={{
-              padding: '7px 18px',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-              color: '#fff',
-              textDecoration: 'none',
-              boxShadow: '0 2px 12px rgba(138,43,226,0.3)',
-              transition: 'all 0.2s ease',
-            }}
-            onClick={closeMenu}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(138,43,226,0.4)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 12px rgba(138,43,226,0.3)';
-            }}
-          >
+          <Link href="/register" style={{
+            padding: '6px 16px', fontSize: '0.82rem', fontWeight: 600,
+            borderRadius: '6px', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
+            transition: 'all 0.2s ease',
+          }} onClick={closeMenu}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-hover)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(230,57,70,0.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.boxShadow = 'none'; }}>
             Unirse
           </Link>
         </>
@@ -396,39 +248,30 @@ export default function Navbar() {
     <nav
       className={styles.navbar}
       style={{
-        background: scrolled
-          ? 'rgba(15, 12, 41, 0.85)'
-          : 'rgba(15, 12, 41, 0.5)',
+        background: scrolled ? 'rgba(13, 13, 13, 0.92)' : 'rgba(13, 13, 13, 0.6)',
         backdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
-        borderColor: scrolled ? 'rgba(255,255,255,0.1)' : 'var(--glass-border)',
+        borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
         transition: 'background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease',
       }}
     >
       <div className={styles.navContainer}>
         <Link href="/" className={styles.logo} onClick={() => setMenuOpen(false)}>
-          <Image src="/logo.png" alt="Gremio Estelar" width={0} height={0} sizes="100vw" style={{ height: '30px', width: 'auto' }} />
+          <Image src="/logo.png" alt="Gremio Estelar" width={0} height={0} sizes="100vw" style={{ height: '28px', width: 'auto' }} />
         </Link>
 
-        {/* Desktop nav */}
         <div className={styles.desktopNav}>
           <ClientOnly fallback={null}>
             <AuthNav />
           </ClientOnly>
         </div>
 
-        {/* Hamburger button */}
-        <button
-          className={styles.hamburger}
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Menú"
-        >
+        <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menú">
           <span style={{ transform: menuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' }} />
           <span style={{ opacity: menuOpen ? 0 : 1 }} />
           <span style={{ transform: menuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' }} />
         </button>
       </div>
 
-      {/* Mobile menu */}
       {menuOpen && (
         <div className={styles.mobileMenu}>
           <ClientOnly fallback={null}>

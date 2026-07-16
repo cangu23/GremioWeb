@@ -57,22 +57,10 @@ function formatTimeAgo(dateStr: string): string {
   return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
-const TABS: { key: TabKey; icon: React.ReactNode; label: string }[] = [
-  {
-    key: 'posts',
-    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
-    label: 'Publicaciones',
-  },
-  {
-    key: 'events',
-    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-    label: 'Eventos',
-  },
-  {
-    key: 'vtubers',
-    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-    label: 'Nuevos VTubers',
-  },
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'posts', label: 'Publicaciones' },
+  { key: 'events', label: 'Eventos' },
+  { key: 'vtubers', label: 'Nuevos VTubers' },
 ];
 
 export default function RecentActivitySection() {
@@ -85,9 +73,7 @@ export default function RecentActivitySection() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-        }
+        if (entry.isIntersecting) setVisible(true);
       },
       { threshold: 0.1 }
     );
@@ -100,11 +86,8 @@ export default function RecentActivitySection() {
       try {
         const result = await apiFetch('/activity', {});
         setData(result);
-      } catch {
-        // Silently fail — section just won't render
-      } finally {
-        setLoading(false);
-      }
+      } catch { /* silent */ }
+      finally { setLoading(false); }
     };
     fetchActivity();
   }, []);
@@ -112,21 +95,8 @@ export default function RecentActivitySection() {
   if (loading) {
     return (
       <section className="section" ref={sectionRef}>
-        <div className="container">
-          <h2 className="section-title">Actividad Reciente</h2>
-          <p className="section-subtitle">Lo que está pasando en la comunidad ahora mismo</p>
-          <div className="glass" style={{
-            padding: '40px', borderRadius: '20px',
-            display: 'flex', justifyContent: 'center',
-          }}>
-            <span style={{
-              width: '24px', height: '24px',
-              border: '2px solid rgba(255,255,255,0.1)',
-              borderTopColor: 'var(--primary)',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }} />
-          </div>
+        <div className="container" style={{ textAlign: 'center', padding: '60px 0' }}>
+          <div style={{ width: 22, height: 22, border: '2px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
         </div>
       </section>
     );
@@ -136,7 +106,6 @@ export default function RecentActivitySection() {
     return null;
   }
 
-  // Auto-select first tab with data
   const activeKey = data[activeTab]?.length > 0 ? activeTab : (
     data.posts.length > 0 ? 'posts' :
     data.events.length > 0 ? 'events' : 'vtubers'
@@ -147,34 +116,30 @@ export default function RecentActivitySection() {
       ref={sectionRef}
       className="section"
       id="recent-activity"
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        background: 'linear-gradient(180deg, transparent 0%, rgba(0,212,255,0.02) 50%, transparent 100%)',
-      }}
+      style={{ position: 'relative', zIndex: 1 }}
     >
       <div className="container">
+        <div className="section-accent-line" style={{
+          opacity: visible ? 1 : 0, transition: 'opacity 0.5s ease',
+        }} />
         <h2 className="section-title" style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+          opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(15px)',
+          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
         }}>
           Actividad Reciente
         </h2>
         <p className="section-subtitle" style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s',
+          opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(15px)',
+          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s',
         }}>
           Lo que está pasando en la comunidad ahora mismo
         </p>
 
         {/* Tabs */}
         <div style={{
-          display: 'flex', gap: '4px', justifyContent: 'center', marginBottom: '32px',
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s',
+          display: 'flex', gap: '4px', justifyContent: 'center', marginBottom: '24px',
+          opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(15px)',
+          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s',
         }}>
           {TABS.map((tab) => {
             const count = data[tab.key]?.length || 0;
@@ -185,24 +150,23 @@ export default function RecentActivitySection() {
                 onClick={() => setActiveTab(tab.key)}
                 disabled={count === 0}
                 style={{
-                  padding: '10px 20px', borderRadius: '10px',
+                  padding: '7px 16px', borderRadius: '8px',
                   border: 'none', cursor: count === 0 ? 'default' : 'pointer',
-                  background: isActive ? 'rgba(138,43,226,0.15)' : 'transparent',
-                  color: isActive ? 'var(--text)' : count === 0 ? 'rgba(255,255,255,0.15)' : 'var(--text-muted)',
-                  fontWeight: 600, fontSize: '0.9rem',
-                  transition: 'all 0.2s',
+                  background: isActive ? 'var(--primary-subtle)' : 'transparent',
+                  color: isActive ? 'var(--primary)' : count === 0 ? 'rgba(255,255,255,0.12)' : 'var(--text-muted)',
+                  fontWeight: isActive ? 600 : 500, fontSize: '0.82rem',
+                  transition: 'all 0.2s ease',
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  opacity: count === 0 ? 0.5 : 1,
+                  opacity: count === 0 ? 0.4 : 1,
                 }}
               >
-                <span style={{ display: 'inline-flex' }}>{tab.icon}</span>
                 <span>{tab.label}</span>
                 {count > 0 && (
                   <span style={{
-                    padding: '1px 7px', borderRadius: '10px',
-                    background: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)',
-                    color: '#fff', fontSize: '0.7rem', fontWeight: 700,
-                    minWidth: '18px', textAlign: 'center',
+                    padding: '1px 6px', borderRadius: '6px',
+                    background: isActive ? 'var(--primary)' : 'rgba(255,255,255,0.08)',
+                    color: '#fff', fontSize: '0.62rem', fontWeight: 700,
+                    minWidth: '16px', textAlign: 'center',
                   }}>
                     {count}
                   </span>
@@ -215,112 +179,94 @@ export default function RecentActivitySection() {
         {/* Content */}
         <div style={{
           opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(30px)',
-          transition: 'all 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.3s',
-          maxWidth: '700px', margin: '0 auto',
+          transform: visible ? 'translateY(0)' : 'translateY(20px)',
+          transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s',
+          maxWidth: '600px', margin: '0 auto',
         }}>
-          {activeKey === 'posts' && (
-            <ActivityPosts data={data.posts} />
-          )}
-          {activeKey === 'events' && (
-            <ActivityEvents data={data.events} />
-          )}
-          {activeKey === 'vtubers' && (
-            <ActivityVtubers data={data.vtubers} />
-          )}
+          {activeKey === 'posts' && <ActivityPosts data={data.posts} />}
+          {activeKey === 'events' && <ActivityEvents data={data.events} />}
+          {activeKey === 'vtubers' && <ActivityVtubers data={data.vtubers} />}
         </div>
 
-        {/* View all CTA */}
-        <div style={{
-          textAlign: 'center', marginTop: '32px',
-          opacity: visible ? 1 : 0,
-          transition: 'all 0.6s ease 0.5s',
-        }}>
-          <Link
-            href="/feed"
-            className="btn btn-outline"
-            style={{ padding: '12px 28px', fontSize: '0.95rem', borderRadius: '12px', borderWidth: '2px' }}
-          >
+        <div style={{ textAlign: 'center', marginTop: '24px', opacity: visible ? 1 : 0, transition: 'opacity 0.5s ease 0.4s' }}>
+          <Link href="/feed" className="btn btn--outline btn--sm">
             Ver toda la actividad
           </Link>
         </div>
       </div>
+
+
     </section>
   );
 }
 
-/* ===== POSTS TAB ===== */
 function ActivityPosts({ data }: { data: ActivityPost[] }) {
-  if (data.length === 0) return <EmptyTab icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>} text="No hay publicaciones recientes aun." />;
+  if (data.length === 0) {
+    return (
+      <div style={{
+        padding: '32px', borderRadius: '12px', textAlign: 'center',
+        background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
+      }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay publicaciones recientes aún.</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {data.map((post, idx) => (
         <Link
           key={post.id}
           href={`/profile/${post.user.id}`}
-          className="glass"
           style={{
-            padding: '18px 20px', borderRadius: '16px',
+            padding: '16px 18px', borderRadius: '10px',
+            background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
             textDecoration: 'none', color: 'var(--text)',
-            transition: 'all 0.3s ease',
-            animation: `fadeInUp 0.5s ease ${idx * 0.08}s forwards`,
+            transition: 'all 0.2s ease',
+            animation: `fadeInUp 0.4s ease ${idx * 0.06}s forwards`,
             opacity: 0,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.borderColor = 'rgba(138,43,226,0.2)';
-            e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.3)';
+            e.currentTarget.style.background = 'var(--bg-card-hover)';
+            e.currentTarget.style.borderColor = 'rgba(230,57,70,0.12)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.background = 'var(--bg-card)';
             e.currentTarget.style.borderColor = 'var(--glass-border)';
-            e.currentTarget.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)';
           }}
         >
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <div style={{
-              width: '30px', height: '30px', borderRadius: '50%',
+              width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
               background: post.user.vtuberProfile?.avatarUrl
                 ? `url(${post.user.vtuberProfile.avatarUrl}) center/cover`
-                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                : 'linear-gradient(135deg, var(--primary), var(--warm))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontWeight: 'bold', fontSize: '0.7rem',
-              overflow: 'hidden', flexShrink: 0,
+              color: 'white', fontWeight: 'bold', fontSize: '0.6rem',
+              overflow: 'hidden',
             }}>
               {!post.user.vtuberProfile?.avatarUrl && (post.user.vtuberProfile?.displayName || post.user.username).charAt(0).toUpperCase()}
-            </div>              <div style={{ fontSize: '0.85rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ fontWeight: 600 }}>
-                    {post.user.vtuberProfile?.displayName || post.user.username}
-                  </span>
-                  {(post.user.role === 'VTUBER' || post.user.vtuberProfile?.isApproved) && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff007f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="VTuber Oficial">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                  )}
-                </div>
-                <span style={{ color: 'var(--text-muted)' }}>
-                  · {formatTimeAgo(post.createdAt)}
-                </span>
-              </div>
+            </div>
+            <div style={{ fontSize: '0.78rem' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                {post.user.vtuberProfile?.displayName || post.user.username}
+              </span>
+              <span style={{ color: 'var(--text-muted)' }}> · {formatTimeAgo(post.createdAt)}</span>
+            </div>
           </div>
-          {/* Content preview */}
           <p style={{
-            fontSize: '0.9rem', lineHeight: 1.6, color: 'var(--text-muted)',
+            fontSize: '0.85rem', lineHeight: 1.6, color: 'var(--text-muted)',
             whiteSpace: 'pre-wrap',
           }}>
             {post.content}
           </p>
-          {/* Stats */}
           <div style={{
-            display: 'flex', gap: '16px', marginTop: '10px',
-            paddingTop: '10px', borderTop: '1px solid var(--glass-border)',
-            fontSize: '0.78rem', color: 'var(--text-muted)',
+            display: 'flex', gap: '12px', marginTop: '8px',
+            paddingTop: '8px', borderTop: '1px solid var(--glass-border)',
+            fontSize: '0.72rem', color: 'var(--text-muted)',
           }}>
-            <span>Likes {post._count.likes}</span>
-            <span>Comments {post._count.comments}</span>
+            <span>❤️ {post._count.likes}</span>
+            <span>💬 {post._count.comments}</span>
           </div>
         </Link>
       ))}
@@ -328,61 +274,67 @@ function ActivityPosts({ data }: { data: ActivityPost[] }) {
   );
 }
 
-/* ===== EVENTS TAB ===== */
 function ActivityEvents({ data }: { data: ActivityEvent[] }) {
-  if (data.length === 0) return <EmptyTab icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="18"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="16" y1="14" x2="16" y2="18"/></svg>} text="No hay eventos proximos." />;
+  if (data.length === 0) {
+    return (
+      <div style={{
+        padding: '32px', borderRadius: '12px', textAlign: 'center',
+        background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
+      }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay eventos próximos.</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {data.map((event, idx) => (
         <Link
           key={event.id}
           href={`/events/${event.id}`}
-          className="glass"
           style={{
-            padding: '18px 20px', borderRadius: '16px',
+            padding: '14px 16px', borderRadius: '10px',
+            background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
             textDecoration: 'none', color: 'var(--text)',
-            transition: 'all 0.3s ease',
-            animation: `fadeInUp 0.5s ease ${idx * 0.08}s forwards`,
+            transition: 'all 0.2s ease',
+            animation: `fadeInUp 0.4s ease ${idx * 0.06}s forwards`,
             opacity: 0,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.borderColor = 'rgba(138,43,226,0.2)';
+            e.currentTarget.style.background = 'var(--bg-card-hover)';
+            e.currentTarget.style.borderColor = 'rgba(230,57,70,0.12)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.background = 'var(--bg-card)';
             e.currentTarget.style.borderColor = 'var(--glass-border)';
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {/* Date badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '48px', height: '48px', borderRadius: '10px', flexShrink: 0,
-              background: 'linear-gradient(135deg, rgba(138,43,226,0.15), rgba(255,0,127,0.1))',
-              border: '1px solid rgba(138,43,226,0.2)',
+              width: '42px', height: '42px', borderRadius: '8px', flexShrink: 0,
+              background: 'rgba(230,57,70,0.08)',
+              border: '1px solid rgba(230,57,70,0.12)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              lineHeight: 1.2,
+              lineHeight: 1.1,
             }}>
-              <span style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.55rem', fontWeight: 600, color: 'var(--primary)', textTransform: 'uppercase' }}>
                 {new Date(event.date).toLocaleDateString('es-ES', { month: 'short' })}
               </span>
-              <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)' }}>
                 {new Date(event.date).getDate()}
               </span>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {event.title}
               </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 Por @{event.creator.username} · {event._count.attendees} asistentes
               </div>
             </div>
-            {/* Status badge */}
             <span style={{
-              padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 600,
-              background: event.status === 'UPCOMING' ? 'rgba(0,212,255,0.1)' : 'rgba(0,230,118,0.1)',
+              padding: '2px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 600,
+              background: event.status === 'UPCOMING' ? 'rgba(69,123,157,0.1)' : 'rgba(42,157,143,0.1)',
               color: event.status === 'UPCOMING' ? 'var(--accent)' : 'var(--success)',
               flexShrink: 0,
             }}>
@@ -395,70 +347,65 @@ function ActivityEvents({ data }: { data: ActivityEvent[] }) {
   );
 }
 
-/* ===== VTUBERS TAB ===== */
 function ActivityVtubers({ data }: { data: ActivityVTuber[] }) {
-  if (data.length === 0) return <EmptyTab icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/><path d="M8 21l4-4 4 4"/></svg>} text="No hay nuevos VTubers aun." />;
+  if (data.length === 0) {
+    return (
+      <div style={{
+        padding: '32px', borderRadius: '12px', textAlign: 'center',
+        background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
+      }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay nuevos VTubers aún.</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {data.map((vtuber, idx) => (
         <Link
           key={vtuber.id}
           href={`/profile/${vtuber.userId}`}
-          className="glass"
           style={{
-            padding: '18px 20px', borderRadius: '16px',
+            padding: '14px 16px', borderRadius: '10px',
+            background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
             textDecoration: 'none', color: 'var(--text)',
-            transition: 'all 0.3s ease',
-            animation: `fadeInUp 0.5s ease ${idx * 0.08}s forwards`,
+            transition: 'all 0.2s ease',
+            animation: `fadeInUp 0.4s ease ${idx * 0.06}s forwards`,
             opacity: 0,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.borderColor = 'rgba(138,43,226,0.2)';
+            e.currentTarget.style.background = 'var(--bg-card-hover)';
+            e.currentTarget.style.borderColor = 'rgba(230,57,70,0.12)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.background = 'var(--bg-card)';
             e.currentTarget.style.borderColor = 'var(--glass-border)';
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {/* Avatar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
+              width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
               background: vtuber.avatarUrl
                 ? `url(${vtuber.avatarUrl}) center/cover`
-                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                : 'linear-gradient(135deg, var(--primary), var(--warm))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontWeight: 'bold', fontSize: '0.9rem',
+              color: 'white', fontWeight: 'bold', fontSize: '0.8rem',
               overflow: 'hidden',
             }}>
               {!vtuber.avatarUrl && vtuber.displayName.charAt(0).toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>
                 {vtuber.displayName}
               </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 @{vtuber.user.username} · se unió {formatTimeAgo(vtuber.createdAt)}
               </div>
             </div>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>VT</span>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--primary)' }}>VT</span>
           </div>
         </Link>
       ))}
-    </div>
-  );
-}
-
-/* ===== EMPTY STATE ===== */
-function EmptyTab({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="glass" style={{
-      padding: '40px', borderRadius: '20px', textAlign: 'center',
-    }}>
-      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', marginBottom: '16px', color: 'var(--text-muted)', opacity: 0.5 }}>{icon}</div>
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{text}</p>
     </div>
   );
 }

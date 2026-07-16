@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api';
-import { useScrollParallax } from '@/lib/useScrollParallax';
 
 interface PlatformStats {
   totalVtubers: number;
@@ -17,15 +16,14 @@ interface StatDisplay {
   value: number;
   suffix: string;
   label: string;
-  icon: string;
   key: keyof PlatformStats;
 }
 
 const statConfigs: StatDisplay[] = [
-  { value: 0, suffix: '+', label: 'VTubers Registrados', icon: '', key: 'totalVtubers' },
-  { value: 0, suffix: '+', label: 'Eventos Realizados', icon: '', key: 'totalEvents' },
-  { value: 0, suffix: '+', label: 'Gremios Creados', icon: '', key: 'totalGuilds' },
-  { value: 0, suffix: '+', label: 'Mensajes Enviados', icon: '', key: 'totalMessages' },
+  { value: 0, suffix: '+', label: 'VTubers Registrados', key: 'totalVtubers' },
+  { value: 0, suffix: '+', label: 'Eventos Realizados', key: 'totalEvents' },
+  { value: 0, suffix: '+', label: 'Gremios Creados', key: 'totalGuilds' },
+  { value: 0, suffix: '+', label: 'Mensajes Enviados', key: 'totalMessages' },
 ];
 
 function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) {
@@ -64,19 +62,13 @@ function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) 
     return () => observer.disconnect();
   }, [target, hasAnimated]);
 
-  return (
-    <span ref={ref}>
-      {count.toLocaleString()}
-      {suffix}
-    </span>
-  );
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
 export default function StatsSection() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
   const sectionRef = useRef<HTMLDivElement>(null);
-  const { childRef: glassParallaxRef } = useScrollParallax(0.04);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -84,7 +76,7 @@ export default function StatsSection() {
         const data = await apiFetch('/stats', {});
         setStats(data);
       } catch {
-        // Silently fail — stats section just won't animate
+        // Silently fail
       } finally {
         setLoading(false);
       }
@@ -101,64 +93,31 @@ export default function StatsSection() {
     <section
       ref={sectionRef}
       className="section"
-      style={{
-        position: 'relative',
-        zIndex: 1,
-      }}
+      style={{ position: 'relative', zIndex: 1 }}
     >
       <div className="container">
-        <div
-          ref={glassParallaxRef}
-          className="glass"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '2px',
-            padding: '0',
-            borderRadius: '24px',
-            overflow: 'hidden',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid var(--glass-border)',
-          }}
-        >
+        <div className="section-accent-line" />
+        <h2 className="section-title">Estadísticas</h2>
+        <p className="section-subtitle">
+          Números que reflejan el crecimiento de nuestra comunidad
+        </p>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '16px',
+        }}>
           {loading ? (
-            // Skeleton loading state
             [0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                style={{
-                  padding: '40px 24px',
-                  textAlign: 'center',
-                  background: 'var(--card-bg)',
-                }}
-              >
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.05)',
-                    margin: '0 auto 12px',
-                  }}
-                />
-                <div
-                  style={{
-                    width: '80px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.05)',
-                    margin: '0 auto 8px',
-                  }}
-                />
-                <div
-                  style={{
-                    width: '100px',
-                    height: '16px',
-                    borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.03)',
-                    margin: '0 auto',
-                  }}
-                />
+              <div key={i} style={{
+                padding: '32px 20px',
+                textAlign: 'center',
+                background: 'var(--bg-card)',
+                borderRadius: '12px',
+                border: '1px solid var(--glass-border)',
+              }}>
+                <div className="skeleton" style={{ width: '60px', height: '28px', margin: '0 auto 8px' }} />
+                <div className="skeleton" style={{ width: '100px', height: '14px', margin: '0 auto' }} />
               </div>
             ))
           ) : (
@@ -166,40 +125,46 @@ export default function StatsSection() {
               <div
                 key={i}
                 style={{
-                  padding: '40px 24px',
+                  padding: '32px 20px',
                   textAlign: 'center',
-                  background: 'var(--card-bg)',
+                  background: 'var(--bg-card)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--glass-border)',
                   transition: 'all 0.3s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(138,43,226,0.05)';
+                  e.currentTarget.style.background = 'var(--bg-card-hover)';
+                  e.currentTarget.style.borderColor = 'rgba(230,57,70,0.15)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--card-bg)';
+                  e.currentTarget.style.background = 'var(--bg-card)';
+                  e.currentTarget.style.borderColor = 'var(--glass-border)';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                <div style={{ width: '28px', height: '3px', borderRadius: '2px', background: 'var(--primary)', margin: '0 auto 16px' }} />
-                <div
-                  style={{
-                    fontSize: '2.5rem',
-                    fontWeight: 800,
-                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    marginBottom: '8px',
-                    lineHeight: 1.2,
-                  }}
-                >
+                <div style={{
+                  width: '24px',
+                  height: '2px',
+                  background: 'var(--primary)',
+                  margin: '0 auto 12px',
+                  borderRadius: '1px',
+                }} />
+                <div style={{
+                  fontSize: '2.2rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  marginBottom: '6px',
+                  lineHeight: 1.2,
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
                   <AnimatedNumber target={stat.value} suffix={stat.suffix} />
                 </div>
-                <div
-                  style={{
-                    fontSize: '0.95rem',
-                    color: 'var(--text-muted)',
-                    fontWeight: 500,
-                  }}
-                >
+                <div style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--text-muted)',
+                  fontWeight: 500,
+                }}>
                   {stat.label}
                 </div>
               </div>

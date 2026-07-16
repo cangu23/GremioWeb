@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useParallaxChildren } from '@/lib/useScrollParallax';
 
 interface PlanFeature {
   text: string;
@@ -15,8 +14,6 @@ interface Plan {
   price: string;
   period: string;
   description: string;
-  gradient: string;
-  accentColor: string;
   icon: string;
   features: PlanFeature[];
   cta: { label: string; href: string };
@@ -30,8 +27,6 @@ const plans: Plan[] = [
     price: 'Gratis',
     period: 'siempre',
     description: 'Perfecto para explorar la plataforma y conectar con la comunidad.',
-    gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-    accentColor: '#8b5cf6',
     icon: '✦',
     features: [
       { text: 'Perfil básico', included: true },
@@ -51,8 +46,6 @@ const plans: Plan[] = [
     price: 'Gratis',
     period: 'por ahora',
     description: 'Todo lo que necesitas para brillar como creador de contenido virtual.',
-    gradient: 'linear-gradient(135deg, #8a2be2, #ff007f)',
-    accentColor: '#ff007f',
     icon: '🎭',
     highlighted: true,
     features: [
@@ -73,8 +66,6 @@ const plans: Plan[] = [
     price: 'Próximamente',
     period: '',
     description: 'Lleva tu carrera al siguiente nivel con herramientas profesionales.',
-    gradient: 'linear-gradient(135deg, #f5af19, #f12711)',
-    accentColor: '#f5af19',
     icon: '🌟',
     features: [
       { text: 'Todo lo del plan VTuber', included: true },
@@ -83,7 +74,7 @@ const plans: Plan[] = [
       { text: 'Soporte prioritario', included: true },
       { text: 'Más espacio en galería', included: true },
       { text: 'Badge exclusivo Pro', included: true },
-      { text: 'Acceso anticipo a funciones', included: true },
+      { text: 'Acceso anticipado a funciones', included: true },
       { text: 'Monetización y donaciones', included: false },
     ],
     cta: { label: 'Notificarme', href: '/support' },
@@ -94,8 +85,6 @@ const plans: Plan[] = [
     price: 'A medida',
     period: '',
     description: 'Solución completa para agencias y grupos de gestión de VTubers.',
-    gradient: 'linear-gradient(135deg, #00d4ff, #7c4dff)',
-    accentColor: '#00d4ff',
     icon: '🏢',
     features: [
       { text: 'Todo lo del plan Pro', included: true },
@@ -116,8 +105,6 @@ export default function PricingSection() {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  useParallaxChildren(sectionRef);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -126,7 +113,7 @@ export default function PricingSection() {
             const index = Number(entry.target.getAttribute('data-index'));
             setTimeout(() => {
               setVisibleCards((prev) => new Set(prev).add(index));
-            }, index * 150);
+            }, index * 120);
           }
         }
       },
@@ -135,7 +122,6 @@ export default function PricingSection() {
 
     const cards = sectionRef.current?.querySelectorAll('.pricing-card');
     cards?.forEach((card) => observer.observe(card));
-
     return () => observer.disconnect();
   }, []);
 
@@ -144,37 +130,20 @@ export default function PricingSection() {
       ref={sectionRef}
       className="section"
       id="pricing"
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        background: 'linear-gradient(180deg, transparent 0%, rgba(255,0,127,0.02) 50%, transparent 100%)',
-      }}
+      style={{ position: 'relative', zIndex: 1 }}
     >
-      {/* Decorative background blobs (with parallax) */}
-      <div data-parallax-speed="-0.1" style={{
-        position: 'absolute', top: '10%', left: '5%',
-        width: '300px', height: '300px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(138,43,226,0.06), transparent 70%)',
-        pointerEvents: 'none', zIndex: -1, willChange: 'transform',
-      }} />
-      <div data-parallax-speed="-0.08" style={{
-        position: 'absolute', bottom: '20%', right: '10%',
-        width: '250px', height: '250px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,0,127,0.05), transparent 70%)',
-        pointerEvents: 'none', zIndex: -1, willChange: 'transform',
-      }} />
-
       <div className="container">
+        <div className="section-accent-line" />
         <h2 className="section-title">Planes y Precios</h2>
         <p className="section-subtitle">
           Todos los planes son completamente gratuitos. Estamos construyendo la plataforma
-          y queremos que seas parte desde el inicio. Elige el plan que mejor se adapte a ti.
+          y queremos que seas parte desde el inicio.
         </p>
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: '16px',
           alignItems: 'stretch',
         }}>
           {plans.map((plan, index) => {
@@ -191,29 +160,20 @@ export default function PricingSection() {
                 onMouseLeave={() => setHoveredCard(null)}
                 style={{
                   position: 'relative',
-                  padding: '32px 24px',
-                  borderRadius: '20px',
-                  background: isHighlighted
-                    ? 'linear-gradient(135deg, rgba(138,43,226,0.08), rgba(255,0,127,0.05))'
-                    : 'var(--card-bg)',
+                  padding: '28px 22px',
+                  borderRadius: '12px',
+                  background: isHighlighted ? 'rgba(230,57,70,0.04)' : 'var(--bg-card)',
                   border: isHighlighted
-                    ? '1px solid rgba(138,43,226,0.25)'
+                    ? '1px solid rgba(230,57,70,0.2)'
                     : '1px solid var(--glass-border)',
-                  backdropFilter: 'blur(12px)',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+                  transition: 'all 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
                   opacity: isVisible ? 1 : 0,
                   transform: isVisible
-                    ? isHovered
-                      ? 'translateY(-8px) scale(1.02)'
-                      : 'translateY(0) scale(1)'
-                    : 'translateY(40px) scale(0.95)',
-                  boxShadow: isHighlighted && isVisible
-                    ? '0 0 30px rgba(138,43,226,0.1)'
-                    : isHovered
-                      ? '0 20px 60px rgba(0,0,0,0.4)'
-                      : '0 8px 32px rgba(0,0,0,0.37)',
+                    ? isHovered ? 'translateY(-4px)' : 'translateY(0)'
+                    : 'translateY(25px)',
+                  boxShadow: isHovered ? '0 8px 32px rgba(0,0,0,0.35)' : 'none',
                   overflow: 'hidden',
                 }}
               >
@@ -221,17 +181,16 @@ export default function PricingSection() {
                 {isHighlighted && (
                   <div style={{
                     position: 'absolute',
-                    top: '16px',
-                    right: '-28px',
+                    top: '14px',
+                    right: '-24px',
                     transform: 'rotate(45deg)',
-                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    background: 'var(--primary)',
                     color: '#fff',
-                    fontSize: '0.65rem',
+                    fontSize: '0.6rem',
                     fontWeight: 700,
-                    padding: '4px 36px',
+                    padding: '3px 32px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    boxShadow: '0 2px 10px rgba(138,43,226,0.3)',
                   }}>
                     Popular
                   </div>
@@ -239,35 +198,30 @@ export default function PricingSection() {
 
                 {/* Top accent bar */}
                 <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '3px',
-                  background: plan.gradient,
-                  borderRadius: '20px 20px 0 0',
-                  opacity: isHovered ? 1 : 0.6,
+                  width: '24px',
+                  height: '2px',
+                  background: 'var(--primary)',
+                  borderRadius: '1px',
+                  marginBottom: '14px',
+                  opacity: isHovered ? 0.8 : 0.4,
                   transition: 'opacity 0.3s ease',
                 }} />
 
                 {/* Icon and name */}
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{
-                    fontSize: '1.5rem',
-                    marginBottom: '8px',
-                  }}>
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{ fontSize: '1.3rem', marginBottom: '6px' }}>
                     {plan.icon}
                   </div>
                   <h3 style={{
-                    fontSize: '1.3rem',
-                    fontWeight: 800,
-                    color: 'var(--text)',
+                    fontSize: '1.15rem',
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
                     marginBottom: '2px',
                   }}>
                     {plan.name}
                   </h3>
                   <div style={{
-                    fontSize: '0.8rem',
+                    fontSize: '0.75rem',
                     fontWeight: 500,
                     color: 'var(--text-muted)',
                   }}>
@@ -277,23 +231,20 @@ export default function PricingSection() {
 
                 {/* Price */}
                 <div style={{
-                  marginBottom: '16px',
-                  paddingBottom: '16px',
+                  marginBottom: '14px',
+                  paddingBottom: '14px',
                   borderBottom: '1px solid var(--glass-border)',
                 }}>
                   <span style={{
-                    fontSize: '2rem',
-                    fontWeight: 800,
-                    background: plan.gradient,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
+                    fontSize: '1.6rem',
+                    fontWeight: 700,
+                    color: 'var(--primary)',
                   }}>
                     {plan.price}
                   </span>
                   {plan.period && (
                     <span style={{
-                      fontSize: '0.85rem',
+                      fontSize: '0.8rem',
                       color: 'var(--text-muted)',
                       fontWeight: 500,
                       marginLeft: '4px',
@@ -302,9 +253,9 @@ export default function PricingSection() {
                     </span>
                   )}
                   <p style={{
-                    fontSize: '0.85rem',
+                    fontSize: '0.8rem',
                     color: 'var(--text-muted)',
-                    marginTop: '8px',
+                    marginTop: '6px',
                     lineHeight: 1.5,
                   }}>
                     {plan.description}
@@ -316,8 +267,8 @@ export default function PricingSection() {
                   flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px',
-                  marginBottom: '24px',
+                  gap: '8px',
+                  marginBottom: '20px',
                 }}>
                   {plan.features.map((feature, i) => (
                     <div
@@ -325,26 +276,24 @@ export default function PricingSection() {
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '10px',
-                        fontSize: '0.85rem',
-                        color: feature.included ? 'var(--text)' : 'var(--text-muted)',
-                        opacity: feature.included ? 1 : 0.5,
+                        gap: '8px',
+                        fontSize: '0.8rem',
+                        color: feature.included ? 'var(--text-secondary)' : 'var(--text-muted)',
+                        opacity: feature.included ? 1 : 0.45,
                       }}
                     >
                       <span style={{
-                        width: '18px',
-                        height: '18px',
+                        width: '14px',
+                        height: '14px',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '0.6rem',
+                        fontSize: '0.5rem',
                         fontWeight: 700,
                         flexShrink: 0,
-                        background: feature.included
-                          ? `${plan.accentColor}20`
-                          : 'rgba(255,255,255,0.05)',
-                        color: feature.included ? plan.accentColor : 'var(--text-muted)',
+                        background: feature.included ? 'rgba(230,57,70,0.12)' : 'rgba(255,255,255,0.04)',
+                        color: feature.included ? 'var(--primary)' : 'var(--text-muted)',
                       }}>
                         {feature.included ? '✓' : '−'}
                       </span>
@@ -360,26 +309,28 @@ export default function PricingSection() {
                   style={{
                     display: 'block',
                     textAlign: 'center',
-                    padding: '14px',
-                    borderRadius: '12px',
-                    fontWeight: 700,
-                    fontSize: '0.95rem',
-                    background: isHighlighted
-                      ? 'linear-gradient(135deg, var(--primary), var(--secondary))'
-                      : `linear-gradient(135deg, ${plan.accentColor}25, ${plan.accentColor}10)`,
-                    color: isHighlighted ? '#fff' : plan.accentColor,
-                    border: isHighlighted ? 'none' : `1px solid ${plan.accentColor}30`,
-                    transition: 'all 0.3s ease',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    background: isHighlighted ? 'var(--primary)' : 'var(--bg-card)',
+                    color: isHighlighted ? '#fff' : 'var(--text-secondary)',
+                    border: isHighlighted ? 'none' : '1px solid var(--glass-border)',
                     textDecoration: 'none',
+                    transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
                     if (!isHighlighted) {
-                      e.currentTarget.style.background = `linear-gradient(135deg, ${plan.accentColor}40, ${plan.accentColor}20)`;
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                      e.currentTarget.style.borderColor = 'var(--primary)';
+                      e.currentTarget.style.color = 'var(--primary)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isHighlighted) {
-                      e.currentTarget.style.background = `linear-gradient(135deg, ${plan.accentColor}25, ${plan.accentColor}10)`;
+                      e.currentTarget.style.background = 'var(--bg-card)';
+                      e.currentTarget.style.borderColor = 'var(--glass-border)';
+                      e.currentTarget.style.color = 'var(--text-secondary)';
                     }
                   }}
                 >
@@ -390,19 +341,14 @@ export default function PricingSection() {
           })}
         </div>
 
-        {/* Bottom note */}
         <p style={{
           textAlign: 'center',
-          marginTop: '32px',
-          fontSize: '0.85rem',
+          marginTop: '28px',
+          fontSize: '0.8rem',
           color: 'var(--text-muted)',
-          maxWidth: '500px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
           lineHeight: 1.6,
         }}>
-          Todos los planes son completamente gratuitos durante esta fase beta.
-          Queremos que formes parte de la comunidad desde el principio. 🚀
+          Todos los planes son completamente gratuitos durante esta fase beta. 🚀
         </p>
       </div>
     </section>

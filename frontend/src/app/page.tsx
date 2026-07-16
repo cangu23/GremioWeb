@@ -16,28 +16,27 @@ function SectionDivider() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '16px',
+      gap: '12px',
       padding: '0 20px',
-      opacity: 0.3,
+      opacity: 0.2,
     }}>
       <div style={{
         flex: 1,
-        maxWidth: '200px',
+        maxWidth: '120px',
         height: '1px',
-        background: 'linear-gradient(90deg, transparent, var(--primary))',
+        background: 'linear-gradient(90deg, transparent, var(--glass-border))',
       }} />
       <div style={{
-        width: '4px',
-        height: '4px',
+        width: '3px',
+        height: '3px',
         borderRadius: '50%',
         background: 'var(--primary)',
-        animation: 'section-divider-pulse 3s ease-in-out infinite',
       }} />
       <div style={{
         flex: 1,
-        maxWidth: '200px',
+        maxWidth: '120px',
         height: '1px',
-        background: 'linear-gradient(90deg, var(--primary), transparent)',
+        background: 'linear-gradient(90deg, var(--glass-border), transparent)',
       }} />
     </div>
   );
@@ -47,6 +46,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
+      <SectionDivider />
       <LiveNowSection />
       <SectionDivider />
       <HowItWorksSection />
