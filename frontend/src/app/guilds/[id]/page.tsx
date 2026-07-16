@@ -97,6 +97,8 @@ function GuildDetailContent() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
+  const pendingPreviewRef = useRef<string | null>(null);
+  pendingPreviewRef.current = pendingImagePreview;
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsLogoUrl, setSettingsLogoUrl] = useState('');
@@ -159,7 +161,7 @@ function GuildDetailContent() {
     // Clear typing indicator when switching channels
     setTypingUsers({});
     // Clean up pending image preview when switching channels
-    if (pendingImagePreview) URL.revokeObjectURL(pendingImagePreview);
+    if (pendingPreviewRef.current) URL.revokeObjectURL(pendingPreviewRef.current);
     setPendingImageUrl(null);
     setPendingImagePreview(null);
   }, [activeChannel, fetchMessages]);
@@ -187,6 +189,8 @@ function GuildDetailContent() {
   useEffect(() => {
     const sock = socketRef.current;
     if (!sock) return;
+
+    const cleanup = typingCleanupRef.current;
 
     const onMessage = (msg: ChatMessage) => {
       if (msg.channelId === activeChannel) {
@@ -217,20 +221,20 @@ function GuildDetailContent() {
         if (data.isTyping) {
           next[data.userId] = { username: data.username, displayName: data.displayName };
           // Auto-cleanup after 5s in case we miss the stop event
-          const existing = typingCleanupRef.current.get(data.userId);
+          const existing = cleanup.get(data.userId);
           if (existing) clearTimeout(existing);
-          typingCleanupRef.current.set(data.userId, setTimeout(() => {
+          cleanup.set(data.userId, setTimeout(() => {
             setTypingUsers(p => {
               const updated = { ...p };
               delete updated[data.userId];
               return updated;
             });
-            typingCleanupRef.current.delete(data.userId);
+            cleanup.delete(data.userId);
           }, 5000));
         } else {
           delete next[data.userId];
-          const existing = typingCleanupRef.current.get(data.userId);
-          if (existing) { clearTimeout(existing); typingCleanupRef.current.delete(data.userId); }
+          const existing = cleanup.get(data.userId);
+          if (existing) { clearTimeout(existing); cleanup.delete(data.userId); }
         }
         return next;
       });
@@ -254,8 +258,8 @@ function GuildDetailContent() {
       sock.off('guild:error');
       // Clean up typing timeouts
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      typingCleanupRef.current.forEach(t => clearTimeout(t));
-      typingCleanupRef.current.clear();
+      cleanup.forEach(t => clearTimeout(t));
+      cleanup.clear();
     };
   }, [activeChannel, user?.id]);
 

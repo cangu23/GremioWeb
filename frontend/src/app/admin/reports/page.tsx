@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 
@@ -43,7 +43,7 @@ export default function AdminReportsPage() {
   const [statusFilter, setStatusFilter] = useState('PENDING');
   const [page, setPage] = useState(1);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
@@ -52,9 +52,9 @@ export default function AdminReportsPage() {
       setData(res);
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
     finally { setLoading(false); }
-  };
+  }, [page, statusFilter, showToast]);
 
-  useEffect(() => { fetchData(); }, [page, statusFilter]);
+  useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { setPage(1); }, [statusFilter]);
 
   const resolveReport = async (id: string, status: string) => {

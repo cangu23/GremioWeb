@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { VTUBER_SURVEY_QUESTIONS, type SurveyAnswers } from '@gremio-estelar/shared';
@@ -45,7 +45,7 @@ export default function AdminVtuberRequestsPage() {
   const [processing, setProcessing] = useState(false);
   const [approvedCode, setApprovedCode] = useState('');
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
@@ -58,9 +58,9 @@ export default function AdminVtuberRequestsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, filterStatus, showToast]);
 
-  useEffect(() => { fetchRequests(); }, [page, filterStatus]);
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
   const handleApprove = async (id: string) => {
     if (!window.confirm('¿Aprobar esta solicitud? Se generará un código único para el usuario.')) return;

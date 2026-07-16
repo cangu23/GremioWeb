@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 
@@ -28,6 +28,8 @@ export default function AdminVtubersPage() {
   const [data, setData] = useState<AdminVtubersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const searchRef = useRef('');
+  searchRef.current = search;
   const [filterVerified, setFilterVerified] = useState('');
   const [filterApproved, setFilterApproved] = useState('');
   const [page, setPage] = useState(1);
@@ -42,12 +44,12 @@ export default function AdminVtubersPage() {
   const [editData, setEditData] = useState({ displayName: '', description: '', avatarUrl: '' });
   const [saving, setSaving] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setFetchError(false);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
-      if (search) params.set('search', search);
+      if (searchRef.current) params.set('search', searchRef.current);
       if (filterVerified) params.set('isVerified', filterVerified);
       if (filterApproved) params.set('isApproved', filterApproved);
       const res = await apiFetch(`/admin/vtubers?${params}`);
@@ -57,7 +59,7 @@ export default function AdminVtubersPage() {
       showToast(err instanceof Error ? err.message : 'Error de conexión', 'error');
     }
     finally { setLoading(false); }
-  };
+  }, [page, filterVerified, filterApproved, showToast]);
 
   const fetchUnverified = async () => {
     setLoadingUnverified(true);

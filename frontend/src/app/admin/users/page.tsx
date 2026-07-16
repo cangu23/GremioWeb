@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 
@@ -64,7 +64,7 @@ export default function AdminUsersPage() {
   const [editData, setEditData] = useState({ username: '', email: '', role: '', status: '' });
   const [saving, setSaving] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
@@ -78,9 +78,9 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, statusFilter, roleFilter, showToast]);
 
-  useEffect(() => { fetchUsers(); }, [page, statusFilter, roleFilter]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => { setPage(1); }, [search, statusFilter, roleFilter]);
 
   const handleSearch = (e: React.FormEvent) => {

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
@@ -45,7 +45,7 @@ function EventDetailContent() {
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchEvent = async () => {
+  const fetchEvent = useCallback(async () => {
     try {
       const data = await apiFetch(`/events/${id}`);
       setEvent(data);
@@ -54,9 +54,9 @@ function EventDetailContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { fetchEvent(); }, [id]);
+  useEffect(() => { fetchEvent(); }, [fetchEvent]);
 
   const handleAttend = async () => {
     if (!user) { router.push('/login'); return; }

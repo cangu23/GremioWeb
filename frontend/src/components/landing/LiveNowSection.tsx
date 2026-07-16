@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
@@ -64,8 +64,8 @@ export default function LiveNowSection() {
     return () => clearInterval(interval);
   }, [visible]);
 
-  const goNext = () => setActiveIndex((p) => (p < liveVtubers.length - 1 ? p + 1 : 0));
-  const goPrev = () => setActiveIndex((p) => (p > 0 ? p - 1 : liveVtubers.length - 1));
+  const goNext = useCallback(() => setActiveIndex((p) => (p < liveVtubers.length - 1 ? p + 1 : 0)), [liveVtubers.length]);
+  const goPrev = useCallback(() => setActiveIndex((p) => (p > 0 ? p - 1 : liveVtubers.length - 1)), [liveVtubers.length]);
 
   useEffect(() => {
     if (!visible) return;
