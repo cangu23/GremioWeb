@@ -228,7 +228,7 @@ function ActivityPosts({ data }: { data: ActivityPost[] }) {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--bg-card-hover)';
-            e.currentTarget.style.borderColor = 'rgba(230,57,70,0.12)';
+            e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'var(--bg-card)';
@@ -302,7 +302,7 @@ function ActivityEvents({ data }: { data: ActivityEvent[] }) {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--bg-card-hover)';
-            e.currentTarget.style.borderColor = 'rgba(230,57,70,0.12)';
+            e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'var(--bg-card)';
@@ -312,8 +312,8 @@ function ActivityEvents({ data }: { data: ActivityEvent[] }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
               width: '42px', height: '42px', borderRadius: '8px', flexShrink: 0,
-              background: 'rgba(230,57,70,0.08)',
-              border: '1px solid rgba(230,57,70,0.12)',
+              background: 'rgba(139,92,246,0.08)',
+              border: '1px solid rgba(139,92,246,0.12)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               lineHeight: 1.1,
             }}>
@@ -334,7 +334,7 @@ function ActivityEvents({ data }: { data: ActivityEvent[] }) {
             </div>
             <span style={{
               padding: '2px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 600,
-              background: event.status === 'UPCOMING' ? 'rgba(69,123,157,0.1)' : 'rgba(42,157,143,0.1)',
+              background: event.status === 'UPCOMING' ? 'rgba(108,180,238,0.1)' : 'rgba(42,157,143,0.1)',
               color: event.status === 'UPCOMING' ? 'var(--accent)' : 'var(--success)',
               flexShrink: 0,
             }}>
@@ -375,7 +375,7 @@ function ActivityVtubers({ data }: { data: ActivityVTuber[] }) {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--bg-card-hover)';
-            e.currentTarget.style.borderColor = 'rgba(230,57,70,0.12)';
+            e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'var(--bg-card)';

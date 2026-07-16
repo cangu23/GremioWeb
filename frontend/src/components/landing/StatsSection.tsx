@@ -134,7 +134,7 @@ export default function StatsSection() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'var(--bg-card-hover)';
-                  e.currentTarget.style.borderColor = 'rgba(230,57,70,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(139,92,246,0.15)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {

@@ -341,13 +341,13 @@ function ProfileContent() {
               <span style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 padding: '4px 12px', borderRadius: '20px',
-                background: 'rgba(255,68,68,0.12)',
-                border: '1px solid rgba(255,68,68,0.3)',
-                fontSize: '0.8rem', fontWeight: 600, color: '#ff4444',
+                background: 'rgba(245,158,11,0.12)',
+                border: '1px solid rgba(245,158,11,0.3)',
+                fontSize: '0.8rem', fontWeight: 600, color: 'var(--warm)',
               }}>
                 <span style={{
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: '#ff4444',
+                  background: 'var(--warm)',
                   animation: 'pulse 1.5s ease-in-out infinite',
                 }} />
                 EN VIVO
@@ -468,8 +468,8 @@ function ProfileContent() {
                 }}
                 onMouseEnter={(e) => {
                   if (isFollowed) {
-                    e.currentTarget.style.background = 'rgba(255,68,68,0.15)';
-                    e.currentTarget.style.borderColor = 'rgba(255,68,68,0.3)';
+                    e.currentTarget.style.background = 'rgba(245,158,11,0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)';
                     e.currentTarget.textContent = 'Dejar de seguir';
                   }
                 }}

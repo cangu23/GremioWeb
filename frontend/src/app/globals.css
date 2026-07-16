@@ -1,9 +1,9 @@
 /* ==========================================================================
-   GREMIO ESTELAR — Design System (LeFolk-inspired clean dark theme)
+   GREMIO ESTELAR — Design System (cosmic purple/violet theme)
    ========================================================================== */
 
 :root {
-  /* --- Palette (LeFolk-inspired: cherry red accents, refined dark bg) --- */
+  /* --- Palette (Cosmic purple/violet, stellar dark bg) --- */
   --bg-deep: #0d0d0d;
   --bg-mid: #141414;
   --bg-surface: rgba(25, 25, 28, 0.85);
@@ -15,27 +15,27 @@
   --text-muted: #7a7a78;
   --text-disabled: rgba(255, 255, 255, 0.2);
 
-  /* Red/cherry accent - LeFolk inspired */
-  --primary: #e63946;
-  --primary-hover: #ff4d5a;
-  --primary-glow: rgba(230, 57, 70, 0.25);
-  --primary-subtle: rgba(230, 57, 70, 0.1);
-  --primary-muted: rgba(230, 57, 70, 0.06);
+  /* Purple/violet accent - Estelar cosmos */
+  --primary: #8B5CF6;
+  --primary-hover: #A78BFA;
+  --primary-glow: rgba(139, 92, 246, 0.25);
+  --primary-subtle: rgba(139, 92, 246, 0.1);
+  --primary-muted: rgba(139, 92, 246, 0.06);
 
-  --secondary: #d62828;
-  --secondary-hover: #e63939;
-  --secondary-subtle: rgba(214, 40, 40, 0.1);
+  --secondary: #7C3AED;
+  --secondary-hover: #8B5CF6;
+  --secondary-subtle: rgba(124, 58, 237, 0.1);
 
-  --accent: #457b9d;
-  --accent-subtle: rgba(69, 123, 157, 0.1);
+  --accent: #6CB4EE;
+  --accent-subtle: rgba(108, 180, 238, 0.1);
 
-  /* Warm accent (complementary) */
-  --warm: #f4a261;
-  --warm-subtle: rgba(244, 162, 97, 0.1);
+  /* Warm accent (complementary - starlight gold) */
+  --warm: #F59E0B;
+  --warm-subtle: rgba(245, 158, 11, 0.1);
 
   /* Feedback */
-  --error: #e63946;
-  --error-subtle: rgba(230, 57, 70, 0.12);
+  --error: #EF4444;
+  --error-subtle: rgba(239, 68, 68, 0.12);
   --success: #2a9d8f;
   --success-subtle: rgba(42, 157, 143, 0.12);
   --warning: #e9c46a;
@@ -439,19 +439,19 @@ textarea.input {
 .badge--primary {
   background: var(--primary-subtle);
   color: var(--primary);
-  border: 1px solid rgba(230, 57, 70, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .badge--secondary {
   background: var(--secondary-subtle);
   color: var(--secondary);
-  border: 1px solid rgba(214, 40, 40, 0.2);
+  border: 1px solid rgba(124, 58, 237, 0.2);
 }
 
 .badge--accent {
   background: var(--accent-subtle);
   color: var(--accent);
-  border: 1px solid rgba(69, 123, 157, 0.2);
+  border: 1px solid rgba(108, 180, 238, 0.2);
 }
 
 .badge--success {
@@ -469,7 +469,7 @@ textarea.input {
 .badge--error {
   background: var(--error-subtle);
   color: var(--error);
-  border: 1px solid rgba(230, 57, 70, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 /* ==========================================================================

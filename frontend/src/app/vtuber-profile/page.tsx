@@ -823,7 +823,7 @@ function VtuberProfileEditor() {
                 <div key={q.id} className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" style={{ fontSize: '0.95rem', marginBottom: '6px' }}>
                     {q.question}
-                    {q.required && <span style={{ color: '#f44336', marginLeft: '4px' }}>*</span>}
+                    {q.required && <span style={{ color: 'var(--warm)', marginLeft: '4px' }}>*</span>}
                   </label>
                   {q.type === 'textarea' ? (
                     <textarea

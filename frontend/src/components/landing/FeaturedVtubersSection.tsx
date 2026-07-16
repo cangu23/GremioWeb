@@ -193,7 +193,7 @@ export default function FeaturedVtubersSection() {
                   background: activeVtuber.avatarUrl
                     ? `url(${activeVtuber.avatarUrl}) center/cover`
                     : 'linear-gradient(135deg, var(--primary), var(--warm))',
-                  border: '2px solid rgba(230,57,70,0.15)',
+                  border: '2px solid rgba(139,92,246,0.15)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'white', fontWeight: 'bold', fontSize: '1rem',
                   overflow: 'hidden',
@@ -206,7 +206,7 @@ export default function FeaturedVtubersSection() {
                       {activeVtuber.displayName}
                     </h3>
                     {activeVtuber.isVerified && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e63946" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                       </svg>
                     )}

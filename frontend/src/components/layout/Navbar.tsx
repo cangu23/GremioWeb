@@ -137,7 +137,7 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
           Ranking
         </Link>
         <Link href="/shop" style={{...linkBase, color: 'var(--warm)'}} onClick={closeMenu}
-          onMouseEnter={e => { e.currentTarget.style.color = '#f4a261'; e.currentTarget.style.background = 'rgba(244,162,97,0.08)'; }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--warm)'; e.currentTarget.style.background = 'rgba(245,158,11,0.08)'; }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--warm)'; e.currentTarget.style.background = 'transparent'; }}>
           Tienda
         </Link>
@@ -166,7 +166,7 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
                 minWidth: '12px', height: '12px', borderRadius: '6px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: '0 2px',
-                boxShadow: '0 2px 6px rgba(230,57,70,0.4)',
+                boxShadow: '0 2px 6px rgba(139,92,246,0.4)',
               }}>
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
@@ -174,7 +174,7 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
           </Link>
 
           {user.role === 'ADMIN' && (
-            <Link href="/admin" style={{ ...linkBase, color: 'var(--primary)', fontWeight: 600, background: 'var(--primary-subtle)', border: '1px solid rgba(230,57,70,0.15)' }} onClick={closeMenu}>
+            <Link href="/admin" style={{ ...linkBase, color: 'var(--primary)', fontWeight: 600, background: 'var(--primary-subtle)', border: '1px solid rgba(139,92,246,0.15)' }} onClick={closeMenu}>
               Admin
             </Link>
           )}
@@ -185,7 +185,7 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
             background: 'var(--primary)', color: '#fff', textDecoration: 'none',
             transition: 'all 0.2s ease',
           }} onClick={closeMenu}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-hover)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(230,57,70,0.3)'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-hover)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(139,92,246,0.3)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.boxShadow = 'none'; }}>
             Dashboard
           </Link>
@@ -224,7 +224,7 @@ function AuthNav({ closeMenu }: { closeMenu?: () => void }) {
             borderRadius: '6px', background: 'var(--primary)', color: '#fff', textDecoration: 'none',
             transition: 'all 0.2s ease',
           }} onClick={closeMenu}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-hover)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(230,57,70,0.3)'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-hover)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(139,92,246,0.3)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.boxShadow = 'none'; }}>
             Unirse
           </Link>

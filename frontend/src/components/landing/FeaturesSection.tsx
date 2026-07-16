@@ -172,7 +172,7 @@ export default function FeaturesSection() {
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
                 e.currentTarget.style.background = 'var(--bg-card-hover)';
-                e.currentTarget.style.borderColor = 'rgba(230,57,70,0.2)';
+                e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)';
                 e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)';
                 const icon = e.currentTarget.querySelector('.feature-icon') as HTMLElement;
                 if (icon) icon.style.color = 'var(--primary)';

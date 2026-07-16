@@ -96,7 +96,7 @@ export default function LiveNowSection() {
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
             padding: '4px 16px', borderRadius: '20px',
-            background: 'rgba(230,57,70,0.08)', border: '1px solid rgba(230,57,70,0.2)',
+            background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)',
             fontSize: '0.78rem', fontWeight: 600, color: 'var(--primary)',
             marginBottom: '12px',
           }}>
@@ -130,8 +130,8 @@ export default function LiveNowSection() {
                     position: 'absolute', top: '50%',
                     [dir === 'prev' ? 'left' : 'right']: '-16px',
                     width: '40px', height: '40px', borderRadius: '50%',
-                    background: hoveredNav === dir ? 'rgba(230,57,70,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: hoveredNav === dir ? '1px solid rgba(230,57,70,0.3)' : '1px solid var(--glass-border)',
+                    background: hoveredNav === dir ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: hoveredNav === dir ? '1px solid rgba(139,92,246,0.3)' : '1px solid var(--glass-border)',
                     color: hoveredNav === dir ? 'var(--primary)' : 'var(--text-muted)',
                     cursor: 'pointer', fontSize: '1.1rem', fontWeight: 600, zIndex: 10,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -178,13 +178,13 @@ export default function LiveNowSection() {
                 }}>
                   <div style={{
                     width: '48px', height: '48px', borderRadius: '50%',
-                    background: 'rgba(230,57,70,0.12)',
+                    background: 'rgba(139,92,246,0.12)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <div style={{
                       width: '20px', height: '20px', borderRadius: '50%',
                       background: 'var(--primary)',
-                      boxShadow: '0 0 20px rgba(230,57,70,0.3)',
+                      boxShadow: '0 0 20px rgba(139,92,246,0.3)',
                       animation: 'pulse 1.5s ease-in-out infinite',
                     }} />
                   </div>
@@ -202,7 +202,7 @@ export default function LiveNowSection() {
                 fontSize: '0.68rem', fontWeight: 700, color: 'white',
                 letterSpacing: '0.06em',
                 display: 'flex', alignItems: 'center', gap: '5px',
-                boxShadow: '0 2px 10px rgba(230,57,70,0.3)',
+                boxShadow: '0 2px 10px rgba(139,92,246,0.3)',
               }}>
                 <span style={{
                   width: '4px', height: '4px', borderRadius: '50%',

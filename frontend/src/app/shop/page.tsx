@@ -228,7 +228,7 @@ export default function ShopPage() {
                   {/* Type icon */}
                   <div style={{
                     width: '48px', height: '48px', borderRadius: '12px',
-                    background: 'linear-gradient(135deg, rgba(138,43,226,0.15), rgba(255,68,68,0.1))',
+                    background: 'linear-gradient(135deg, rgba(138,43,226,0.15), rgba(245,158,11,0.1))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '1.5rem',
                   }}>
@@ -280,7 +280,7 @@ export default function ShopPage() {
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: '4px',
                       fontWeight: 800, fontSize: '1rem',
-                      color: canAfford ? '#00e676' : '#ff4444',
+                      color: canAfford ? '#00e676' : 'var(--warm)',
                     }}>
                       💰 {item.price} pts
                     </div>
@@ -318,7 +318,7 @@ export default function ShopPage() {
                         disabled={purchasing === item.id || !canAfford}
                         style={{
                           padding: '8px 18px', borderRadius: '10px', border: 'none',
-                          background: canAfford ? 'linear-gradient(135deg, var(--primary), #ff4444)' : 'rgba(255,255,255,0.05)',
+                          background: canAfford ? 'linear-gradient(135deg, var(--primary), var(--warm))' : 'rgba(255,255,255,0.05)',
                           color: canAfford ? 'white' : 'var(--text-muted)',
                           cursor: canAfford ? 'pointer' : 'not-allowed',
                           fontWeight: 600, fontSize: '0.8rem',

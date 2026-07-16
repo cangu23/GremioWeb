@@ -32,7 +32,7 @@ export default function HeroSection() {
       {/* Subtle background texture */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(230,57,70,0.03) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(69,123,157,0.02) 0%, transparent 50%)',
+        backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(139,92,246,0.03) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(108,180,238,0.02) 0%, transparent 50%)',
         pointerEvents: 'none', zIndex: -1,
       }} />
 
@@ -83,7 +83,7 @@ export default function HeroSection() {
           fontWeight: 600,
           color: 'var(--primary)',
           background: 'var(--primary-subtle)',
-          border: '1px solid rgba(230,57,70,0.2)',
+          border: '1px solid rgba(139,92,246,0.2)',
           letterSpacing: '0.03em',
         }}>
           ✦ Comunidad para Creadores Virtuales

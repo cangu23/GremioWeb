@@ -37,8 +37,8 @@ export default function CTASection() {
             textAlign: 'center',
             position: 'relative',
             overflow: 'hidden',
-            border: '1px solid rgba(230,57,70,0.15)',
-            background: 'linear-gradient(135deg, rgba(230,57,70,0.06), rgba(42,157,143,0.03))',
+            border: '1px solid rgba(139,92,246,0.15)',
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.06), rgba(42,157,143,0.03))',
             transform: visible ? 'translateY(0)' : 'translateY(20px)',
             opacity: visible ? 1 : 0,
             transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
@@ -48,7 +48,7 @@ export default function CTASection() {
           <div style={{
             position: 'absolute', top: '-60px', right: '-60px',
             width: '200px', height: '200px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(230,57,70,0.08), transparent)',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.08), transparent)',
             pointerEvents: 'none',
           }} />
           <div style={{

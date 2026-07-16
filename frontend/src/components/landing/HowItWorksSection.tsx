@@ -139,7 +139,7 @@ export default function HowItWorksSection() {
                   display: 'inline-block',
                   padding: '2px 12px',
                   borderRadius: '12px',
-                  background: isVisible ? 'rgba(230,57,70,0.06)' : 'rgba(255,255,255,0.02)',
+                  background: isVisible ? 'rgba(139,92,246,0.06)' : 'rgba(255,255,255,0.02)',
                   color: isVisible ? 'var(--primary)' : 'var(--text-muted)',
                   fontSize: '0.68rem',
                   fontWeight: 600,

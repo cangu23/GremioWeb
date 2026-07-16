@@ -162,9 +162,9 @@ export default function PricingSection() {
                   position: 'relative',
                   padding: '28px 22px',
                   borderRadius: '12px',
-                  background: isHighlighted ? 'rgba(230,57,70,0.04)' : 'var(--bg-card)',
+                  background: isHighlighted ? 'rgba(139,92,246,0.04)' : 'var(--bg-card)',
                   border: isHighlighted
-                    ? '1px solid rgba(230,57,70,0.2)'
+                    ? '1px solid rgba(139,92,246,0.2)'
                     : '1px solid var(--glass-border)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -292,7 +292,7 @@ export default function PricingSection() {
                         fontSize: '0.5rem',
                         fontWeight: 700,
                         flexShrink: 0,
-                        background: feature.included ? 'rgba(230,57,70,0.12)' : 'rgba(255,255,255,0.04)',
+                        background: feature.included ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.04)',
                         color: feature.included ? 'var(--primary)' : 'var(--text-muted)',
                       }}>
                         {feature.included ? '✓' : '−'}

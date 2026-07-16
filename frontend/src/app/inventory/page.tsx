@@ -274,8 +274,8 @@ export default function InventoryPage() {
                             onClick={() => equipItem(p.itemId)}
                             style={{
                               flex: 1, padding: '8px 12px', borderRadius: '8px', border: 'none',
-                              background: p.equipped ? 'rgba(255,68,68,0.1)' : 'rgba(138,43,226,0.1)',
-                              color: p.equipped ? '#ff4444' : 'var(--primary)',
+                              background: p.equipped ? 'rgba(245,158,11,0.1)' : 'rgba(138,43,226,0.1)',
+                              color: p.equipped ? 'var(--warm)' : 'var(--primary)',
                               cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem',
                             }}
                           >
@@ -287,7 +287,7 @@ export default function InventoryPage() {
                             onClick={() => consumeItem(p.itemId, type)}
                             style={{
                               flex: 1, padding: '8px 12px', borderRadius: '8px', border: 'none',
-                              background: 'linear-gradient(135deg, var(--primary), #ff4444)',
+                              background: 'linear-gradient(135deg, var(--primary), var(--warm))',
                               color: 'white', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem',
                             }}
                           >
