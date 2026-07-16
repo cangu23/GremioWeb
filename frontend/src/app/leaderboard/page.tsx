@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
+import { ShimmerBlock } from '@/components/ui/Skeleton';
 
 interface LeaderboardEntry {
   id: string;
@@ -37,7 +38,32 @@ function LeaderboardContent() {
   }, []);
 
   if (loading) {
-    return <div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando clasificación...</div>;
+    return (
+      <div className="glass" style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '16px' }}>
+          <ShimmerBlock width="30px" height="14px" borderRadius="4px" />
+          <ShimmerBlock width="100px" height="14px" borderRadius="4px" />
+          <div style={{ flex: 1 }} />
+          <ShimmerBlock width="40px" height="14px" borderRadius="4px" />
+          <ShimmerBlock width="80px" height="14px" borderRadius="4px" />
+        </div>
+        {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          <div key={i} style={{
+            padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+            display: 'flex', alignItems: 'center', gap: '16px',
+            animation: `fadeInUp 0.4s ease-out ${i * 0.04}s both`,
+          }}>
+            <ShimmerBlock width="24px" height="20px" borderRadius="4px" />
+            <ShimmerBlock width="40px" height="40px" borderRadius="50%" />
+            <ShimmerBlock width="120px" height="14px" borderRadius="4px" />
+            <div style={{ flex: 1 }} />
+            <ShimmerBlock width="40px" height="22px" borderRadius="10px" />
+            <ShimmerBlock width="70px" height="14px" borderRadius="4px" />
+            <ShimmerBlock width="120px" height="8px" borderRadius="4px" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (error) {
@@ -199,8 +225,19 @@ export default function LeaderboardPage() {
     <div className="container" style={{ paddingBottom: '40px', paddingTop: '20px' }}>
       <ClientOnly
         fallback={
-          <div className="container" style={{ padding: '40px', textAlign: 'center' }}>
-            Cargando clasificación...
+          <div className="container" style={{ paddingTop: '20px' }}>
+            <div className="glass" style={{ overflow: 'hidden' }}>
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <ShimmerBlock width="24px" height="20px" borderRadius="4px" />
+                  <ShimmerBlock width="40px" height="40px" borderRadius="50%" />
+                  <ShimmerBlock width="120px" height="14px" borderRadius="4px" />
+                  <div style={{ flex: 1 }} />
+                  <ShimmerBlock width="40px" height="22px" borderRadius="10px" />
+                  <ShimmerBlock width="70px" height="14px" borderRadius="4px" />
+                </div>
+              ))}
+            </div>
           </div>
         }
       >

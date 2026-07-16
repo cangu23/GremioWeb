@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
+import SkeletonEventCard from '@/components/events/SkeletonEventCard';
 
 interface EventItem {
   id: string;
@@ -266,18 +267,11 @@ function EventsContent() {
           </button>
         </div>
       ) : loading ? (
-        <div style={{
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
-          padding: '60px', gap: '12px', color: 'var(--text-muted)',
-        }}>
-          <span style={{
-            width: '24px', height: '24px',
-            border: '2px solid rgba(255,255,255,0.1)',
-            borderTopColor: 'var(--primary)',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
-          }} />
-          Cargando eventos...
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <SkeletonEventCard />
+          <SkeletonEventCard />
+          <SkeletonEventCard />
+          <SkeletonEventCard />
         </div>
       ) : events.length === 0 ? (
         <div className="glass" style={{
@@ -328,14 +322,12 @@ function EventsContent() {
 export default function EventsPage() {
   return (
     <ClientOnly fallback={
-      <div className="container" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <span style={{
-          display: 'inline-block', width: '24px', height: '24px',
-          border: '2px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)',
-          borderRadius: '50%', animation: 'spin 0.8s linear infinite',
-          marginBottom: '12px',
-        }} />
-        <p>Cargando eventos...</p>
+      <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <SkeletonEventCard />
+          <SkeletonEventCard />
+          <SkeletonEventCard />
+        </div>
       </div>
     }>
       <EventsContent />

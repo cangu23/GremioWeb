@@ -89,6 +89,61 @@ const Icons = {
 };
 
 // ==========================================================================
+// Hook: shared navbar state (notification count, equipped badge, socket)
+// Elevado al Navbar padre para evitar duplicación entre AuthNav mobile/desktop
+// ==========================================================================
+function useNavbarState(user: { id: string } | null) {
+  const { showToast } = useToast();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [equippedBadge, setEquippedBadge] = useState<{ icon: string; label: string } | null>(null);
+
+  // Equipped badge fetch
+  useEffect(() => {
+    if (!user) { setEquippedBadge(null); return; }
+    (async () => {
+      try {
+        const badge = await apiFetch(`/shop/badge/${user.id}`, {});
+        if (badge?.item?.data) {
+          const data = JSON.parse(badge.item.data);
+          setEquippedBadge({ icon: data.icon || '🏅', label: data.label || '' });
+        } else {
+          setEquippedBadge(null);
+        }
+      } catch { setEquippedBadge(null); }
+    })();
+  }, [user]);
+
+  // Notification count: polling + real-time socket
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+
+    const fetchUnread = async () => {
+      try { const data = await apiFetch('/notifications/unread-count', {}); setUnreadCount(data.count); } catch { }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60000);
+
+    let sock: any;
+    try {
+      sock = connectSocket();
+      sock.on(NOTIFICATION_EVENTS.NEW, () => {
+        setUnreadCount(prev => prev + 1);
+        showToast('🔔 Nueva notificación', 'success');
+      });
+    } catch (err) {
+      console.warn('[Socket] Could not connect for notifications:', err);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (sock) sock.off(NOTIFICATION_EVENTS.NEW);
+    };
+  }, [user, showToast]);
+
+  return { unreadCount, equippedBadge };
+}
+
+// ==========================================================================
 // Global Search Modal
 // ==========================================================================
 function SearchModal({ onClose }: { onClose: () => void }) {
@@ -434,56 +489,14 @@ const menuItemStyle: React.CSSProperties = {
 // ==========================================================================
 // AuthNav — redesigned with unique icons, no sidebar duplicates
 // ==========================================================================
-function AuthNav({ closeMenu, isMobile }: { closeMenu?: () => void; isMobile?: boolean }) {
+function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
+  closeMenu?: () => void;
+  isMobile?: boolean;
+  unreadCount: number;
+  equippedBadge: { icon: string; label: string } | null;
+}) {
   const { user, logout } = useAuth();
-  const { showToast } = useToast();
-  const [unreadCount, setUnreadCount] = useState(0);
   const [showSearch, setShowSearch] = useState(false);
-  const [equippedBadge, setEquippedBadge] = useState<{ icon: string; label: string } | null>(null);
-
-  useEffect(() => {
-    if (!user) { setEquippedBadge(null); return; }
-    (async () => {
-      try {
-        const badge = await apiFetch(`/shop/badge/${user.id}`, {});
-        if (badge?.item?.data) {
-          const data = JSON.parse(badge.item.data);
-          setEquippedBadge({ icon: data.icon || '🏅', label: data.label || '' });
-        } else {
-          setEquippedBadge(null);
-        }
-      } catch { setEquippedBadge(null); }
-    })();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) { setUnreadCount(0); return; }
-
-    const fetchUnread = async () => {
-      try { const data = await apiFetch('/notifications/unread-count', {}); setUnreadCount(data.count); } catch { }
-    };
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 60000);
-
-    let sock: any;
-    const setupSocket = () => {
-      try {
-        sock = connectSocket();
-        sock.on(NOTIFICATION_EVENTS.NEW, () => {
-          setUnreadCount(prev => prev + 1);
-          showToast('🔔 Nueva notificación', 'success');
-        });
-      } catch (err) {
-        console.warn('[Socket] Could not connect for notifications:', err);
-      }
-    };
-    setupSocket();
-
-    return () => {
-      clearInterval(interval);
-      if (sock) sock.off(NOTIFICATION_EVENTS.NEW);
-    };
-  }, [user, showToast]);
 
   const iconBtn: React.CSSProperties = {
     padding: '7px', borderRadius: '8px', border: 'none',
@@ -696,8 +709,10 @@ function AuthNav({ closeMenu, isMobile }: { closeMenu?: () => void; isMobile?: b
 // Navbar wraps them in desktopNav / mobileMenu for proper CSS layout.
 // ==========================================================================
 export default function Navbar() {
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { unreadCount, equippedBadge } = useNavbarState(user);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -722,7 +737,7 @@ export default function Navbar() {
 
         <div className={styles.desktopNav}>
           <ClientOnly fallback={null}>
-            <AuthNav />
+            <AuthNav unreadCount={unreadCount} equippedBadge={equippedBadge} />
           </ClientOnly>
         </div>
 
@@ -737,7 +752,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className={styles.mobileMenu}>
           <ClientOnly fallback={null}>
-            <AuthNav isMobile closeMenu={() => setMenuOpen(false)} />
+            <AuthNav isMobile closeMenu={() => setMenuOpen(false)} unreadCount={unreadCount} equippedBadge={equippedBadge} />
           </ClientOnly>
         </div>
       )}

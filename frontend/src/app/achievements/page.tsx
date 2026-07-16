@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import Image from 'next/image';
+import { ShimmerBlock, SkeletonText } from '@/components/ui/Skeleton';
 
 interface Achievement {
   id: string;
@@ -50,7 +51,25 @@ function AchievementsContent() {
   }, [user]);
 
   if (loading) {
-    return <div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando logros...</div>;
+    return (
+      <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="glass" style={{ padding: '24px', animation: `fadeInUp 0.4s ease-out ${i * 0.06}s both` }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+              <ShimmerBlock width="48px" height="48px" borderRadius="12px" />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <ShimmerBlock width="120px" height="18px" borderRadius="4px" />
+                  <ShimmerBlock width="50px" height="14px" borderRadius="4px" />
+                </div>
+                <SkeletonText lines={2} />
+                <ShimmerBlock width="60px" height="14px" borderRadius="4px" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (error) {
@@ -195,13 +214,35 @@ function getCategoryIcon(category: string): React.ReactNode {
   return icons[category] || <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>;
 }
 
+function SkeletonAchievementGrid() {
+  return (
+    <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+      {[1, 2, 3, 4, 5, 6].map(i => (
+        <div key={i} className="glass" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+            <ShimmerBlock width="48px" height="48px" borderRadius="12px" />
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <ShimmerBlock width="120px" height="18px" borderRadius="4px" />
+                <ShimmerBlock width="50px" height="14px" borderRadius="4px" />
+              </div>
+              <SkeletonText lines={2} />
+              <ShimmerBlock width="60px" height="14px" borderRadius="4px" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AchievementsPage() {
   return (
     <div className="container" style={{ paddingBottom: '40px', paddingTop: '20px' }}>
       <ClientOnly
         fallback={
-          <div className="container" style={{ padding: '40px', textAlign: 'center' }}>
-            Cargando logros...
+          <div className="container" style={{ paddingTop: '20px' }}>
+            <SkeletonAchievementGrid />
           </div>
         }
       >

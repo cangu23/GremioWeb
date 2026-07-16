@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
+import { ShimmerBlock } from '@/components/ui/Skeleton';
 
 interface Notification {
   id: string;
@@ -120,8 +121,25 @@ function NotificationsContent() {
       </div>
 
       {loading ? (
-        <div className="glass" style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
-          Cargando notificaciones...
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="glass" style={{
+              padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px',
+              borderLeft: '3px solid var(--primary)',
+              animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both`,
+            }}>
+              <ShimmerBlock width="40px" height="40px" borderRadius="50%" />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <ShimmerBlock width="140px" height="16px" borderRadius="4px" />
+                  <ShimmerBlock width="8px" height="8px" borderRadius="50%" />
+                </div>
+                <ShimmerBlock width="80%" height="14px" borderRadius="4px" />
+                <ShimmerBlock width="100px" height="12px" borderRadius="4px" />
+              </div>
+              <ShimmerBlock width="50px" height="14px" borderRadius="4px" />
+            </div>
+          ))}
         </div>
       ) : error ? (
         <div className="glass" style={{ padding: '40px', textAlign: 'center', color: 'var(--error)' }}>
@@ -246,8 +264,18 @@ export default function NotificationsPage() {
     <div className="container" style={{ paddingBottom: '40px', paddingTop: '20px', maxWidth: '700px' }}>
       <ClientOnly
         fallback={
-          <div className="container" style={{ padding: '40px', textAlign: 'center' }}>
-            Cargando notificaciones...
+          <div className="container" style={{ paddingTop: '20px', maxWidth: '700px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="glass" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', borderLeft: '3px solid var(--primary)' }}>
+                  <ShimmerBlock width="40px" height="40px" borderRadius="50%" />
+                  <div style={{ flex: 1 }}>
+                    <ShimmerBlock width="140px" height="16px" borderRadius="4px" />
+                    <ShimmerBlock width="80%" height="14px" borderRadius="4px" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         }
       >

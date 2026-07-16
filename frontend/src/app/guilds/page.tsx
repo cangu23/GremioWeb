@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
+import SkeletonGuildCard from '@/components/guilds/SkeletonGuildCard';
 
 interface GuildItem {
   id: string;
@@ -190,18 +191,11 @@ function GuildsContent() {
           </button>
         </div>
       ) : loading ? (
-        <div style={{
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
-          padding: '60px', gap: '12px', color: 'var(--text-muted)',
-        }}>
-          <span style={{
-            width: '24px', height: '24px',
-            border: '2px solid rgba(255,255,255,0.1)',
-            borderTopColor: 'var(--primary)',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
-          }} />
-          Cargando gremios...
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <SkeletonGuildCard />
+          <SkeletonGuildCard />
+          <SkeletonGuildCard />
+          <SkeletonGuildCard />
         </div>
       ) : guilds.length === 0 ? (
         <div className="glass" style={{
@@ -243,14 +237,12 @@ function GuildsContent() {
 export default function GuildsPage() {
   return (
     <ClientOnly fallback={
-      <div className="container" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <span style={{
-          display: 'inline-block', width: '24px', height: '24px',
-          border: '2px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)',
-          borderRadius: '50%', animation: 'spin 0.8s linear infinite',
-          marginBottom: '12px',
-        }} />
-        <p>Cargando gremios...</p>
+      <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <SkeletonGuildCard />
+          <SkeletonGuildCard />
+          <SkeletonGuildCard />
+        </div>
       </div>
     }>
       <GuildsContent />
