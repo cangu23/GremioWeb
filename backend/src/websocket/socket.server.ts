@@ -19,6 +19,9 @@ export const ioContext: { instance: Server | null } = { instance: null };
 // Track online users per guild for real-time member status
 const guildOnlineUsers = new Map<string, Set<string>>();
 
+// Track all online users globally for real-time friend presence
+const globalOnlineUsers = new Set<string>();
+
 function addOnlineUser(guildId: string, userId: string) {
   if (!guildOnlineUsers.has(guildId)) {
     guildOnlineUsers.set(guildId, new Set());
@@ -83,6 +86,13 @@ export const createSocketServer = (httpServer: HttpServer) => {
     socket.join('global');
     // Join personal room for notifications & targeted events
     socket.join(`user:${userId}`);
+
+    // Global presence tracking
+    globalOnlineUsers.add(userId);
+    // Broadcast to everyone that this user came online
+    socket.broadcast.emit('user:online', { userId, username });
+    // Send the current online user list to the newly connected client
+    socket.emit('user:online-list', { onlineIds: Array.from(globalOnlineUsers) });
 
     // Send recent message history
     const recentMessages = await prisma.chatMessage.findMany({
@@ -256,6 +266,10 @@ export const createSocketServer = (httpServer: HttpServer) => {
     });
 
     socket.on('disconnect', () => {
+      // Remove from global presence tracking
+      globalOnlineUsers.delete(userId);
+      socket.broadcast.emit('user:offline', { userId });
+
       // Remove user from all guilds they were in
       const guilds = socket.data.guilds as Set<string> | undefined;
       if (guilds) {
