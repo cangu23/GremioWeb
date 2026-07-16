@@ -2,14 +2,18 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { apiFetch, getAccessToken } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import { connectSocket } from '@/lib/socket-client';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
 import type { Socket } from 'socket.io-client';
+import PostCard from '@/components/posts/PostCard';
+import CreatePost from '@/components/posts/CreatePost';
+import SkeletonPostCard from '@/components/posts/SkeletonPostCard';
+import { usePosts } from '@/lib/hooks/usePosts';
+import type { GuildItem, TrendingHashtag, LiveVTuberProfile, FollowingUser, EventItem } from '../../../shared/types';
 
 // ==========================================================================
 // Landing sections (for non-authenticated users)
@@ -70,73 +74,6 @@ function LandingPage() {
 }
 
 // ==========================================================================
-// Types
-// ==========================================================================
-interface Post {
-  id: string;
-  content: string;
-  mediaUrl: string | null;
-  isPinned: boolean;
-  createdAt: string;
-  userId: string;
-  user: {
-    id: string;
-    username: string;
-    role?: string;
-    vtuberProfile?: { displayName: string; avatarUrl: string | null; isApproved?: boolean; isVerified?: boolean } | null;
-  };
-  _count: { comments: number; likes: number };
-  isLikedByMe: boolean;
-  hashtags: string[];
-}
-
-interface GuildItem {
-  id: string;
-  name: string;
-  description: string;
-  logoUrl?: string | null;
-  _count: { members: number };
-  isMember: boolean;
-  myRole: string | null;
-}
-
-interface TrendingHashtag {
-  id: string;
-  name: string;
-  _count: { posts: number };
-}
-
-interface LiveVTuberProfile {
-  id: string;
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  isLive: boolean;
-  isVerified: boolean;
-  twitchUrl: string | null;
-  youtubeUrl: string | null;
-  user: { id: string; username: string };
-}
-
-interface FollowingUser {
-  id: string;
-  username: string;
-  vtuberProfile?: {
-    displayName: string | null;
-    avatarUrl: string | null;
-    isVerified: boolean | null;
-  } | null;
-}
-
-interface EventItem {
-  id: string;
-  title: string;
-  date: string;
-  creator: { id: string; username: string };
-  _count: { attendees: number };
-}
-
-// ==========================================================================
 // SVG Icons
 // ==========================================================================
 const NavIcons = {
@@ -151,409 +88,22 @@ const NavIcons = {
   dashboard: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
 };
 
-// ==========================================================================
-// Post Card Component
-// ==========================================================================
-function PostCard({ post, onLike, currentUserId, onDelete }: {
-  post: Post;
-  onLike: (id: string, isLiked: boolean) => void;
-  currentUserId?: string;
-  onDelete?: (id: string) => void;
-}) {
-  const [showComments, setShowComments] = useState(false);
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editContent, setEditContent] = useState(post.content);
-  const [saving, setSaving] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
-  const [commentText, setCommentText] = useState('');
-  const [loadingComments, setLoadingComments] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [menuOpen]);
-
-  const isOwner = currentUserId === post.userId;
-
-  const handleEdit = async () => {
-    if (!editContent.trim()) return;
-    setSaving(true);
-    try {
-      const updated = await apiFetch(`/posts/${post.id}`, {
-        method: 'PUT', body: JSON.stringify({ content: editContent.trim() }),
-      });
-      post.content = updated.content;
-      setEditing(false);
-      setMenuOpen(false);
-    } catch {} finally { setSaving(false); }
-  };
-
-  const handleDelete = async () => {
-    setDeleting(true);
-    try {
-      await apiFetch(`/posts/${post.id}`, { method: 'DELETE' });
-      setShowDeleteConfirm(false);
-      onDelete?.(post.id);
-    } catch { setDeleting(false); }
-  };
-
-  const loadComments = async () => {
-    setLoadingComments(true);
-    try {
-      const data = await apiFetch(`/posts/${post.id}/comments`, {});
-      setComments(data);
-    } catch {} finally { setLoadingComments(false); }
-  };
-
-  const toggleComments = () => {
-    if (!showComments) loadComments();
-    setShowComments(!showComments);
-  };
-
-  const handleComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
-    try {
-      const newComment = await apiFetch(`/posts/${post.id}/comments`, {
-        method: 'POST', body: JSON.stringify({ content: commentText.trim() }),
-      });
-      setComments(prev => [...prev, newComment]);
-      setCommentText('');
-      post._count.comments++;
-    } catch {}
-  };
-
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'ahora';
-    if (mins < 60) return `${mins}m`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d`;
-    return new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-  };
-
-  useEffect(() => {
-    if (!lightboxImage && !showDeleteConfirm) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setLightboxImage(null); setShowDeleteConfirm(false); }
-    };
-    window.addEventListener('keydown', handleKey);
-    document.body.style.overflow = lightboxImage ? 'hidden' : '';
-    return () => {
-      window.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = '';
-    };
-  }, [lightboxImage, showDeleteConfirm]);
-
-  return (
-    <div className="glass" style={{ overflow: 'hidden' }}>
-      {/* Lightbox */}
-      {lightboxImage && (
-        <div onClick={() => setLightboxImage(null)} style={{
-          position: 'fixed', inset: 0, zIndex: 10000,
-          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'zoom-out', animation: 'fadeIn 0.2s ease-out',
-        }}>
-          <button onClick={(e) => { e.stopPropagation(); setLightboxImage(null); }} style={{
-            position: 'absolute', top: '20px', right: '20px',
-            width: '44px', height: '44px', borderRadius: '50%',
-            border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer',
-            background: 'rgba(0,0,0,0.5)', color: 'white',
-            fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s', zIndex: 1,
-          }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.6)'; e.currentTarget.style.borderColor = '#8B5CF6'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
-            aria-label="Cerrar">✕</button>
-          <img src={lightboxImage} alt="" onClick={(e) => e.stopPropagation()} style={{
-            maxWidth: '90vw', maxHeight: '90vh', borderRadius: '8px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5)', objectFit: 'contain',
-            userSelect: 'none', animation: 'lightboxZoomIn 0.3s ease-out',
-          }} />
-        </div>
-      )}
-
-      {/* Delete confirmation */}
-      {showDeleteConfirm && (
-        <div onClick={() => { if (!deleting) setShowDeleteConfirm(false); }} style={{
-          position: 'fixed', inset: 0, zIndex: 10001,
-          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          animation: 'fadeIn 0.15s ease-out',
-        }}>
-          <div onClick={e => e.stopPropagation()} style={{
-            background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '16px', padding: '28px', maxWidth: '400px', width: '90%',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-            animation: 'lightboxZoomIn 0.2s ease-out',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,77,106,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Eliminar publicación</h3>
-                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>¿Estás seguro? Esta acción no se puede deshacer.</p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting} style={{
-                padding: '8px 20px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
-                background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: '0.85rem',
-              }}
-                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>Cancelar</button>
-              <button onClick={handleDelete} disabled={deleting} style={{
-                padding: '8px 20px', borderRadius: '8px', border: 'none',
-                background: 'linear-gradient(135deg, #ff4d6a, #ff1a4f)',
-                color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
-              }}>{deleting ? 'Eliminando...' : 'Eliminar'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Post header */}
-      <div style={{ padding: '16px 16px 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <Link href={`/profile/${post.user.id}`}>
-            <div style={{
-              width: '40px', height: '40px', borderRadius: '50%',
-              background: post.user.vtuberProfile?.avatarUrl
-                ? `url(${post.user.vtuberProfile.avatarUrl}) center/cover`
-                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontWeight: 'bold', fontSize: '1rem',
-              overflow: 'hidden', flexShrink: 0,
-            }}>
-              {!post.user.vtuberProfile?.avatarUrl && (post.user.vtuberProfile?.displayName || post.user.username).charAt(0).toUpperCase()}
-            </div>
-          </Link>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <Link href={`/profile/${post.user.id}`} style={{
-              color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
-              display: 'inline-flex', alignItems: 'center', gap: '4px',
-            }}>
-              {post.user.vtuberProfile?.displayName || post.user.username}
-              {(post.user.role === 'VTUBER' || post.user.vtuberProfile?.isApproved) && (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Oficial">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-              )}
-            </Link>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              @{post.user.username} · {timeAgo(post.createdAt)}
-            </div>
-          </div>
-          {post.isPinned && <span style={{ fontSize: '0.7rem', color: 'var(--primary)' }}>📌</span>}
-          {isOwner && (
-            <div ref={menuRef} style={{ position: 'relative' }}>
-              <button onClick={() => setMenuOpen(!menuOpen)} style={{
-                width: '30px', height: '30px', borderRadius: '50%',
-                border: 'none', background: menuOpen ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color: 'var(--text-muted)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.1rem', transition: 'all 0.2s', flexShrink: 0,
-              }}
-                onMouseOver={e => { if (!menuOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-                onMouseOut={e => { if (!menuOpen) e.currentTarget.style.background = 'transparent'; }}
-                aria-label="Opciones">⋮</button>
-              {menuOpen && (
-                <div style={{
-                  position: 'absolute', right: 0, top: '100%', marginTop: '4px',
-                  minWidth: '140px', zIndex: 100,
-                  background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '10px', padding: '4px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                  animation: 'fadeInUp 0.12s ease-out',
-                }}>
-                  <button onClick={() => { setEditContent(post.content); setEditing(true); setMenuOpen(false); }} style={{
-                    display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
-                    padding: '8px 12px', border: 'none', background: 'none',
-                    color: 'var(--text)', cursor: 'pointer', fontSize: '0.82rem',
-                    borderRadius: '6px', transition: 'background 0.15s',
-                  }}
-                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                    onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    Editar
-                  </button>
-                  <button onClick={() => { setShowDeleteConfirm(true); setMenuOpen(false); }} style={{
-                    display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
-                    padding: '8px 12px', border: 'none', background: 'none',
-                    color: '#ff4d6a', cursor: 'pointer', fontSize: '0.82rem',
-                    borderRadius: '6px', transition: 'background 0.15s',
-                  }}
-                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,106,0.1)')}
-                    onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                    Eliminar
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Content */}
-        {editing ? (
-          <div style={{ marginBottom: '8px' }}>
-            <textarea className="input" style={{ width: '100%', minHeight: '70px', fontSize: '0.9rem', lineHeight: 1.5, resize: 'vertical', marginBottom: '8px' }}
-              value={editContent} onChange={e => setEditContent(e.target.value)} maxLength={2000} autoFocus />
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{editContent.length}/2000</span>
-              <button onClick={() => { setEditing(false); setEditContent(post.content); }} style={{
-                padding: '5px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
-                background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: '0.82rem',
-              }}
-                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>Cancelar</button>
-              <button onClick={handleEdit} disabled={saving || !editContent.trim()} className="btn" style={{ padding: '5px 14px', fontSize: '0.82rem' }}>
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p style={{ fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: '8px' }}>
-            {post.content.split(/(#\w+)/g).map((part, i) => {
-              if (part.startsWith('#')) return <Link key={i} href={`/feed?tag=${part.slice(1)}`} style={{ color: 'var(--primary)', fontWeight: 500 }}>{part}</Link>;
-              if (part.startsWith('@')) return <Link key={i} href={`/vtubers?q=${encodeURIComponent(part.slice(1))}`} style={{ color: 'var(--secondary)', fontWeight: 500 }}>{part}</Link>;
-              return part;
-            })}
-          </p>
-        )}
-
-        {/* Media */}
-        {post.mediaUrl && (
-          <div style={{ borderRadius: '10px', overflow: 'hidden', marginBottom: '8px', cursor: 'zoom-in', position: 'relative' }}
-            onClick={() => setLightboxImage(post.mediaUrl!)}>
-            <img src={post.mediaUrl} alt="" style={{ width: '100%', maxHeight: '350px', objectFit: 'cover', transition: 'transform 0.3s ease', display: 'block' }} />
-          </div>
-        )}
-
-        {/* Hashtags */}
-        {post.hashtags.length > 0 && (
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-            {post.hashtags.map(tag => (
-              <Link key={tag} href={`/feed?tag=${tag}`} style={{ fontSize: '0.78rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 500 }}>#{tag}</Link>
-            ))}
-          </div>
-        )}
-
-        {/* Like/Comment count */}
-        <div style={{ display: 'flex', gap: '16px', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '4px' }}>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{post._count.likes} {post._count.likes === 1 ? 'like' : 'likes'}</span>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{post._count.comments} {post._count.comments === 1 ? 'comentario' : 'comentarios'}</span>
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button onClick={() => onLike(post.id, post.isLikedByMe)} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flex: 1,
-            background: post.isLikedByMe ? 'rgba(139,92,246,0.08)' : 'none', border: 'none',
-            cursor: 'pointer', color: post.isLikedByMe ? 'var(--primary)' : 'var(--text-muted)',
-            fontSize: '0.82rem', padding: '6px 8px', borderRadius: '6px',
-            transition: 'all 0.2s', fontWeight: post.isLikedByMe ? 600 : 400,
-          }}
-            onMouseOver={e => { if (!post.isLikedByMe) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { if (!post.isLikedByMe) e.currentTarget.style.background = 'none'; }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={post.isLikedByMe ? '#8B5CF6' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-            </svg>
-            Like
-          </button>
-          <button onClick={toggleComments} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flex: 1,
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: showComments ? 'var(--primary)' : 'var(--text-muted)',
-            fontSize: '0.82rem', padding: '6px 8px', borderRadius: '6px',
-            transition: 'all 0.2s',
-          }}
-            onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-            onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            Comentar
-          </button>
-        </div>
-      </div>
-
-      {/* Comments section */}
-      {showComments && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '12px 16px', background: 'rgba(0,0,0,0.15)' }}>
-          {loadingComments ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center' }}>Cargando comentarios...</p>
-          ) : comments.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center', marginBottom: '10px' }}>Sin comentarios. ¡Sé el primero!</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
-              {comments.map((comment: any) => (
-                <div key={comment.id} style={{ display: 'flex', gap: '8px' }}>
-                  <Link href={`/profile/${comment.userId}`}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0 }}>
-                      {(comment.user?.vtuberProfile?.displayName || comment.user?.username || '?').charAt(0).toUpperCase()}
-                    </div>
-                  </Link>
-                  <div style={{ flex: 1 }}>
-                    <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', textDecoration: 'none' }}>
-                      {comment.user?.vtuberProfile?.displayName || comment.user?.username}
-                    </Link>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.82rem', lineHeight: 1.4 }}>{comment.content}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {currentUserId && (
-            <form onSubmit={handleComment} style={{ display: 'flex', gap: '8px' }}>
-              <input className="input" style={{ flex: 1, padding: '7px 10px', fontSize: '0.82rem' }} placeholder="Escribe un comentario..." value={commentText} onChange={e => setCommentText(e.target.value)} maxLength={500} />
-              <button type="submit" className="btn" style={{ padding: '7px 14px', fontSize: '0.82rem' }} disabled={!commentText.trim()}>Enviar</button>
-            </form>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ==========================================================================
 // Home Page Content (authenticated)
 // ==========================================================================
 function HomeContent() {
   const { user, isLoading } = useAuth();
-  const router = useRouter();
 
   // Left sidebar data
   const [myGuilds, setMyGuilds] = useState<GuildItem[]>([]);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
 
   // Center - Feed
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newPost, setNewPost] = useState('');
-  const [posting, setPosting] = useState(false);
-  const [error, setError] = useState('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [feedMode, setFeedMode] = useState<'global' | 'following'>('global');
+  const {
+    posts, setPosts, loading, error, hasMore, loadingMore,
+    feedMode, setFeedMode, setPage, loadMore, handleLike,
+  } = usePosts({ user });
 
   // Right sidebar data
   const [trendingHashtags, setTrendingHashtags] = useState<TrendingHashtag[]>([]);
@@ -562,28 +112,7 @@ function HomeContent() {
   const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
   const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set());
 
-  // Fetch feed posts
-  const fetchFeed = useCallback(async (pageNum = 1, append = false) => {
-    try {
-      const mode = feedMode === 'following' && user ? 'true' : 'false';
-      const data = await apiFetch(`/posts?limit=20&page=${pageNum}&personalized=${mode}`, {});
-      if (append) setPosts(prev => [...prev, ...data]);
-      else setPosts(data);
-      setHasMore(data.length === 20);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al cargar feed');
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [feedMode, user]);
 
-  const loadMore = () => {
-    setLoadingMore(true);
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchFeed(nextPage, true);
-  };
 
   // Fetch sidebar data
   useEffect(() => {
@@ -672,72 +201,8 @@ function HomeContent() {
       }
     };
   }, [user]);
-
-  // Initial feed load
-  useEffect(() => {
-    if (user) {
-      setPage(1);
-      fetchFeed(1, false);
-    }
-  }, [fetchFeed, user]);
-
-  // Image handling
-  const processImageFile = (file: File) => {
-    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-      setError('Formato no soportado. Usa JPEG, PNG, WebP o GIF.'); return false;
-    }
-    if (file.size > 5 * 1024 * 1024) { setError('La imagen es muy grande. Máximo 5 MB.'); return false; }
-    setSelectedImage(file);
-    setImagePreview(URL.createObjectURL(file));
-    setError('');
-    return true;
-  };
-
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPost.trim() && !selectedImage) return;
-    setPosting(true); setError('');
-    try {
-      let mediaUrl = undefined;
-      if (selectedImage) {
-        setUploadingImage(true);
-        const formData = new FormData();
-        formData.append('image', selectedImage);
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'http://localhost:4000';
-        const token = getAccessToken();
-        const res = await fetch(`${baseUrl}/api/uploads/post`, {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        });
-        if (!res.ok) throw new Error('Error al subir imagen');
-        const data = await res.json();
-        mediaUrl = data.url;
-        setUploadingImage(false);
-      }
-      const post = await apiFetch('/posts', {
-        method: 'POST',
-        body: JSON.stringify({ content: newPost.trim() || '(imagen)', mediaUrl }),
-      });
-      setPosts(prev => [post, ...prev]);
-      setNewPost('');
-      if (imagePreview) URL.revokeObjectURL(imagePreview);
-      setSelectedImage(null);
-      setImagePreview(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al publicar');
-    } finally { setPosting(false); setUploadingImage(false); }
-  };
-
-  const handleLike = async (postId: string, isLiked: boolean) => {
-    try {
-      if (isLiked) await apiFetch(`/posts/${postId}/unlike`, { method: 'POST' });
-      else await apiFetch(`/posts/${postId}/like`, { method: 'POST' });
-      setPosts(prev => prev.map(p => {
-        if (p.id === postId) return { ...p, isLikedByMe: !isLiked, _count: { ...p._count, likes: isLiked ? p._count.likes - 1 : p._count.likes + 1 } };
-        return p;
-      }));
-    } catch {}
+  const handlePostCreated = (post: any) => {
+    setPosts(prev => [post, ...prev]);
   };
 
   if (isLoading) {
@@ -865,7 +330,16 @@ function HomeContent() {
               Amigos
             </h4>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-              {followingUsers.length}
+              {followingUsers.length} ·{' '}
+              <span style={{ color: '#00e676', fontWeight: 600 }}>
+                {(() => {
+                  let online = 0;
+                  for (const f of followingUsers) {
+                    if (onlineFriendIds.has(f.id) || liveVtubers.some(lv => lv.userId === f.id)) online++;
+                  }
+                  return `${online} en línea`;
+                })()}
+              </span>
             </span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1154,77 +628,18 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Post creation */}
-        <div className="glass" style={{ padding: '16px' }}>
-          <form onSubmit={handleCreatePost}>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-              <div style={{
-                width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                background: avatarUrl ? `url(${avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'white', fontWeight: 'bold', fontSize: '0.9rem',
-              }}>
-                {!avatarUrl && displayName.charAt(0).toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <textarea
-                  className="input"
-                  style={{ minHeight: '48px', resize: 'none', fontSize: '0.9rem', border: 'none', background: 'transparent', padding: '8px 4px', color: 'var(--text)' }}
-                  placeholder="¿Qué está pasando, estelar? ✨"
-                  value={newPost}
-                  onChange={e => setNewPost(e.target.value)}
-                  maxLength={2000}
-                  onFocus={e => { e.currentTarget.style.minHeight = '70px'; }}
-                  onBlur={e => { if (!newPost) e.currentTarget.style.minHeight = '48px'; }}
-                />
-
-                {/* Image preview */}
-                {imagePreview && (
-                  <div style={{ position: 'relative', marginBottom: '8px', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <img src={imagePreview} alt="" style={{ width: '100%', maxHeight: '250px', objectFit: 'contain', background: 'rgba(0,0,0,0.3)' }} />
-                    <button type="button" onClick={() => { URL.revokeObjectURL(imagePreview!); setSelectedImage(null); setImagePreview(null); }} style={{
-                      position: 'absolute', top: '6px', right: '6px', width: '28px', height: '28px',
-                      borderRadius: '50%', border: 'none', cursor: 'pointer',
-                      background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '0.9rem',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>✕</button>
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="home-post-image" style={{ display: 'none' }}
-                      onChange={e => { const file = e.target.files?.[0]; if (file) processImageFile(file); e.target.value = ''; }}
-                      disabled={posting || !!imagePreview} />
-                    <label htmlFor="home-post-image" style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                      padding: '5px 10px', borderRadius: '6px', cursor: imagePreview ? 'not-allowed' : 'pointer',
-                      color: imagePreview ? 'var(--text-muted)' : 'var(--text-muted)',
-                      fontSize: '0.78rem', transition: 'all 0.2s', opacity: imagePreview ? 0.4 : 1,
-                    }}
-                      onMouseOver={e => { if (!imagePreview) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                      onMouseOut={e => { if (!imagePreview) e.currentTarget.style.background = 'transparent'; }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                      </svg>
-                      Foto
-                    </label>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{newPost.length}/2000</span>
-                  </div>
-                  <button type="submit" className="btn" disabled={(!newPost.trim() && !selectedImage) || posting || uploadingImage} style={{ padding: '7px 18px', fontSize: '0.82rem' }}>
-                    {uploadingImage ? 'Subiendo...' : posting ? 'Publicando...' : 'Publicar'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
+        <CreatePost
+          compact
+          onPostCreated={handlePostCreated}
+        />
 
         {/* Feed */}
         {loading ? (
-          <div className="glass" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <span style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <p style={{ marginTop: '8px', fontSize: '0.85rem' }}>Cargando publicaciones...</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <SkeletonPostCard />
+            <SkeletonPostCard withImage />
+            <SkeletonPostCard />
+            <SkeletonPostCard withImage />
           </div>
         ) : posts.length === 0 ? (
           <div className="glass" style={{ padding: '40px 20px', textAlign: 'center' }}>

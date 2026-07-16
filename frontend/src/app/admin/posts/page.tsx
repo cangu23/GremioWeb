@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 
@@ -28,21 +28,23 @@ export default function AdminPostsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [hideFilter, setHideFilter] = useState('');
+  const searchRef = useRef(search);
+  searchRef.current = search;
   const [page, setPage] = useState(1);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
-      if (search) params.set('search', search);
+      if (searchRef.current) params.set('search', searchRef.current);
       if (hideFilter) params.set('isHidden', hideFilter);
       const res = await apiFetch(`/admin/posts?${params}`);
       setData(res);
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
     finally { setLoading(false); }
-  };
+  }, [page, hideFilter, showToast]);
 
-  useEffect(() => { fetchData(); }, [page, hideFilter]);
+  useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { setPage(1); }, [search, hideFilter]);
 
   const actionPost = async (id: string, payload: Record<string, unknown>, label: string) => {

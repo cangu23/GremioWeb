@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 
@@ -31,23 +31,25 @@ export default function AdminEventsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
+  const searchRef = useRef(search);
+  searchRef.current = search;
   const [selectedEvent, setSelectedEvent] = useState<AdminEvent | null>(null);
   const [editData, setEditData] = useState({ title: '', description: '', location: '', status: '' });
   const [saving, setSaving] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
-      if (search) params.set('search', search);
+      if (searchRef.current) params.set('search', searchRef.current);
       if (statusFilter) params.set('status', statusFilter);
       const res = await apiFetch(`/admin/events?${params}`);
       setData(res);
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
     finally { setLoading(false); }
-  };
+  }, [page, statusFilter, showToast]);
 
-  useEffect(() => { fetchData(); }, [page, statusFilter]);
+  useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { setPage(1); }, [search, statusFilter]);
 
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); fetchData(); };

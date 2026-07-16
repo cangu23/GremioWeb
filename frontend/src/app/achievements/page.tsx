@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
+import Image from 'next/image';
 
 interface Achievement {
   id: string;
@@ -136,7 +137,7 @@ function AchievementsContent() {
                     }}
                   >
                     {ach.iconUrl ? (
-                      <img src={ach.iconUrl} alt="" style={{ width: '28px', height: '28px' }} />
+                      <Image src={ach.iconUrl} alt="" width={28} height={28} style={{ width: '28px', height: '28px' }} />
                     ) : (
                       getCategoryIcon(ach.category)
                     )}

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 
@@ -37,23 +37,25 @@ export default function AdminGuildsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const searchRef = useRef(search);
+  searchRef.current = search;
   const [selectedGuild, setSelectedGuild] = useState<AdminGuild | null>(null);
   const [editData, setEditData] = useState({ name: '', description: '', tags: '' });
   const [saving, setSaving] = useState(false);
   const [detail, setDetail] = useState<AdminGuildDetail | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
-      if (search) params.set('search', search);
+      if (searchRef.current) params.set('search', searchRef.current);
       const res = await apiFetch(`/admin/guilds?${params}`);
       setData(res);
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
     finally { setLoading(false); }
-  };
+  }, [page, showToast]);
 
-  useEffect(() => { fetchData(); }, [page]);
+  useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { setPage(1); }, [search]);
 
   const openDetail = async (id: string) => {

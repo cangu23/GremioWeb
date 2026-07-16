@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 
@@ -44,7 +44,7 @@ export default function AdminCodesPage() {
   const [newCode, setNewCode] = useState('');
   const [form, setForm] = useState({ name: '', role: 'VTUBER' });
 
-  const fetchCodes = async () => {
+  const fetchCodes = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
@@ -58,9 +58,9 @@ export default function AdminCodesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, filterRole, filterStatus, showToast]);
 
-  useEffect(() => { fetchCodes(); }, [page, filterRole, filterStatus]);
+  useEffect(() => { fetchCodes(); }, [fetchCodes]);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
