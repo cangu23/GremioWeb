@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import { ArrowLeft, ArrowRight } from '@/components/ui/Icons';
 
 interface LiveVTuber {
   id: string;
@@ -139,7 +140,7 @@ export default function LiveNowSection() {
                     transform: `translateY(-50%) scale(${hoveredNav === dir ? 1.1 : 1})`,
                   }}
                   aria-label={dir === 'prev' ? 'Anterior' : 'Siguiente'}
-                >{dir === 'prev' ? '←' : '→'}</button>
+                >{dir === 'prev' ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}</button>
               ))}
             </>
           )}

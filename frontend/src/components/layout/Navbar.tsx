@@ -9,6 +9,7 @@ import { connectSocket, NOTIFICATION_EVENTS } from '@/lib/socket-client';
 import { useToast } from '@/lib/ToastContext';
 import ClientOnly from '@/lib/ClientOnly';
 import styles from './Navbar.module.css';
+import { Users, Calendar, Shield, FileText, MessageCircle, ShoppingBag, Award, BarChart, Bell, Backpack, Sparkles, Settings, LogOut, Key, Plus, Grid, TrendingUp, User, HelpCircle } from '@/components/ui/Icons';
 
 // ==========================================================================
 // SVG Icon components (unique to header)
@@ -128,7 +129,7 @@ function useNavbarState(user: { id: string } | null) {
       sock = connectSocket();
       sock.on(NOTIFICATION_EVENTS.NEW, () => {
         setUnreadCount(prev => prev + 1);
-        showToast('🔔 Nueva notificación', 'success');
+        showToast('Nueva notificación', 'success');
       });
     } catch (err) {
       console.warn('[Socket] Could not connect for notifications:', err);
@@ -149,7 +150,7 @@ function useNavbarState(user: { id: string } | null) {
 function SearchModal({ onClose }: { onClose: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{ label: string; href: string; icon: string }[]>([]);
+  const [results, setResults] = useState<{ label: string; href: string; icon: React.ReactNode }[]>([]);
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
@@ -161,17 +162,17 @@ function SearchModal({ onClose }: { onClose: () => void }) {
     setSearching(true);
     const q = query.toLowerCase();
     const items = [
-      { label: 'VTubers', href: '/vtubers', icon: '👤' },
-      { label: 'Eventos', href: '/events', icon: '📅' },
-      { label: 'Gremios', href: '/guilds', icon: '🛡️' },
-      { label: 'Feed', href: '/feed', icon: '📰' },
-      { label: 'Chat global', href: '/chat', icon: '💬' },
-      { label: 'Tienda', href: '/shop', icon: '🛒' },
-      { label: 'Ranking', href: '/leaderboard', icon: '🏆' },
-      { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-      { label: 'Notificaciones', href: '/notifications', icon: '🔔' },
-      { label: 'Inventario', href: '/inventory', icon: '🎒' },
-      { label: 'Logros', href: '/achievements', icon: '🏅' },
+      { label: 'VTubers', href: '/vtubers', icon: <Users size={16} color="var(--text-muted)" /> },
+      { label: 'Eventos', href: '/events', icon: <Calendar size={16} color="var(--text-muted)" /> },
+      { label: 'Gremios', href: '/guilds', icon: <Shield size={16} color="var(--text-muted)" /> },
+      { label: 'Feed', href: '/feed', icon: <FileText size={16} color="var(--text-muted)" /> },
+      { label: 'Chat global', href: '/chat', icon: <MessageCircle size={16} color="var(--text-muted)" /> },
+      { label: 'Tienda', href: '/shop', icon: <ShoppingBag size={16} color="var(--text-muted)" /> },
+      { label: 'Ranking', href: '/leaderboard', icon: <Award size={16} color="var(--text-muted)" /> },
+      { label: 'Dashboard', href: '/dashboard', icon: <BarChart size={16} color="var(--text-muted)" /> },
+      { label: 'Notificaciones', href: '/notifications', icon: <Bell size={16} color="var(--text-muted)" /> },
+      { label: 'Inventario', href: '/inventory', icon: <Backpack size={16} color="var(--text-muted)" /> },
+      { label: 'Logros', href: '/achievements', icon: <Award size={16} color="var(--text-muted)" /> },
     ];
     const filtered = items
       .filter(item => item.label.toLowerCase().includes(q))
@@ -260,7 +261,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                 onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
                 onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <span style={{ fontSize: '1rem' }}>{item.icon}</span>
+                <span style={{ display: 'inline-flex' }}>{item.icon}</span>
                 <span>{item.label}</span>
               </Link>
             ))}
@@ -529,18 +530,18 @@ function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
           </button>
 
           {[
-            { icon: '📰', label: 'Feed', href: '/feed' },
-            { icon: '📅', label: 'Eventos', href: '/events' },
-            { icon: '🛡️', label: 'Gremios', href: '/guilds' },
-            { icon: '👤', label: 'VTubers', href: '/vtubers' },
-            { icon: '💬', label: 'Chat', href: '/chat' },
-            { icon: '🛒', label: 'Tienda', href: '/shop' },
-            { icon: '🏆', label: 'Ranking', href: '/leaderboard' },
-            { icon: '📊', label: 'Dashboard', href: '/dashboard' },
-            { icon: '🔔', label: 'Notificaciones', href: '/notifications', badge: unreadCount > 0 ? unreadCount : undefined },
+            { icon: <FileText size={18} />, label: 'Feed', href: '/feed' },
+            { icon: <Calendar size={18} />, label: 'Eventos', href: '/events' },
+            { icon: <Shield size={18} />, label: 'Gremios', href: '/guilds' },
+            { icon: <Users size={18} />, label: 'VTubers', href: '/vtubers' },
+            { icon: <MessageCircle size={18} />, label: 'Chat', href: '/chat' },
+            { icon: <ShoppingBag size={18} />, label: 'Tienda', href: '/shop' },
+            { icon: <Award size={18} />, label: 'Ranking', href: '/leaderboard' },
+            { icon: <BarChart size={18} />, label: 'Dashboard', href: '/dashboard' },
+            { icon: <Bell size={18} />, label: 'Notificaciones', href: '/notifications', badge: unreadCount > 0 ? unreadCount : undefined },
           ].map(link => (
             <Link key={link.href} href={link.href} onClick={closeMenu} style={mobileLink}>
-              <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center' }}>{link.icon}</span>
+              <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}>{link.icon}</span>
               <span>{link.label}</span>
               {link.badge !== undefined && link.badge > 0 && (
                 <span style={{
@@ -557,7 +558,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
 
           {user.role === 'ADMIN' && (
             <Link href="/admin" onClick={closeMenu} style={{ ...mobileLink, color: 'var(--primary)', fontWeight: 600 }}>
-              <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center' }}>⚙️</span>
+              <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}><Settings size={18} color="var(--primary)" /></span>
               <span>Admin</span>
             </Link>
           )}
@@ -580,7 +581,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
             ...mobileLink, border: 'none', background: 'transparent', width: '100%', cursor: 'pointer',
             color: 'var(--error)',
           }}>
-            <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center' }}>🚪</span>
+            <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}><LogOut size={18} /></span>
             <span>Cerrar Sesión</span>
           </button>
         </>
@@ -649,7 +650,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
           padding: '10px 12px', borderRadius: '8px', textDecoration: 'none',
           color: 'var(--text)', fontSize: '0.85rem', fontWeight: 500,
         }}>
-          <span style={{ fontSize: '1rem' }}>🔑</span>
+          <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}><Key size={18} /></span>
           <span>Iniciar Sesión</span>
         </Link>
         <Link href="/register" onClick={closeMenu} style={{
@@ -658,7 +659,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
           color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 600,
           background: 'var(--primary-subtle)',
         }}>
-          <span style={{ fontSize: '1rem' }}>✨</span>
+          <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}><Sparkles size={18} color="var(--primary)" /></span>
           <span>Unirse al Gremio</span>
         </Link>
       </>

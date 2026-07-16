@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
+import { Heart, MessageCircle } from '@/components/ui/Icons';
 
 interface ActivityPost {
   id: string;
@@ -265,8 +266,8 @@ function ActivityPosts({ data }: { data: ActivityPost[] }) {
             paddingTop: '8px', borderTop: '1px solid var(--glass-border)',
             fontSize: '0.72rem', color: 'var(--text-muted)',
           }}>
-            <span>❤️ {post._count.likes}</span>
-            <span>💬 {post._count.comments}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Heart size={12} color="var(--text-muted)" /> {post._count.likes}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MessageCircle size={12} color="var(--text-muted)" /> {post._count.comments}</span>
           </div>
         </Link>
       ))}

@@ -2,12 +2,13 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import SkeletonVTuberCard from '@/components/vtubers/SkeletonVTuberCard';
+import { Star, Sparkles, Users, FileText, Twitch, Youtube, Twitter, Gamepad, Music, Palette, Mic, Headphones, MessageSquare, Telescope, Rocket } from '@/components/ui/Icons';
 
 /* ─────────── Types ─────────── */
 
@@ -59,30 +60,34 @@ function parseLanguages(raw: string | null): string[] {
   try { return JSON.parse(raw); } catch { return raw.split(',').map(s => s.trim()).filter(Boolean); }
 }
 
-const CONTENT_TYPE_ICONS: Record<string, string> = {
-  gaming: '🎮',
-  music: '🎵',
-  art: '🎨',
-  chatting: '💬',
-  singing: '🎤',
-  asmr: '🎧',
-  'just-chatting': '💬',
-  vtuber: '🌟',
-};
-
 const CONTENT_TYPES = [
   { value: '', label: 'Todo' },
-  { value: 'gaming', label: '🎮 Gaming' },
-  { value: 'music', label: '🎵 Música' },
-  { value: 'art', label: '🎨 Arte' },
-  { value: 'singing', label: '🎤 Canto' },
-  { value: 'chatting', label: '💬 Charla' },
-  { value: 'asmr', label: '🎧 ASMR' },
+  { value: 'gaming', label: 'Gaming' },
+  { value: 'music', label: 'Música' },
+  { value: 'art', label: 'Arte' },
+  { value: 'singing', label: 'Canto' },
+  { value: 'chatting', label: 'Charla' },
+  { value: 'asmr', label: 'ASMR' },
 ];
+
+function ContentTypeIcon({ type, size = 14 }: { type: string; size?: number }) {
+  const props = { size, color: 'var(--primary)', strokeWidth: 2 };
+  switch (type.toLowerCase()) {
+    case 'gaming': return <Gamepad {...props} />;
+    case 'music': return <Music {...props} />;
+    case 'art': return <Palette {...props} />;
+    case 'singing': return <Mic {...props} />;
+    case 'asmr': return <Headphones {...props} />;
+    case 'chatting':
+    case 'just-chatting':
+    case 'vtuber':
+    default: return <MessageSquare {...props} />;
+  }
+}
 
 /* ─────────── Stats Card ─────────── */
 
-function StatCard({ icon, value, label }: { icon: string; value: string | number; label: string }) {
+function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
   return (
     <div
       className="glass"
@@ -98,7 +103,7 @@ function StatCard({ icon, value, label }: { icon: string; value: string | number
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
       onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
     >
-      <div style={{ fontSize: '2rem', marginBottom: '6px' }}>{icon}</div>
+      <div style={{ fontSize: '1.5rem', marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>{icon}</div>
       <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.2 }}>{value}</div>
       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{label}</div>
     </div>
@@ -109,7 +114,6 @@ function StatCard({ icon, value, label }: { icon: string; value: string | number
 
 function VTuberCard({ v }: { v: VTuberProfile }) {
   const langs = parseLanguages(v.languages);
-  const contentTypeIcon = v.contentType ? CONTENT_TYPE_ICONS[v.contentType] || '🌟' : '🌟';
   const accentColor = v.themeColor || 'var(--primary)';
 
   return (
@@ -163,7 +167,7 @@ function VTuberCard({ v }: { v: VTuberProfile }) {
             background: 'rgba(255,215,0,0.15)', color: '#ffd700',
             fontSize: '0.7rem', fontWeight: 700, border: '1px solid rgba(255,215,0,0.3)',
           }}>
-            ★ Destacado
+            <Star size={12} color="#ffd700" strokeWidth={2.5} /> Destacado
           </div>
         )}
 
@@ -233,7 +237,7 @@ function VTuberCard({ v }: { v: VTuberProfile }) {
               color: 'var(--primary)',
               border: '1px solid rgba(138,43,226,0.2)',
             }}>
-              {contentTypeIcon} {v.contentType.charAt(0).toUpperCase() + v.contentType.slice(1)}
+              <ContentTypeIcon type={v.contentType} size={12} /> {v.contentType.charAt(0).toUpperCase() + v.contentType.slice(1)}
             </span>
           )}
           {langs.slice(0, 2).map(lang => (
@@ -265,13 +269,13 @@ function VTuberCard({ v }: { v: VTuberProfile }) {
           borderTop: '1px solid rgba(255,255,255,0.04)',
         }}>
           <div style={{ display: 'flex', gap: '14px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            <span>👤 {v.user._count.followers}</span>
-            <span>📝 {v.user._count.posts}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={14} /> {v.user._count.followers}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><FileText size={14} /> {v.user._count.posts}</span>
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {v.twitchUrl && <span title="Twitch" style={{ fontSize: '0.8rem' }}>📺</span>}
-            {v.youtubeUrl && <span title="YouTube" style={{ fontSize: '0.8rem' }}>▶️</span>}
-            {v.twitterUrl && <span title="Twitter/X" style={{ fontSize: '0.8rem' }}>🐦</span>}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            {v.twitchUrl && <Twitch size={14} color="#9146FF" title="Twitch" />}
+            {v.youtubeUrl && <Youtube size={14} color="#FF0000" title="YouTube" />}
+            {v.twitterUrl && <Twitter size={14} color="#1DA1F2" title="Twitter/X" />}
           </div>
         </div>
       </div>
@@ -437,7 +441,7 @@ function VtubersContent() {
   if (error) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🌠</div>
+        <div style={{ fontSize: '3rem', marginBottom: '16px' }}><Sparkles size={48} color="var(--text-muted)" strokeWidth={1.5} /></div>
         <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>Algo salió mal</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>No pudimos cargar los VTubers. Intenta de nuevo.</p>
         <button onClick={() => { setError(false); setLoading(true); fetchOverview(); }} className="btn" style={{ padding: '12px 28px' }}>
@@ -468,9 +472,9 @@ function VtubersContent() {
         </div>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <StatCard icon="🌟" value={totalVtubers} label="VTubers" />
-          <StatCard icon="🔴" value={liveCount} label="En vivo ahora" />
-          <StatCard icon="✓" value={featuredVtubers.length} label="Destacados" />
+          <StatCard icon={<Sparkles size={28} color="var(--primary)" />} value={totalVtubers} label="VTubers" />
+          <StatCard icon={<span style={{ width: 16, height: 16, borderRadius: '50%', background: '#e91e63', display: 'inline-block' }} />} value={liveCount} label="En vivo ahora" />
+          <StatCard icon={<Star size={28} color="#ffd700" fill="#ffd700" />} value={featuredVtubers.length} label="Destacados" />
           {!loggedIn && (
             <Link href="/register" style={{ textDecoration: 'none' }}>
               <div
@@ -489,7 +493,7 @@ function VtubersContent() {
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(138,43,226,0.2)'; }}
               >
-                <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>🚀</div>
+                <div style={{ fontSize: '1.5rem', marginBottom: '4px', display: 'flex', justifyContent: 'center' }}><Rocket size={28} color="var(--primary)" /></div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--primary)' }}>¡Únete al gremio!</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Crea tu perfil VTuber</div>
               </div>
@@ -534,7 +538,7 @@ function VtubersContent() {
       {hasFeatured && (
         <div style={{ marginBottom: '36px' }}>
           <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>⭐</span> VTubers Destacados
+            <Star size={22} color="#ffd700" fill="#ffd700" /> VTubers Destacados
           </h2>
           <div style={{
             display: 'grid', gap: '16px',
@@ -599,7 +603,7 @@ function VtubersContent() {
           </div>
         ) : directory.length === 0 ? (
           <div className="glass" style={{ padding: '48px 20px', textAlign: 'center', borderRadius: '16px' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔭</div>
+            <div style={{ fontSize: '3rem', marginBottom: '12px' }}><Telescope size={48} color="var(--text-muted)" strokeWidth={1.5} /></div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
               {search || contentType ? 'Sin resultados' : 'Aún no hay VTubers'}
             </h3>

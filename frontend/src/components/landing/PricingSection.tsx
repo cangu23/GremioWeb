@@ -348,7 +348,7 @@ export default function PricingSection() {
           color: 'var(--text-muted)',
           lineHeight: 1.6,
         }}>
-          Todos los planes son completamente gratuitos durante esta fase beta. 🚀
+          Todos los planes son completamente gratuitos durante esta fase beta.
         </p>
       </div>
     </section>

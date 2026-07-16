@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import { Heart, MessageCircle } from '@/components/ui/Icons';
 
 interface FeaturedPost {
   id: string;
@@ -298,8 +299,8 @@ export default function FeaturedVtubersSection() {
                         display: 'flex', gap: '10px', marginTop: '6px',
                         fontSize: '0.7rem', color: 'var(--text-muted)',
                       }}>
-                        <span>❤️ {post._count.likes}</span>
-                        <span>💬 {post._count.comments}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Heart size={12} color="var(--text-muted)" /> {post._count.likes}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MessageCircle size={12} color="var(--text-muted)" /> {post._count.comments}</span>
                         <span>· {formatTimeAgo(post.createdAt)}</span>
                       </div>
                     </div>
