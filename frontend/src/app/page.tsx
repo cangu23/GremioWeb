@@ -118,8 +118,15 @@ function HomeContent() {
   const [followingUsers, setFollowingUsers] = useState<FollowingUser[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
   const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set());
+  const [now, setNow] = useState(() => Date.now());
+  const [maidsData, setMaidsData] = useState<any[]>([]);
+  const [maidsLoading, setMaidsLoading] = useState(true);
 
-
+  // Tick every 60s for real-time countdown
+  useEffect(() => {
+    const interval = setInterval(() => { setNow(Date.now()); }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch sidebar data + poll live VTubers
   useEffect(() => {
@@ -161,6 +168,13 @@ function HomeContent() {
         const events = await apiFetch('/events?status=UPCOMING&limit=5', {});
         setUpcomingEvents(Array.isArray(events) ? events.slice(0, 4) : []);
       } catch {}
+
+      // Hoshizora Maids
+      try {
+        const data = await apiFetch('/users/role/MAID', {});
+        if (Array.isArray(data)) setMaidsData(data);
+      } catch {}
+      setMaidsLoading(false);
     };
 
     fetchSidebarData();
@@ -514,6 +528,290 @@ function HomeContent() {
           </div>
         </div>
       )}
+
+      {/* Hoshizora Maid — promo card + schedule */}
+      <div className="glass" style={{
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, rgba(212,160,48,0.08), rgba(196,149,106,0.04))',
+        border: '1px solid rgba(212,160,48,0.15)',
+      }}>
+        {/* Header link */}
+        <Link href="/hoshizora-maid" style={{
+          padding: '14px', display: 'flex', alignItems: 'center', gap: '12px',
+          textDecoration: 'none', color: 'inherit',
+          transition: 'all 0.3s ease',
+          borderBottom: '1px solid rgba(212,160,48,0.1)',
+        }}
+          onMouseOver={e => {
+            e.currentTarget.style.background = 'rgba(212,160,48,0.05)';
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.background = 'transparent';
+          }}
+        >
+          <div style={{
+            width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0,
+            background: 'linear-gradient(135deg, rgba(212,160,48,0.2), rgba(196,149,106,0.1))',
+            border: '1px solid rgba(212,160,48,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+              <line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+            </svg>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#d4a030' }}>Hoshizora Maid</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Cafetería estelar en VRChat</div>
+          </div>
+          <span style={{
+            fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0,
+            display: 'inline-flex', alignItems: 'center', gap: '3px',
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </span>
+        </Link>
+
+        {/* Schedule */}
+        <div style={{ padding: '12px 14px' }}>
+          <div style={{
+            fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#d4a030', marginBottom: '8px',
+            display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Horario
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            {[
+              { day: 'Lun - Vie', hours: '18:00 - 23:00' },
+              { day: 'Sáb', hours: '16:00 - 01:00' },
+              { day: 'Dom', hours: '14:00 - 22:00' },
+            ].map((s, i) => (
+              <div key={i} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '3px 0', fontSize: '0.78rem',
+                borderBottom: i < 2 ? '1px solid rgba(212,160,48,0.07)' : 'none',
+              }}>
+                <span style={{ color: 'var(--text-secondary)' }}>{s.day}</span>
+                <span style={{ color: '#d4a030', fontWeight: 600 }}>{s.hours}</span>
+              </div>
+            ))}
+          </div>
+          {/* Status badge */}
+          <div style={{
+            marginTop: '8px', padding: '6px 10px', borderRadius: '8px',
+            background: 'rgba(212,160,48,0.08)',
+            border: '1px solid rgba(212,160,48,0.12)',
+            display: 'flex', alignItems: 'center', gap: '6px',
+            fontSize: '0.72rem', color: '#d4a030', fontWeight: 500,
+          }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="8 12 11 15 16 9"/>
+            </svg>
+            Abierto todos los días — Ven a visitarnos
+          </div>
+        </div>
+      </div>
+
+      {/* Hoshizora Maid — Events */}
+      <div className="glass" style={{
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, rgba(212,160,48,0.08), rgba(196,149,106,0.04))',
+        border: '1px solid rgba(212,160,48,0.15)',
+      }}>
+        <div style={{ padding: '12px 14px' }}>
+          {/* Header with next event countdown */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '8px',
+          }}>
+            <div style={{
+              fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.06em', color: '#d4a030',
+              display: 'flex', alignItems: 'center', gap: '6px',
+            }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="18" rx="3" ry="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+              Eventos Especiales
+            </div>
+            {(() => {
+              const d = new Date(now);
+              const today = d.getDay();
+              const eventDays = [4, 5, 6, 0];
+              const eventNames = ['Ceremonia de Té', 'Noche de Karaoke', 'Cat Café Day', 'Lounge Estelar'];
+              const eventColors = ['#4caf50', '#e040fb', '#ff9800', '#64b5f6'];
+              let nextIdx = -1;
+              let minDays = 8;
+              for (let i = 0; i < eventDays.length; i++) {
+                let diff = eventDays[i] - today;
+                if (diff <= 0) diff += 7;
+                if (diff < minDays) { minDays = diff; nextIdx = i; }
+              }
+              if (nextIdx === -1) return null;
+              return (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  padding: '2px 8px', borderRadius: '8px',
+                  background: `${eventColors[nextIdx]}15`,
+                  border: `1px solid ${eventColors[nextIdx]}30`,
+                  fontSize: '0.68rem', fontWeight: 700, color: eventColors[nextIdx],
+                }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  {minDays === 0 ? `Hoy: ${eventNames[nextIdx]}` : minDays === 1 ? 'Mañana' : `En ${minDays} días`}
+                </div>
+              );
+            })()}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {[
+              { day: 'Jue', label: 'Ceremonia de Té', color: '#4caf50' },
+              { day: 'Vie', label: 'Noche de Karaoke', color: '#e040fb' },
+              { day: 'Sáb', label: 'Cat Café Day', color: '#ff9800' },
+              { day: 'Dom', label: 'Lounge Estelar', color: '#64b5f6' },
+            ].map((ev, i) => (
+              <Link key={i} href="/hoshizora-maid" style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '6px 8px', borderRadius: '8px', textDecoration: 'none', color: 'inherit',
+                fontSize: '0.82rem', transition: 'background 0.15s',
+              }}
+                onMouseOver={e => { e.currentTarget.style.background = 'rgba(212,160,48,0.08)'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ev.color, flexShrink: 0 }} />
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.label}</span>
+                <span style={{ fontSize: '0.68rem', color: ev.color, fontWeight: 600, flexShrink: 0, padding: '1px 6px', borderRadius: '4px', background: `${ev.color}15` }}>{ev.day}</span>
+              </Link>
+            ))}
+          </div>
+          <Link href="/hoshizora-maid" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+            marginTop: '8px', padding: '5px', borderRadius: '6px',
+            fontSize: '0.72rem', color: '#d4a030', fontWeight: 600,
+            textDecoration: 'none', transition: 'background 0.15s',
+          }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(212,160,48,0.08)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+            Ver todos los eventos
+          </Link>
+        </div>
+      </div>
+
+      {/* Nuestras Maids */}
+      <div className="glass" style={{
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, rgba(212,160,48,0.08), rgba(196,149,106,0.04))',
+        border: '1px solid rgba(212,160,48,0.15)',
+      }}>
+        <div style={{ padding: '12px 14px' }}>
+          <div style={{
+            fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#d4a030', marginBottom: '8px',
+            display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Nuestras Maids
+          </div>
+
+          {(() => {
+            if (maidsLoading) {
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {[1, 2, 3].map(s => (
+                    <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ height: '12px', width: '80px', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', marginBottom: '4px' }} />
+                        <div style={{ height: '10px', width: '50px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+
+            if (maidsData.length === 0) {
+              return (
+                <div style={{ padding: '12px', textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Próximamente nuestras maids estelares
+                </div>
+              );
+            }
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {maidsData.slice(0, 4).map(maid => {
+                  const mName = maid.vtuberProfile?.displayName || maid.username;
+                  const mAvatar = maid.vtuberProfile?.avatarUrl;
+                  const staffRoles: Record<string, string> = {
+                    'hana_hoshizora': 'Head Maid',
+                    'luna_tsukino': 'Maid de Sala',
+                    'sora_aoi': 'Barista',
+                    'rin_kagamine': 'Maid Recepción',
+                  };
+                  const mRole = staffRoles[maid.username] || 'Maid';
+
+                  return (
+                    <Link key={maid.id} href={`/profile/${maid.id}`} style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '6px 8px', borderRadius: '8px', textDecoration: 'none', color: 'inherit',
+                      fontSize: '0.82rem', transition: 'background 0.15s',
+                    }}
+                      onMouseOver={e => { e.currentTarget.style.background = 'rgba(212,160,48,0.08)'; }}
+                      onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <div style={{
+                        width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                        background: mAvatar ? `url(${mAvatar}) center/cover` : 'linear-gradient(135deg, #d4a030, #c4956a)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#1a1410', fontWeight: 'bold', fontSize: '0.7rem',
+                        overflow: 'hidden',
+                      }}>
+                        {!mAvatar && mName.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#f5e6d3' }}>{mName}</div>
+                        <div style={{ fontSize: '0.68rem', color: '#d4a030', fontWeight: 500 }}>{mRole}</div>
+                      </div>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                      </svg>
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          <Link href="/hoshizora-maid" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+            marginTop: '8px', padding: '5px', borderRadius: '6px',
+            fontSize: '0.72rem', color: '#d4a030', fontWeight: 600,
+            textDecoration: 'none', transition: 'background 0.15s',
+          }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(212,160,48,0.08)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+            Conocer al equipo
+          </Link>
+        </div>
+      </div>
 
       {/* Notifications */}
       <Link href="/notifications" className="glass" style={{

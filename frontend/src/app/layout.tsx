@@ -7,6 +7,7 @@ import { AuthProvider } from '@/lib/AuthContext';
 import { ToastProvider } from '@/lib/ToastContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import PageTransition from '@/components/layout/PageTransition';
 import ParticlesBackground from '@/components/landing/ParticlesBackground';
 import './globals.css';
 
@@ -42,7 +43,9 @@ export default function RootLayout({
               <AuthProvider>
                 <Navbar />
                 <main className="page">
-                  {children}
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
                 </main>
                 <Footer />
               </AuthProvider>

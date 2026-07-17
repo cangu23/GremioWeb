@@ -261,9 +261,9 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             {[
               { label: 'Eventos', href: '/events' },
               { label: 'VTubers', href: '/vtubers' },
-              { label: 'Gremios', href: '/guilds' },
-              { label: 'Tienda', href: '/shop' },
-            ].map(q => (
+              { label: 'Gremios', href: '/guilds' },          {label: 'Tienda', href: '/shop' },
+          {label: 'Hoshizora Maid', href: '/hoshizora-maid' },
+        ].map(q => (
               <Link key={q.label} href={q.href} onClick={onClose} style={{
                 padding: '2px 10px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
                 color: 'var(--text-muted)', fontSize: '0.78rem', textDecoration: 'none',
@@ -570,6 +570,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
             { icon: <Award size={18} />, label: 'Ranking', href: '/leaderboard' },
             { icon: <BarChart size={18} />, label: 'Dashboard', href: '/dashboard' },
             { icon: <Bell size={18} />, label: 'Notificaciones', href: '/notifications', badge: unreadCount > 0 ? unreadCount : undefined },
+            { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>, label: 'Hoshizora Maid', href: '/hoshizora-maid' },
           ].map(link => (
             <Link key={link.href} href={link.href} onClick={closeMenu} style={mobileLink}>
               <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}>{link.icon}</span>
@@ -666,6 +667,18 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
               boxShadow: '0 0 6px var(--primary-glow)',
             }} />
           )}
+        </Link>
+
+        {/* Hoshizora Maid — Café link */}
+        <Link href="/hoshizora-maid" style={{ ...iconBtn, textDecoration: 'none' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(212,160,48,0.12)'; e.currentTarget.style.color = '#d4a030'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          title="Hoshizora Maid Café"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+            <line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+          </svg>
         </Link>
 
         <div style={{ width: '1px', height: '20px', background: 'var(--glass-border)', margin: '0 4px' }} />

@@ -29,7 +29,24 @@
   --accent: #6CB4EE;
   --accent-subtle: rgba(108, 180, 238, 0.1);
 
-  /* Warm accent (complementary - starlight gold) */
+  /* Warm accent (complementary - starli
+
+  /* Café/crema — Hoshizora Maid theme */
+  --cafe-bg: #1a1410;
+  --cafe-bg-light: #2a221c;
+  --cafe-card: rgba(45, 38, 32, 0.85);
+  --cafe-card-hover: rgba(55, 48, 42, 0.9);
+  --cafe-cream: #f5e6d3;
+  --cafe-cream-light: #faf0e6;
+  --cafe-cream-dark: #d4c4b0;
+  --cafe-brown: #8B6914;
+  --cafe-brown-light: #a0782c;
+  --cafe-gold: #d4a030;
+  --cafe-accent: #c4956a;
+  --cafe-text: #f5e6d3;
+  --cafe-text-muted: #b8a898;
+  --cafe-border: rgba(180, 150, 120, 0.15);
+  --cafe-border-hover: rgba(180, 150, 120, 0.3);ght gold) */
   --warm: #F59E0B;
   --warm-subtle: rgba(245, 158, 11, 0.1);
 

@@ -25,7 +25,7 @@ export const updateUserAdminSchema = z.object({
   body: z.object({
     username: z.string().min(3).max(30).optional(),
     email: z.string().email().optional(),
-    role: z.enum(['USER', 'VTUBER', 'MODERATOR', 'ADMIN']).optional(),
+    role: z.enum(['USER', 'VTUBER', 'MAID', 'MODERATOR', 'ADMIN']).optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'BANNED', 'PENDING']).optional(),
     xp: z.number().int().min(0).optional(),
     level: z.number().int().min(1).optional(),
@@ -38,6 +38,7 @@ export const updateVtuberAdminSchema = z.object({
   body: z.object({
     displayName: z.string().max(50).optional(),
     description: z.string().max(2000).optional(),
+    lore: z.string().max(5000).optional(),
     avatarUrl: z.string().url().optional().or(z.literal('')),
     bannerUrl: z.string().url().optional().or(z.literal('')),
     isVerified: z.boolean().optional(),
@@ -45,6 +46,18 @@ export const updateVtuberAdminSchema = z.object({
     isFeatured: z.boolean().optional(),
     isHidden: z.boolean().optional(),
     contentType: z.string().max(100).optional(),
+    themeColor: z.string().max(20).optional(),
+    fanName: z.string().max(100).optional(),
+    oshiMark: z.string().max(20).optional(),
+    streamSchedule: z.string().max(500).optional(),
+    languages: z.string().max(200).optional(),
+    twitchUrl: z.string().url().optional().or(z.literal('')),
+    youtubeUrl: z.string().url().optional().or(z.literal('')),
+    kickUrl: z.string().url().optional().or(z.literal('')),
+    tiktokUrl: z.string().url().optional().or(z.literal('')),
+    twitterUrl: z.string().url().optional().or(z.literal('')),
+    discordUrl: z.string().url().optional().or(z.literal('')),
+    websiteUrl: z.string().url().optional().or(z.literal('')),
   }),
 });
 

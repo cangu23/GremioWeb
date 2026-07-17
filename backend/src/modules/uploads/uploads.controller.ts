@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
+import sharp from 'sharp';
 import cloudinary from '../../lib/cloudinary';
 
 // Allowed MIME types
@@ -24,21 +25,38 @@ export const uploadImage = multer({
   limits: { fileSize: MAX_FILE_SIZE },
 }).single('image');
 
-// Helper: upload buffer to Cloudinary
-const uploadToCloudinary = (buffer: Buffer, folder: string): Promise<string> => {
+// Helper: compress buffer with Sharp, then upload to Cloudinary
+const uploadToCloudinary = async (buffer: Buffer, folder: string): Promise<string> => {
+  // Compress & resize server-side as a safety net
+  const maxWidth = folder.includes('logo') ? 512 : folder.includes('banner') ? 1920 : 1920;
+  const maxHeight = folder.includes('logo') ? 512 : folder.includes('banner') ? 1080 : 1080;
+
+  const compressed = await sharp(buffer)
+    .resize({
+      width: maxWidth,
+      height: maxHeight,
+      fit: 'inside',      // Preserve aspect ratio
+      withoutEnlargement: true, // Don't upscale small images
+    })
+    .webp({ quality: 80 })
+    .toBuffer();
+
+  console.log(
+    `📦 [Sharp] ${folder}: ${(buffer.length / 1024).toFixed(1)}KB → ${(compressed.length / 1024).toFixed(1)}KB (${Math.round((1 - compressed.length / buffer.length) * 100)}% reducción)`
+  );
+
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: `gremio-estelar/${folder}`,
         resource_type: 'image',
-        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
       },
       (error, result) => {
         if (error) return reject(error);
         resolve(result!.secure_url);
       }
     );
-    uploadStream.end(buffer);
+    uploadStream.end(compressed);
   });
 };
 
@@ -115,6 +133,29 @@ export const handleUploadPostImage = async (req: Request, res: Response, next: N
     res.json({
       status: 'success',
       url,
+      filename: req.file.originalname,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Upload cafe image (logo / banner) handler
+export const handleUploadCafeImage = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ status: 'error', message: 'No se seleccionó ninguna imagen.' });
+      return;
+    }
+
+    const type = (req.query.type as string) || 'logo'; // 'logo' or 'banner'
+    const folder = type === 'banner' ? 'cafe-banners' : 'cafe-logos';
+    const url = await uploadToCloudinary(req.file.buffer, folder);
+
+    res.json({
+      status: 'success',
+      url,
+      type,
       filename: req.file.originalname,
     });
   } catch (err) {

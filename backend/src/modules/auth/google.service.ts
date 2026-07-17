@@ -50,13 +50,7 @@ const verifyGoogleToken = async (credential: string): Promise<GoogleTokenPayload
 const getOrCreateVtuberProfile = async (userId: string, displayName: string, avatarUrl: string) => {
   const existing = await prisma.vTuberProfile.findUnique({ where: { userId } });
   if (existing) {
-    // Update avatar if Google has one
-    if (avatarUrl) {
-      return prisma.vTuberProfile.update({
-        where: { userId },
-        data: { avatarUrl },
-      });
-    }
+    // ⚠️ Only update displayName, NOT the avatar — user may have customized it
     return existing;
   }
   // Create new profile
@@ -92,10 +86,7 @@ export const authenticateWithGoogle = async (credential: string) => {
       throw new AppError(`La cuenta está ${existingUser.status.toLowerCase()}. Contacta a soporte.`, 403);
     }
 
-    // Update avatar if Google provided one and user has a VTuber profile
-    if (googleUser.picture && existingUser.vtuberProfile) {
-      await getOrCreateVtuberProfile(existingUser.id, googleUser.name, googleUser.picture);
-    }
+    // Don't update avatar on re-login — user may have customized it
 
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(existingUser.id);

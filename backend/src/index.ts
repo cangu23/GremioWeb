@@ -8,6 +8,7 @@ import * as RequestsController from './modules/admin/requests.controller';
 import { authenticate } from './modules/auth/authenticate';
 import userRoutes from './modules/users/user.routes';
 import socialRoutes from './modules/social/social.routes';
+import friendRoutes from './modules/social/friends.routes';
 import eventRoutes from './modules/events/events.routes';
 import guildRoutes from './modules/guilds/guilds.routes';
 import gamificationRoutes from './modules/gamification/gamification.routes';
@@ -49,6 +50,9 @@ console.log(`${BOOT}   [OK] /api/users`);
 
 router.use('/social', socialRoutes);
 console.log(`${BOOT}   [OK] /api/social`);
+
+router.use('/friends', friendRoutes);
+console.log(`${BOOT}   [OK] /api/friends`);
 
 router.use('/events', eventRoutes);
 console.log(`${BOOT}   [OK] /api/events`);

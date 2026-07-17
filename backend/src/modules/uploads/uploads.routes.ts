@@ -17,4 +17,7 @@ router.post('/post', authenticate, UploadsController.uploadImage, UploadsControl
 // Upload guild chat image (requires auth)
 router.post('/guild', authenticate, UploadsController.uploadImage, UploadsController.handleUploadGuildImage);
 
+// Upload cafe image (logo/banner) (requires auth)
+router.post('/cafe', authenticate, UploadsController.uploadImage, UploadsController.handleUploadCafeImage);
+
 export default router;

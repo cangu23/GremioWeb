@@ -10,12 +10,28 @@ interface AdminVtuber {
   id: string;
   displayName: string;
   description: string | null;
+  lore: string | null;
   avatarUrl: string | null;
+  bannerUrl: string | null;
   isVerified: boolean;
   isApproved: boolean;
   isFeatured: boolean;
   isHidden: boolean;
-  user: { id: string; username: string } | null;
+  isLive: boolean;
+  contentType: string | null;
+  themeColor: string | null;
+  fanName: string | null;
+  oshiMark: string | null;
+  streamSchedule: string | null;
+  languages: string | null;
+  twitchUrl: string | null;
+  youtubeUrl: string | null;
+  kickUrl: string | null;
+  tiktokUrl: string | null;
+  twitterUrl: string | null;
+  discordUrl: string | null;
+  websiteUrl: string | null;
+  user: { id: string; username: string; role?: string } | null;
 }
 
 interface AdminVtubersResponse {
@@ -41,7 +57,15 @@ export default function AdminVtubersPage() {
   const [quickVerifyError, setQuickVerifyError] = useState(false);
   const [quickApprovalError, setQuickApprovalError] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<AdminVtuber | null>(null);
-  const [editData, setEditData] = useState({ displayName: '', description: '', avatarUrl: '' });
+  const [editTab, setEditTab] = useState<'basico' | 'redes' | 'stream'>('basico');
+  const [editData, setEditData] = useState({
+    displayName: '', description: '', lore: '',
+    avatarUrl: '', bannerUrl: '',
+    contentType: '', themeColor: '', fanName: '', oshiMark: '',
+    streamSchedule: '', languages: '',
+    twitchUrl: '', youtubeUrl: '', kickUrl: '', tiktokUrl: '',
+    twitterUrl: '', discordUrl: '', websiteUrl: '',
+  });
   const [saving, setSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -91,10 +115,26 @@ export default function AdminVtubersPage() {
 
   const openEdit = (profile: AdminVtuber) => {
     setSelectedProfile(profile);
+    setEditTab('basico');
     setEditData({
       displayName: profile.displayName,
       description: profile.description || '',
+      lore: profile.lore || '',
       avatarUrl: profile.avatarUrl || '',
+      bannerUrl: profile.bannerUrl || '',
+      contentType: profile.contentType || '',
+      themeColor: profile.themeColor || '',
+      fanName: profile.fanName || '',
+      oshiMark: profile.oshiMark || '',
+      streamSchedule: profile.streamSchedule || '',
+      languages: profile.languages || '',
+      twitchUrl: profile.twitchUrl || '',
+      youtubeUrl: profile.youtubeUrl || '',
+      kickUrl: profile.kickUrl || '',
+      tiktokUrl: profile.tiktokUrl || '',
+      twitterUrl: profile.twitterUrl || '',
+      discordUrl: profile.discordUrl || '',
+      websiteUrl: profile.websiteUrl || '',
     });
   };
 
@@ -492,29 +532,170 @@ export default function AdminVtubersPage() {
       </div>
 
       {selectedProfile && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => setSelectedProfile(null)}>
-          <div className="glass" style={{ padding: '32px', borderRadius: '20px', width: '100%', maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Editar Perfil VTuber</h2>
-              <button onClick={() => setSelectedProfile(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px', overflowY: 'auto' }} onClick={() => setSelectedProfile(null)}>
+          <div className="glass" style={{ padding: '32px', borderRadius: '20px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: 0 }}>Editar Perfil VTuber</h2>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                  @{selectedProfile.user?.username} · {selectedProfile.user?.role || '—'}
+                </p>
+              </div>
+              <button onClick={() => setSelectedProfile(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer', padding: '4px 8px', borderRadius: '8px' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>✕</button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="form-group">
-                <label className="form-label">Nombre de VTuber</label>
-                <input className="input" value={editData.displayName} onChange={e => setEditData({ ...editData, displayName: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Avatar URL</label>
-                <input className="input" value={editData.avatarUrl} onChange={e => setEditData({ ...editData, avatarUrl: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Descripción</label>
-                <textarea className="input" style={{ minHeight: '120px', resize: 'vertical' }} value={editData.description} onChange={e => setEditData({ ...editData, description: e.target.value })} />
-              </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+              {([
+                { id: 'basico', label: 'Info Básica', icon: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z' },
+                { id: 'stream', label: 'Stream & Horario', icon: 'M8 5v14l11-7z' },
+                { id: 'redes', label: 'Redes Sociales', icon: 'M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z' },
+              ] as const).map((tab) => (
+                <button key={tab.id} onClick={() => setEditTab(tab.id)}
+                  style={{
+                    padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                    fontSize: '0.82rem', fontWeight: 600,
+                    background: editTab === tab.id ? 'rgba(138,43,226,0.2)' : 'transparent',
+                    color: editTab === tab.id ? '#8a2be2' : 'var(--text-muted)',
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={tab.icon} />
+                  </svg>
+                  {tab.label}
+                </button>
+              ))}
             </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setSelectedProfile(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
-              <button onClick={saveProfile} className="btn" disabled={saving}>{saving ? 'Guardando...' : 'Guardar Cambios'}</button>
+
+            {/* Tab Content */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {editTab === 'basico' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Nombre de VTuber</label>
+                    <input className="input" value={editData.displayName} onChange={e => setEditData({ ...editData, displayName: e.target.value })} placeholder="Nombre artístico" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Avatar URL</label>
+                    <input className="input" value={editData.avatarUrl} onChange={e => setEditData({ ...editData, avatarUrl: e.target.value })} placeholder="https://..." />
+                    {editData.avatarUrl && (
+                      <div style={{ marginTop: '8px', width: '60px', height: '60px', borderRadius: '50%', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <img src={editData.avatarUrl} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Banner URL</label>
+                    <input className="input" value={editData.bannerUrl} onChange={e => setEditData({ ...editData, bannerUrl: e.target.value })} placeholder="https://..." />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Descripción</label>
+                    <textarea className="input" style={{ minHeight: '100px', resize: 'vertical' }} value={editData.description} onChange={e => setEditData({ ...editData, description: e.target.value })} placeholder="Biografía corta..." />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Lore / Historia</label>
+                    <textarea className="input" style={{ minHeight: '100px', resize: 'vertical' }} value={editData.lore} onChange={e => setEditData({ ...editData, lore: e.target.value })} placeholder="Historia de fondo del personaje..." />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-group">
+                      <label className="form-label">Tipo de Contenido</label>
+                      <select className="input" value={editData.contentType} onChange={e => setEditData({ ...editData, contentType: e.target.value })}>
+                        <option value="">Seleccionar...</option>
+                        <option value="gaming">🎮 Gaming</option>
+                        <option value="music">🎵 Música</option>
+                        <option value="art">🎨 Arte</option>
+                        <option value="singing">🎤 Canto</option>
+                        <option value="asmr">🎧 ASMR</option>
+                        <option value="chatting">💬 Chats</option>
+                        <option value="vtuber">✨ VTuber General</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Color Temático</label>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input type="color" value={editData.themeColor || '#8a2be2'} onChange={e => setEditData({ ...editData, themeColor: e.target.value })}
+                          style={{ width: '40px', height: '36px', borderRadius: '8px', border: 'none', cursor: 'pointer', padding: 0 }} />
+                        <input className="input" value={editData.themeColor} onChange={e => setEditData({ ...editData, themeColor: e.target.value })} placeholder="#8a2be2" style={{ flex: 1 }} />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Nombre de Fans</label>
+                      <input className="input" value={editData.fanName} onChange={e => setEditData({ ...editData, fanName: e.target.value })} placeholder="Ej: Estelares" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Oshi Mark (Símbolo)</label>
+                      <input className="input" value={editData.oshiMark} onChange={e => setEditData({ ...editData, oshiMark: e.target.value })} placeholder="Ej: ✨" maxLength={10} />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {editTab === 'stream' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Horario de Stream</label>
+                    <textarea className="input" style={{ minHeight: '80px', resize: 'vertical' }} value={editData.streamSchedule} onChange={e => setEditData({ ...editData, streamSchedule: e.target.value })} placeholder="Ej: Lunes y Viernes 20:00 VRChat / Sábados 18:00 Twitch" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Idiomas</label>
+                    <input className="input" value={editData.languages} onChange={e => setEditData({ ...editData, languages: e.target.value })} placeholder='Ej: ["Español","Inglés"] o separado por comas' />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>JSON array o lista separada por comas</span>
+                  </div>
+                </>
+              )}
+
+              {editTab === 'redes' && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: '#9146FF' }}>Twitch</label>
+                      <input className="input" value={editData.twitchUrl} onChange={e => setEditData({ ...editData, twitchUrl: e.target.value })} placeholder="https://twitch.tv/..." />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: '#FF0000' }}>YouTube</label>
+                      <input className="input" value={editData.youtubeUrl} onChange={e => setEditData({ ...editData, youtubeUrl: e.target.value })} placeholder="https://youtube.com/@..." />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: '#53fc18' }}>Kick</label>
+                      <input className="input" value={editData.kickUrl} onChange={e => setEditData({ ...editData, kickUrl: e.target.value })} placeholder="https://kick.com/..." />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: '#00f2ea' }}>TikTok</label>
+                      <input className="input" value={editData.tiktokUrl} onChange={e => setEditData({ ...editData, tiktokUrl: e.target.value })} placeholder="https://tiktok.com/@..." />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: '#1DA1F2' }}>Twitter / X</label>
+                      <input className="input" value={editData.twitterUrl} onChange={e => setEditData({ ...editData, twitterUrl: e.target.value })} placeholder="https://x.com/..." />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: '#5865F2' }}>Discord</label>
+                      <input className="input" value={editData.discordUrl} onChange={e => setEditData({ ...editData, discordUrl: e.target.value })} placeholder="https://discord.gg/..." />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Sitio Web</label>
+                      <input className="input" value={editData.websiteUrl} onChange={e => setEditData({ ...editData, websiteUrl: e.target.value })} placeholder="https://..." />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px' }}>
+              <button onClick={() => setSelectedProfile(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '10px 20px', borderRadius: '10px' }}>Cancelar</button>
+              <button onClick={saveProfile} className="btn" disabled={saving} style={{
+                padding: '10px 28px', borderRadius: '10px', fontWeight: 700,
+                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                color: '#fff', border: 'none',
+                opacity: saving ? 0.7 : 1,
+              }}>
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
             </div>
           </div>
         </div>

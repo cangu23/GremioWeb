@@ -49,6 +49,7 @@ const roleColors: Record<string, string> = {
   ADMIN: '#8a2be2',
   MODERATOR: '#2196f3',
   VTUBER: '#ff007f',
+  MAID: '#d4a030',
   USER: '#4caf50',
 };
 
@@ -159,6 +160,7 @@ export default function AdminUsersPage() {
               <option value="ADMIN">Admin</option>
               <option value="MODERATOR">Moderador</option>
               <option value="VTUBER">VTuber</option>
+              <option value="MAID">Maid</option>
               <option value="USER">Usuario</option>
             </select>
           </div>
@@ -190,11 +192,33 @@ export default function AdminUsersPage() {
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                            {user.username.charAt(0).toUpperCase()}
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%',
+                            background: user.vtuberProfile?.avatarUrl
+                              ? `url(${user.vtuberProfile.avatarUrl}) center/cover`
+                              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.8rem', fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden',
+                          }}>
+                            {!user.vtuberProfile?.avatarUrl && user.username.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{user.username}</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {user.username}
+                              {user.vtuberProfile?.isVerified && (
+                                <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado">
+                                  <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              )}
+                              {user.role === 'MAID' && (
+                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#d4a030', background: 'rgba(212,160,48,0.15)', padding: '1px 6px', borderRadius: '4px' }}>MAID</span>
+                              )}
+                            </div>
+                            {user.vtuberProfile?.displayName && (
+                              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                {user.vtuberProfile.displayName}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -275,10 +299,10 @@ export default function AdminUsersPage() {
               <div className="form-group">
                 <label className="form-label">Rol</label>
                 <select className="input" value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })}>
-                  <option value="USER">Usuario</option>
-                  <option value="VTUBER">VTuber</option>
-                  <option value="MODERATOR">Moderador</option>
-                  <option value="ADMIN">Admin</option>
+                  <option value="USER">Usuario</option>              <option value="VTUBER">VTuber</option>
+              <option value="MAID">Maid</option>
+              <option value="MODERATOR">Moderador</option>
+              <option value="ADMIN">Admin</option>
                 </select>
               </div>
               <div className="form-group">

@@ -29,6 +29,10 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
   return safeProfile as UserProfile;
 };
 
+export const getUsersByRole = async (role: string) => {
+  return UserRepository.findByRole(role);
+};
+
 export const searchUsers = async (query: string) => {
   // If no query or too short, return all VTubers (for directory browsing)
   if (!query || query.length < 2) {

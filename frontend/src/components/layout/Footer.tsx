@@ -17,6 +17,7 @@ export default function Footer() {
     ],
     Comunidad: [
       { href: '/chat', label: 'Mensajes' },
+      { href: '/hoshizora-maid', label: 'Hoshizora Maid' },
       { href: '/achievements', label: 'Logros' },
       { href: '/support', label: 'Apoyar' },
     ],

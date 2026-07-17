@@ -16,6 +16,7 @@ import {
 import * as AdminController from './admin.controller';
 import * as CodesController from './codes.controller';
 import * as RequestsController from './requests.controller';
+import * as SettingsController from './settings.controller';
 
 const router = Router();
 
@@ -80,5 +81,9 @@ router.post('/vtuber-requests/:id/reject', RequestsController.rejectRequest);
 
 // ========== LOGS ==========
 router.get('/logs', AdminController.listLogs);
+
+// ========== CAFE SETTINGS ==========
+router.get('/settings', SettingsController.getAllSettings);
+router.patch('/settings', SettingsController.updateSettings);
 
 export default router;

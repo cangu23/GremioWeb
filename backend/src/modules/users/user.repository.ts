@@ -72,6 +72,27 @@ export const searchByUsername = async (query: string) => {
   });
 };
 
+export const findByRole = async (role: string) => {
+  return prisma.user.findMany({
+    where: { role },
+    select: {
+      id: true,
+      username: true,
+      role: true,
+      vtuberProfile: {
+        select: {
+          displayName: true,
+          avatarUrl: true,
+          description: true,
+          isVerified: true,
+          isApproved: true,
+        },
+      },
+    },
+    orderBy: { username: 'asc' },
+  });
+};
+
 export const getUserProfileById = async (id: string) => {
   return prisma.user.findUnique({
     where: { id },

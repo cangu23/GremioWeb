@@ -40,6 +40,8 @@ model User {
   // Social
   followers     Follow[]       @relation("following")
   following     Follow[]       @relation("follower")
+  friendRequestsSent   Friend[] @relation("friendSender")
+  friendRequestsReceived Friend[] @relation("friendReceiver")
 
   // Events
   eventsCreated Event[]        @relation("eventCreator")
@@ -241,6 +243,23 @@ model Follow {
   @@unique([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
+}
+
+model Friend {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, BLOCKED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender      User     @relation("friendSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("friendReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
 }
 
 model Event {
@@ -453,6 +472,18 @@ model Report {
   @@index([status])
   @@index([targetType, targetId])
   @@index([createdAt])
+}
+
+// ========== APP SETTINGS ==========
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([key])
 }
 
 model ChatMessage {

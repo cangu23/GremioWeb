@@ -19,6 +19,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     Permission.VIEW_ADMIN_PANEL,
   ],
   [Role.VTUBER]: [],
+  [Role.MAID]: [],
   [Role.USER]: [],
 };
 

@@ -584,6 +584,8 @@ export const getDashboardStats = async () => {
     totalUsers,
     activeUsers,
     totalVtubers,
+    totalMaids,
+    totalVtubersLive,
     totalGuilds,
     totalEvents,
     totalPosts,
@@ -596,10 +598,13 @@ export const getDashboardStats = async () => {
     newUsersThisWeek,
     newUsersThisMonth,
     pendingVerifications,
+    usersByRole,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { status: 'ACTIVE' } }),
     prisma.vTuberProfile.count(),
+    prisma.user.count({ where: { role: 'MAID' } }),
+    prisma.vTuberProfile.count({ where: { isLive: true } }),
     prisma.guild.count(),
     prisma.event.count(),
     prisma.post.count(),
@@ -618,12 +623,20 @@ export const getDashboardStats = async () => {
       where: { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
     }),
     prisma.vTuberProfile.count({ where: { isApproved: true, isVerified: false } }),
+    prisma.user.groupBy({ by: ['role'], _count: true }),
   ]);
+
+  const userCountByRole: Record<string, number> = {};
+  for (const entry of usersByRole) {
+    userCountByRole[entry.role] = entry._count;
+  }
 
   return {
     totalUsers,
     activeUsers,
     totalVtubers,
+    totalMaids,
+    totalVtubersLive,
     totalGuilds,
     totalEvents,
     totalPosts,
@@ -636,6 +649,7 @@ export const getDashboardStats = async () => {
     newUsersThisWeek,
     newUsersThisMonth,
     pendingVerifications,
+    userCountByRole,
   };
 };
 

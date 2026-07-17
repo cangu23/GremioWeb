@@ -12,6 +12,7 @@ router.patch('/me', authenticate, validateRequest(updateUserSchema), UserControl
 
 // Public routes
 router.get('/search', UserController.searchUsers);
+router.get('/role/:role', UserController.getUsersByRole);
 router.get('/:id', UserController.getPublicUser);
 
 export default router;

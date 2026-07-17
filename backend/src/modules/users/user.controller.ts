@@ -31,6 +31,16 @@ export const getPublicUser = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const getUsersByRole = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const role = String(req.params.role || '').toUpperCase();
+    const users = await UserService.getUsersByRole(role);
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const searchUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const q = String(req.query.q || '');
