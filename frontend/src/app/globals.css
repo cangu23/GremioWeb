@@ -29,7 +29,7 @@
   --accent: #6CB4EE;
   --accent-subtle: rgba(108, 180, 238, 0.1);
 
-  /* Warm accent (complementary - starli
+  /* Warm accent (complementary - starlight gold) */
 
   /* Café/crema — Hoshizora Maid theme */
   --cafe-bg: #1a1410;
@@ -46,7 +46,7 @@
   --cafe-text: #f5e6d3;
   --cafe-text-muted: #b8a898;
   --cafe-border: rgba(180, 150, 120, 0.15);
-  --cafe-border-hover: rgba(180, 150, 120, 0.3);ght gold) */
+  --cafe-border-hover: rgba(180, 150, 120, 0.3);
   --warm: #F59E0B;
   --warm-subtle: rgba(245, 158, 11, 0.1);
 
