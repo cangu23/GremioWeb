@@ -145,6 +145,11 @@ function MessengerContent() {
     sock.on('connect', () => setConnected(true));
     sock.on('disconnect', () => setConnected(false));
 
+    // If socket is already connected (e.g. from Navbar), reflect immediately
+    if (sock.connected) {
+      setConnected(true);
+    }
+
     // Track typing timeout ref for cleanup
     const typingClearRef = { current: null as ReturnType<typeof setTimeout> | null };
 
@@ -615,45 +620,45 @@ function MessengerContent() {
                     }} />
                   </div>
 
-                  {/* Info */}
+                  {/* Info: solo nombre + online + badge, sin preview de mensaje */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        marginBottom: '3px',
                       }}>
-                        <span style={{
-                          fontWeight: isActive ? 700 : 600,
-                          fontSize: '0.88rem',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: '6px',
+                          minWidth: 0, flex: 1,
                         }}>
-                          {getUsername(other)}
-                        </span>
-                        <span style={{
-                          fontSize: '0.68rem', color: 'var(--text-muted)', flexShrink: 0,
-                        }}>
-                          {formatTime(conv.createdAt)}
-                        </span>
-                      </div>
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                      }}>
-                        <span style={{
-                          fontSize: '0.78rem', color: 'var(--text-muted)',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                          flex: 1,
-                        }}>
-                          {conv.senderId === currentUser.id && <span style={{ marginRight: '3px' }}>Tú: </span>}
-                          {conv.content}
-                        </span>
-                        {unread > 0 && (
                           <span style={{
-                            background: 'var(--primary)', color: '#fff',
-                            fontSize: '0.65rem', fontWeight: 700,
-                            padding: '1px 7px', borderRadius: '10px', flexShrink: 0,
+                            fontWeight: isActive ? 700 : 600,
+                            fontSize: '0.9rem',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                           }}>
-                            {unread > 99 ? '99+' : unread}
+                            {getUsername(other)}
                           </span>
-                        )}
+                          <span style={{
+                            display: 'inline-block',
+                            width: '7px', height: '7px', borderRadius: '50%',
+                            background: onlineUsers.has(other.id) ? '#22c55e' : 'rgba(255,255,255,0.15)',
+                            flexShrink: 0,
+                          }} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          {unread > 0 && (
+                            <span style={{
+                              background: 'var(--secondary)', color: '#fff',
+                              fontSize: '0.63rem', fontWeight: 700,
+                              padding: '2px 7px', borderRadius: '10px',
+                            }}>
+                              {unread > 99 ? '99+' : unread}
+                            </span>
+                          )}
+                          <span style={{
+                            fontSize: '0.68rem', color: 'var(--text-muted)',
+                          }}>
+                            {formatTime(conv.createdAt)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </button>
