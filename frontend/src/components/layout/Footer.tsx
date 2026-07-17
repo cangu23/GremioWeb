@@ -16,7 +16,7 @@ export default function Footer() {
       { href: '/leaderboard', label: 'Ranking' },
     ],
     Comunidad: [
-      { href: '/chat', label: 'Chat Global' },
+      { href: '/chat', label: 'Mensajes' },
       { href: '/achievements', label: 'Logros' },
       { href: '/support', label: 'Apoyar' },
     ],

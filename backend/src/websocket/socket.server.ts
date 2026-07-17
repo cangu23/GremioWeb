@@ -94,40 +94,28 @@ export const createSocketServer = (httpServer: HttpServer) => {
     // Send the current online user list to the newly connected client
     socket.emit('user:online-list', { onlineIds: Array.from(globalOnlineUsers) });
 
-    // Send recent message history
-    const recentMessages = await prisma.chatMessage.findMany({
-      where: { room: 'global' },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            vtuberProfile: { select: { displayName: true, avatarUrl: true } },
-          },
-        },
-      },
-    });
-
-    socket.emit('chat:history', recentMessages.reverse());
-
-    // Handle new messages
-    socket.on('chat:message', async (data: { content: string; room?: string }) => {
-      const room = data.room || 'global';
+    // Handle Direct Messages
+    socket.on('dm:message', async (data: { receiverId: string; content: string }) => {
       const content = data.content?.trim();
-
       if (!content || content.length > 1000) return;
+      if (data.receiverId === userId) return; // Can't DM self
 
       try {
-        const message = await prisma.chatMessage.create({
+        const message = await prisma.directMessage.create({
           data: {
-            room,
-            userId,
             content,
+            senderId: userId,
+            receiverId: data.receiverId,
           },
           include: {
-            user: {
+            sender: {
+              select: {
+                id: true,
+                username: true,
+                vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+              },
+            },
+            receiver: {
               select: {
                 id: true,
                 username: true,
@@ -137,33 +125,58 @@ export const createSocketServer = (httpServer: HttpServer) => {
           },
         });
 
-        socket.to(room).emit('chat:message', {
+        const payload = {
           id: message.id,
-          room: message.room,
-          userId: message.userId,
           content: message.content,
+          read: message.read,
           createdAt: message.createdAt.toISOString(),
-          user: {
-            id: message.user.id,
-            username: message.user.username,
-            avatarUrl: message.user.vtuberProfile?.avatarUrl ?? null,
-            displayName: message.user.vtuberProfile?.displayName ?? null,
+          senderId: message.senderId,
+          receiverId: message.receiverId,
+          sender: {
+            id: message.sender.id,
+            username: message.sender.username,
+            vtuberProfile: message.sender.vtuberProfile,
           },
-        });
+          receiver: {
+            id: message.receiver.id,
+            username: message.receiver.username,
+            vtuberProfile: message.receiver.vtuberProfile,
+          },
+        };
+
+        // Send to both users (sender gets confirmation, receiver gets new message)
+        socket.emit('dm:message', payload);
+        socket.to(`user:${data.receiverId}`).emit('dm:message', payload);
       } catch (err) {
-        console.error('[Socket] Error saving message:', err);
-        socket.emit('chat:error', { message: 'Error al enviar mensaje' });
+        console.error('[Socket] Error sending DM:', err);
+        socket.emit('dm:error', { message: 'Error al enviar mensaje' });
       }
     });
 
-    // Handle typing events
-    socket.on('chat:typing', (data: { room?: string; isTyping: boolean }) => {
-      const room = data.room || 'global';
-      socket.to(room).emit('chat:typing', {
+    // Handle typing indicators for DMs
+    socket.on('dm:typing', (data: { receiverId: string; isTyping: boolean }) => {
+      socket.to(`user:${data.receiverId}`).emit('dm:typing', {
         userId,
         username,
         isTyping: data.isTyping,
       });
+    });
+
+    // Handle read receipts for DMs
+    socket.on('dm:read', async (data: { messageIds: string[] }) => {
+      if (!data.messageIds?.length) return;
+      try {
+        await prisma.directMessage.updateMany({
+          where: {
+            id: { in: data.messageIds },
+            receiverId: userId,
+            read: false,
+          },
+          data: { read: true },
+        });
+      } catch (err) {
+        console.error('[Socket] Error marking DMs as read:', err);
+      }
     });
 
     // Handle room joins

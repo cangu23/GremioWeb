@@ -55,3 +55,9 @@ export const CHAT_EVENTS = {
   TYPING: 'chat:typing',
   ERROR: 'chat:error',
 } as const;
+
+export const DM_EVENTS = {
+  MESSAGE: 'dm:message',
+  TYPING: 'dm:typing',
+  READ: 'dm:read',
+} as const;

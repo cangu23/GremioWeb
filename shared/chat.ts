@@ -1,26 +1,56 @@
-export interface ChatMessageData {
+export interface DmMessage {
   id: string;
-  room: string;
-  userId: string;
   content: string;
+  read: boolean;
   createdAt: string;
-  user: {
+  senderId: string;
+  receiverId: string;
+  sender: {
     id: string;
     username: string;
-    avatarUrl: string | null;
-    displayName: string | null;
+    vtuberProfile: { displayName: string; avatarUrl: string | null } | null;
+  };
+  receiver: {
+    id: string;
+    username: string;
+    vtuberProfile: { displayName: string; avatarUrl: string | null } | null;
   };
 }
 
-export interface ChatSendPayload {
-  room: string;
+export interface Conversation {
+  id: string;
+  content: string;
+  read: boolean;
+  createdAt: string;
+  senderId: string;
+  receiverId: string;
+  sender: {
+    id: string;
+    username: string;
+    vtuberProfile: { displayName: string; avatarUrl: string | null } | null;
+  };
+  receiver: {
+    id: string;
+    username: string;
+    vtuberProfile: { displayName: string; avatarUrl: string | null } | null;
+  };
+}
+
+export interface DmSendPayload {
+  receiverId: string;
   content: string;
 }
 
-// Socket.IO event names
-export const CHAT_EVENTS = {
-  MESSAGE: 'chat:message',
-  HISTORY: 'chat:history',
-  JOIN: 'chat:join',
-  TYPING: 'chat:typing',
+export interface DmTypingData {
+  userId: string;
+  username: string;
+  isTyping: boolean;
+  receiverId: string;
+}
+
+// Socket.IO event names for Direct Messages
+export const DM_EVENTS = {
+  MESSAGE: 'dm:message',
+  TYPING: 'dm:typing',
+  READ: 'dm:read',
 } as const;

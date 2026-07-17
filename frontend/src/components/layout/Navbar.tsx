@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
-import { connectSocket, NOTIFICATION_EVENTS } from '@/lib/socket-client';
+import { connectSocket, NOTIFICATION_EVENTS, DM_EVENTS } from '@/lib/socket-client';
 import { useToast } from '@/lib/ToastContext';
 import ClientOnly from '@/lib/ClientOnly';
 import styles from './Navbar.module.css';
@@ -96,6 +96,7 @@ const Icons = {
 function useNavbarState(user: { id: string } | null) {
   const { showToast } = useToast();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [dmUnreadCount, setDmUnreadCount] = useState(0);
   const [equippedBadge, setEquippedBadge] = useState<{ icon: string; label: string } | null>(null);
 
   // Equipped badge fetch
@@ -141,7 +142,36 @@ function useNavbarState(user: { id: string } | null) {
     };
   }, [user, showToast]);
 
-  return { unreadCount, equippedBadge };
+  // DM unread count: fetch + real-time via socket
+  useEffect(() => {
+    if (!user) { setDmUnreadCount(0); return; }
+
+    const fetchDmUnread = async () => {
+      try { const data = await apiFetch('/dm/unread-count', {}); setDmUnreadCount(data.count); } catch { }
+    };
+    fetchDmUnread();
+    const interval = setInterval(fetchDmUnread, 60000);
+
+    let sock: any;
+    try {
+      sock = connectSocket();
+      // Increment when a new DM arrives (not from ourselves)
+      sock.on(DM_EVENTS.MESSAGE, (msg: { receiverId: string }) => {
+        if (msg.receiverId === user.id) {
+          setDmUnreadCount(prev => prev + 1);
+        }
+      });
+    } catch (err) {
+      console.warn('[Socket] Could not connect for DM count:', err);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (sock) sock.off(DM_EVENTS.MESSAGE);
+    };
+  }, [user]);
+
+  return { unreadCount, dmUnreadCount, equippedBadge };
 }
 
 // ==========================================================================
@@ -166,7 +196,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
       { label: 'Eventos', href: '/events', icon: <Calendar size={16} color="var(--text-muted)" /> },
       { label: 'Gremios', href: '/guilds', icon: <Shield size={16} color="var(--text-muted)" /> },
       { label: 'Feed', href: '/feed', icon: <FileText size={16} color="var(--text-muted)" /> },
-      { label: 'Chat global', href: '/chat', icon: <MessageCircle size={16} color="var(--text-muted)" /> },
+      { label: 'Mensajes', href: '/chat', icon: <MessageCircle size={16} color="var(--text-muted)" /> },
       { label: 'Tienda', href: '/shop', icon: <ShoppingBag size={16} color="var(--text-muted)" /> },
       { label: 'Ranking', href: '/leaderboard', icon: <Award size={16} color="var(--text-muted)" /> },
       { label: 'Dashboard', href: '/dashboard', icon: <BarChart size={16} color="var(--text-muted)" /> },
@@ -490,10 +520,11 @@ const menuItemStyle: React.CSSProperties = {
 // ==========================================================================
 // AuthNav — redesigned with unique icons, no sidebar duplicates
 // ==========================================================================
-function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
+function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadge }: {
   closeMenu?: () => void;
   isMobile?: boolean;
   unreadCount: number;
+  dmUnreadCount: number;
   equippedBadge: { icon: string; label: string } | null;
 }) {
   const { user, logout } = useAuth();
@@ -534,7 +565,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
             { icon: <Calendar size={18} />, label: 'Eventos', href: '/events' },
             { icon: <Shield size={18} />, label: 'Gremios', href: '/guilds' },
             { icon: <Users size={18} />, label: 'VTubers', href: '/vtubers' },
-            { icon: <MessageCircle size={18} />, label: 'Chat', href: '/chat' },
+            { icon: <MessageCircle size={18} />, label: 'Chat', href: '/chat', badge: dmUnreadCount > 0 ? dmUnreadCount : undefined },
             { icon: <ShoppingBag size={18} />, label: 'Tienda', href: '/shop' },
             { icon: <Award size={18} />, label: 'Ranking', href: '/leaderboard' },
             { icon: <BarChart size={18} />, label: 'Dashboard', href: '/dashboard' },
@@ -603,9 +634,22 @@ function AuthNav({ closeMenu, isMobile, unreadCount, equippedBadge }: {
         <Link href="/chat" style={{ ...iconBtn, textDecoration: 'none' }}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-          title="Chat global"
+          title="Mensajes"
         >
           {Icons.message}
+          {dmUnreadCount > 0 && (
+            <span style={{
+              position: 'absolute', top: '2px', right: '2px',
+              minWidth: '16px', height: '16px', borderRadius: '8px',
+              background: 'var(--secondary)',
+              color: '#fff', fontSize: '0.6rem', fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '0 4px',
+              boxShadow: '0 0 6px rgba(255,0,127,0.5)',
+            }}>
+              {dmUnreadCount > 99 ? '99+' : dmUnreadCount}
+            </span>
+          )}
         </Link>
 
         <Link href="/notifications" style={{ ...iconBtn, textDecoration: 'none' }}
@@ -713,7 +757,7 @@ export default function Navbar() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { unreadCount, equippedBadge } = useNavbarState(user);
+  const { unreadCount, dmUnreadCount, equippedBadge } = useNavbarState(user);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -738,7 +782,7 @@ export default function Navbar() {
 
         <div className={styles.desktopNav}>
           <ClientOnly fallback={null}>
-            <AuthNav unreadCount={unreadCount} equippedBadge={equippedBadge} />
+            <AuthNav unreadCount={unreadCount} dmUnreadCount={dmUnreadCount} equippedBadge={equippedBadge} />
           </ClientOnly>
         </div>
 
@@ -753,7 +797,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className={styles.mobileMenu}>
           <ClientOnly fallback={null}>
-            <AuthNav isMobile closeMenu={() => setMenuOpen(false)} unreadCount={unreadCount} equippedBadge={equippedBadge} />
+            <AuthNav isMobile closeMenu={() => setMenuOpen(false)} unreadCount={unreadCount} dmUnreadCount={dmUnreadCount} equippedBadge={equippedBadge} />
           </ClientOnly>
         </div>
       )}
