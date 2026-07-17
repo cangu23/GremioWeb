@@ -87,6 +87,7 @@ export interface LiveVTuberProfile {
   displayName: string;
   avatarUrl: string | null;
   isLive: boolean;
+  lastLiveAt: string | null;
   isVerified: boolean;
   twitchUrl: string | null;
   youtubeUrl: string | null;

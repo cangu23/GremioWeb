@@ -24,6 +24,7 @@ export interface VTuberProfile {
   themeColor?: string | null;
   hashtags?: string | null;
   isLive?: boolean;
+  lastLiveAt?: string | null;
   isVerified?: boolean;
   isApproved?: boolean;
   isFeatured?: boolean;

@@ -125,6 +125,7 @@ model VTuberProfile {
   oshiMark    String?
   hashtags    String?
   isLive      Boolean  @default(false)
+  lastLiveAt  DateTime?
   isVerified  Boolean  @default(false)
   isApproved  Boolean  @default(false)
   isFeatured  Boolean  @default(false)

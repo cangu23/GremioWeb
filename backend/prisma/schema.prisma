@@ -124,6 +124,7 @@ model VTuberProfile {
   hashtags    String?                    // JSON array de hashtags oficiales
   themeColor  String?                   // Color de tema del perfil (hex, ej: "#8a2be2")
   isLive      Boolean  @default(false)  // Estado en directo / offline
+  lastLiveAt  DateTime?                  // Última vez que estuvo en vivo
   isVerified  Boolean  @default(false)  // Admin: verified VTuber
   isApproved  Boolean  @default(false)  // Admin: approved profile
   isFeatured  Boolean  @default(false)  // Admin: featured VTuber

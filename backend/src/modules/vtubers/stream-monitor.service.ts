@@ -67,7 +67,7 @@ async function checkAllVTubers(): Promise<number> {
     if (liveProfileIds.length > 0) {
       await prisma.vTuberProfile.updateMany({
         where: { id: { in: liveProfileIds } },
-        data: { isLive: true },
+        data: { isLive: true, lastLiveAt: new Date() },
       });
     }
 
@@ -171,7 +171,7 @@ export async function checkSingleVTuber(profileId: string): Promise<boolean> {
 
     await prisma.vTuberProfile.update({
       where: { id: profileId },
-      data: { isLive },
+      data: { isLive, ...(isLive ? { lastLiveAt: new Date() } : {}) },
     });
 
     return isLive;

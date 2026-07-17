@@ -533,6 +533,21 @@ textarea.input {
   to   { transform: rotate(360deg); }
 }
 
+@keyframes vtuber-live-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(233,30,99,0.3); }
+  50%      { box-shadow: 0 0 25px rgba(233,30,99,0.6), 0 0 50px rgba(233,30,99,0.2); }
+}
+
+@keyframes vtuber-live-ring {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes vtuber-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(0.8); }
+}
+
 .animate-fade-in-up { animation: fadeInUp 0.6s var(--ease-out-expo) forwards; }
 .animate-fade-in    { animation: fadeIn 0.6s ease forwards; }
 .animate-pulse-slow { animation: pulse 3s ease-in-out infinite; }

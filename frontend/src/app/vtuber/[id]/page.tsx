@@ -43,6 +43,7 @@ interface VTuberProfileData {
   languages: string | null;
   themeColor: string | null;
   isLive: boolean;
+  lastLiveAt: string | null;
   isVerified: boolean;
   isApproved: boolean;
   isFeatured: boolean;
@@ -89,6 +90,12 @@ function formatTimeAgo(dateStr: string): string {
 function parseLanguages(raw: string | null): string[] {
   if (!raw) return [];
   try { return JSON.parse(raw); } catch { return raw.split(',').map(s => s.trim()).filter(Boolean); }
+}
+
+function extractTwitchChannel(url: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/(?:twitch\.tv\/)([a-zA-Z0-9_]+)/);
+  return match ? match[1].toLowerCase() : null;
 }
 
 function ContentTypeIcon({ type, size = 16 }: { type: string | null; size?: number }) {
@@ -698,6 +705,81 @@ function VtuberPublicProfile() {
           )}
         </div>
 
+        {/* ═══════════════════ TWITCH EMBED (solo si está en vivo) ═══════════════════ */}
+        {isLive && vtuber?.twitchUrl && (() => {
+          const channel = extractTwitchChannel(vtuber.twitchUrl);
+          if (!channel) return null;
+          const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+          return (
+            <div style={{ marginBottom: '32px' }}>
+              <div className="glass" style={{
+                borderRadius: '16px', overflow: 'hidden',
+                border: '1px solid rgba(233,30,99,0.2)',
+                boxShadow: '0 0 40px rgba(233,30,99,0.08)',
+              }}>
+                {/* Live header bar */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '12px 18px',
+                  background: 'linear-gradient(135deg, rgba(233,30,99,0.08), rgba(145,65,255,0.05))',
+                  borderBottom: '1px solid rgba(233,30,99,0.15)',
+                }}>
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: '#e91e63',
+                    animation: 'vtuber-pulse-dot 1.5s ease infinite',
+                  }} />
+                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#e91e63' }}>
+                    EN VIVO AHORA
+                  </span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                    — {displayName} está transmitiendo
+                  </span>
+                  <a
+                    href={vtuber.twitchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      marginLeft: 'auto',
+                      padding: '6px 16px', borderRadius: '8px',
+                      background: '#9146FF', color: '#fff',
+                      fontSize: '0.8rem', fontWeight: 600,
+                      textDecoration: 'none',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#7c3aed'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#9146FF'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Twitch size={14} color="#fff" strokeWidth={2.5} />
+                      Ver en Twitch
+                    </span>
+                  </a>
+                </div>
+                {/* Embed iframe */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  paddingTop: '56.25%', /* 16:9 aspect ratio */
+                  background: '#0a0a0a',
+                }}>
+                  <iframe
+                    src={`https://player.twitch.tv/?channel=${channel}&parent=${host}&muted=true`}
+                    style={{
+                      position: 'absolute',
+                      top: 0, left: 0,
+                      width: '100%', height: '100%',
+                      border: 'none',
+                    }}
+                    allowFullScreen
+                    title={`${displayName} en vivo`}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ═══════════════════ CONTENT GRID ═══════════════════ */}
         <div style={{
           display: 'grid',
@@ -799,9 +881,39 @@ function VtuberPublicProfile() {
             )}
 
             {/* Stream Info */}
-            {(vtuber?.streamSchedule || languagesList.length > 0) && (
+            {(vtuber?.streamSchedule || languagesList.length > 0 || (!isLive && vtuber?.lastLiveAt)) && (
               <div className="glass" style={{ padding: '24px', borderRadius: '16px', borderLeft: `3px solid ${themeColor}` }}>
                 <SectionTitle icon={<Calendar size={16} />}>Información de Stream</SectionTitle>
+
+                {/* Última vez en vivo */}
+                {!isLive && vtuber?.lastLiveAt && (
+                  <div style={{ marginBottom: (vtuber?.streamSchedule || languagesList.length > 0) ? '16px' : 0 }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Último Stream
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      Última vez en vivo: {(() => {
+                        const lastLive = vtuber?.lastLiveAt;
+                        if (!lastLive) return 'desconocido';
+                        const dt = new Date(lastLive);
+                        const diffMs = Date.now() - dt.getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMins / 60);
+                        const diffDays = Math.floor(diffHours / 24);
+                        if (diffMins < 1) return 'ahora mismo';
+                        if (diffMins < 60) return `hace ${diffMins} min`;
+                        if (diffHours < 24) return `hace ${diffHours}h`;
+                        if (diffDays < 7) return `hace ${diffDays}d`;
+                        return dt.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+                      })()}
+                    </p>
+                  </div>
+                )}
+
                 {vtuber?.streamSchedule && (
                   <div style={{ marginBottom: languagesList.length > 0 ? '16px' : 0 }}>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>

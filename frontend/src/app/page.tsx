@@ -114,7 +114,7 @@ function HomeContent() {
 
 
 
-  // Fetch sidebar data
+  // Fetch sidebar data + poll live VTubers
   useEffect(() => {
     if (!user) return;
 
@@ -157,6 +157,18 @@ function HomeContent() {
     };
 
     fetchSidebarData();
+
+    // Poll live VTubers every 45s for real-time updates
+    const livePollInterval = setInterval(async () => {
+      try {
+        const data = await apiFetch('/vtubers/live', {});
+        if (Array.isArray(data)) setLiveVtubers(data.slice(0, 5));
+      } catch {}
+    }, 45000);
+
+    return () => {
+      clearInterval(livePollInterval);
+    };
   }, [user]);
 
   // Connect to socket for real-time friend presence
@@ -632,6 +644,120 @@ function HomeContent() {
           compact
           onPostCreated={handlePostCreated}
         />
+
+        {/* ═══ LIVE VTUBERS — tarjetas tipo publicación ═══ */}
+        {liveVtubers.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {liveVtubers.map(v => (
+              <div key={v.id} className="glass" style={{
+                borderRadius: '16px',
+                border: '1px solid rgba(233,30,99,0.15)',
+                boxShadow: '0 0 30px rgba(233,30,99,0.06)',
+                overflow: 'hidden',
+                transition: 'all 0.3s ease',
+                animation: 'fadeInUp 0.5s ease forwards',
+              }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'rgba(233,30,99,0.35)';
+                  e.currentTarget.style.boxShadow = '0 0 40px rgba(233,30,99,0.1)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'rgba(233,30,99,0.15)';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(233,30,99,0.06)';
+                }}
+              >
+                {/* Live header bar */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 16px',
+                  background: 'linear-gradient(135deg, rgba(233,30,99,0.08), rgba(145,65,255,0.04))',
+                  borderBottom: '1px solid rgba(233,30,99,0.1)',
+                }}>
+                  <span style={{
+                    width: '8px', height: '8px', borderRadius: '50%',
+                    background: '#e91e63',
+                    animation: 'pulse 1.5s ease-in-out infinite',
+                  }} />
+                  <span style={{ fontWeight: 700, fontSize: '0.78rem', color: '#e91e63', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    En vivo ahora
+                  </span>
+                </div>
+
+                {/* Card body */}
+                <div style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  {/* Avatar */}
+                  <Link href={`/profile/${v.userId}`} style={{ flexShrink: 0 }}>
+                    <div style={{
+                      width: '48px', height: '48px', borderRadius: '50%',
+                      background: v.avatarUrl
+                        ? `url(${v.avatarUrl}) center/cover`
+                        : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontWeight: 'bold', fontSize: '1rem',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      transition: 'transform 0.2s',
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      {!v.avatarUrl && v.displayName.charAt(0).toUpperCase()}
+                      {v.avatarUrl && (
+                        <img src={v.avatarUrl} alt={v.displayName}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                      {/* Live ring */}
+                      <div style={{
+                        position: 'absolute', inset: -3, borderRadius: '50%',
+                        border: '2px solid rgba(233,30,99,0.5)',
+                        animation: 'pulse 2s ease-in-out infinite',
+                        pointerEvents: 'none',
+                      }} />
+                    </div>
+                  </Link>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Link href={`/profile/${v.userId}`} style={{ color: 'var(--text)', textDecoration: 'none' }}>
+                        {v.displayName}
+                      </Link>
+                      {v.isVerified && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="Verificado">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      @{v.user.username} · {v.twitchUrl ? 'Twitch' : v.youtubeUrl ? 'YouTube' : 'Streaming'}
+                    </div>
+                  </div>
+
+                  {/* Action */}
+                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                    <a
+                      href={v.twitchUrl || v.youtubeUrl || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn"
+                      style={{
+                        padding: '8px 16px', fontSize: '0.82rem', fontWeight: 700,
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #e91e63, #ff6b9d)',
+                        color: '#fff', border: 'none',
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        animation: 'vtuber-live-glow 2s ease-in-out infinite',
+                      }}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} />
+                      Ver Stream
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Feed */}
         {loading ? (
