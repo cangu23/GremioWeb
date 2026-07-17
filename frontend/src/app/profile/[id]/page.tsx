@@ -9,6 +9,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink } from '@/components/ui/Icons';
 
 interface SocialUser {
   id: string;
@@ -195,13 +196,13 @@ function ProfileContent() {
 
   // Social link configs
   const socialLinks = [
-    { url: vtuber?.twitchUrl, label: 'Twitch', icon: 'TW', color: '#9146FF', bg: 'rgba(145,65,255,0.15)' },
-    { url: vtuber?.youtubeUrl, label: 'YouTube', icon: 'YT', color: '#FF0000', bg: 'rgba(255,0,0,0.12)' },
-    { url: vtuber?.kickUrl, label: 'Kick', icon: 'KC', color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
-    { url: vtuber?.tiktokUrl, label: 'TikTok', icon: 'TK', color: '#00f2ea', bg: 'rgba(0,242,234,0.12)' },
-    { url: vtuber?.twitterUrl, label: 'Twitter/X', icon: 'X', color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)' },
-    { url: vtuber?.discordUrl, label: 'Discord', icon: 'DC', color: '#5865F2', bg: 'rgba(88,101,242,0.12)' },
-    { url: vtuber?.websiteUrl, label: 'Sitio Web', icon: 'WWW', color: 'var(--primary)', bg: 'rgba(138,43,226,0.1)' },
+    { url: vtuber?.twitchUrl, label: 'Twitch', icon: <Twitch size={18} color="#9146FF" strokeWidth={2} />, color: '#9146FF', bg: 'rgba(145,65,255,0.15)' },
+    { url: vtuber?.youtubeUrl, label: 'YouTube', icon: <Youtube size={18} color="#FF0000" strokeWidth={2} />, color: '#FF0000', bg: 'rgba(255,0,0,0.12)' },
+    { url: vtuber?.kickUrl, label: 'Kick', icon: <Music size={18} color="#53fc18" strokeWidth={2.5} />, color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
+    { url: vtuber?.tiktokUrl, label: 'TikTok', icon: <Music size={18} color="#00f2ea" strokeWidth={2} />, color: '#00f2ea', bg: 'rgba(0,242,234,0.12)' },
+    { url: vtuber?.twitterUrl, label: 'Twitter/X', icon: <Twitter size={18} color="#1DA1F2" strokeWidth={2} />, color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)' },
+    { url: vtuber?.discordUrl, label: 'Discord', icon: <Discord size={18} color="#5865F2" strokeWidth={2} />, color: '#5865F2', bg: 'rgba(88,101,242,0.12)' },
+    { url: vtuber?.websiteUrl, label: 'Sitio Web', icon: <Globe size={18} color="var(--primary)" strokeWidth={2} />, color: 'var(--primary)', bg: 'rgba(138,43,226,0.1)' },
   ].filter(s => s.url);
 
   return (
@@ -335,7 +336,16 @@ function ProfileContent() {
               </svg>
             )}
             {vtuber?.isFeatured && (
-              <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent)' }}>FEATURED</span>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                fontSize: '0.85rem', fontWeight: 700, color: '#ffd700',
+                padding: '4px 12px', borderRadius: '20px',
+                background: 'rgba(255,215,0,0.1)',
+                border: '1px solid rgba(255,215,0,0.3)',
+              }}>
+                <Star size={14} color="#ffd700" fill="#ffd700" strokeWidth={2.5} />
+                DESTACADO
+              </span>
             )}
             {vtuber?.isLive && (
               <span style={{
@@ -493,6 +503,7 @@ function ProfileContent() {
                   border: '2px solid rgba(255,215,0,0.4)',
                   color: '#ffd700',
                   transition: 'all 0.3s ease',
+                  display: 'flex', alignItems: 'center', gap: '8px',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(255,215,0,0.1)';
@@ -503,8 +514,8 @@ function ProfileContent() {
                   e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.borderColor = 'rgba(255,215,0,0.4)';
                   e.currentTarget.style.boxShadow = 'none';
-                }}                >
-                Donar
+                }}>
+                <Heart size={18} /> Donar
               </button>
               <Link
                 href={`/chat?user=${profile.id}`}
@@ -516,6 +527,7 @@ function ProfileContent() {
                   border: '2px solid rgba(0,212,255,0.3)',
                   color: 'var(--accent)',
                   transition: 'all 0.3s ease',
+                  display: 'flex', alignItems: 'center', gap: '8px',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(0,212,255,0.1)';
@@ -524,8 +536,8 @@ function ProfileContent() {
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.borderColor = 'rgba(0,212,255,0.3)';
-                }}                >
-                Mensaje
+                }}>
+                <MessageCircle size={18} /> Mensaje
               </Link>
             </>
           ) : (
@@ -557,14 +569,13 @@ function ProfileContent() {
               <div className="glass" style={{
                 padding: '24px', borderRadius: '16px',
                 borderLeft: `3px solid ${themeColor}`,
-              }}>
-                <h3 style={{
-                  fontSize: '0.85rem', fontWeight: 700, marginBottom: '12px',
-                  textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)',
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                }}>
-                  📝 Descripción
-                </h3>
+              }}>                  <h3 style={{
+                    fontSize: '0.85rem', fontWeight: 700, marginBottom: '12px',
+                    textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)',
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                  }}>
+                    <BookOpen size={16} /> Descripción
+                  </h3>
                 <p style={{
                   fontSize: '0.95rem', lineHeight: 1.8, color: 'var(--text)',
                   whiteSpace: 'pre-wrap',
@@ -589,7 +600,7 @@ function ProfileContent() {
                   }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                    📖 Lore / Historia
+                    <BookOpen size={16} /> Lore / Historia
                   </span>
                   <span style={{
                     fontSize: '0.85rem', color: themeColor, fontWeight: 600,
@@ -620,10 +631,11 @@ function ProfileContent() {
             {socialLinks.length > 0 && (
               <div className="glass" style={{ padding: '24px', borderRadius: '16px', borderTop: `3px solid ${themeColor}` }}>
                 <h3 style={{
-                  fontSize: '1rem', fontWeight: 700, marginBottom: '16px',
+                  fontSize: '0.85rem', fontWeight: 700, marginBottom: '14px',
+                  textTransform: 'uppercase', letterSpacing: '0.05em',
                   display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
                 }}>
-                  Redes Sociales
+                  <Link2 size={16} /> Redes Sociales
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {socialLinks.map((link) => (
@@ -648,10 +660,10 @@ function ProfileContent() {
                         e.currentTarget.style.filter = 'brightness(1)';
                       }}
                     >
-                      <span style={{ fontSize: '1.1rem' }}>{link.icon}</span>
+                      <span style={{ display: 'flex' }}>{link.icon}</span>
                       <span>{link.label}</span>
                       <span style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.6 }}>
-                        ↗
+                        <ExternalLink size={12} />
                       </span>
                     </a>
                   ))}
@@ -661,13 +673,13 @@ function ProfileContent() {
 
             {/* Stream Info */}
             {(vtuber?.streamSchedule || languagesList.length > 0) && (
-              <div className="glass" style={{ padding: '24px', borderRadius: '16px', borderLeft: `3px solid ${themeColor}` }}>
-                <h3 style={{
-                  fontSize: '1rem', fontWeight: 700, marginBottom: '16px',
-                  display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
-                }}>
-                  📡 Información de Stream
-                </h3>
+              <div className="glass" style={{ padding: '24px', borderRadius: '16px', borderLeft: `3px solid ${themeColor}` }}>                  <h3 style={{
+                    fontSize: '0.85rem', fontWeight: 700, marginBottom: '14px',
+                    textTransform: 'uppercase', letterSpacing: '0.05em',
+                    display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)',
+                  }}>
+                    <Calendar size={16} /> Stream
+                  </h3>
                 {vtuber?.streamSchedule && (
                   <div style={{ marginBottom: languagesList.length > 0 ? '14px' : 0 }}>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 600 }}>
@@ -845,7 +857,7 @@ function ProfileContent() {
               fontSize: '1.15rem', fontWeight: 700,
               marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px',
             }}>
-              🖼️ Galería
+              <IconImage size={20} /> Galería
               {!mediaPostsLoading && (
                 <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-muted)' }}>
                   {mediaPosts.length} {mediaPosts.length === 1 ? 'imagen' : 'imágenes'}
@@ -917,7 +929,7 @@ function ProfileContent() {
                       color: 'white', fontSize: '1.2rem', fontWeight: 600,
                       pointerEvents: 'none',
                     }}>
-                      🔍
+                      <ZoomIn size={20} />
                     </div>
                   </div>
                 ))}
@@ -985,8 +997,8 @@ function ProfileContent() {
             padding: '30px', width: '90%', maxWidth: '400px',
             borderRadius: '20px',
           }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.3rem', marginBottom: '8px' }}>
-              💝 Donar a {displayName}
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Heart size={24} color="#ffd700" /> Donar a {displayName}
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px' }}>
               Apoya a tu VTuber favorito con una donación
@@ -1038,7 +1050,7 @@ function ProfileContent() {
                 flex: 1, background: 'linear-gradient(135deg, #ffd700, #ffaa00)',
                 color: '#000', fontWeight: 800,
               }} disabled={donateLoading}>
-                {donateLoading ? 'Procesando...' : `💝 Donar $${donateAmount}`}
+                {donateLoading ? 'Procesando...' : `Donar $${donateAmount}`}
               </button>
             </div>
           </div>
@@ -1059,7 +1071,7 @@ function ProfileContent() {
             maxHeight: '60vh', overflow: 'auto', borderRadius: '20px',
           }} onClick={e => e.stopPropagation()}>
             <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              👥 Seguidores <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>({profile._count.followers})</span>
+              <Users size={20} /> Seguidores <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>({profile._count.followers})</span>
             </h3>
             {followers.length === 0
               ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Sin seguidores aún.</p>
@@ -1123,7 +1135,7 @@ function ProfileContent() {
             maxHeight: '60vh', overflow: 'auto', borderRadius: '20px',
           }} onClick={e => e.stopPropagation()}>
             <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              👥 Siguiendo <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>({profile._count.following})</span>
+              <Users size={20} /> Siguiendo <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>({profile._count.following})</span>
             </h3>
             {following.length === 0
               ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>No sigue a nadie aún.</p>
