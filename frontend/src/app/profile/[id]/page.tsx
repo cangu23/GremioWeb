@@ -163,7 +163,7 @@ function ProfileContent() {
         method: 'POST',
         body: JSON.stringify({ recipientId: String(id), amount: donateAmount, message: donateMessage || undefined }),
       });
-      setDonateSuccess(`¡Donaste $${donateAmount} USD a ${profile?.username}! 💝`);
+      setDonateSuccess(`¡Donaste $${donateAmount} USD a ${profile?.username}! `);
       setShowDonate(false);
       setTimeout(() => setDonateSuccess(''), 5000);
     } catch (err: unknown) {
@@ -491,7 +491,8 @@ function ProfileContent() {
                   }
                 }}
               >
-                {followLoading ? '...' : isFollowed ? 'Siguiendo' : '✦ Seguir'}
+                {followLoading ? '...' : isFollowed ? 'Siguiendo' : (
+                    <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Seguir</>)}
               </button>
               <button
                 onClick={() => setShowDonate(true)}
@@ -550,7 +551,7 @@ function ProfileContent() {
                 background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
               }}
             >
-              ✎ Editar Perfil VTuber
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg> Editar Perfil VTuber
             </Link>
           )}
         </div>

@@ -2,7 +2,7 @@ import { prisma } from '../../database';
 import { checkLiveChannels, extractChannelName, isChannelLive } from '../../lib/twitch.service';
 import env from '../../config/env';
 
-const CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const CHECK_INTERVAL_MS = 1 * 60 * 1000; // 1 minute
 let intervalHandle: ReturnType<typeof setInterval> | null = null;
 
 /**

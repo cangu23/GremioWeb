@@ -244,8 +244,7 @@ function VtuberPublicProfile() {
         <div style={{ fontSize: '3rem', marginBottom: '16px' }}><Telescope size={48} color="var(--text-muted)" strokeWidth={1.5} /></div>
         <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>Perfil no encontrado</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>{error}</p>
-        <Link href="/vtubers" className="btn" style={{ padding: '12px 28px' }}>
-          ← Volver al Directorio
+        <Link href="/vtubers" className="btn" style={{ padding: '12px 28px' }}>            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Volver al Directorio
         </Link>
       </div>
     );
@@ -619,7 +618,7 @@ function VtuberPublicProfile() {
                   }
                 }}
               >
-                {followLoading ? '...' : isFollowed ? 'Siguiendo' : '✦ Seguir'}
+                {followLoading ? '...' : isFollowed ? 'Siguiendo' : (<><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Seguir</>)}
               </button>
 
               {/* Watch Stream button — only if live */}
@@ -700,7 +699,7 @@ function VtuberPublicProfile() {
                 background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
               }}
             >
-              ✎ Editar Perfil VTuber
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg> Editar Perfil VTuber
             </Link>
           )}
         </div>
@@ -996,7 +995,8 @@ function VtuberPublicProfile() {
                 fontSize: '1.15rem', fontWeight: 700,
                 display: 'flex', alignItems: 'center', gap: '8px',
               }}>
-                📝 Publicaciones
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Publicaciones
               </h3>
               <Link href={`/feed?user=${profile.id}`} style={{
                 fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600,
@@ -1296,7 +1296,7 @@ function VtuberPublicProfile() {
                 flex: 1, background: 'linear-gradient(135deg, #ffd700, #ffaa00)',
                 color: '#000', fontWeight: 800,
               }} disabled={donateLoading}>
-                {donateLoading ? 'Procesando...' : `💝 Donar $${donateAmount}`}
+                {donateLoading ? 'Procesando...' : (<><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.5-1.5 2.5-3.5 2.5-5.5A4.5 4.5 0 0 0 17 4c-1.4 0-2.7.6-3.7 1.6L12 7l-1.3-1.4C9.7 4.6 8.4 4 7 4a4.5 4.5 0 0 0-4.5 4.5c0 2 1 4 2.5 5.5L12 20l7-6z"/></svg> Donar ${donateAmount}</>)}
               </button>
             </div>
           </div>

@@ -181,15 +181,18 @@ function VTuberCard({ v }: { v: VTuberProfile }) {
             border: `2px solid ${v.isLive ? '#e91e63' : 'rgba(139,92,246,0.15)'}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
-            overflow: 'hidden',
+            position: 'relative',
             transition: 'border-color 0.3s',
           }}>
             {!v.avatarUrl && v.displayName.charAt(0).toUpperCase()}
             {v.isLive && (
               <div style={{
-                position: 'absolute', bottom: 0, right: 0,
-                width: 16, height: 16, borderRadius: '50%',
-                background: '#e91e63', border: '2px solid var(--background)',
+                position: 'absolute', bottom: '-2px', right: '-2px',
+                width: 14, height: 14, borderRadius: '50%',
+                background: '#e91e63',
+                border: '2px solid var(--background)',
+                boxShadow: '0 0 6px rgba(233,30,99,0.6)',
+                animation: 'vtuber-pulse-dot 1.5s ease infinite',
               }} />
             )}
           </div>
@@ -319,9 +322,11 @@ function LiveMiniCard({ v }: { v: VTuberProfile }) {
             {!v.avatarUrl && v.displayName.charAt(0).toUpperCase()}
           </div>
           <div style={{
-            position: 'absolute', bottom: 0, right: 0,
-            width: 12, height: 12, borderRadius: '50%',
-            background: '#e91e63', border: '2px solid var(--background)',
+            position: 'absolute', bottom: '-1px', right: '-1px',
+            width: 11, height: 11, borderRadius: '50%',
+            background: '#e91e63',
+            border: '2px solid var(--background)',
+            boxShadow: '0 0 4px rgba(233,30,99,0.5)',
           }} />
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
