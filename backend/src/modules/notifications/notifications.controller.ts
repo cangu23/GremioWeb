@@ -4,7 +4,9 @@ import * as NotificationsService from './notifications.service';
 export const getMyNotifications = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 50, 100);
-    const notifications = await NotificationsService.getMyNotifications(req.user!.id, limit);
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const skip = (page - 1) * limit;
+    const notifications = await NotificationsService.getMyNotifications(req.user!.id, limit, skip);
     res.json(notifications);
   } catch (err) {
     next(err);

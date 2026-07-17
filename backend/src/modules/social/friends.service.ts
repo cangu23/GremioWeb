@@ -2,6 +2,7 @@ import AppError from '../../errors/AppError';
 import * as FriendRepository from './friends.repository';
 import * as UserRepository from '../users/user.repository';
 import * as NotificationsRepository from '../notifications/notifications.repository';
+import { NOTIFICATION_TYPES } from '@gremio-estelar/shared';
 
 export const sendRequest = async (senderId: string, receiverId: string) => {
   if (senderId === receiverId) {
@@ -43,7 +44,7 @@ export const sendRequest = async (senderId: string, receiverId: string) => {
   if (sender) {
     await NotificationsRepository.createNotification({
       userId: receiverId,
-      type: 'FRIEND_REQUEST',
+      type: NOTIFICATION_TYPES.FRIEND_REQUEST,
       title: 'Solicitud de amistad',
       message: `@${sender.username} te ha enviado una solicitud de amistad.`,
       referenceId: senderId,
@@ -71,7 +72,7 @@ export const acceptRequest = async (userId: string, requesterId: string) => {
   if (accepter) {
     await NotificationsRepository.createNotification({
       userId: requesterId,
-      type: 'FRIEND_ACCEPT',
+      type: NOTIFICATION_TYPES.FRIEND_ACCEPT,
       title: 'Solicitud aceptada',
       message: `@${accepter.username} aceptó tu solicitud de amistad.`,
       referenceId: userId,

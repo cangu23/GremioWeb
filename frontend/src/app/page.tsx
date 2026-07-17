@@ -12,6 +12,7 @@ import type { Socket } from 'socket.io-client';
 import PostCard from '@/components/posts/PostCard';
 import CreatePost from '@/components/posts/CreatePost';
 import SkeletonPostCard from '@/components/posts/SkeletonPostCard';
+import UserAvatar from '@/components/ui/UserAvatar';
 import { usePosts } from '@/lib/hooks/usePosts';
 import type { GuildItem, TrendingHashtag, LiveVTuberProfile, FollowingUser, EventItem } from '../../../shared/types';
 
@@ -272,14 +273,13 @@ function HomeContent() {
       {/* Welcome card */}
       <div className="glass" style={{ padding: '16px', textAlign: 'center' }}>
         <Link href={`/profile/${user.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: '50%', margin: '0 auto 8px',
-            background: avatarUrl ? `url(${avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.4rem', color: 'white', fontWeight: 'bold',
-            border: user.role === 'VTUBER' ? '2px solid var(--primary)' : '2px solid transparent',
-          }}>
-            {!avatarUrl && displayName.charAt(0).toUpperCase()}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+            <UserAvatar
+              src={avatarUrl}
+              alt={displayName}
+              size={56}
+              style={{ margin: '0 auto' }}
+            />
           </div>
           <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{displayName}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{user.username}</div>
@@ -315,25 +315,13 @@ function HomeContent() {
               }}
                 onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
                 onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>
-                <div style={{
-                  width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                  background: v.avatarUrl
-                    ? `url(${v.avatarUrl}) center/cover`
-                    : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'white', fontWeight: 'bold', fontSize: '0.65rem',
-                  overflow: 'hidden',
-                  position: 'relative',
-                }}>
-                  {!v.avatarUrl && v.displayName.charAt(0).toUpperCase()}
-                  {/* Live dot */}
-                  <div style={{
-                    position: 'absolute', bottom: '-1px', right: '-1px',
-                    width: '10px', height: '10px', borderRadius: '50%',
-                    background: 'var(--primary)',
-                    border: '2px solid var(--bg-deep)',
-                  }} />
-                </div>
+                <UserAvatar
+                  src={v.avatarUrl}
+                  alt={v.displayName}
+                  userId={v.userId}
+                  isLive={true}
+                  size={28}
+                />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     {v.displayName}

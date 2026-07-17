@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink } from '@/components/ui/Icons';
 import FriendButton from '@/components/social/FriendButton';
+import NoteModal from '@/components/ui/NoteModal';
 
 interface SocialUser {
   id: string;
@@ -37,6 +38,8 @@ interface SocialProfile {
   createdAt: string;
   xp: number;
   level: number;
+  note: string | null;
+  noteUpdatedAt: string | null;
   vtuberProfile?: {
     id: string;
     displayName: string;
@@ -103,6 +106,7 @@ function ProfileContent() {
   const [mediaPosts, setMediaPosts] = useState<Post[]>([]);
   const [mediaPostsLoading, setMediaPostsLoading] = useState(true);
   const [galleryImage, setGalleryImage] = useState<string | null>(null);
+  const [showNoteModal, setShowNoteModal] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -581,7 +585,86 @@ function ProfileContent() {
         }}>
           {/* ===== LEFT COLUMN ===== */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Description */}
+            {/* Note / Status */}
+          <div className="glass" style={{
+            padding: '20px 24px', borderRadius: '16px',
+            borderLeft: `3px solid ${profile.note ? 'var(--primary)' : 'transparent'}`,
+            transition: 'all 0.3s ease',
+          }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: '10px',
+            }}>
+              <h3 style={{
+                fontSize: '0.85rem', fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)',
+                display: 'flex', alignItems: 'center', gap: '8px',
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                Nota
+              </h3>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setShowNoteModal(true)}
+                  style={{
+                    background: 'none', border: 'none', color: 'var(--primary)',
+                    cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
+                    padding: '4px 10px', borderRadius: '6px',
+                    transition: 'all 0.15s',
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.1)'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  {profile.note ? (
+                    <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Editar</>
+                  ) : (
+                    <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Agregar nota</>
+                  )}
+                </button>
+              )}
+            </div>
+            {profile.note ? (
+              <>
+                <p style={{
+                  fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text)',
+                  fontStyle: 'italic', margin: 0,
+                }}>
+                  &ldquo;{profile.note}&rdquo;
+                </p>
+                {profile.noteUpdatedAt && (
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '6px', opacity: 0.6 }}>
+                    {new Date(profile.noteUpdatedAt).toLocaleDateString('es-ES', {
+                      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>
+                {isOwnProfile ? 'Comparte cómo te sientes agregando una nota a tu perfil ✨' : 'Este usuario no tiene nota.'}
+              </p>
+            )}
+          </div>
+
+          {/* Note Modal */}
+          <NoteModal
+            isOpen={showNoteModal}
+            currentNote={profile.note || ''}
+            onClose={() => setShowNoteModal(false)}
+            onSave={async (note: string) => {
+              const data = await apiFetch('/user/note', {
+                method: 'PUT',
+                body: JSON.stringify({ note: note || null }),
+              });
+              setProfile(prev => prev ? { ...prev, note: data.note, noteUpdatedAt: data.noteUpdatedAt } : prev);
+              setShowNoteModal(false);
+            }}
+          />
+
+          {/* Description */}
             {vtuber?.description && (
               <div className="glass" style={{
                 padding: '24px', borderRadius: '16px',

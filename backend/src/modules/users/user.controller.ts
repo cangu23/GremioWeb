@@ -50,3 +50,14 @@ export const searchUsers = async (req: Request, res: Response, next: NextFunctio
     next(error);
   }
 };
+
+export const updateNote = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const { note } = req.body;
+    const result = await UserService.updateNote(userId, note);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};

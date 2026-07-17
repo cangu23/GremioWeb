@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
+import UserAvatar from '@/components/ui/UserAvatar';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -10,6 +11,7 @@ interface PostCardProps {
   onLike: (id: string, isLiked: boolean) => void;
   currentUserId?: string;
   onDelete?: (id: string) => void;
+  highlight?: boolean;
 }
 
 // ==========================================================================
@@ -30,7 +32,7 @@ function timeAgo(date: string): string {
 // ==========================================================================
 // PostCard Component
 // ==========================================================================
-export default function PostCard({ post, onLike, currentUserId, onDelete }: PostCardProps) {
+export default function PostCard({ post, onLike, currentUserId, onDelete, highlight }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -119,7 +121,12 @@ export default function PostCard({ post, onLike, currentUserId, onDelete }: Post
   }, [lightboxImage, showDeleteConfirm]);
 
   return (
-    <div className="glass" style={{ overflow: 'hidden' }}>
+    <div id={`post-${post.id}`} className="glass" style={{
+      overflow: 'hidden',
+      transition: 'box-shadow 0.5s ease, border-color 0.5s ease',
+      boxShadow: highlight ? '0 0 0 2px var(--primary), 0 0 20px rgba(108,99,255,0.3)' : undefined,
+      borderColor: highlight ? 'var(--primary)' : undefined,
+    }}>
       {/* ===== LIGHTBOX ===== */}
       {lightboxImage && (
         <div onClick={() => setLightboxImage(null)} style={{
@@ -202,19 +209,13 @@ export default function PostCard({ post, onLike, currentUserId, onDelete }: Post
       {/* ===== POST HEADER ===== */}
       <div style={{ padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <Link href={`/profile/${post.user.id}`}>
-            <div style={{
-              width: '40px', height: '40px', borderRadius: '50%',
-              background: post.user.vtuberProfile?.avatarUrl
-                ? `url(${post.user.vtuberProfile.avatarUrl}) center/cover`
-                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontWeight: 'bold', fontSize: '1rem',
-              overflow: 'hidden', flexShrink: 0,
-            }}>
-              {!post.user.vtuberProfile?.avatarUrl && (post.user.vtuberProfile?.displayName || post.user.username).charAt(0).toUpperCase()}
-            </div>
-          </Link>
+          <UserAvatar
+            src={post.user.vtuberProfile?.avatarUrl}
+            alt={post.user.vtuberProfile?.displayName || post.user.username}
+            userId={post.user.id}
+            isVerified={post.user.vtuberProfile?.isApproved}
+            size={40}
+          />
           <div style={{ minWidth: 0, flex: 1 }}>
             <Link href={`/profile/${post.user.id}`} style={{
               color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',

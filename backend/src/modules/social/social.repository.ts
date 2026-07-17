@@ -39,6 +39,7 @@ export const getFollowers = (userId: string) => {
         select: {
           id: true,
           username: true,
+          note: true,
           vtuberProfile: {
             select: {
               displayName: true,
@@ -61,6 +62,7 @@ export const getFollowing = (userId: string) => {
         select: {
           id: true,
           username: true,
+          note: true,
           vtuberProfile: {
             select: {
               displayName: true,

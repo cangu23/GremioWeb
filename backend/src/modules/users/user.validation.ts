@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+export const updateNoteSchema = z.object({
+  body: z.object({
+    note: z.string().max(100).nullable(),
+  }),
+});
+
 export const updateUserSchema = z.object({
   body: z.object({
     username: z.string().min(3).max(30).optional(),

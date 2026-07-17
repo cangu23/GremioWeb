@@ -65,6 +65,7 @@ export const searchByUsername = async (query: string) => {
       id: true,
       username: true,
       role: true,
+      note: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
     },
     take: 50,
@@ -79,6 +80,7 @@ export const findByRole = async (role: string) => {
       id: true,
       username: true,
       role: true,
+      note: true,
       vtuberProfile: {
         select: {
           displayName: true,
@@ -90,6 +92,13 @@ export const findByRole = async (role: string) => {
       },
     },
     orderBy: { username: 'asc' },
+  });
+};
+
+export const updateUser = async (id: string, data: Record<string, unknown>) => {
+  return prisma.user.update({
+    where: { id },
+    data,
   });
 };
 

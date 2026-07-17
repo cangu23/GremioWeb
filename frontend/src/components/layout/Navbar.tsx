@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api';
 import { connectSocket, NOTIFICATION_EVENTS, DM_EVENTS } from '@/lib/socket-client';
 import { useToast } from '@/lib/ToastContext';
 import ClientOnly from '@/lib/ClientOnly';
+import UserAvatar from '@/components/ui/UserAvatar';
 import styles from './Navbar.module.css';
 import { Users, Calendar, Shield, FileText, MessageCircle, ShoppingBag, Award, BarChart, Bell, Backpack, Sparkles, Settings, LogOut, Key, Plus, Grid, TrendingUp, User, HelpCircle } from '@/components/ui/Icons';
 
@@ -115,7 +116,7 @@ function useNavbarState(user: { id: string } | null) {
     })();
   }, [user]);
 
-  // Notification count: polling + real-time socket
+  // Notification count: polling + real-time socket + custom refresh event
   useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
 
@@ -125,12 +126,17 @@ function useNavbarState(user: { id: string } | null) {
     fetchUnread();
     const interval = setInterval(fetchUnread, 60000);
 
+    // Listen for custom event dispatched when user reads notifications on /notifications page
+    const handleNotifsRead = () => setTimeout(fetchUnread, 300);
+    window.addEventListener('notifications-read', handleNotifsRead);
+
     let sock: any;
     try {
       sock = connectSocket();
-      sock.on(NOTIFICATION_EVENTS.NEW, () => {
+      sock.on(NOTIFICATION_EVENTS.NEW, (notif: { title?: string; message?: string }) => {
         setUnreadCount(prev => prev + 1);
-        showToast('Nueva notificación', 'success');
+        const toastMsg = notif?.title || 'Nueva notificación';
+        showToast(toastMsg, 'success');
       });
     } catch (err) {
       console.warn('[Socket] Could not connect for notifications:', err);
@@ -138,6 +144,7 @@ function useNavbarState(user: { id: string } | null) {
 
     return () => {
       clearInterval(interval);
+      window.removeEventListener('notifications-read', handleNotifsRead);
       if (sock) sock.off(NOTIFICATION_EVENTS.NEW);
     };
   }, [user, showToast]);
@@ -405,23 +412,20 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(!open)}
+        title={displayName}
         style={{
-          width: '32px', height: '32px', borderRadius: '50%', border: 'none',
-          padding: 0, cursor: 'pointer', overflow: 'hidden', flexShrink: 0,
-          background: avatarUrl
-            ? `url(${avatarUrl}) center/cover`
-            : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+          padding: 0, border: 'none', background: 'none', cursor: 'pointer',
+          display: 'inline-flex', flexShrink: 0,
           outline: open ? '2px solid var(--primary)' : '2px solid transparent',
           outlineOffset: '2px',
           transition: 'outline 0.15s',
         }}
-        title={displayName}
       >
-        {!avatarUrl && (
-          <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.75rem' }}>
-            {displayName.charAt(0).toUpperCase()}
-          </span>
-        )}
+        <UserAvatar
+          src={avatarUrl}
+          alt={displayName}
+          size={32}
+        />
       </button>
 
       {open && (

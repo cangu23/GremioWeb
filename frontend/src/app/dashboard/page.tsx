@@ -10,6 +10,7 @@ import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import RecentActivity from '@/components/landing/RecentActivity';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 interface GamificationData {
   xp: number;
@@ -241,29 +242,12 @@ function DashboardContent() {
         <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '220px', height: '220px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
           {/* Avatar */}
-          <div style={{
-            width: '72px', height: '72px', borderRadius: '50%',
-            background: avatarUrl
-              ? `url(${avatarUrl}) center/cover`
-              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.8rem', color: 'white', fontWeight: 'bold',
-            border: isVtuber ? '3px solid rgba(255,0,127,0.4)' : '3px solid rgba(255,255,255,0.12)',
-            flexShrink: 0, position: 'relative',
-          }}>
-            {!avatarUrl && (displayName || user.username).charAt(0).toUpperCase()}
-            {isVtuber && (
-              <div style={{
-                position: 'absolute', bottom: '-2px', right: '-2px',
-                width: '22px', height: '22px', borderRadius: '11px',
-                background: 'linear-gradient(135deg, #ff007f, #ff9800)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '2px solid var(--bg-deep)',
-              }}>
-                <SvgStar />
-              </div>
-            )}
-          </div>
+          <UserAvatar
+            src={avatarUrl}
+            alt={displayName || user.username}
+            userId={user.id}
+            size={72}
+          />
           <div style={{ flex: 1, minWidth: '200px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '4px' }}>
               <h1 className="heading-md" style={{ marginBottom: 0 }}>

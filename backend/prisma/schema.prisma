@@ -26,6 +26,10 @@ model User {
   updatedAt     DateTime       @updatedAt
   password      String?
 
+  // Note / status (Instagram-style note on avatar)
+  note          String?
+  noteUpdatedAt DateTime?
+
   // Gamification
   xp            Int            @default(0)
   level         Int            @default(1)

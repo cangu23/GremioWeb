@@ -1,11 +1,12 @@
 import prisma from '../../database/prisma';
 import { emitNotification } from './emit-notification';
 
-export const findNotificationsByUser = (userId: string, limit = 50) =>
+export const findNotificationsByUser = (userId: string, limit = 50, skip = 0) =>
   prisma.notification.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
     take: limit,
+    skip,
   });
 
 export const countUnreadNotifications = (userId: string) =>

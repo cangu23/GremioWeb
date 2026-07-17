@@ -4,6 +4,7 @@ import * as AdminRepository from './admin.repository';
 import AppError from '../../errors/AppError';
 import { AdminQueryInput, PaginatedResponse } from './admin.types';
 import { UpdateUserAdminInput, UpdateVtuberAdminInput, UpdateEventAdminInput, UpdateGuildAdminInput, UpdatePostAdminInput, UpdateCommentAdminInput } from './admin.types';
+import { NOTIFICATION_TYPES } from '@gremio-estelar/shared';
 
 // ========== HELPERS ==========
 
@@ -202,7 +203,7 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
         await prisma.notification.create({
           data: {
             userId: updatedUser.id,
-            type: 'VTUBER_APPROVED',
+            type: NOTIFICATION_TYPES.VTUBER_APPROVED,
             title: '✅ ¡Felicidades, ahora eres VTuber oficial!',
             message: `Tu perfil ha sido aprobado. ¡Bienvenido a la comunidad de VTubers! Ya puedes personalizar tu perfil, crear eventos y unirte a gremios.`,
             referenceId: id,
@@ -213,7 +214,7 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
         await prisma.notification.create({
           data: {
             userId: updatedUser.id,
-            type: 'VTUBER_VERIFIED',
+            type: NOTIFICATION_TYPES.VTUBER_VERIFIED,
             title: '🔵 ¡Has sido verificado!',
             message: `Tu cuenta ha sido verificada. Ahora lucirás la insignia azul de verificación en tu perfil, publicaciones y en toda la plataforma.`,
             referenceId: id,

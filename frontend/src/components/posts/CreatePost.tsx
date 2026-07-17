@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { apiFetch, getAccessToken } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
+import UserAvatar from '@/components/ui/UserAvatar';
 import type { CreatePostData } from '../../../../shared/types';
 
 // ==========================================================================
@@ -197,16 +198,12 @@ export default function CreatePost({
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
             {/* Avatar */}
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-              background: avatarUrl
-                ? `url(${avatarUrl}) center/cover`
-                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontWeight: 'bold', fontSize: '0.9rem',
-            }}>
-              {!avatarUrl && displayName.charAt(0).toUpperCase()}
-            </div>
+            <UserAvatar
+              src={avatarUrl}
+              alt={displayName}
+              userId={user?.id}
+              size={36}
+            />
             <div style={{ flex: 1, minWidth: 0 }}>
               <textarea
                 className="input"

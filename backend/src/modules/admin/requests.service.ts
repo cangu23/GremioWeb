@@ -132,7 +132,7 @@ export const approveRequest = async (id: string, adminId: string) => {
   await prisma.notification.create({
     data: {
       userId: request.userId,
-      type: 'VTUBER_APPROVED',
+      type: 'vtuber_approved',
       title: 'Solicitud de VTuber Aprobada',
       message: `Tu solicitud para ser VTuber oficial ha sido aprobada. Usa tu código único: ${codeResult.rawCode}\n\nCanjéalo en tu perfil para activar tu rol.`,
       referenceId: request.id,
@@ -181,7 +181,7 @@ export const rejectRequest = async (id: string, adminId: string, notes?: string)
   await prisma.notification.create({
     data: {
       userId: request.userId,
-      type: 'VTUBER_REJECTED',
+      type: 'vtuber_rejected',
       title: 'Solicitud de VTuber',
       message: `Tu solicitud para ser VTuber no fue aprobada en esta ocasión.${notes ? ` Motivo: ${notes}` : ' Puedes intentarlo de nuevo más tarde.'}`,
       referenceId: request.id,

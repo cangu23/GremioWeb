@@ -2,8 +2,8 @@ import { NOTIFICATION_TYPES } from '@gremio-estelar/shared';
 import * as NotificationsRepository from './notifications.repository';
 import prisma from '../../database/prisma';
 
-export const getMyNotifications = async (userId: string, limit = 50) => {
-  return NotificationsRepository.findNotificationsByUser(userId, limit);
+export const getMyNotifications = async (userId: string, limit = 50, skip = 0) => {
+  return NotificationsRepository.findNotificationsByUser(userId, limit, skip);
 };
 
 export const getUnreadCount = async (userId: string) => {

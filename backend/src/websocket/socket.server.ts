@@ -3,6 +3,7 @@ import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import env from '../config/env';
 import prisma from '../database/prisma';
+import * as NotificationsService from '../modules/notifications/notifications.service';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -147,6 +148,9 @@ export const createSocketServer = (httpServer: HttpServer) => {
         // Send to both users (sender gets confirmation, receiver gets new message)
         socket.emit('dm:message', payload);
         socket.to(`user:${data.receiverId}`).emit('dm:message', payload);
+
+        // Send notification to receiver (fire & forget)
+        NotificationsService.notifyDM(username, userId, data.receiverId).catch(() => {});
       } catch (err) {
         console.error('[Socket] Error sending DM:', err);
         socket.emit('dm:error', { message: 'Error al enviar mensaje' });

@@ -41,6 +41,18 @@ export const searchUsers = async (query: string) => {
   return UserRepository.searchByUsername(query);
 };
 
+export const updateNote = async (userId: string, note: string | null) => {
+  const trimmed = note?.trim() || null;
+  if (trimmed && trimmed.length > 100) {
+    throw new AppError('La nota no puede tener más de 100 caracteres', 400);
+  }
+  const updated = await UserRepository.updateUser(userId, {
+    note: trimmed,
+    noteUpdatedAt: trimmed ? new Date() : null,
+  });
+  return { note: updated.note, noteUpdatedAt: updated.noteUpdatedAt };
+};
+
 export const getPublicUser = async (userId: string): Promise<PublicUser> => {
   const userProfile = await UserRepository.getUserProfileById(userId);
   if (!userProfile) {

@@ -2,11 +2,12 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import PostCard from '@/components/posts/PostCard';
 import CreatePost from '@/components/posts/CreatePost';
 import SkeletonPostCard from '@/components/posts/SkeletonPostCard';
@@ -15,12 +16,15 @@ import type { TrendingHashtag } from '../../../../shared/types';
 
 function FeedContent() {
   const { user, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const postRef = useRef<string | null>(null);
   const {
     posts, setPosts, loading, error, hasMore, loadingMore,
     feedMode, setFeedMode, setPage, loadMore, handleLike,
   } = usePosts({ user });
 
   const [trendingHashtags, setTrendingHashtags] = useState<TrendingHashtag[]>([]);
+  const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
 
   const fetchHashtags = useCallback(async () => {
     try {
@@ -31,7 +35,28 @@ function FeedContent() {
 
   useEffect(() => {
     fetchHashtags();
-  }, [fetchHashtags]);
+    // Check if we need to scroll to a specific post
+    const postId = searchParams.get('post');
+    if (postId) {
+      postRef.current = postId;
+    }
+  }, [fetchHashtags, searchParams]);
+
+  // Scroll to and highlight the target post once loaded
+  useEffect(() => {
+    if (!postRef.current || posts.length === 0) return;
+    const targetId = postRef.current;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`post-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightPostId(targetId);
+        // Remove highlight after 2s
+        setTimeout(() => setHighlightPostId(null), 2000);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [posts]);
 
   const handlePostCreated = (post: any) => {
     setPosts(prev => [post, ...prev]);
@@ -97,7 +122,7 @@ function FeedContent() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {posts.map(post => (
-                <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user?.id} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
+                <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user?.id} highlight={highlightPostId === post.id} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
               ))}
               {hasMore && (
                 <button onClick={loadMore} disabled={loadingMore} className="btn" style={{
@@ -144,8 +169,10 @@ function FeedContent() {
 
 export default function FeedPage() {
   return (
-    <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando feed...</div>}>
-      <FeedContent />
-    </ClientOnly>
+    <Suspense fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando feed...</div>}>
+      <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando feed...</div>}>
+        <FeedContent />
+      </ClientOnly>
+    </Suspense>
   );
 }

@@ -27,10 +27,15 @@ export const createPost = async (payload: CreatePostPayload, userId: string, men
     }
   }
 
-  // Process mentions
-  if (mentionedUserIds) {
+  // Process mentions & notify
+  const poster = await UserRepository.findById(userId);
+  if (mentionedUserIds && poster) {
     for (const mentionedId of mentionedUserIds) {
       await PostsRepository.createMention(post.id, mentionedId);
+      // Only notify if mentioning someone else
+      if (mentionedId !== userId) {
+        await NotificationsService.notifyMention(poster.username, post.id, mentionedId).catch(() => {});
+      }
     }
   }
 
