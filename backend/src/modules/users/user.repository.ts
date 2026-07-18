@@ -37,9 +37,11 @@ export const searchByUsername = async (query: string) => {
     ],
   };
 
+  // SQLite LIKE is case-insensitive by default, so `mode` is optional.
+  // Explicit cast avoids TS error when Prisma is generated from SQLite schema.
   const insensitiveContains = (value: string) => ({
     contains: value,
-    mode: Prisma.QueryMode.insensitive,
+    mode: 'insensitive' as any,
   });
 
   let where: Prisma.UserWhereInput;

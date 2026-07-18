@@ -291,6 +291,8 @@ function DashboardContent() {
             { icon: <SvgShield />, label: 'Gremios', href: '/guilds', desc: 'Encuentra tu grupo' },
             { icon: <SvgCalendar />, label: 'Eventos', href: '/events', desc: 'Descubre eventos' },
             { icon: <SvgStar />, label: 'VTubers', href: '/vtubers', desc: 'Explora perfiles' },
+            { icon: <SvgAward />, label: 'Recompensas', href: '/daily-rewards', desc: 'Reclama tu recompensa', color: '#F59E0B' },
+            { icon: <SvgStar />, label: 'Ruleta', href: '/roulette', desc: 'Gira y gana', color: '#EF4444' },
           ].map(renderQuickCard)}
         </div>
       </div>

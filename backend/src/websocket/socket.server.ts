@@ -282,6 +282,93 @@ export const createSocketServer = (httpServer: HttpServer) => {
       }
     });
 
+    // Handle guild message deletion
+    socket.on('guild:delete-message', async (data: { messageId: string; guildId: string; channelId: string }) => {
+      try {
+        const message = await prisma.guildChannelMessage.findUnique({ where: { id: data.messageId } });
+        if (!message) {
+          socket.emit('chat:error', { message: 'Mensaje no encontrado' });
+          return;
+        }
+
+        const adminUser = await prisma.user.findUnique({ where: { id: userId } });
+        const isAdmin = adminUser?.role === 'ADMIN';
+
+        if (message.userId !== userId && !isAdmin) {
+          socket.emit('chat:error', { message: 'No tienes permiso para eliminar este mensaje' });
+          return;
+        }
+
+        await prisma.guildChannelMessage.delete({ where: { id: data.messageId } });
+
+        io.to(`guild:${data.guildId}`).emit('guild:message-deleted', {
+          messageId: data.messageId,
+          channelId: data.channelId,
+        });
+      } catch (err) {
+        console.error('[Socket] Error deleting guild message:', err);
+        socket.emit('chat:error', { message: 'Error al eliminar mensaje' });
+      }
+    });
+
+    // Handle message deletion (owned or admin)
+    socket.on('chat:delete-message', async (data: { messageId: string; room?: string }) => {
+      try {
+        const message = await prisma.chatMessage.findUnique({ where: { id: data.messageId } });
+        if (!message) {
+          socket.emit('chat:error', { message: 'Mensaje no encontrado' });
+          return;
+        }
+        
+        const adminUser = await prisma.user.findUnique({ where: { id: userId } });
+        const isAdmin = adminUser?.role === 'ADMIN';
+        
+        // Allow if user owns the message OR is admin
+        if (message.userId !== userId && !isAdmin) {
+          socket.emit('chat:error', { message: 'No tienes permiso para eliminar este mensaje' });
+          return;
+        }
+
+        await prisma.chatMessage.delete({ where: { id: data.messageId } });
+        
+        // Notify the room that the message was deleted
+        const room = data.room || 'global';
+        io.to(room).emit('chat:message-deleted', { messageId: data.messageId });
+      } catch (err) {
+        console.error('[Socket] Error deleting message:', err);
+        socket.emit('chat:error', { message: 'Error al eliminar mensaje' });
+      }
+    });
+
+    // Handle DM deletion (owned or admin)
+    socket.on('dm:delete-message', async (data: { messageId: string }) => {
+      try {
+        const message = await prisma.directMessage.findUnique({ where: { id: data.messageId } });
+        if (!message) {
+          socket.emit('chat:error', { message: 'Mensaje no encontrado' });
+          return;
+        }
+        
+        const adminUser = await prisma.user.findUnique({ where: { id: userId } });
+        const isAdmin = adminUser?.role === 'ADMIN';
+        
+        // Allow if user is sender/receiver OR admin
+        if (message.senderId !== userId && message.receiverId !== userId && !isAdmin) {
+          socket.emit('chat:error', { message: 'No tienes permiso para eliminar este mensaje' });
+          return;
+        }
+
+        await prisma.directMessage.delete({ where: { id: data.messageId } });
+        
+        // Notify both users that the message was deleted
+        io.to(`user:${message.senderId}`).emit('dm:message-deleted', { messageId: data.messageId });
+        io.to(`user:${message.receiverId}`).emit('dm:message-deleted', { messageId: data.messageId });
+      } catch (err) {
+        console.error('[Socket] Error deleting DM:', err);
+        socket.emit('chat:error', { message: 'Error al eliminar mensaje' });
+      }
+    });
+
     socket.on('disconnect', () => {
       // Remove from global presence tracking
       globalOnlineUsers.delete(userId);

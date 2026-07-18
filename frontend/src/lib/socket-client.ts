@@ -54,10 +54,19 @@ export const CHAT_EVENTS = {
   JOIN: 'chat:join',
   TYPING: 'chat:typing',
   ERROR: 'chat:error',
+  DELETE: 'chat:delete-message',
+  DELETED: 'chat:message-deleted',
 } as const;
 
 export const DM_EVENTS = {
   MESSAGE: 'dm:message',
   TYPING: 'dm:typing',
   READ: 'dm:read',
+  DELETE: 'dm:delete-message',
+  DELETED: 'dm:message-deleted',
+} as const;
+
+export const GUILD_EVENTS = {
+  DELETE: 'guild:delete-message',
+  DELETED: 'guild:message-deleted',
 } as const;

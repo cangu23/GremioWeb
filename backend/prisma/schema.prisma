@@ -69,6 +69,14 @@ model User {
   vtuberRequests VtuberRequest[]
   requestsReviewed VtuberRequest[] @relation("requestReviewer")
 
+  // Warnings (3 strikes system)
+  warningsReceived Warning[]    @relation("warnedUser")
+  warningsGiven   Warning[]    @relation("warnerUser")
+
+  // Daily Rewards & Roulette
+  dailyRewards  DailyReward[]
+  rouletteSpins RouletteSpin[]
+
   // Admin
   adminLogs     AdminLog[]
   reportsMade   Report[]       @relation("reportReporter")
@@ -382,6 +390,56 @@ model GuildMember {
   @@unique([guildId, userId])
   @@index([guildId])
   @@index([userId])
+}
+
+// ========== DAILY REWARDS ==========
+
+model DailyReward {
+  id        String   @id @default(cuid())
+  userId    String
+  day       Int      @default(1)                    // Day of streak (1-7, resets after 7)
+  xpAwarded Int      @default(0)
+  bonus     Boolean  @default(false)                 // Whether this was a bonus reward (day 7)
+  claimedAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, claimedAt])
+  @@index([userId])
+}
+
+// ========== ROULETTE SPINS ==========
+
+model RouletteSpin {
+  id        String   @id @default(cuid())
+  userId    String
+  prize     String                       // e.g. "xp_50", "xp_100", "badge_rare", "item_1"
+  prizeLabel String                     // Human-readable prize name
+  prizeValue Int      @default(0)        // XP amount or item ID
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId])
+}
+
+// ========== WARNINGS (3 strikes) ==========
+
+model Warning {
+  id          String   @id @default(cuid())
+  userId      String                       // User who received the warning
+  warnedById  String                       // Admin who issued the warning
+  reason      String
+  strike      Int      @default(1)          // 1st, 2nd, or 3rd strike
+  autoBanned  Boolean  @default(false)      // Whether this strike triggered auto-ban
+  createdAt   DateTime @default(now())
+
+  warnedUser  User     @relation("warnedUser", fields: [userId], references: [id], onDelete: Cascade)
+  warner      User     @relation("warnerUser", fields: [warnedById], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model GuildJoinRequest {

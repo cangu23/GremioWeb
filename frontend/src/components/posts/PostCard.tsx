@@ -213,7 +213,7 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
             src={post.user.vtuberProfile?.avatarUrl}
             alt={post.user.vtuberProfile?.displayName || post.user.username}
             userId={post.user.id}
-            isVerified={post.user.vtuberProfile?.isApproved}
+            isVerified={post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved}
             size={40}
           />
           <div style={{ minWidth: 0, flex: 1 }}>

@@ -55,6 +55,7 @@ model User {
   guildsCreated Guild[]        @relation("guildCreator")
   guildMembers  GuildMember[]
   guildRequests GuildJoinRequest[]
+  guildChannelMessages GuildChannelMessage[]
 
   // Achievements
   achievements  UserAchievement[]
@@ -70,6 +71,14 @@ model User {
   codesRedeemed  RoleCode[]    @relation("codeRedeemer")
   vtuberRequests VtuberRequest[]
   requestsReviewed VtuberRequest[] @relation("requestReviewer")
+
+  // Warnings (3 strikes system)
+  warningsReceived Warning[]    @relation("warnedUser")
+  warningsGiven   Warning[]    @relation("warnerUser")
+
+  // Daily Rewards & Roulette
+  dailyRewards  DailyReward[]
+  rouletteSpins RouletteSpin[]
 
   // Admin
   adminLogs     AdminLog[]
@@ -130,6 +139,7 @@ model VTuberProfile {
   fanName     String?
   oshiMark    String?
   hashtags    String?
+  themeColor  String?
   isLive      Boolean  @default(false)
   lastLiveAt  DateTime?
   isVerified  Boolean  @default(false)
@@ -322,8 +332,42 @@ model Guild {
 
   members     GuildMember[]
   joinRequests GuildJoinRequest[]
+  channels    GuildChannel[]
 
   @@index([name])
+}
+
+model GuildChannel {
+  id        String   @id @default(cuid())
+  guildId   String
+  name      String
+  type      String   @default("TEXT")
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  messages  GuildChannelMessage[]
+
+  @@unique([guildId, name])
+  @@index([guildId, position])
+}
+
+model GuildChannelMessage {
+  id        String   @id @default(cuid())
+  channelId String
+  guildId   String
+  userId    String
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channel   GuildChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+  @@index([guildId, createdAt])
 }
 
 model GuildMember {
@@ -429,6 +473,7 @@ model VtuberRequest {
   description   String?
   avatarUrl     String?
   lore          String?
+  surveyAnswers String?
   notes         String?
   reviewedById  String?
   reviewedAt    DateTime?
@@ -440,6 +485,56 @@ model VtuberRequest {
 
   @@index([status])
   @@index([userId])
+}
+
+// ========== DAILY REWARDS ==========
+
+model DailyReward {
+  id        String   @id @default(cuid())
+  userId    String
+  day       Int      @default(1)
+  xpAwarded Int      @default(0)
+  bonus     Boolean  @default(false)
+  claimedAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, claimedAt])
+  @@index([userId])
+}
+
+// ========== ROULETTE SPINS ==========
+
+model RouletteSpin {
+  id        String   @id @default(cuid())
+  userId    String
+  prize     String
+  prizeLabel String
+  prizeValue Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId])
+}
+
+// ========== WARNINGS (3 strikes) ==========
+
+model Warning {
+  id          String   @id @default(cuid())
+  userId      String
+  warnedById  String
+  reason      String
+  strike      Int      @default(1)
+  autoBanned  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  warnedUser  User     @relation("warnedUser", fields: [userId], references: [id], onDelete: Cascade)
+  warner      User     @relation("warnerUser", fields: [warnedById], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model AdminLog {

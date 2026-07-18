@@ -22,6 +22,9 @@ import statsRoutes from './modules/stats/stats.routes';
 import activityRoutes from './modules/activity/activity.routes';
 import vtuberRoutes from './modules/vtubers/vtubers.routes';
 import shopRoutes from './modules/shop/shop.routes';
+import dailyRewardsRoutes from './modules/daily-rewards/daily-rewards.routes';
+import rouletteRoutes from './modules/roulette/roulette.routes';
+import warningsRoutes from './modules/warnings/warnings.routes';
 
 const BOOT = '[BOOT]';
 const router = Router();
@@ -92,6 +95,15 @@ console.log(`${BOOT}   [OK] /api/activity`);
 
 router.use('/shop', shopRoutes);
 console.log(`${BOOT}   [OK] /api/shop`);
+
+router.use('/daily-rewards', dailyRewardsRoutes);
+console.log(`${BOOT}   [OK] /api/daily-rewards`);
+
+router.use('/roulette', rouletteRoutes);
+console.log(`${BOOT}   [OK] /api/roulette`);
+
+router.use('/warnings', warningsRoutes);
+console.log(`${BOOT}   [OK] /api/warnings`);
 
 // Also mount health at root for quick checks
 router.get('/', (req, res) => {
