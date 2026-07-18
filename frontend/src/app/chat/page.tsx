@@ -16,7 +16,7 @@ import type { Socket } from 'socket.io-client';
 interface UserInfo {
   id: string;
   username: string;
-  vtuberProfile: { displayName: string; avatarUrl: string | null } | null;
+  vtuberProfile: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
 }
 
 interface DmMessageData {

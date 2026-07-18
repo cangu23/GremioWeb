@@ -46,6 +46,28 @@ ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NODE_ENV=production
 RUN npm run build --workspace=frontend
 
+# ===== FRONTEND PRODUCTION STAGE =====
+FROM --platform=linux/amd64 node:20-alpine AS frontend-runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Copy standalone output (self-contained Next.js server)
+COPY --from=builder /app/frontend/.next/standalone ./
+
+# Copy static files (not included in standalone by default)
+COPY --from=builder /app/frontend/.next/static ./.next/static
+
+# Copy public assets
+COPY --from=builder /app/frontend/public ./public
+
+EXPOSE 3000
+
+# Start Next.js standalone server
+CMD ["node", "server.js"]
+
 # ===== BACKEND PRODUCTION STAGE =====
 FROM --platform=linux/amd64 node:20-alpine AS runner
 
@@ -59,12 +81,21 @@ RUN apk add --no-cache openssl
 
 # Copy only what the backend needs to run
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
+
+# Copy workspace package.json files BEFORE prune so npm can resolve dependency tree
+COPY --from=builder /app/backend/package.json ./backend/
+COPY --from=builder /app/shared/package.json ./shared/
+
 COPY --from=builder /app/node_modules ./node_modules
+
+# Remove devDependencies (vitest, typescript, @types/*, etc.) to reduce image size
+# prisma CLI is kept because it's needed for runtime migrations (see /start.sh)
+RUN npm prune --omit=dev
+
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/prisma ./backend/prisma
-COPY --from=builder /app/backend/package.json ./backend/
 COPY --from=builder /app/shared/dist ./shared/dist
-COPY --from=builder /app/shared/package.json ./shared/
 
 # Expose port for the Express API
 EXPOSE 4000
