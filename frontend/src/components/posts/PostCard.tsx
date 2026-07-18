@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { useToast } from '@/lib/ToastContext';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -45,6 +46,13 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
   const [commentText, setCommentText] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportTarget, setReportTarget] = useState<'post' | 'comment'>('post');
+  const [reportCommentId, setReportCommentId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [reporting, setReporting] = useState(false);
+  const { showToast } = useToast();
 
   // Close menu on outside click
   useEffect(() => {
@@ -80,6 +88,36 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
     } catch { setDeleting(false); }
   };
 
+  const openReportModal = (target: 'post' | 'comment', commentId?: string) => {
+    setReportTarget(target);
+    setReportCommentId(commentId || null);
+    setShowReportModal(true);
+    setReportReason('');
+    setReportDescription('');
+  };
+
+  const handleReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportReason.trim()) return;
+    setReporting(true);
+    try {
+      const url = reportTarget === 'post'
+        ? `/posts/${post.id}/report`
+        : `/posts/comments/${reportCommentId}/report`;
+      await apiFetch(url, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reportReason.trim(), description: reportDescription.trim() || undefined }),
+      });
+      showToast('Reporte enviado. Gracias por ayudar a mantener la comunidad segura.', 'success');
+      setShowReportModal(false);
+      setReportReason('');
+      setReportDescription('');
+      setMenuOpen(false);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al enviar el reporte', 'error');
+    } finally { setReporting(false); }
+  };
+
   const loadComments = async () => {
     setLoadingComments(true);
     try {
@@ -106,11 +144,15 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
     } catch {}
   };
 
-  // Close lightbox / delete confirm on ESC
+  // Close lightbox / delete confirm / report modal on ESC
   useEffect(() => {
-    if (!lightboxImage && !showDeleteConfirm) return;
+    if (!lightboxImage && !showDeleteConfirm && !showReportModal) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setLightboxImage(null); setShowDeleteConfirm(false); }
+      if (e.key === 'Escape') {
+        setLightboxImage(null);
+        setShowDeleteConfirm(false);
+        if (showReportModal) { setShowReportModal(false); setReportReason(''); setReportDescription(''); setReportCommentId(null); }
+      }
     };
     window.addEventListener('keydown', handleKey);
     document.body.style.overflow = lightboxImage ? 'hidden' : '';
@@ -118,7 +160,7 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
       window.removeEventListener('keydown', handleKey);
       document.body.style.overflow = '';
     };
-  }, [lightboxImage, showDeleteConfirm]);
+  }, [lightboxImage, showDeleteConfirm, showReportModal]);
 
   return (
     <div id={`post-${post.id}`} className="glass" style={{
@@ -127,6 +169,98 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
       boxShadow: highlight ? '0 0 0 2px var(--primary), 0 0 20px rgba(108,99,255,0.3)' : undefined,
       borderColor: highlight ? 'var(--primary)' : undefined,
     }}>
+      {/* ===== REPORT MODAL ===== */}
+      {showReportModal && (
+        <div onClick={() => { if (!reporting) { setShowReportModal(false); setReportReason(''); setReportDescription(''); setReportCommentId(null); } }} style={{
+          position: 'fixed', inset: 0, zIndex: 10001,
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.15s ease-out',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '16px', padding: '28px', maxWidth: '440px', width: '90%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            animation: 'lightboxZoomIn 0.2s ease-out',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,152,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff9800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Reportar {reportTarget === 'post' ? 'publicación' : 'comentario'}</h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Ayúdanos a mantener la comunidad segura.</p>
+              </div>
+            </div>
+            <form onSubmit={handleReport}>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '6px', display: 'block' }}>Motivo del reporte</label>
+                <select
+                  className="input"
+                  value={reportReason}
+                  onChange={e => setReportReason(e.target.value)}
+                  required
+                  style={{ width: '100%' }}
+                >
+                  <option value="">Selecciona un motivo...</option>
+                  <option value="Spam o publicidad">Spam o publicidad</option>
+                  <option value="Contenido inapropiado">Contenido inapropiado</option>
+                  <option value="Acoso o bullying">Acoso o bullying</option>
+                  <option value="Discurso de odio">Discurso de odio</option>
+                  <option value="Desinformación">Desinformación</option>
+                  <option value="Violencia o contenido sensible">Violencia o contenido sensible</option>
+                  <option value="Infracción de derechos de autor">Infracción de derechos de autor</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label className="form-label" style={{ fontSize: '0.85rem', marginBottom: '6px', display: 'block' }}>
+                  Descripción adicional <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(opcional)</span>
+                </label>
+                <textarea
+                  className="input"
+                  value={reportDescription}
+                  onChange={e => setReportDescription(e.target.value)}
+                  placeholder="Añade más contexto sobre el reporte..."
+                  rows={3}
+                  maxLength={500}
+                  style={{ width: '100%', resize: 'vertical' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowReportModal(false); setReportReason(''); setReportDescription(''); }}
+                  disabled={reporting}
+                  style={{
+                    padding: '8px 20px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
+                    background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: '0.85rem',
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                  onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={reporting || !reportReason}
+                  style={{
+                    padding: '8px 20px', borderRadius: '8px', border: 'none',
+                    background: !reportReason ? 'rgba(255,152,0,0.3)' : 'linear-gradient(135deg, #ff9800, #f57c00)',
+                    color: 'white', cursor: !reportReason ? 'not-allowed' : 'pointer',
+                    fontSize: '0.85rem', fontWeight: 600,
+                  }}
+                >
+                  {reporting ? 'Enviando...' : 'Enviar Reporte'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ===== LIGHTBOX ===== */}
       {lightboxImage && (
         <div onClick={() => setLightboxImage(null)} style={{
@@ -233,57 +367,74 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
             </div>
           </div>
           {post.isPinned && <span style={{ fontSize: '0.7rem', color: 'var(--primary)' }}>📌 Fijado</span>}
-          {isOwner && (
-            <div ref={menuRef} style={{ position: 'relative' }}>
-              <button onClick={() => setMenuOpen(!menuOpen)} style={{
-                width: '30px', height: '30px', borderRadius: '50%',
-                border: 'none', background: menuOpen ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color: 'var(--text-muted)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.1rem', transition: 'all 0.2s', flexShrink: 0,
-              }}
-                onMouseOver={e => { if (!menuOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-                onMouseOut={e => { if (!menuOpen) e.currentTarget.style.background = 'transparent'; }}
-                aria-label="Opciones">⋮</button>
-              {menuOpen && (
-                <div style={{
-                  position: 'absolute', right: 0, top: '100%', marginTop: '4px',
-                  minWidth: '140px', zIndex: 100,
-                  background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '10px', padding: '4px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                  animation: 'fadeInUp 0.12s ease-out',
-                }}>
-                  <button onClick={() => { setEditContent(post.content); setEditing(true); setMenuOpen(false); }} style={{
+          <div ref={menuRef} style={{ position: 'relative' }}>
+            <button onClick={() => setMenuOpen(!menuOpen)} style={{
+              width: '30px', height: '30px', borderRadius: '50%',
+              border: 'none', background: menuOpen ? 'rgba(255,255,255,0.1)' : 'transparent',
+              color: 'var(--text-muted)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.1rem', transition: 'all 0.2s', flexShrink: 0,
+            }}
+              onMouseOver={e => { if (!menuOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+              onMouseOut={e => { if (!menuOpen) e.currentTarget.style.background = 'transparent'; }}
+              aria-label="Opciones">⋮</button>
+            {menuOpen && (
+              <div style={{
+                position: 'absolute', right: 0, top: '100%', marginTop: '4px',
+                minWidth: '160px', zIndex: 100,
+                background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '10px', padding: '4px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                animation: 'fadeInUp 0.12s ease-out',
+              }}>
+                {isOwner && (
+                  <>
+                    <button onClick={() => { setEditContent(post.content); setEditing(true); setMenuOpen(false); }} style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                      padding: '8px 12px', border: 'none', background: 'none',
+                      color: 'var(--text)', cursor: 'pointer', fontSize: '0.82rem',
+                      borderRadius: '6px', transition: 'background 0.15s',
+                    }}
+                      onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                      onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                      Editar
+                    </button>
+                    <button onClick={() => { setShowDeleteConfirm(true); setMenuOpen(false); }} style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                      padding: '8px 12px', border: 'none', background: 'none',
+                      color: '#ff4d6a', cursor: 'pointer', fontSize: '0.82rem',
+                      borderRadius: '6px', transition: 'background 0.15s',
+                    }}
+                      onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,106,0.1)')}
+                      onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                      </svg>
+                      Eliminar
+                    </button>
+                  </>
+                )}
+                {!isOwner && currentUserId && (
+                  <button onClick={() => { openReportModal('post'); setMenuOpen(false); }} style={{
                     display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
                     padding: '8px 12px', border: 'none', background: 'none',
-                    color: 'var(--text)', cursor: 'pointer', fontSize: '0.82rem',
+                    color: '#ff9800', cursor: 'pointer', fontSize: '0.82rem',
                     borderRadius: '6px', transition: 'background 0.15s',
                   }}
-                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,152,0,0.1)')}
                     onMouseOut={e => (e.currentTarget.style.background = 'none')}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
                     </svg>
-                    Editar
+                    Reportar
                   </button>
-                  <button onClick={() => { setShowDeleteConfirm(true); setMenuOpen(false); }} style={{
-                    display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
-                    padding: '8px 12px', border: 'none', background: 'none',
-                    color: '#ff4d6a', cursor: 'pointer', fontSize: '0.82rem',
-                    borderRadius: '6px', transition: 'background 0.15s',
-                  }}
-                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,106,0.1)')}
-                    onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                    </svg>
-                    Eliminar
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ===== POST CONTENT ===== */}
@@ -405,16 +556,40 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
               {comments.map(comment => (
-                <div key={comment.id} style={{ display: 'flex', gap: '8px' }}>
+                <div key={comment.id} style={{ display: 'flex', gap: '8px', position: 'relative', paddingRight: '20px' }}>
                   <Link href={`/profile/${comment.userId}`}>
                     <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0 }}>
                       {(comment.user?.vtuberProfile?.displayName || comment.user?.username || '?').charAt(0).toUpperCase()}
                     </div>
                   </Link>
-                  <div style={{ flex: 1 }}>
-                    <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', textDecoration: 'none' }}>
-                      {comment.user?.vtuberProfile?.displayName || comment.user?.username}
-                    </Link>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', textDecoration: 'none' }}>
+                        {comment.user?.vtuberProfile?.displayName || comment.user?.username}
+                      </Link>
+                      {currentUserId && comment.userId !== currentUserId && (
+                        <button
+                          onClick={() => openReportModal('comment', comment.id)}
+                          title="Reportar comentario"
+                          style={{
+                            marginLeft: 'auto',
+                            width: '18px', height: '18px', flexShrink: 0,
+                            border: 'none', background: 'none', cursor: 'pointer',
+                            color: 'var(--text-muted)', opacity: 0.3,
+                            transition: 'opacity 0.15s',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            padding: 0,
+                          }}
+                          onMouseOver={e => (e.currentTarget.style.opacity = '1')}
+                          onMouseOut={e => (e.currentTarget.style.opacity = '0.3')}
+                          aria-label="Reportar comentario"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                     <p style={{ margin: '2px 0 0', fontSize: '0.82rem', lineHeight: 1.4 }}>{comment.content}</p>
                   </div>
                 </div>

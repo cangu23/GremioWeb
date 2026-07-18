@@ -49,7 +49,9 @@ router.post('/vtubers/request', authenticate, RequestsController.submitRequest);
 console.log(`${BOOT}   [OK] POST /api/vtubers/request`);
 
 router.use('/users', userRoutes);
+router.use('/user', userRoutes); // Alias sin 's' para compatibilidad con frontend
 console.log(`${BOOT}   [OK] /api/users`);
+console.log(`${BOOT}   [OK] /api/user (alias)`);
 
 router.use('/social', socialRoutes);
 console.log(`${BOOT}   [OK] /api/social`);

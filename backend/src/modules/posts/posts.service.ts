@@ -4,6 +4,7 @@ import * as NotificationsService from '../notifications/notifications.service';
 import { CreatePostPayload, CreateCommentPayload } from '@gremio-estelar/shared';
 import * as UserRepository from '../users/user.repository';
 import * as SocialRepository from '../social/social.repository';
+import prisma from '../../database/prisma';
 
 // ========== POSTS ==========
 
@@ -115,7 +116,14 @@ export const getPostById = async (id: string, currentUserId?: string) => {
 export const deletePost = async (postId: string, userId: string) => {
   const post = await PostsRepository.findPostById(postId);
   if (!post) throw new AppError('Publicación no encontrada', 404);
-  if (post.userId !== userId) throw new AppError('No tienes permiso para eliminar esta publicación', 403);
+
+  // Allow owner, admin, or moderator to delete
+  if (post.userId !== userId) {
+    const user = await UserRepository.findById(userId);
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {
+      throw new AppError('No tienes permiso para eliminar esta publicación', 403);
+    }
+  }
 
   await PostsRepository.deletePost(postId);
   return { message: 'Publicación eliminada' };
@@ -196,10 +204,16 @@ export const getComments = async (postId: string, currentUserId?: string) => {
 };
 
 export const deleteComment = async (commentId: string, userId: string) => {
-  // Verify the comment exists and belongs to the user before deleting
   const comment = await PostsRepository.findCommentById(commentId);
   if (!comment) throw new AppError('Comentario no encontrado', 404);
-  if (comment.userId !== userId) throw new AppError('No tienes permiso para eliminar este comentario', 403);
+
+  // Allow owner, admin, or moderator to delete
+  if (comment.userId !== userId) {
+    const user = await UserRepository.findById(userId);
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {
+      throw new AppError('No tienes permiso para eliminar este comentario', 403);
+    }
+  }
 
   await PostsRepository.deleteComment(commentId);
   return { message: 'Comentario eliminado' };
@@ -214,6 +228,70 @@ export const getTrendingHashtags = async (limit = 10) => {
 export const getPostsByHashtag = async (hashtag: string, page = 1, limit = 20) => {
   const posts = await PostsRepository.findPostsByHashtag(hashtag, page, limit);
   return posts.map(formatPost);
+};
+
+// ========== REPORTS ==========
+
+export const reportPost = async (data: {
+  postId: string;
+  reporterId: string;
+  reason: string;
+  description?: string;
+}) => {
+  const post = await PostsRepository.findPostById(data.postId);
+  if (!post) throw new AppError('Publicación no encontrada', 404);
+
+  if (post.userId === data.reporterId) {
+    throw new AppError('No puedes reportar tu propia publicación', 400);
+  }
+
+  if (!data.reason || data.reason.trim().length < 5) {
+    throw new AppError('La razón debe tener al menos 5 caracteres', 400);
+  }
+
+  const report = await prisma.report.create({
+    data: {
+      targetType: 'POST',
+      targetId: data.postId,
+      reason: data.reason.trim(),
+      description: data.description?.trim(),
+      reporterId: data.reporterId,
+      status: 'PENDING',
+    },
+  });
+
+  return { message: 'Reporte enviado correctamente. Gracias por ayudar a mantener la comunidad segura.', id: report.id };
+};
+
+export const reportComment = async (data: {
+  commentId: string;
+  reporterId: string;
+  reason: string;
+  description?: string;
+}) => {
+  const comment = await PostsRepository.findCommentById(data.commentId);
+  if (!comment) throw new AppError('Comentario no encontrado', 404);
+
+  if (comment.userId === data.reporterId) {
+    throw new AppError('No puedes reportar tu propio comentario', 400);
+  }
+
+  if (!data.reason || data.reason.trim().length < 5) {
+    throw new AppError('La razón debe tener al menos 5 caracteres', 400);
+  }
+
+  const report = await prisma.report.create({
+    data: {
+      targetType: 'COMMENT',
+      targetId: data.commentId,
+      reason: data.reason.trim(),
+      description: data.description?.trim(),
+      reporterId: data.reporterId,
+      status: 'PENDING',
+    },
+  });
+
+  return { message: 'Reporte enviado correctamente. Gracias por ayudar a mantener la comunidad segura.', id: report.id };
 };
 
 // ========== DIRECT MESSAGES ==========

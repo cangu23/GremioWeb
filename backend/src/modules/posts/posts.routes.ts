@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../auth/authenticate';
 import { optionalAuth } from '../auth/optionalAuth';
 import { validateRequest } from '../auth/validateRequest';
-import { createPostSchema, createCommentSchema } from './posts.validation';
+import { createPostSchema, createCommentSchema, reportPostSchema, reportCommentSchema } from './posts.validation';
 import * as PostsController from './posts.controller';
 
 const router = Router();
@@ -20,6 +20,9 @@ router.post('/', authenticate, validateRequest(createPostSchema), PostsControlle
 router.put('/:id', authenticate, PostsController.updatePost);
 router.delete('/:id', authenticate, PostsController.deletePost);
 
+// ========== REPORTS ==========
+router.post('/:id/report', authenticate, validateRequest(reportPostSchema), PostsController.reportPost);
+
 // ========== LIKES ==========
 router.post('/:id/like', authenticate, PostsController.likePost);
 router.post('/:id/unlike', authenticate, PostsController.unlikePost);
@@ -28,5 +31,6 @@ router.post('/:id/unlike', authenticate, PostsController.unlikePost);
 router.get('/:postId/comments', optionalAuth, PostsController.getComments);
 router.post('/:postId/comments', authenticate, validateRequest(createCommentSchema), PostsController.createComment);
 router.delete('/comments/:commentId', authenticate, PostsController.deleteComment);
+router.post('/comments/:commentId/report', authenticate, validateRequest(reportCommentSchema), PostsController.reportComment);
 
 export default router;

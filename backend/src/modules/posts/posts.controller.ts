@@ -115,6 +115,32 @@ export const getPostsByHashtag = async (req: Request, res: Response, next: NextF
   } catch (err) { next(err); }
 };
 
+// ========== REPORTS ==========
+
+export const reportPost = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await PostsService.reportPost({
+      postId: String(req.params.id),
+      reporterId: req.user!.id,
+      reason: req.body.reason,
+      description: req.body.description,
+    });
+    res.status(201).json(result);
+  } catch (err) { next(err); }
+};
+
+export const reportComment = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await PostsService.reportComment({
+      commentId: String(req.params.commentId),
+      reporterId: req.user!.id,
+      reason: req.body.reason,
+      description: req.body.description,
+    });
+    res.status(201).json(result);
+  } catch (err) { next(err); }
+};
+
 // ========== DIRECT MESSAGES ==========
 
 export const sendMessage = async (req: Request, res: Response, next: NextFunction) => {

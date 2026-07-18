@@ -16,3 +16,17 @@ export const createCommentSchema = z.object({
     mediaUrl: z.string().url().optional().or(z.literal('')),
   }),
 });
+
+export const reportPostSchema = z.object({
+  body: z.object({
+    reason: z.string().min(5, 'La razón debe tener al menos 5 caracteres').max(100, 'La razón es demasiado larga'),
+    description: z.string().max(500, 'La descripción es demasiado larga').optional(),
+  }),
+});
+
+export const reportCommentSchema = z.object({
+  body: z.object({
+    reason: z.string().min(5, 'La razón debe tener al menos 5 caracteres').max(100, 'La razón es demasiado larga'),
+    description: z.string().max(500, 'La descripción es demasiado larga').optional(),
+  }),
+});
