@@ -1,6 +1,7 @@
 import AppError from '../../errors/AppError';
 import prisma from '../../database/prisma';
 import * as AdminRepository from '../admin/admin.repository';
+import * as NotificationsService from '../notifications/notifications.service';
 
 export const issueWarning = async (userId: string, warnedById: string, reason: string, ip?: string) => {
   if (!reason?.trim()) throw new AppError('Debes proporcionar una razón para la advertencia', 400);
@@ -32,15 +33,15 @@ export const issueWarning = async (userId: string, warnedById: string, reason: s
     });
     autoBanned = true;
 
-    // Create a notification
-    await prisma.notification.create({
-      data: {
-        userId,
-        type: 'SYSTEM',
-        title: '🚫 Cuenta suspendida',
-        message: `Has recibido 3 advertencias y tu cuenta ha sido suspendida automáticamente. Contacta a un administrador para más información.`,
-      },
-    });
+      // Notify via real-time notification
+    NotificationsService.notifyWarning({
+      userId,
+      strike,
+      reason: reason.trim(),
+      warnedByUsername: 'Sistema',
+      remainingWarnings: 0,
+      autoBanned: true,
+    }).catch(() => {});
 
     // Log admin action
     await AdminRepository.createAdminLog({
@@ -70,15 +71,16 @@ export const issueWarning = async (userId: string, warnedById: string, reason: s
     ip,
   });
 
-  // Notify the user about the warning
-  await prisma.notification.create({
-    data: {
-      userId,
-      type: 'WARNING',
-      title: `⚠️ Advertencia #${strike}${autoBanned ? ' (Cuenta suspendida)' : ''}`,
-      message: `${reason.trim()}${strike < 3 ? `\n\n${3 - strike} advertencia(s) restante(s) antes de suspensión automática.` : '\n\nTu cuenta ha sido suspendida por acumular 3 advertencias.'}`,
-    },
-  });
+  // Notify the user about the warning via real-time notification
+  const warnerUser = await prisma.user.findUnique({ where: { id: warnedById } });
+  NotificationsService.notifyWarning({
+    userId,
+    strike,
+    reason: reason.trim(),
+    warnedByUsername: warnerUser?.username || 'Staff',
+    remainingWarnings: Math.max(0, 3 - strike),
+    autoBanned,
+  }).catch(() => {});
 
   return {
     warning: {

@@ -58,15 +58,19 @@ const actionLabels: Record<string, string> = {
   HIDE_POST: 'Publicación oculta',
   UNHIDE_POST: 'Publicación visible',
   RESTORE_POST: 'Publicación restaurada',
-  DELETE_POST: 'Publicación eliminada',
+  DELETE_POST: 'Publicación eliminada (staff)',
   HIDE_COMMENT: 'Comentario oculto',
   UNHIDE_COMMENT: 'Comentario visible',
-  DELETE_COMMENT: 'Comentario eliminado',
+  DELETE_COMMENT: 'Comentario eliminado (staff)',
   RESOLVE_REPORT: 'Reporte resuelto',
   PIN_POST: 'Publicación fijada',
   UNPIN_POST: 'Publicación desfijada',
   FEATURE_POST: 'Publicación destacada',
   UNFEATURE_POST: 'Publicación no destacada',
+  // Warnings
+  ISSUE_WARNING: 'Advertencia emitida',
+  AUTO_BAN_3_STRIKES: 'Auto-ban (3 strikes)',
+  DELETE_POST_ADMIN: 'Publicación eliminada (admin)',
 };
 
 export default function AdminLogsPage() {

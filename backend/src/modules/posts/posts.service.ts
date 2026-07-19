@@ -4,6 +4,7 @@ import * as NotificationsService from '../notifications/notifications.service';
 import { CreatePostPayload, CreateCommentPayload } from '@gremio-estelar/shared';
 import * as UserRepository from '../users/user.repository';
 import * as SocialRepository from '../social/social.repository';
+import * as AdminRepository from '../admin/admin.repository';
 import prisma from '../../database/prisma';
 
 // ========== POSTS ==========
@@ -113,19 +114,38 @@ export const getPostById = async (id: string, currentUserId?: string) => {
   return formatted;
 };
 
-export const deletePost = async (postId: string, userId: string) => {
+export const deletePost = async (postId: string, userId: string, moderationNote?: string) => {
   const post = await PostsRepository.findPostById(postId);
   if (!post) throw new AppError('Publicación no encontrada', 404);
 
   // Allow owner, admin, or moderator to delete
-  if (post.userId !== userId) {
-    const user = await UserRepository.findById(userId);
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {
+  const isStaffAction = post.userId !== userId;
+  let staffUser = null;
+  if (isStaffAction) {
+    staffUser = await UserRepository.findById(userId);
+    if (!staffUser || (staffUser.role !== 'ADMIN' && staffUser.role !== 'MODERATOR')) {
       throw new AppError('No tienes permiso para eliminar esta publicación', 403);
     }
   }
 
   await PostsRepository.deletePost(postId);
+
+  // Log audit trail and notify author for staff moderation actions
+  if (isStaffAction && staffUser) {
+    AdminRepository.createAdminLog({
+      userId,
+      action: 'DELETE_POST',
+      detail: JSON.stringify({
+        postId,
+        contentPreview: post.content.substring(0, 100),
+        authorId: post.userId,
+        authorUsername: post.user?.username || 'unknown',
+      }),
+    }).catch((err) => console.error('[AuditLog] Error logging DELETE_POST:', err));
+
+    NotificationsService.notifyPostDeleted(staffUser.username, postId, post.userId, moderationNote).catch(() => {});
+  }
+
   return { message: 'Publicación eliminada' };
 };
 
@@ -203,19 +223,39 @@ export const getComments = async (postId: string, currentUserId?: string) => {
   }));
 };
 
-export const deleteComment = async (commentId: string, userId: string) => {
+export const deleteComment = async (commentId: string, userId: string, moderationNote?: string) => {
   const comment = await PostsRepository.findCommentById(commentId);
   if (!comment) throw new AppError('Comentario no encontrado', 404);
 
   // Allow owner, admin, or moderator to delete
-  if (comment.userId !== userId) {
-    const user = await UserRepository.findById(userId);
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {
+  const isStaffAction = comment.userId !== userId;
+  let staffUser = null;
+  if (isStaffAction) {
+    staffUser = await UserRepository.findById(userId);
+    if (!staffUser || (staffUser.role !== 'ADMIN' && staffUser.role !== 'MODERATOR')) {
       throw new AppError('No tienes permiso para eliminar este comentario', 403);
     }
   }
 
   await PostsRepository.deleteComment(commentId);
+
+  // Log audit trail and notify author for staff moderation actions
+  if (isStaffAction && staffUser) {
+    AdminRepository.createAdminLog({
+      userId,
+      action: 'DELETE_COMMENT',
+      detail: JSON.stringify({
+        commentId,
+        contentPreview: comment.content.substring(0, 100),
+        postId: comment.postId,
+        authorId: comment.userId,
+        authorUsername: comment.user?.username || 'unknown',
+      }),
+    }).catch((err) => console.error('[AuditLog] Error logging DELETE_COMMENT:', err));
+
+    NotificationsService.notifyCommentDeleted(staffUser.username, commentId, comment.userId, moderationNote).catch(() => {});
+  }
+
   return { message: 'Comentario eliminado' };
 };
 

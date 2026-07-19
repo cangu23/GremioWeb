@@ -18,6 +18,11 @@ export const NOTIFICATION_TYPES = {
   FRIEND_REQUEST: 'friend_request',
   FRIEND_ACCEPT: 'friend_accept',
   VTUBER_APPROVED_VERIFIED: 'vtuber_approved_verified',
+
+  // Warnings / Moderation
+  WARNING: 'warning',
+  POST_DELETED: 'post_deleted',
+  COMMENT_DELETED: 'comment_deleted',
 } as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];

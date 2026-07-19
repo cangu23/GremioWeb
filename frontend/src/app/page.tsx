@@ -1201,7 +1201,7 @@ function HomeContent() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {posts.map(post => (
-              <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user.id} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
+              <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user.id} currentUserRole={user.role} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
             ))}
             {hasMore && (
               <button onClick={loadMore} disabled={loadingMore} className="btn btn--outline" style={{

@@ -22,6 +22,11 @@ vi.mock('../admin/admin.repository', () => ({
   createAdminLog: vi.fn(),
 }));
 
+// ── NotificationsService mock ────────────────────
+vi.mock('../notifications/notifications.service', () => ({
+  notifyWarning: vi.fn().mockResolvedValue(undefined),
+}));
+
 // ── Import SUT ───────────────────────────────────
 import * as WarningsService from './warnings.service';
 
@@ -111,6 +116,7 @@ describe('WarningsService', () => {
     });
 
     it('sends notification on warning', async () => {
+      const mockNotifyWarning = (await import('../notifications/notifications.service')).notifyWarning;
       mockPrisma.user.findUnique.mockResolvedValue({ id: userId, username: 'testuser', status: 'ACTIVE' });
       mockPrisma.warning.count.mockResolvedValue(0);
       mockPrisma.warning.create.mockResolvedValue({
@@ -122,14 +128,16 @@ describe('WarningsService', () => {
 
       await WarningsService.issueWarning(userId, warnedById, reason);
 
-      // Prisma.create uses { data: {...} } wrapper
-      expect(mockPrisma.notification.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
+      expect(mockNotifyWarning).toHaveBeenCalledWith(
+        expect.objectContaining({
           userId,
-          type: 'WARNING',
-          title: expect.stringContaining('Advertencia'),
-        }),
-      });
+          strike: 1,
+          reason,
+          warnedByUsername: expect.any(String),
+          remainingWarnings: 2,
+          autoBanned: false,
+        })
+      );
     });
 
     it('logs admin action', async () => {

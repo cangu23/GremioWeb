@@ -11,6 +11,7 @@ interface PostCardProps {
   post: PostCardData;
   onLike: (id: string, isLiked: boolean) => void;
   currentUserId?: string;
+  currentUserRole?: string;
   onDelete?: (id: string) => void;
   highlight?: boolean;
 }
@@ -33,7 +34,7 @@ function timeAgo(date: string): string {
 // ==========================================================================
 // PostCard Component
 // ==========================================================================
-export default function PostCard({ post, onLike, currentUserId, onDelete, highlight }: PostCardProps) {
+export default function PostCard({ post, onLike, currentUserId, currentUserRole, onDelete, highlight }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -42,6 +43,8 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
+  const [moderationNote, setModerationNote] = useState('');
   const [comments, setComments] = useState<CommentData[]>([]);
   const [commentText, setCommentText] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
@@ -65,6 +68,7 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
   }, [menuOpen]);
 
   const isOwner = currentUserId === post.userId;
+  const isStaff = currentUserRole === 'ADMIN' || currentUserRole === 'MODERATOR';
 
   const handleEdit = async () => {
     if (!editContent.trim()) return;
@@ -82,10 +86,30 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await apiFetch(`/posts/${post.id}`, { method: 'DELETE' });
+      await apiFetch(`/posts/${post.id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ moderationNote: moderationNote.trim() || undefined }),
+      });
       setShowDeleteConfirm(false);
+      setModerationNote('');
       onDelete?.(post.id);
     } catch { setDeleting(false); }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    setDeleting(true);
+    try {
+      await apiFetch(`/posts/comments/${commentId}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ moderationNote: moderationNote.trim() || undefined }),
+      });
+      setComments(prev => prev.filter(c => c.id !== commentId));
+      setShowDeleteConfirm(false);
+      setDeleteCommentId(null);
+      showToast('Comentario eliminado por moderación.', 'success');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al eliminar comentario', 'error');
+    } finally { setDeleting(false); }
   };
 
   const openReportModal = (target: 'post' | 'comment', commentId?: string) => {
@@ -151,6 +175,8 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
       if (e.key === 'Escape') {
         setLightboxImage(null);
         setShowDeleteConfirm(false);
+        setDeleteCommentId(null);
+        setModerationNote('');
         if (showReportModal) { setShowReportModal(false); setReportReason(''); setReportDescription(''); setReportCommentId(null); }
       }
     };
@@ -300,7 +326,7 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
 
       {/* ===== DELETE CONFIRMATION ===== */}
       {showDeleteConfirm && (
-        <div onClick={() => { if (!deleting) setShowDeleteConfirm(false); }} style={{
+        <div onClick={() => { if (!deleting) { setShowDeleteConfirm(false); setDeleteCommentId(null); setModerationNote(''); } }} style={{
           position: 'fixed', inset: 0, zIndex: 10001,
           background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -308,33 +334,67 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
         }}>
           <div onClick={e => e.stopPropagation()} style={{
             background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '16px', padding: '28px', maxWidth: '400px', width: '90%',
+            borderRadius: '16px', padding: '28px', maxWidth: '440px', width: '90%',
             boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
             animation: 'lightboxZoomIn 0.2s ease-out',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,77,106,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
+                {isStaff && !isOwner && !deleteCommentId ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                )}
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Eliminar publicación</h3>
-                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>¿Estás seguro? Esta acción no se puede deshacer.</p>
+                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
+                  {deleteCommentId ? 'Eliminar comentario' : (isStaff && !isOwner ? 'Moderar publicación' : 'Eliminar publicación')}
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  {isStaff && !isOwner && !deleteCommentId
+                    ? 'Esta publicación infringe las normas de la comunidad. ¿Estás seguro de eliminarla?'
+                    : deleteCommentId
+                      ? 'Este comentario infringe las normas. ¿Estás seguro de eliminarlo?'
+                      : '¿Estás seguro? Esta acción no se puede deshacer.'}
+                </p>
               </div>
             </div>
+            {/* Custom moderation note textarea for staff */}
+            {(isStaff && !isOwner) || (isStaff && deleteCommentId) ? (
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label" style={{ fontSize: '0.82rem', marginBottom: '6px', display: 'block', color: 'var(--text-muted)' }}>
+                  Mensaje al usuario <span style={{ fontWeight: 400 }}>(opcional)</span>
+                </label>
+                <textarea
+                  className="input"
+                  value={moderationNote}
+                  onChange={e => setModerationNote(e.target.value)}
+                  placeholder="Explica al usuario por qué se elimina su contenido..."
+                  rows={3}
+                  maxLength={300}
+                  style={{ width: '100%', resize: 'vertical', fontSize: '0.85rem' }}
+                />
+              </div>
+            ) : null}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting} style={{
+              <button onClick={() => { setShowDeleteConfirm(false); setDeleteCommentId(null); setModerationNote(''); }} disabled={deleting} style={{
                 padding: '8px 20px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)',
                 background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: '0.85rem',
               }}
-                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>Cancelar</button>
-              <button onClick={handleDelete} disabled={deleting} style={{
-                padding: '8px 20px', borderRadius: '8px', border: 'none',
-                background: 'linear-gradient(135deg, #ff4d6a, #ff1a4f)',
-                color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
-              }}>{deleting ? 'Eliminando...' : 'Eliminar'}</button>
+                onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>Cancelar</button>
+              <button
+                onClick={() => deleteCommentId ? handleDeleteComment(deleteCommentId) : handleDelete()}
+                disabled={deleting}
+                style={{
+                  padding: '8px 20px', borderRadius: '8px', border: 'none',
+                  background: 'linear-gradient(135deg, #ff4d6a, #ff1a4f)',
+                  color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
+                }}>{deleting ? 'Eliminando...' : 'Eliminar'}</button>
             </div>
           </div>
         </div>
@@ -414,6 +474,24 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
                         <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
                       </svg>
                       Eliminar
+                    </button>
+                  </>
+                )}
+                {!isOwner && isStaff && (
+                  <>
+                    <div style={{ padding: '4px 12px', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Moderar</div>
+                    <button onClick={() => { setShowDeleteConfirm(true); setMenuOpen(false); }} style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                      padding: '8px 12px', border: 'none', background: 'none',
+                      color: '#ff4d6a', cursor: 'pointer', fontSize: '0.82rem',
+                      borderRadius: '6px', transition: 'background 0.15s',
+                    }}
+                      onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,106,0.1)')}
+                      onMouseOut={e => (e.currentTarget.style.background = 'none')}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                      Eliminar publicación
                     </button>
                   </>
                 )}
@@ -567,7 +645,31 @@ export default function PostCard({ post, onLike, currentUserId, onDelete, highli
                       <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', textDecoration: 'none' }}>
                         {comment.user?.vtuberProfile?.displayName || comment.user?.username}
                       </Link>
-                      {currentUserId && comment.userId !== currentUserId && (
+                      {/* Staff moderate button for comments */}
+                      {isStaff && currentUserId && comment.userId !== currentUserId && (
+                        <button
+                          onClick={() => { setDeleteCommentId(comment.id); setShowDeleteConfirm(true); }}
+                          title="Eliminar comentario (moderación)"
+                          style={{
+                            marginLeft: 'auto',
+                            width: '18px', height: '18px', flexShrink: 0,
+                            border: 'none', background: 'none', cursor: 'pointer',
+                            color: '#ff4d6a', opacity: 0.3,
+                            transition: 'opacity 0.15s',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            padding: 0,
+                          }}
+                          onMouseOver={e => (e.currentTarget.style.opacity = '1')}
+                          onMouseOut={e => (e.currentTarget.style.opacity = '0.3')}
+                          aria-label="Moderar comentario"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                          </svg>
+                        </button>
+                      )}
+                      {/* Report button for non-staff users */}
+                      {!isStaff && currentUserId && comment.userId !== currentUserId && (
                         <button
                           onClick={() => openReportModal('comment', comment.id)}
                           title="Reportar comentario"

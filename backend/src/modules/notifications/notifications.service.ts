@@ -131,3 +131,55 @@ export const notifyDM = async (senderUsername: string, senderId: string, receive
     referenceId: senderId,
   });
 };
+
+export const notifyWarning = async (data: {
+  userId: string;
+  strike: number;
+  reason: string;
+  warnedByUsername: string;
+  remainingWarnings: number;
+  autoBanned?: boolean;
+}) => {
+  const title = data.autoBanned
+    ? '🚫 Cuenta suspendida'
+    : `⚠️ Advertencia #${data.strike}`;
+
+  const message = data.autoBanned
+    ? `Has recibido 3 advertencias y tu cuenta ha sido suspendida automáticamente. Motivo: ${data.reason}. Contacta a un administrador para más información.`
+    : `Has recibido una advertencia del staff. Motivo: ${data.reason}. Te quedan ${data.remainingWarnings} advertencia(s) antes de suspensión automática. Moderador: @${data.warnedByUsername}.`;
+
+  return NotificationsRepository.createNotification({
+    userId: data.userId,
+    type: NOTIFICATION_TYPES.WARNING,
+    title,
+    message,
+  });
+};
+
+export const notifyPostDeleted = async (staffUsername: string, postId: string, authorId: string, moderationNote?: string) => {
+  const message = moderationNote
+    ? `Tu publicación fue eliminada por moderación. Moderador: @${staffUsername}. Motivo: ${moderationNote}`
+    : `Tu publicación fue eliminada por violar las normas de la comunidad. Moderador: @${staffUsername}.`;
+
+  return NotificationsRepository.createNotification({
+    userId: authorId,
+    type: NOTIFICATION_TYPES.POST_DELETED,
+    title: 'Publicación eliminada',
+    message,
+    referenceId: postId,
+  });
+};
+
+export const notifyCommentDeleted = async (staffUsername: string, commentId: string, authorId: string, moderationNote?: string) => {
+  const message = moderationNote
+    ? `Tu comentario fue eliminado por moderación. Moderador: @${staffUsername}. Motivo: ${moderationNote}`
+    : `Tu comentario fue eliminado por violar las normas de la comunidad. Moderador: @${staffUsername}.`;
+
+  return NotificationsRepository.createNotification({
+    userId: authorId,
+    type: NOTIFICATION_TYPES.COMMENT_DELETED,
+    title: 'Comentario eliminado',
+    message,
+    referenceId: commentId,
+  });
+};

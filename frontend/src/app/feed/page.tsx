@@ -122,7 +122,7 @@ function FeedContent() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {posts.map(post => (
-                <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user?.id} highlight={highlightPostId === post.id} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
+                <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user?.id} currentUserRole={user?.role} highlight={highlightPostId === post.id} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
               ))}
               {hasMore && (
                 <button onClick={loadMore} disabled={loadingMore} className="btn" style={{

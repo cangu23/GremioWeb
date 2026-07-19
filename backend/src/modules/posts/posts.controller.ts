@@ -52,7 +52,7 @@ export const getPostById = async (req: Request, res: Response, next: NextFunctio
 
 export const deletePost = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await PostsService.deletePost(String(req.params.id), req.user!.id);
+    const result = await PostsService.deletePost(String(req.params.id), req.user!.id, req.body.moderationNote);
     res.json(result);
   } catch (err) { next(err); }
 };
@@ -91,7 +91,7 @@ export const getComments = async (req: Request, res: Response, next: NextFunctio
 
 export const deleteComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await PostsService.deleteComment(String(req.params.commentId), req.user!.id);
+    const result = await PostsService.deleteComment(String(req.params.commentId), req.user!.id, req.body.moderationNote);
     res.json(result);
   } catch (err) { next(err); }
 };
