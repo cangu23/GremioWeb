@@ -2,17 +2,17 @@
 
 # ============================================================
 # Gremio Estelar — Production Startup Script
+# ============================================================
 # Architecture:
-#   - Express (backend) runs on internal port 4001 (background)
-#   - Next.js (frontend) runs on Render's $PORT (foreground)
-#   - Next.js rewrites /api/* requests to Express on 4001
-# This avoids complex reverse proxies and is the recommended pattern.
+#   With frontend: Express on internal 4001, Next.js on Render's $PORT
+#   Without frontend: Express on Render's $PORT directly (API mode)
 # ============================================================
 
 BACKEND_PORT=4001
+RENDER_PORT="${PORT:-4000}"
 
 # ── Database migration ─────────────────────────────────────
-if [ -f /app/prisma/schema.prisma ] || [ -f /app/backend/prisma/schema.prisma ]; then
+if [ -f /app/backend/prisma/schema.prisma ]; then
   SCHEMA="/app/backend/prisma/schema.prisma"
   db_synced=false
   for i in 1 2 3 4 5; do
@@ -32,45 +32,38 @@ if [ -f /app/prisma/schema.prisma ] || [ -f /app/backend/prisma/schema.prisma ];
   fi
 fi
 
-# ── Start Express backend on internal port (background) ────
-if [ -f /app/backend/dist/server.js ]; then
-  echo "[BOOT] Starting Express backend on port $BACKEND_PORT..."
+# ── Check if frontend (Next.js standalone) is available ────
+if [ -f /app/frontend/server.js ]; then
+  echo "[BOOT] Frontend found — starting full stack"
+  echo "[BOOT]   Express on internal port $BACKEND_PORT"
+  echo "[BOOT]   Next.js on Render port $RENDER_PORT"
+
+  # Start Express on internal port 4001 (background)
   PORT=$BACKEND_PORT node /app/backend/dist/server.js &
   EXPRESS_PID=$!
-  echo "[BOOT] Express started (PID: $EXPRESS_PID)"
-  
-  # Wait for Express to be ready (cold start can take 10-30s on Render)
-  echo "[BOOT] Waiting for Express to be ready..."
+
+  # Wait for Express to be ready
   for i in 1 2 3 4 5 6 7 8; do
     if curl -s http://localhost:$BACKEND_PORT/api/health > /dev/null 2>&1; then
-      echo "[BOOT] Express ready on port $BACKEND_PORT"
+      echo "[BOOT] Express ready (PID: $EXPRESS_PID)"
       break
     fi
-    echo "[BOOT] Waiting for Express (attempt $i)..."
     sleep 3
   done
-else
-  echo "[BOOT] Backend build not found — running frontend only"
+
+  # Start Next.js on Render's PORT (foreground)
+  echo "[BOOT] Starting Next.js frontend..."
+  exec node /app/frontend/server.js
 fi
 
-# ── Start Next.js frontend on Render's PORT (foreground) ───
-if [ -f /app/frontend/server.js ]; then
-  echo "[BOOT] Starting Next.js frontend on port ${PORT:-4000}..."
-  # exec replaces the shell so signals go directly to Next.js
-  exec node /app/frontend/server.js
-elif [ -f /app/server.js ]; then
-  echo "[BOOT] Starting Next.js frontend (from /app/server.js) on port ${PORT:-4000}..."
-  exec node /app/server.js
+# ── No frontend available — run Express on Render's PORT ───
+echo "[BOOT] ⚠️  Frontend build not found — API-only mode"
+ls -la /app/frontend/ 2>/dev/null || echo "[BOOT] /app/frontend/ does not exist"
+
+if [ -f /app/backend/dist/server.js ]; then
+  echo "[BOOT] Starting Express on Render port $RENDER_PORT..."
+  exec node /app/backend/dist/server.js
 else
-  echo "[BOOT] ⚠️  Frontend build not found — starting backend only"
-  ls -la /app/ 2>&1
-  # If Express is running in background, wait for it (keep container alive)
-  if [ -n "$EXPRESS_PID" ]; then
-    echo "[BOOT] Backend running on port $BACKEND_PORT (PID: $EXPRESS_PID)"
-    echo "[BOOT] Waiting for Express process..."
-    wait $EXPRESS_PID
-  else
-    echo "[BOOT] No backend either — container has nothing to serve"
-    exit 1
-  fi
+  echo "[BOOT] No backend either — container has nothing to serve"
+  exit 1
 fi
