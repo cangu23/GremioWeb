@@ -54,6 +54,12 @@ const adminNavItems = [
     ],
   },
   {
+    section: 'Personalizacion',
+    items: [
+      { href: '/admin/stickers', label: 'Stickers y Emojis', icon: 'shield' },
+    ],
+  },
+  {
     section: 'Moderacion',
     items: [
       { href: '/admin/reports', label: 'Reportes', icon: 'reports' },

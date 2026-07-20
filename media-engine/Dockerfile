@@ -1,8 +1,10 @@
 # ===== MEDIA ENGINE — Python/FastAPI microservice =====
 # ======================================================
+# Build platform: linux/amd64 (required by Render)
+# ======================================================
 
 # ── BUILD STAGE ────────────────────────────────────────
-FROM python:3.12-slim AS builder
+FROM --platform=linux/amd64 python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -18,7 +20,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # ── RUNTIME STAGE ─────────────────────────────────────
-FROM python:3.12-slim AS runner
+# Render expects the service to run on the $PORT env var (dynamic).
+# We use a shell-form CMD to substitute $PORT at runtime.
+FROM --platform=linux/amd64 python:3.12-slim AS runner
 
 WORKDIR /app
 
@@ -26,6 +30,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg62-turbo \
     libwebp7 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy installed packages from builder
@@ -37,11 +42,13 @@ COPY app ./app
 # Make sure scripts in .local are usable
 ENV PATH=/root/.local/bin:$PATH
 
+# Expose port (Render overrides this with $PORT)
 EXPOSE 8001
 
-# Health check
+# Health check (uses 8001 as fallback if PORT not set)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" || exit 1
+    CMD python -c "import os,urllib.request; port=os.getenv('PORT','8001'); urllib.request.urlopen(f'http://localhost:{port}/health')" || exit 1
 
-# Run with uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+# Use shell form so $PORT env var is substituted at runtime
+# Render injects the PORT env var automatically
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001}

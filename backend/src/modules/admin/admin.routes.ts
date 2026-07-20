@@ -17,6 +17,7 @@ import * as AdminController from './admin.controller';
 import * as CodesController from './codes.controller';
 import * as RequestsController from './requests.controller';
 import * as SettingsController from './settings.controller';
+import * as StickersController from './stickers.controller';
 
 const router = Router();
 
@@ -85,5 +86,11 @@ router.get('/logs', AdminController.listLogs);
 // ========== CAFE SETTINGS ==========
 router.get('/settings', SettingsController.getAllSettings);
 router.patch('/settings', SettingsController.updateSettings);
+
+// ========== STICKERS / EMOJIS (Admin CRUD) ==========
+router.get('/stickers', StickersController.listStickers);
+router.post('/stickers', StickersController.createSticker);
+router.patch('/stickers/:id', StickersController.updateSticker);
+router.delete('/stickers/:id', StickersController.deleteSticker);
 
 export default router;

@@ -8,6 +8,7 @@ import { useToast } from '@/lib/ToastContext';
 import ModerateModal from './ModerateModal';
 import ReportModal from './ReportModal';
 import MentionInput, { renderContentWithMentions } from './MentionInput';
+import StickerPicker from '@/components/ui/StickerPicker';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -50,6 +51,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
   const [comments, setComments] = useState<CommentData[]>([]);
   const [commentText, setCommentText] = useState('');
   const [commentMentionIds, setCommentMentionIds] = useState<string[]>([]);
+  const [showCommentStickerPicker, setShowCommentStickerPicker] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -695,7 +697,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             </div>
           )}
           {currentUserId && (
-            <form onSubmit={handleComment} style={{ display: 'flex', gap: '8px' }}>
+            <form onSubmit={handleComment} style={{ display: 'flex', gap: '6px' }}>
               <div style={{ flex: 1 }}>
                 <MentionInput
                   value={commentText}
@@ -707,7 +709,42 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                   style={{ padding: '7px 10px', fontSize: '0.82rem', minHeight: '34px' }}
                 />
               </div>
-              <button type="submit" className="btn" style={{ padding: '7px 14px', fontSize: '0.82rem', alignSelf: 'flex-end' }} disabled={!commentText.trim()}>Enviar</button>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-end' }}>
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowCommentStickerPicker(!showCommentStickerPicker)}
+                    title="Añadir sticker"
+                    style={{
+                      width: '34px', height: '34px', flexShrink: 0,
+                      borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+                      cursor: 'pointer',
+                      background: showCommentStickerPicker ? 'rgba(138,43,226,0.1)' : 'rgba(255,255,255,0.04)',
+                      color: showCommentStickerPicker ? 'var(--primary)' : 'var(--text-muted)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.15s',
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseOut={e => { if (!showCommentStickerPicker) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                    </svg>
+                  </button>
+                  {showCommentStickerPicker && (
+                    <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: '8px', zIndex: 100 }}>
+                      <StickerPicker
+                        onSelect={(sticker) => {
+                          setCommentText(prev => prev + ` :${sticker.name}: `);
+                          setShowCommentStickerPicker(false);
+                        }}
+                        onClose={() => setShowCommentStickerPicker(false)}
+                      />
+                    </div>
+                  )}
+                </div>
+                <button type="submit" className="btn" style={{ padding: '7px 14px', fontSize: '0.82rem', height: '34px' }} disabled={!commentText.trim()}>Enviar</button>
+              </div>
             </form>
           )}
         </div>

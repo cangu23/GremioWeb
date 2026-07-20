@@ -1,0 +1,78 @@
+# ======================================================
+# Gremio Estelar — Render Blueprint (Infrastructure as Code)
+# ======================================================
+# Connect your GitHub repo to Render and it will auto-detect this file.
+# It deploys TWO services:
+#   1. gremio-web: Express backend + Next.js frontend (monolith)
+#   2. gremio-media-engine: Python/FastAPI image optimization microservice
+# ======================================================
+
+services:
+  # ===== MAIN APP (Backend + Frontend) =====
+  - type: web
+    name: gremio-web
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Health check path (Render will ping this)
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: FRONTEND_PORT
+        value: "3001"
+      - key: DATABASE_URL
+        sync: false  # User fills this in the Render Dashboard
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: "15m"
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: "7d"
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://gremio-web.onrender.com/api
+      # URL of the Media Engine service (set after deploying it)
+      - key: MEDIA_ENGINE_URL
+        value: https://gremio-media-engine.onrender.com
+
+  # ===== MEDIA ENGINE (Python/FastAPI) =====
+  - type: web
+    name: gremio-media-engine
+    env: docker
+    dockerfilePath: ./media-engine/Dockerfile
+    dockerContext: ./media-engine
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8001"
+      - key: DEBUG
+        value: "false"
+      # Cloudflare R2 credentials (fill in Render Dashboard)
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY
+        sync: false
+      - key: R2_SECRET_KEY
+        sync: false
+      - key: R2_BUCKET
+        value: gremio-estelar-media
+      - key: R2_PUBLIC_URL
+        sync: false

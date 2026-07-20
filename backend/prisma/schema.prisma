@@ -82,6 +82,9 @@ model User {
   reportsMade   Report[]       @relation("reportReporter")
   reportsModerated Report[]    @relation("reportModerator")
 
+  // Stickers (admin-managed)
+  stickersAdded Sticker[]    @relation("stickerAuthor")
+
   // Chat messages
   chatMessages  ChatMessage[]
   dmsSent       DirectMessage[] @relation("dmSender")
@@ -686,6 +689,24 @@ model Donation {
   @@index([donorId])
   @@index([recipientId])
   @@index([createdAt])
+}
+
+// ========== STICKERS / EMOJIS (Staff-managed) ==========
+
+model Sticker {
+  id          String   @id @default(cuid())
+  name        String   @unique                    // e.g. "pepe_dance", "kira_heart" — usado como :pepe_dance:
+  imageUrl    String                              // URL de la imagen (WebP optimizado)
+  category    String   @default("general")        // general, anime, meme, hearts, etc.
+  type        String   @default("sticker")        // "emoji" (32x32) or "sticker" (96x96)
+  addedById   String                              // Admin que lo agregó
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  addedBy     User     @relation("stickerAuthor", fields: [addedById], references: [id])
+
+  @@index([category])
+  @@index([type])
 }
 
 // ========== SHOP ==========

@@ -9,6 +9,7 @@ import { apiFetch } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
+import StickerPicker from '@/components/ui/StickerPicker';
 import type { Socket } from 'socket.io-client';
 
 /* ─────────── Types ─────────── */
@@ -104,6 +105,7 @@ function MessengerContent() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [showChatStickerPicker, setShowChatStickerPicker] = useState(false);
 
   // Typing
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
@@ -874,12 +876,46 @@ function MessengerContent() {
               <form
                 onSubmit={handleSend}
                 style={{
-                  display: 'flex', gap: '8px',
+                  display: 'flex', gap: '6px',
                   padding: '12px 18px',
                   borderTop: '1px solid var(--glass-border)',
                   flexShrink: 0,
                 }}
               >
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowChatStickerPicker(!showChatStickerPicker)}
+                    title="Añadir sticker"
+                    style={{
+                      width: '40px', height: '40px',
+                      borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)',
+                      cursor: 'pointer',
+                      background: showChatStickerPicker ? 'rgba(138,43,226,0.1)' : 'rgba(255,255,255,0.04)',
+                      color: showChatStickerPicker ? 'var(--primary)' : 'var(--text-muted)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.15s',
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseOut={e => { if (!showChatStickerPicker) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                    </svg>
+                  </button>
+                  {showChatStickerPicker && (
+                    <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: '8px', zIndex: 100 }}>
+                      <StickerPicker
+                        onSelect={(sticker) => {
+                          setInput(prev => prev + ` :${sticker.name}: `);
+                          setShowChatStickerPicker(false);
+                          setTimeout(() => inputRef.current?.focus(), 50);
+                        }}
+                        onClose={() => setShowChatStickerPicker(false)}
+                      />
+                    </div>
+                  )}
+                </div>
                 <input
                   ref={inputRef}
                   className="input"

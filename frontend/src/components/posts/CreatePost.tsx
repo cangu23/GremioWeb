@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import UserAvatar from '@/components/ui/UserAvatar';
 import MentionInput from './MentionInput';
+import StickerPicker from '@/components/ui/StickerPicker';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import type { CreatePostData } from '../../../../shared/types';
 
@@ -75,6 +76,8 @@ export default function CreatePost({
   const [processingImage, setProcessingImage] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [mentionIds, setMentionIds] = useState<string[]>([]);
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const [selectedSticker, setSelectedSticker] = useState<{ imageUrl: string; name: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadAndWait } = useSocketMedia();
@@ -128,19 +131,22 @@ export default function CreatePost({
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setSelectedImage(null);
     setImagePreview(null);
+    setSelectedSticker(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { router.push('/login'); return; }
-    if (!content.trim() && !selectedImage) return;
+    if (!content.trim() && !selectedImage && !selectedSticker) return;
 
     setPosting(true);
     setError('');
 
     try {
       let mediaUrl: string | undefined;
-      if (selectedImage) {
+      if (selectedSticker) {
+        mediaUrl = selectedSticker.imageUrl;
+      } else if (selectedImage) {
         setUploadingImage(true);
         setProcessingImage(true);
         try {
@@ -165,6 +171,7 @@ export default function CreatePost({
       setContent('');
       setMentionIds([]);
       removeImage();
+      setSelectedSticker(null);
       onRefreshTrending?.();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al publicar');
@@ -214,6 +221,36 @@ export default function CreatePost({
                   color: 'var(--text)', width: '100%',
                 }}
               />
+
+              {/* Sticker preview */}
+              {selectedSticker && (
+                <div style={{
+                  position: 'relative', marginBottom: '8px', borderRadius: '10px',
+                  overflow: 'hidden', border: '1px solid rgba(138,43,226,0.2)',
+                  padding: '12px', textAlign: 'center',
+                  background: 'rgba(138,43,226,0.04)',
+                }}>
+                  <img
+                    src={selectedSticker.imageUrl} alt={selectedSticker.name}
+                    style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain' }}
+                  />
+                  <div style={{
+                    fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px',
+                  }}>
+                    :{selectedSticker.name}:
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSticker(null)}
+                    style={{
+                      position: 'absolute', top: '6px', right: '6px', width: '24px', height: '24px',
+                      borderRadius: '50%', border: 'none', cursor: 'pointer',
+                      background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '0.75rem',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >✕</button>
+                </div>
+              )}
 
               {imagePreview && (
                 <div style={{
@@ -268,12 +305,47 @@ export default function CreatePost({
                     <ImageIcon />
                     Foto
                   </button>
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowStickerPicker(!showStickerPicker)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                        padding: '5px 10px', borderRadius: '6px',
+                        cursor: 'pointer',
+                        color: showStickerPicker ? 'var(--primary)' : 'var(--text-muted)',
+                        fontSize: '0.78rem',
+                        transition: 'all 0.2s',
+                        background: showStickerPicker ? 'rgba(138,43,226,0.1)' : 'none',
+                        border: 'none',
+                      }}
+                      onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                      onMouseOut={e => { if (!showStickerPicker) e.currentTarget.style.background = 'transparent'; }}
+                      title="Añadir sticker"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                      </svg>
+                      Sticker
+                    </button>
+                    {showStickerPicker && (
+                      <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: '8px', zIndex: 100 }}>
+                        <StickerPicker
+                          onSelect={(sticker) => {
+                            setSelectedSticker({ imageUrl: sticker.imageUrl, name: sticker.name });
+                            setShowStickerPicker(false);
+                          }}
+                          onClose={() => setShowStickerPicker(false)}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{content.length}/2000</span>
                 </div>
                 <button
                   type="submit"
                   className="btn"
-                  disabled={(!content.trim() && !selectedImage) || posting || uploadingImage}
+                  disabled={(!content.trim() && !selectedImage && !selectedSticker) || posting || uploadingImage}
                   style={{ padding: '7px 18px', fontSize: '0.82rem' }}
                 >
                   {processingImage ? 'Procesando imagen...' : uploadingImage ? 'Subiendo...' : posting ? 'Publicando...' : 'Publicar'}
@@ -336,6 +408,40 @@ export default function CreatePost({
           disabled={!user}
         />
 
+        {/* Sticker preview (full mode) */}
+        {selectedSticker && (
+          <div style={{
+            position: 'relative', marginBottom: '12px', borderRadius: '12px',
+            border: '1px solid rgba(138,43,226,0.2)',
+            padding: '16px', textAlign: 'center',
+            background: 'rgba(138,43,226,0.04)',
+          }}>
+            <img
+              src={selectedSticker.imageUrl} alt={selectedSticker.name}
+              style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'contain' }}
+            />
+            <div style={{
+              fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px',
+            }}>
+              Sticker: :{selectedSticker.name}:
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedSticker(null)}
+              style={{
+                position: 'absolute', top: '8px', right: '8px', width: '28px', height: '28px',
+                borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '0.9rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.2s',
+              }}
+              onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,79,0.8)')}
+              onMouseOut={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.7)')}
+              title="Quitar sticker"
+            >✕</button>
+          </div>
+        )}
+
         {imagePreview && (
           <div style={{
             position: 'relative', marginBottom: '12px', borderRadius: '12px', overflow: 'hidden',
@@ -392,6 +498,39 @@ export default function CreatePost({
                   <ImageIcon />
                   Imagen
                 </button>
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowStickerPicker(!showStickerPicker)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '6px 12px', borderRadius: '8px', cursor: 'pointer',
+                      color: showStickerPicker ? 'var(--primary)' : 'var(--text)',
+                      fontSize: '0.85rem', transition: 'all 0.2s',
+                      background: showStickerPicker ? 'rgba(138,43,226,0.1)' : 'rgba(255,255,255,0.05)',
+                      border: 'none',
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                    onMouseOut={e => { if (!showStickerPicker) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                    title="Añadir sticker"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                    </svg>
+                    Sticker
+                  </button>
+                  {showStickerPicker && (
+                    <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: '8px', zIndex: 100 }}>
+                      <StickerPicker
+                        onSelect={(sticker) => {
+                          setSelectedSticker({ imageUrl: sticker.imageUrl, name: sticker.name });
+                          setShowStickerPicker(false);
+                        }}
+                        onClose={() => setShowStickerPicker(false)}
+                      />
+                    </div>
+                  )}
+                </div>
               </>
             )}
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -401,7 +540,7 @@ export default function CreatePost({
           <button
             type="submit"
             className="btn"
-            disabled={!user || (!content.trim() && !selectedImage) || posting || uploadingImage}
+            disabled={!user || (!content.trim() && !selectedImage && !selectedSticker) || posting || uploadingImage}
             style={{ padding: '10px 24px' }}
           >
             {processingImage ? 'Procesando imagen...' : uploadingImage ? 'Subiendo imagen...' : posting ? 'Publicando...' : 'Publicar'}

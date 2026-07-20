@@ -25,6 +25,10 @@ else
 fi
 
 # ── Database migration ─────────────────────────────────────
+# Uses `prisma db push` to sync the schema. This is the recommended approach
+# for this project since all tables were initially created via db push.
+# Migration files exist in backend/prisma/migrations/ for future reference
+# when transitioning to prisma migrate deploy.
 db_synced=false
 for i in 1 2 3 4 5; do
   echo "[BOOT] Attempt $i: Running prisma db push..."
