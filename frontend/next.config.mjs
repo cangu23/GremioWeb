@@ -5,6 +5,23 @@ const nextConfig = {
   output: 'standalone',
 
   transpilePackages: ['@gremio-estelar/shared'],
+
+  // Rewrite /api requests to the Express backend running on internal port 4001
+  // This avoids the need for a reverse proxy — Next.js handles frontend + proxies API calls
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:4001/api/:path*',
+      },
+      // WebSocket upgrade requests also go through the same host
+      {
+        source: '/socket.io/:path*',
+        destination: 'http://localhost:4001/socket.io/:path*',
+      },
+    ];
+  },
+
   images: {
     remotePatterns: [
       {

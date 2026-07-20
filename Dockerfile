@@ -68,18 +68,21 @@ EXPOSE 3000
 # Start Next.js standalone server
 CMD ["node", "server.js"]
 
-# ===== BACKEND PRODUCTION STAGE =====
+# ===== PRODUCTION STAGE (Next.js foreground + Express background) =====
+# Architecture:
+#   - Next.js standalone runs on Render's $PORT (foreground, handles HTTP)
+#   - Express backend runs on internal port 4001 (background)
+#   - Next.js rewrites /api/* -> Express via next.config.mjs
 FROM --platform=linux/amd64 node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=4000
 
-# Install openssl (required by Prisma on Alpine)
+# Install openssl (required by Prisma on Alpine) + curl (for healthchecks)
 RUN apk add --no-cache openssl curl
 
-# Copy only what the backend needs to run
+# Copy root package files
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
 
@@ -89,24 +92,27 @@ COPY --from=builder /app/shared/package.json ./shared/
 
 COPY --from=builder /app/node_modules ./node_modules
 
-# Remove devDependencies (vitest, typescript, @types/*, etc.) to reduce image size
-# prisma CLI is kept because it's needed for runtime migrations (see /start.sh)
+# Remove devDependencies to reduce image size
+# prisma CLI is kept for runtime migrations (see /start.sh)
 RUN npm prune --omit=dev
 
+# ── Backend (Express) ────────────────────────────────
 COPY --from=builder /app/backend/dist ./backend/dist
 COPY --from=builder /app/backend/prisma ./backend/prisma
 COPY --from=builder /app/shared/dist ./shared/dist
 
 # ── Frontend (Next.js standalone) ─────────────────────
-# Copy the standalone output and static files so Express can serve them
+# The standalone folder contains a self-contained server.js with bundled deps
 COPY --from=builder /app/frontend/.next/standalone ./frontend
+# Static files are not included in standalone by default
 COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
+# Public assets (favicon, robots.txt, etc.)
 COPY --from=builder /app/frontend/public ./frontend/public
 
-# Expose port for the Express API
+# Frontend listens on Render's $PORT, backend on internal 4001
 EXPOSE 4000
 
-# Copy startup script (separate file to avoid printf escaping issues)
+# Copy startup script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 

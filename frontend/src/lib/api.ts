@@ -1,6 +1,9 @@
 let currentAccessToken: string | null = null;
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
+// In production, Next.js rewrites /api/* to the Express backend (port 4001).
+// In development, the Next.js dev server proxies to the Express backend (port 4000).
+// Set NEXT_PUBLIC_API_BASE_URL to '/api' for production, or the full URL for dev.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
 export const setAccessToken = (token: string | null) => {
   currentAccessToken = token;
