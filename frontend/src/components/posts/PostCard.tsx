@@ -53,7 +53,19 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportTarget, setReportTarget] = useState<'post' | 'comment'>('post');
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number; y: number;
+    type: 'post' | 'comment';
+    commentId?: string;
+  } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+
+  // Quick moderation open helper
+  const openModerateModal = (targetType: 'post' | 'comment', commentId?: string) => {
+    setDeleteCommentId(targetType === 'comment' ? (commentId || null) : null);
+    setShowDeleteConfirm(true);
+  };
 
   // Close menu on outside click
   useEffect(() => {
@@ -64,6 +76,29 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+        setContextMenu(null);
+      }
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    // Delay adding listener to avoid the same click that opened it
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('keydown', handleEsc);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [contextMenu]);
 
   const isOwner = currentUserId === post.userId;
   const isStaff = currentUserRole === 'ADMIN' || currentUserRole === 'MODERATOR';
@@ -133,7 +168,25 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
       transition: 'box-shadow 0.5s ease, border-color 0.5s ease',
       boxShadow: highlight ? '0 0 0 2px var(--primary), 0 0 20px rgba(108,99,255,0.3)' : undefined,
       borderColor: highlight ? 'var(--primary)' : undefined,
-    }}>
+      position: 'relative',
+      cursor: isStaff && !isOwner ? (contextMenu ? 'default' : undefined) : undefined,
+    }}
+      // Ctrl+Click → direct moderation for staff
+      onClick={(e) => {
+        if ((e.ctrlKey || e.metaKey) && isStaff && !isOwner) {
+          e.preventDefault();
+          e.stopPropagation();
+          openModerateModal('post');
+        }
+      }}
+      // Right-click → custom context menu for staff
+      onContextMenu={(e) => {
+        if (isStaff && !isOwner) {
+          e.preventDefault();
+          setContextMenu({ x: e.clientX, y: e.clientY, type: 'post' });
+        }
+      }}
+    >
 
       {/* ===== LIGHTBOX ===== */}
       {lightboxImage && (
@@ -172,6 +225,84 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
         </div>
       )}
 
+      {/* ===== CUSTOM CONTEXT MENU ===== */}
+      {contextMenu && (
+        <div
+          ref={contextMenuRef}
+          style={{
+            position: 'fixed',
+            left: contextMenu.x,
+            top: contextMenu.y,
+            zIndex: 10002,
+            minWidth: '180px',
+            background: '#1a1a2e',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '12px',
+            padding: '4px',
+            boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+            animation: 'fadeInUp 0.1s ease-out',
+          }}
+        >
+          <div style={{
+            padding: '6px 12px 4px',
+            fontSize: '0.65rem',
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            fontWeight: 600,
+          }}>
+            Moderación rápida
+          </div>            <button
+            onClick={() => {
+              openModerateModal(contextMenu.type === 'comment' ? 'comment' : 'post', contextMenu.commentId);
+              setContextMenu(null);
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+              padding: '8px 12px', border: 'none', background: 'none',
+              color: '#ff4d6a', cursor: 'pointer', fontSize: '0.82rem',
+              borderRadius: '6px', transition: 'background 0.15s',
+            }}
+            onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,106,0.1)')}
+            onMouseOut={e => (e.currentTarget.style.background = 'none')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+            {contextMenu.type === 'post' ? 'Eliminar publicación' : 'Eliminar comentario'}
+            <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+              Ctrl+Click
+            </span>
+          </button>
+
+          {!isOwner && currentUserId && (
+            <button
+              onClick={() => {
+                openReportModal(
+                  contextMenu.type,
+                  contextMenu.commentId
+                );
+                setContextMenu(null);
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                padding: '8px 12px', border: 'none', background: 'none',
+                color: '#ff9800', cursor: 'pointer', fontSize: '0.82rem',
+                borderRadius: '6px', transition: 'background 0.15s',
+              }}
+              onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,152,0,0.1)')}
+              onMouseOut={e => (e.currentTarget.style.background = 'none')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+              </svg>
+              Reportar {contextMenu.type === 'post' ? 'publicación' : 'comentario'}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ===== WIDGETS (portal-based) ===== */}
       {/* Report Modal Widget */}
       <ReportModal
@@ -195,6 +326,10 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
         authorName={deleteCommentId
           ? comments.find(c => c.id === deleteCommentId)?.user?.username || ''
           : post.user?.username || ''
+        }
+        authorAvatarUrl={deleteCommentId
+          ? comments.find(c => c.id === deleteCommentId)?.user?.vtuberProfile?.avatarUrl || undefined
+          : post.user?.vtuberProfile?.avatarUrl || undefined
         }
         authorId={deleteCommentId
           ? comments.find(c => c.id === deleteCommentId)?.userId || ''
@@ -440,10 +575,53 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
               {comments.map(comment => (
-                <div key={comment.id} style={{ display: 'flex', gap: '8px', position: 'relative', paddingRight: '20px' }}>
+                <div key={comment.id} style={{
+                  display: 'flex', gap: '8px', position: 'relative', paddingRight: '20px',
+                  // Visual feedback for staff on hover when not owner
+                  ...(isStaff && currentUserId && comment.userId !== currentUserId ? {
+                    borderRadius: '6px',
+                    transition: 'background 0.15s',
+                    cursor: contextMenu ? 'default' : undefined,
+                  } : {}),
+                }}
+                  // Ctrl+Click → direct moderation for staff
+                  onClick={(e) => {
+                    if ((e.ctrlKey || e.metaKey) && isStaff && currentUserId && comment.userId !== currentUserId) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openModerateModal('comment', comment.id);
+                    }
+                  }}
+                  // Right-click → custom context menu for staff
+                  onContextMenu={(e) => {
+                    if (isStaff && currentUserId && comment.userId !== currentUserId) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setContextMenu({ x: e.clientX, y: e.clientY, type: 'comment', commentId: comment.id });
+                    }
+                  }}
+                  onMouseOver={e => {
+                    if (isStaff && currentUserId && comment.userId !== currentUserId) {
+                      e.currentTarget.style.background = 'rgba(255,77,106,0.04)';
+                    }
+                  }}
+                  onMouseOut={e => {
+                    if (isStaff && currentUserId && comment.userId !== currentUserId) {
+                      e.currentTarget.style.background = 'none';
+                    }
+                  }}
+                >
                   <Link href={`/profile/${comment.userId}`}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0 }}>
-                      {(comment.user?.vtuberProfile?.displayName || comment.user?.username || '?').charAt(0).toUpperCase()}
+                    <div style={{
+                      width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                      background: comment.user?.vtuberProfile?.avatarUrl
+                        ? `url(${comment.user.vtuberProfile.avatarUrl}) center/cover`
+                        : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontSize: '0.7rem', fontWeight: 'bold',
+                      overflow: 'hidden',
+                    }}>
+                      {!comment.user?.vtuberProfile?.avatarUrl && (comment.user?.vtuberProfile?.displayName || comment.user?.username || '?').charAt(0).toUpperCase()}
                     </div>
                   </Link>
                   <div style={{ flex: 1, minWidth: 0 }}>

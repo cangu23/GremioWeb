@@ -230,13 +230,15 @@ function EventDetailContent() {
               e.currentTarget.style.borderColor = 'transparent';
             }}>
             <div style={{
-              width: '44px', height: '44px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+              width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
+              background: event.creator.vtuberProfile?.avatarUrl
+                ? `url(${event.creator.vtuberProfile.avatarUrl}) center/cover`
+                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
-              flexShrink: 0,
+              overflow: 'hidden',
             }}>
-              {(event.creator.vtuberProfile?.displayName || event.creator.username).charAt(0).toUpperCase()}
+              {!event.creator.vtuberProfile?.avatarUrl && (event.creator.vtuberProfile?.displayName || event.creator.username).charAt(0).toUpperCase()}
             </div>
             <div>
               <div style={{ fontWeight: 600 }}>

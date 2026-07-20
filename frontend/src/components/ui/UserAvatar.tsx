@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState, useCallback } from 'react';
+import ProfileCardWidget from './ProfileCardWidget';
 
 interface UserAvatarProps {
   src?: string | null;
@@ -31,23 +31,40 @@ export default function UserAvatar({
   isVerified, isLive, className, style,
 }: UserAvatarProps) {
   const [showNote, setShowNote] = useState(false);
+  const [profileCardUserId, setProfileCardUserId] = useState<string | null>(null);
   const hasNote = !!note;
   const ringSize = size + 6; // 3px padding per side
   const noteDotSize = Math.max(10, Math.round(size * 0.28));
 
+  const openProfileCard = useCallback(() => {
+    if (userId) setProfileCardUserId(userId);
+  }, [userId]);
+
+  const closeProfileCard = useCallback(() => {
+    setProfileCardUserId(null);
+  }, []);
+
   const avatarContent = (
-    <div
-      style={{
-        position: 'relative',
-        display: 'inline-flex',
-        cursor: hasNote ? 'pointer' : undefined,
-        ...(style as React.CSSProperties),
-      }}
-      className={className}
-      onMouseEnter={() => hasNote && setShowNote(true)}
-      onMouseLeave={() => setShowNote(false)}
-      onClick={() => hasNote && setShowNote(!showNote)}
-    >
+    <>
+      {/* Profile card widget */}
+      {profileCardUserId && (
+        <ProfileCardWidget userId={profileCardUserId} onClose={closeProfileCard} />
+      )}
+
+      <div
+        style={{
+          position: 'relative',
+          display: 'inline-flex',
+          cursor: 'pointer',
+          ...(style as React.CSSProperties),
+        }}
+        className={className}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openProfileCard();
+        }}
+      >
       {/* Note ring */}
       {hasNote && (
         <div
@@ -188,14 +205,11 @@ export default function UserAvatar({
         </div>
       )}
     </div>
+    </>
   );
 
   if (userId) {
-    return (
-      <Link href={`/profile/${userId}`} style={{ textDecoration: 'none', display: 'inline-flex' }}>
-        {avatarContent}
-      </Link>
-    );
+    return avatarContent;
   }
 
   return avatarContent;

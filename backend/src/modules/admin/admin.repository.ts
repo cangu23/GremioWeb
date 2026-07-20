@@ -237,7 +237,11 @@ export const findEvents = (params: {
     take: params.take,
     include: {
       creator: {
-        select: { id: true, username: true },
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
       },
       _count: { select: { attendees: true } },
     },
@@ -260,11 +264,21 @@ export const findEventById = (id: string) => {
   return prisma.event.findUnique({
     where: { id },
     include: {
-      creator: { select: { id: true, username: true } },
+      creator: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
       attendees: {
         include: {
           user: {
-            select: { id: true, username: true },
+            select: {
+              id: true,
+              username: true,
+              vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+            },
           },
         },
       },
@@ -308,7 +322,13 @@ export const findGuilds = (params: {
     skip: params.skip,
     take: params.take,
     include: {
-      creator: { select: { id: true, username: true } },
+      creator: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
       _count: { select: { members: true } },
     },
   });
@@ -329,10 +349,22 @@ export const findGuildById = (id: string) => {
   return prisma.guild.findUnique({
     where: { id },
     include: {
-      creator: { select: { id: true, username: true } },
+      creator: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
       members: {
         include: {
-          user: { select: { id: true, username: true } },
+          user: {
+            select: {
+              id: true,
+              username: true,
+              vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+            },
+          },
         },
       },
       _count: { select: { members: true } },
@@ -374,7 +406,13 @@ export const findPosts = (params: {
     skip: params.skip,
     take: params.take,
     include: {
-      user: { select: { id: true, username: true } },
+      user: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
       _count: { select: { comments: true, likes: true } },
     },
   });
@@ -391,7 +429,13 @@ export const findPostById = (id: string) => {
   return prisma.post.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, username: true } },
+      user: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
       _count: { select: { comments: true, likes: true } },
     },
   });
@@ -401,7 +445,15 @@ export const updatePost = (id: string, data: Prisma.PostUpdateInput) => {
   return prisma.post.update({
     where: { id },
     data,
-    include: { user: { select: { id: true, username: true } } },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
+    },
   });
 };
 
@@ -435,7 +487,13 @@ export const findComments = (params: {
     skip: params.skip,
     take: params.take,
     include: {
-      user: { select: { id: true, username: true } },
+      user: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
       post: { select: { id: true, content: true } },
     },
   });
@@ -452,7 +510,13 @@ export const findCommentById = (id: string) => {
   return prisma.comment.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, username: true } },
+      user: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
       post: { select: { id: true, content: true } },
     },
   });
@@ -462,7 +526,15 @@ export const updateComment = (id: string, data: Prisma.CommentUpdateInput) => {
   return prisma.comment.update({
     where: { id },
     data,
-    include: { user: { select: { id: true, username: true } } },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
+    },
   });
 };
 

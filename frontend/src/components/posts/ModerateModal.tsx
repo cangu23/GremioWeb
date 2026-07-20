@@ -19,6 +19,8 @@ interface ModerateModalProps {
   contentPreview?: string;
   /** Author username for display */
   authorName?: string;
+  /** Author avatar URL for display */
+  authorAvatarUrl?: string;
   /** Author user ID for display */
   authorId?: string;
   /** Whether the current user is staff (ADMIN/MODERATOR) */
@@ -47,6 +49,7 @@ export default function ModerateModal({
   targetId,
   contentPreview,
   authorName,
+  authorAvatarUrl,
   authorId,
   isStaff,
   isOwner,
@@ -234,15 +237,19 @@ export default function ModerateModal({
                 borderRadius: '10px',
               }}
             >
+              {/* Avatar: show actual image if available, fallback to initial */}
               <div
                 style={{
                   width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                  background: authorAvatarUrl
+                    ? `url(${authorAvatarUrl}) center/cover`
+                    : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: 'white', fontSize: '0.75rem', fontWeight: 'bold',
+                  overflow: 'hidden',
                 }}
               >
-                {(authorName || '?').charAt(0).toUpperCase()}
+                {!authorAvatarUrl && (authorName || '?').charAt(0).toUpperCase()}
               </div>
               <div>
                 <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)' }}>
