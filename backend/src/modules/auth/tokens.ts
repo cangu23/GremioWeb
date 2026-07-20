@@ -1,6 +1,6 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
-import env from '../../config/env.js';
+import env from '../../config/env';
 
 export const generateTokens = (userId: string) => {
   const accessToken = jwt.sign({ userId }, env.JWT_ACCESS_SECRET, {

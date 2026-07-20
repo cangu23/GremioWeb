@@ -5,9 +5,10 @@ import path from 'path';
 // Going up 2 levels always lands us inside the backend/ directory
 const backendDir = path.resolve(__dirname, '../..');
 
-// Load backend/.env first (highest priority), then root .env as fallback
-dotenv.config({ path: path.join(backendDir, '.env') });
-dotenv.config({ path: path.join(backendDir, '..', '.env') }); // root .env fallback
+// Load backend/.env with override=true to take precedence over pre-existing env vars
+dotenv.config({ path: path.join(backendDir, '.env'), override: true });
+// Load root .env as fallback (lower priority)
+dotenv.config({ path: path.join(backendDir, '..', '.env') });
 
 
 interface EnvConfig {

@@ -69,7 +69,8 @@ const roleConfig: Record<string, { label: string; color: string; bg: string }> =
 };
 
 function GuildDetailContent() {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? '';
   const { user } = useAuth();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);

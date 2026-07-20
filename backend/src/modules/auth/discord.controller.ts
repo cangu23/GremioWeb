@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as DiscordService from './discord.service';
-import env from '../../config/env.js';
+import env from '../../config/env';
 
 const DISCORD_AUTH_URL = 'https://discord.com/api/oauth2/authorize';
 

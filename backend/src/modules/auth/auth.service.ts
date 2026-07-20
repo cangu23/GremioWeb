@@ -1,12 +1,12 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { AuthProvider, Role } from '@gremio-estelar/shared';
-import { prisma } from '../../database/index.js';
+import { prisma } from '../../database/index';
 import * as UserRepository from '../users/user.repository';
 import * as AuthRepository from './auth.repository';
-import AppError from '../../errors/AppError.js';
-import env from '../../config/env.js';
-import { generateTokens, hashToken } from './tokens.js';
+import AppError from '../../errors/AppError';
+import env from '../../config/env';
+import { generateTokens, hashToken } from './tokens';
 import { LoginInput, RegisterInput, RefreshTokenInput } from './auth.types';
 
 /**

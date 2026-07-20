@@ -139,7 +139,8 @@ function SectionTitle({ icon, children, count }: { icon: React.ReactNode; childr
 /* ─────────── Main Content ─────────── */
 
 function VtuberPublicProfile() {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? '';
   const { user: currentUser } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();

@@ -2,10 +2,10 @@ import { OAuth2Client } from 'google-auth-library';
 import { AuthProvider, Role } from '@gremio-estelar/shared';
 import * as UserRepository from '../users/user.repository';
 import * as AuthRepository from './auth.repository';
-import AppError from '../../errors/AppError.js';
-import env from '../../config/env.js';
-import { prisma } from '../../database/index.js';
-import { generateTokens, hashToken } from './tokens.js';
+import AppError from '../../errors/AppError';
+import env from '../../config/env';
+import { prisma } from '../../database/index';
+import { generateTokens, hashToken } from './tokens';
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 

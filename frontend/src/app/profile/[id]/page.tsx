@@ -84,7 +84,8 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 function ProfileContent() {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? '';
   const { user: currentUser } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<SocialProfile | null>(null);

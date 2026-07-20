@@ -122,7 +122,7 @@ function MessengerContent() {
 
   /* ─── Handle `?user=` query param ─── */
   useEffect(() => {
-    const userIdFromUrl = searchParams.get('user');
+    const userIdFromUrl = searchParams?.get('user');
     if (userIdFromUrl && userIdFromUrl !== currentUser?.id) {
       setActiveUserId(userIdFromUrl);
       setShowList(false);

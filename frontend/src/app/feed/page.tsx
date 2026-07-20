@@ -36,7 +36,7 @@ function FeedContent() {
   useEffect(() => {
     fetchHashtags();
     // Check if we need to scroll to a specific post
-    const postId = searchParams.get('post');
+    const postId = searchParams?.get('post');
     if (postId) {
       postRef.current = postId;
     }

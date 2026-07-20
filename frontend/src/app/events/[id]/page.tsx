@@ -37,7 +37,8 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 function EventDetailContent() {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? '';
   const { user } = useAuth();
   const router = useRouter();
   const [event, setEvent] = useState<EventDetail | null>(null);

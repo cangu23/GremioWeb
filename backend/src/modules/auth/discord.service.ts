@@ -1,10 +1,10 @@
 import { AuthProvider, Role } from '@gremio-estelar/shared';
 import * as UserRepository from '../users/user.repository';
 import * as AuthRepository from './auth.repository';
-import AppError from '../../errors/AppError.js';
-import env from '../../config/env.js';
-import { prisma } from '../../database/index.js';
-import { generateTokens, hashToken } from './tokens.js';
+import AppError from '../../errors/AppError';
+import env from '../../config/env';
+import { prisma } from '../../database/index';
+import { generateTokens, hashToken } from './tokens';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 
