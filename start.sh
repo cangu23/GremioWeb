@@ -58,8 +58,19 @@ if [ -f /app/frontend/server.js ]; then
   echo "[BOOT] Starting Next.js frontend on port ${PORT:-4000}..."
   # exec replaces the shell so signals go directly to Next.js
   exec node /app/frontend/server.js
+elif [ -f /app/server.js ]; then
+  echo "[BOOT] Starting Next.js frontend (from /app/server.js) on port ${PORT:-4000}..."
+  exec node /app/server.js
 else
-  echo "[BOOT] Frontend build not found at /app/frontend/server.js"
-  ls -la /app/frontend/ 2>/dev/null || echo "[BOOT] /app/frontend/ does not exist"
-  exit 1
+  echo "[BOOT] ⚠️  Frontend build not found — starting backend only"
+  ls -la /app/ 2>&1
+  # If Express is running in background, wait for it (keep container alive)
+  if [ -n "$EXPRESS_PID" ]; then
+    echo "[BOOT] Backend running on port $BACKEND_PORT (PID: $EXPRESS_PID)"
+    echo "[BOOT] Waiting for Express process..."
+    wait $EXPRESS_PID
+  else
+    echo "[BOOT] No backend either — container has nothing to serve"
+    exit 1
+  fi
 fi
