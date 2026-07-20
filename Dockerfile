@@ -77,7 +77,7 @@ ENV NODE_ENV=production
 ENV PORT=4000
 
 # Install openssl (required by Prisma on Alpine)
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl curl
 
 # Copy only what the backend needs to run
 COPY --from=builder /app/package.json ./
@@ -106,37 +106,8 @@ COPY --from=builder /app/frontend/public ./frontend/public
 # Expose port for the Express API
 EXPOSE 4000
 
-# Create startup script (avoids JSON escaping issues with multi-line CMD)
-RUN printf '#!/bin/sh\n\
-# Start Next.js standalone server in background (port 3001)\n\
-if [ -f /app/frontend/server.js ]; then\n\
-  echo "[BOOT] Starting Next.js frontend on port 3001..."\n\
-  PORT=3001 node /app/frontend/server.js &\n\
-  FRONTEND_PID=$!\
-\
-  # Wait for frontend to be ready (max 15s)\n\
-  for i in 1 2 3; do\n\
-    if curl -s http://localhost:3001/ > /dev/null 2>&1; then\n\
-      echo "[BOOT] Frontend ready (PID: $FRONTEND_PID)"\n\
-      break\n\
-    fi\n\
-    echo "[BOOT] Waiting for frontend to start (attempt $i)..."\n\
-    sleep 5\n\
-  done\n\
-fi\n\
-# Database migration (retry up to 5 times)\n\
-for i in 1 2 3 4 5; do\n\
-  echo "[BOOT] Attempt $i: Running prisma db push..."\n\
-  if npx prisma db push --schema backend/prisma/schema.prisma --skip-generate; then\n\
-    echo "[BOOT] Database sync successful!"\n\
-    break\n\
-  fi\n\
-  if [ "$i" -lt 5 ]; then\n\
-    echo "[BOOT] Attempt $i failed, waiting 5s before retry..."\n\
-    sleep 5\n\
-  fi\n\
-done\n\
-echo "[BOOT] Starting backend server on port 4000..."\n\
-exec node backend/dist/server.js\n' > /start.sh && chmod +x /start.sh
+# Copy startup script (separate file to avoid printf escaping issues)
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 CMD ["/start.sh"]
