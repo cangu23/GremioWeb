@@ -60,9 +60,12 @@ export default function UserAvatar({
         }}
         className={className}
         onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          openProfileCard();
+          if (userId) {
+            e.preventDefault();
+            e.stopPropagation();
+            openProfileCard();
+          }
+          // Sin userId, el click pasa al padre (ej: botón del navbar)
         }}
       >
       {/* Note ring */}
