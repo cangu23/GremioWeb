@@ -7,6 +7,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import { useToast } from '@/lib/ToastContext';
 import ModerateModal from './ModerateModal';
 import ReportModal from './ReportModal';
+import MentionInput, { renderContentWithMentions } from './MentionInput';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -48,6 +49,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
   const [moderationNote, setModerationNote] = useState('');
   const [comments, setComments] = useState<CommentData[]>([]);
   const [commentText, setCommentText] = useState('');
+  const [commentMentionIds, setCommentMentionIds] = useState<string[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -140,10 +142,15 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
     if (!commentText.trim()) return;
     try {
       const newComment = await apiFetch(`/posts/${post.id}/comments`, {
-        method: 'POST', body: JSON.stringify({ content: commentText.trim() }),
+        method: 'POST',
+        body: JSON.stringify({
+          content: commentText.trim(),
+          mentions: commentMentionIds.length > 0 ? commentMentionIds : undefined,
+        }),
       });
       setComments(prev => [...prev, newComment]);
       setCommentText('');
+      setCommentMentionIds([]);
       post._count.comments++;
     } catch {}
   };
@@ -474,13 +481,8 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               </button>
             </div>
           </div>
-        ) : (
-          <p style={{ fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: '8px' }}>
-            {post.content.split(/(#\w+)/g).map((part, i) => {
-              if (part.startsWith('#')) return <Link key={i} href={`/feed?tag=${part.slice(1)}`} style={{ color: 'var(--primary)', fontWeight: 500 }}>{part}</Link>;
-              if (part.startsWith('@')) return <Link key={i} href={`/vtubers?q=${encodeURIComponent(part.slice(1))}`} style={{ color: 'var(--secondary)', fontWeight: 500 }}>{part}</Link>;
-              return part;
-            })}
+        ) : (            <p style={{ fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: '8px' }}>
+            {renderContentWithMentions(post.content)}
           </p>
         )}
 
@@ -686,7 +688,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                         </button>
                       )}
                     </div>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.82rem', lineHeight: 1.4 }}>{comment.content}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.82rem', lineHeight: 1.4 }}>{renderContentWithMentions(comment.content)}</p>
                   </div>
                 </div>
               ))}
@@ -694,8 +696,18 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           )}
           {currentUserId && (
             <form onSubmit={handleComment} style={{ display: 'flex', gap: '8px' }}>
-              <input className="input" style={{ flex: 1, padding: '7px 10px', fontSize: '0.82rem' }} placeholder="Escribe un comentario..." value={commentText} onChange={e => setCommentText(e.target.value)} maxLength={500} />
-              <button type="submit" className="btn" style={{ padding: '7px 14px', fontSize: '0.82rem' }} disabled={!commentText.trim()}>Enviar</button>
+              <div style={{ flex: 1 }}>
+                <MentionInput
+                  value={commentText}
+                  onChange={setCommentText}
+                  onMentionsChange={setCommentMentionIds}
+                  placeholder="Escribe un comentario..."
+                  maxLength={500}
+                  minHeight="auto"
+                  style={{ padding: '7px 10px', fontSize: '0.82rem', minHeight: '34px' }}
+                />
+              </div>
+              <button type="submit" className="btn" style={{ padding: '7px 14px', fontSize: '0.82rem', alignSelf: 'flex-end' }} disabled={!commentText.trim()}>Enviar</button>
             </form>
           )}
         </div>

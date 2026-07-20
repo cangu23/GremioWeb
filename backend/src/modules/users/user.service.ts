@@ -33,6 +33,13 @@ export const getUsersByRole = async (role: string) => {
   return UserRepository.findByRole(role);
 };
 
+export const searchUsersForMention = async (query: string) => {
+  if (!query || query.length < 2) {
+    return UserRepository.searchByUsernameForMention('');
+  }
+  return UserRepository.searchByUsernameForMention(query);
+};
+
 export const searchUsers = async (query: string) => {
   // If no query or too short, return all VTubers (for directory browsing)
   if (!query || query.length < 2) {

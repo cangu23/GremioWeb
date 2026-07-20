@@ -5,6 +5,7 @@ import { apiFetch, getAccessToken } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import UserAvatar from '@/components/ui/UserAvatar';
+import MentionInput from './MentionInput';
 import type { CreatePostData } from '../../../../shared/types';
 
 // ==========================================================================
@@ -89,6 +90,7 @@ export default function CreatePost({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [mentionIds, setMentionIds] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -164,11 +166,13 @@ export default function CreatePost({
         body: JSON.stringify({
           content: content.trim() || '(imagen)',
           mediaUrl,
+          mentions: mentionIds.length > 0 ? mentionIds : undefined,
         }),
       }) as CreatePostData;
 
       onPostCreated(post);
       setContent('');
+      setMentionIds([]);
       removeImage();
       onRefreshTrending?.();
     } catch (err: unknown) {
@@ -205,19 +209,18 @@ export default function CreatePost({
               size={36}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <textarea
-                className="input"
+              <MentionInput
+                value={content}
+                onChange={setContent}
+                onMentionsChange={setMentionIds}
+                placeholder={placeholder || '¿Qué está pasando, estelar? ✨'}
+                maxLength={2000}
+                minHeight="48px"
                 style={{
                   minHeight: '48px', resize: 'none', fontSize: '0.9rem',
                   border: 'none', background: 'transparent', padding: '8px 4px',
                   color: 'var(--text)', width: '100%',
                 }}
-                placeholder={placeholder || '¿Qué está pasando, estelar? ✨'}
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                maxLength={2000}
-                onFocus={e => { e.currentTarget.style.minHeight = '70px'; }}
-                onBlur={e => { if (!content) e.currentTarget.style.minHeight = '48px'; }}
               />
 
               {imagePreview && (
@@ -328,16 +331,17 @@ export default function CreatePost({
           </div>
         )}
 
-        <textarea
-          className="input"
+        <MentionInput
+          value={content}
+          onChange={setContent}
+          onMentionsChange={setMentionIds}
+          placeholder={placeholder || (user ? 'Arrastra una imagen o escribe algo... Comparte con la comunidad 📸' : 'Inicia sesión para publicar...')}
+          maxLength={2000}
+          minHeight="80px"
           style={{
             minHeight: '80px', resize: 'vertical', marginBottom: '12px', fontSize: '0.95rem',
           }}
-          placeholder={placeholder || (user ? 'Arrastra una imagen o escribe algo... Comparte con la comunidad 📸' : 'Inicia sesión para publicar...')}
-          value={content}
-          onChange={e => setContent(e.target.value)}
           disabled={!user}
-          maxLength={2000}
         />
 
         {imagePreview && (

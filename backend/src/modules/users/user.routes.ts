@@ -15,6 +15,7 @@ router.put('/note', authenticate, validateRequest(updateNoteSchema), UserControl
 
 // Public routes
 router.get('/search', UserController.searchUsers);
+router.get('/search/mentions', UserController.searchUsersForMention);
 router.get('/role/:role', UserController.getUsersByRole);
 router.get('/:id', UserController.getPublicUser);
 

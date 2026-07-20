@@ -14,6 +14,7 @@ export const createCommentSchema = z.object({
   body: z.object({
     content: z.string().min(1, 'El comentario no puede estar vacío').max(500, 'El comentario es demasiado largo (máx 500 caracteres)'),
     mediaUrl: z.string().url().optional().or(z.literal('')),
+    mentions: z.array(z.string()).optional(),
   }),
 });
 

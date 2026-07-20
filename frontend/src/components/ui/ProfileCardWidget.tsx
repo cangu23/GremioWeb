@@ -230,50 +230,53 @@ function CardContent({
         ✕
       </button>
 
-      {/* ── Banner section ── */}
-      <div style={{
-        position: 'relative',
-        height: hasCustomBanner ? '140px' : '100px',
-        background: hasCustomBanner
-          ? `url(${bannerUrl}) center/cover`
-          : `linear-gradient(135deg, ${themeColor}, rgba(0,0,0,0.3) 70%)`,
-        overflow: 'hidden',
-      }}>
-        {/* Decorative gradient overlay */}
+      {/* ── Banner wrapper ── */}
+      <div style={{ position: 'relative' }}>
+        {/* ── Banner section ── */}
         <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, transparent 50%, rgba(26,26,46,0.9) 100%)',
-          zIndex: 1,
-        }} />
-
-        {/* Featured glow */}
-        {isFeatured && (
+          position: 'relative',
+          height: hasCustomBanner ? '140px' : '100px',
+          background: hasCustomBanner
+            ? `url(${bannerUrl}) center/cover`
+            : `linear-gradient(135deg, ${themeColor}, rgba(0,0,0,0.3) 70%)`,
+          overflow: 'hidden',
+        }}>
+          {/* Decorative gradient overlay */}
           <div style={{
-            position: 'absolute', top: '-30px', left: '50%', transform: 'translateX(-50%)',
-            width: '120px', height: '120px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,215,0,0.2), transparent 70%)',
-            zIndex: 0, animation: 'pcfGlow 3s ease-in-out infinite',
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(180deg, transparent 50%, rgba(26,26,46,0.9) 100%)',
+            zIndex: 1,
           }} />
-        )}
 
-        {/* Live badge */}
-        {isLive && (
-          <div style={{
-            position: 'absolute', top: '12px', left: '12px', zIndex: 3,
-            padding: '3px 10px', borderRadius: '8px',
-            background: 'rgba(245,158,11,0.9)',
-            fontSize: '0.62rem', fontWeight: 700, color: '#fff',
-            display: 'flex', alignItems: 'center', gap: '4px',
-          }}>
-            <span style={{
-              width: '6px', height: '6px', borderRadius: '50%',
-              background: '#fff', animation: 'pcfPulse 1.5s ease-in-out infinite',
+          {/* Featured glow */}
+          {isFeatured && (
+            <div style={{
+              position: 'absolute', top: '-30px', left: '50%', transform: 'translateX(-50%)',
+              width: '120px', height: '120px', borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255,215,0,0.2), transparent 70%)',
+              zIndex: 0, animation: 'pcfGlow 3s ease-in-out infinite',
             }} />
-            EN VIVO
-          </div>
-        )}
+          )}
 
-        {/* Avatar positioned on banner bottom */}
+          {/* Live badge */}
+          {isLive && (
+            <div style={{
+              position: 'absolute', top: '12px', left: '12px', zIndex: 3,
+              padding: '3px 10px', borderRadius: '8px',
+              background: 'rgba(245,158,11,0.9)',
+              fontSize: '0.62rem', fontWeight: 700, color: '#fff',
+              display: 'flex', alignItems: 'center', gap: '4px',
+            }}>
+              <span style={{
+                width: '6px', height: '6px', borderRadius: '50%',
+                background: '#fff', animation: 'pcfPulse 1.5s ease-in-out infinite',
+              }} />
+              EN VIVO
+            </div>
+          )}
+        </div>
+
+        {/* Avatar — fuera del overflow:hidden del banner */}
         <div style={{
           position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(-50%)',
           zIndex: 3,

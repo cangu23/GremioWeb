@@ -212,66 +212,69 @@ function ProfileContent() {
 
   return (
     <>
-      {/* ===== BANNER SECTION ===== */}
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        height: 'clamp(200px, 30vw, 360px)',
-        background: bannerUrl
-          ? `url(${bannerUrl}) center/cover`
-          : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
-        overflow: 'hidden',
-      }}>
-        {/* Decorative rings */}
+      {/* ===== BANNER WRAPPER ===== */}
+      <div style={{ position: 'relative' }}>
+        {/* ===== BANNER SECTION ===== */}
         <div style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: 'min(80vw, 500px)', height: 'min(80vw, 500px)',
-          borderRadius: '50%',
-          border: '1px solid rgba(138,43,226,0.08)',
-          pointerEvents: 'none', zIndex: 0,
-        }} />
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: 'min(60vw, 380px)', height: 'min(60vw, 380px)',
-          borderRadius: '50%',
-          border: '1px solid rgba(138,43,226,0.06)',
-          pointerEvents: 'none', zIndex: 0,
-        }} />
-
-        {/* Gradient overlay */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.3) 70%, var(--background) 100%)',
-          zIndex: 1,
-        }} />
-
-        {/* Animated glow */}
-        <div style={{
-          position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
-          width: '300px', height: '300px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent 70%)',
-          pointerEvents: 'none', zIndex: 0,
-        }} />
-
-        {/* Verified badge floating */}
-        {vtuber?.isVerified && (
+          position: 'relative',
+          width: '100%',
+          height: 'clamp(200px, 30vw, 360px)',
+          background: bannerUrl
+            ? `url(${bannerUrl}) center/cover`
+            : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
+          overflow: 'hidden',
+        }}>
+          {/* Decorative rings */}
           <div style={{
-            position: 'absolute', top: '20px', right: '20px', zIndex: 2,
-            padding: '6px 14px', borderRadius: '20px',
-            background: 'rgba(0,212,255,0.15)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(0,212,255,0.3)',
-            fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)',
-            display: 'flex', alignItems: 'center', gap: '6px',
-          }}>
-            ✓ Verificado
-          </div>
-        )}
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: 'min(80vw, 500px)', height: 'min(80vw, 500px)',
+            borderRadius: '50%',
+            border: '1px solid rgba(138,43,226,0.08)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: 'min(60vw, 380px)', height: 'min(60vw, 380px)',
+            borderRadius: '50%',
+            border: '1px solid rgba(138,43,226,0.06)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
 
-        {/* Avatar */}
+          {/* Gradient overlay */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.3) 70%, var(--background) 100%)',
+            zIndex: 1,
+          }} />
+
+          {/* Animated glow */}
+          <div style={{
+            position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
+            width: '300px', height: '300px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent 70%)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
+
+          {/* Verified badge floating */}
+          {vtuber?.isVerified && (
+            <div style={{
+              position: 'absolute', top: '20px', right: '20px', zIndex: 2,
+              padding: '6px 14px', borderRadius: '20px',
+              background: 'rgba(0,212,255,0.15)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(0,212,255,0.3)',
+              fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', gap: '6px',
+            }}>
+              ✓ Verificado
+            </div>
+          )}
+        </div>
+
+        {/* Avatar — fuera del overflow:hidden para que sobresalga del banner */}
         <div style={{
           position: 'absolute', bottom: '-60px', left: '50%', transform: 'translateX(-50%)',
-          zIndex: 2, textAlign: 'center',
+          zIndex: 3, textAlign: 'center',
         }}>
           <div style={{
             width: 'clamp(100px, 15vw, 140px)',

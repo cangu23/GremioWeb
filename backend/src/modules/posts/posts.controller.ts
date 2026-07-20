@@ -77,7 +77,7 @@ export const unlikePost = async (req: Request, res: Response, next: NextFunction
 
 export const createComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const comment = await PostsService.createComment(String(req.params.postId), req.body, req.user!.id);
+    const comment = await PostsService.createComment(String(req.params.postId), req.body, req.user!.id, req.body.mentions);
     res.status(201).json(comment);
   } catch (err) { next(err); }
 };

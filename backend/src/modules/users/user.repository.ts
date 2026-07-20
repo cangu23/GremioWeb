@@ -27,6 +27,34 @@ export const createUser = async (data: CreateUserPayload) => {
   });
 };
 
+export const searchByUsernameForMention = async (query: string) => {
+  const insensitiveContains = (value: string) => ({
+    contains: value,
+    mode: 'insensitive' as any,
+  });
+
+  const where: Prisma.UserWhereInput = query
+    ? {
+        OR: [
+          { username: insensitiveContains(query) },
+          { vtuberProfile: { displayName: insensitiveContains(query) } },
+        ],
+      }
+    : {};
+
+  return prisma.user.findMany({
+    where,
+    select: {
+      id: true,
+      username: true,
+      role: true,
+      vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+    },
+    take: 15,
+    orderBy: { username: 'asc' },
+  });
+};
+
 export const searchByUsername = async (query: string) => {
   // Build the VTuber filter (must be VTUBER role or approved)
   // Build search filter (match username or displayName, case-insensitive)

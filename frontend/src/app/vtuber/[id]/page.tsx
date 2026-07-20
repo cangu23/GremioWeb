@@ -337,106 +337,108 @@ function VtuberPublicProfile() {
         )}
 
         {/* ═══════════════════ HERO BANNER ═══════════════════ */}
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        height: 'clamp(220px, 32vw, 400px)',
-        background: bannerUrl
-          ? `url(${bannerUrl}) center/cover`
-          : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
-        overflow: 'hidden',
-      }}>
-        {/* Decorative rings */}
+      <div style={{ position: 'relative' }}>
         <div style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: 'min(80vw, 500px)', height: 'min(80vw, 500px)',
-          borderRadius: '50%',
-          border: '1px solid rgba(138,43,226,0.08)',
-          pointerEvents: 'none', zIndex: 0,
-        }} />
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: 'min(60vw, 380px)', height: 'min(60vw, 380px)',
-          borderRadius: '50%',
-          border: '1px solid rgba(138,43,226,0.06)',
-          pointerEvents: 'none', zIndex: 0,
-        }} />
+          position: 'relative',
+          width: '100%',
+          height: 'clamp(220px, 32vw, 400px)',
+          background: bannerUrl
+            ? `url(${bannerUrl}) center/cover`
+            : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
+          overflow: 'hidden',
+        }}>
+          {/* Decorative rings */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: 'min(80vw, 500px)', height: 'min(80vw, 500px)',
+            borderRadius: '50%',
+            border: '1px solid rgba(138,43,226,0.08)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: 'min(60vw, 380px)', height: 'min(60vw, 380px)',
+            borderRadius: '50%',
+            border: '1px solid rgba(138,43,226,0.06)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
 
-        {/* Gradient overlay */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.3) 70%, var(--background) 100%)',
-          zIndex: 1,
-        }} />
+          {/* Gradient overlay */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.3) 70%, var(--background) 100%)',
+            zIndex: 1,
+          }} />
 
-        {/* Animated glow */}
-        <div style={{
-          position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
-          width: '300px', height: '300px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent 70%)',
-          pointerEvents: 'none', zIndex: 0,
-        }} />
+          {/* Animated glow */}
+          <div style={{
+            position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
+            width: '300px', height: '300px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent 70%)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
 
-        {/* Badges top-right */}
-        <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 2, display: 'flex', gap: '8px' }}>
-          {vtuber?.isVerified && (
-            <div style={{
-              padding: '6px 14px', borderRadius: '20px',
-              background: 'rgba(0,212,255,0.15)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(0,212,255,0.3)',
-              fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)',
-              display: 'flex', alignItems: 'center', gap: '6px',
-            }}>
-              ✓ Verificado
-            </div>
-          )}
-          {profile.role === 'MAID' && (
-            <div style={{
-              padding: '6px 14px', borderRadius: '20px',
-              background: 'rgba(212,160,48,0.15)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(212,160,48,0.3)',
-              fontSize: '0.8rem', fontWeight: 700, color: '#d4a030',
-              display: 'flex', alignItems: 'center', gap: '6px',
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
-              </svg>
-              Maid Oficial
-            </div>
-          )}
-          {isLive && (
-            <div style={{
-              padding: '6px 14px', borderRadius: '20px',
-              background: 'rgba(233,30,99,0.2)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(233,30,99,0.4)',
-              fontSize: '0.8rem', fontWeight: 700, color: '#e91e63',
-              display: 'flex', alignItems: 'center', gap: '6px',
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#e91e63', animation: 'vtuber-pulse-dot 1.5s ease infinite' }} />
-              EN VIVO
-            </div>
-          )}
-          {vtuber?.isFeatured && !isLive && (
-            <div style={{
-              padding: '6px 14px', borderRadius: '20px',
-              background: 'rgba(255,215,0,0.15)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,215,0,0.3)',
-              fontSize: '0.8rem', fontWeight: 600, color: '#ffd700',
-              display: 'flex', alignItems: 'center', gap: '4px',
-            }}>
-              <Star size={12} color="#ffd700" fill="#ffd700" strokeWidth={2.5} /> Destacado
-            </div>
-          )}
+          {/* Badges top-right */}
+          <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 2, display: 'flex', gap: '8px' }}>
+            {vtuber?.isVerified && (
+              <div style={{
+                padding: '6px 14px', borderRadius: '20px',
+                background: 'rgba(0,212,255,0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0,212,255,0.3)',
+                fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}>
+                ✓ Verificado
+              </div>
+            )}
+            {profile.role === 'MAID' && (
+              <div style={{
+                padding: '6px 14px', borderRadius: '20px',
+                background: 'rgba(212,160,48,0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(212,160,48,0.3)',
+                fontSize: '0.8rem', fontWeight: 700, color: '#d4a030',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+                </svg>
+                Maid Oficial
+              </div>
+            )}
+            {isLive && (
+              <div style={{
+                padding: '6px 14px', borderRadius: '20px',
+                background: 'rgba(233,30,99,0.2)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(233,30,99,0.4)',
+                fontSize: '0.8rem', fontWeight: 700, color: '#e91e63',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#e91e63', animation: 'vtuber-pulse-dot 1.5s ease infinite' }} />
+                EN VIVO
+              </div>
+            )}
+            {vtuber?.isFeatured && !isLive && (
+              <div style={{
+                padding: '6px 14px', borderRadius: '20px',
+                background: 'rgba(255,215,0,0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,215,0,0.3)',
+                fontSize: '0.8rem', fontWeight: 600, color: '#ffd700',
+                display: 'flex', alignItems: 'center', gap: '4px',
+              }}>
+                <Star size={12} color="#ffd700" fill="#ffd700" strokeWidth={2.5} /> Destacado
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Avatar */}
+        {/* Avatar — fuera del overflow:hidden */}
         <div style={{
           position: 'absolute', bottom: '-60px', left: '50%', transform: 'translateX(-50%)',
-          zIndex: 2, textAlign: 'center',
+          zIndex: 3, textAlign: 'center',
         }}>
           <div style={{
             width: 'clamp(110px, 16vw, 150px)',

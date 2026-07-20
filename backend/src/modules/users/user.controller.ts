@@ -41,6 +41,16 @@ export const getUsersByRole = async (req: Request, res: Response, next: NextFunc
   }
 };
 
+export const searchUsersForMention = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const q = String(req.query.q || '');
+    const users = await UserService.searchUsersForMention(q);
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const searchUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const q = String(req.query.q || '');

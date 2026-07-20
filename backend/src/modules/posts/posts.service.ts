@@ -181,7 +181,7 @@ export const unlikePost = async (postId: string, userId: string) => {
 
 // ========== COMMENTS ==========
 
-export const createComment = async (postId: string, payload: CreateCommentPayload, userId: string) => {
+export const createComment = async (postId: string, payload: CreateCommentPayload, userId: string, mentionedUserIds?: string[]) => {
   const post = await PostsRepository.findPostById(postId);
   if (!post) throw new AppError('Publicación no encontrada', 404);
 
@@ -197,6 +197,17 @@ export const createComment = async (postId: string, payload: CreateCommentPayloa
     const commenter = await UserRepository.findById(userId);
     if (commenter) {
       await NotificationsService.notifyComment(commenter.username, postId, post.userId).catch(() => {});
+    }
+  }
+
+  // Process mentions & notify
+  const commenter = await UserRepository.findById(userId);
+  if (mentionedUserIds && commenter) {
+    for (const mentionedId of mentionedUserIds) {
+      // Only notify if mentioning someone else
+      if (mentionedId !== userId) {
+        await NotificationsService.notifyMention(commenter.username, postId, mentionedId).catch(() => {});
+      }
     }
   }
 
