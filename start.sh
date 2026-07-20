@@ -11,14 +11,14 @@ if [ -f /app/frontend/server.js ]; then
   PORT=3001 node /app/frontend/server.js &
   FRONTEND_PID=$!
 
-  # Wait for frontend to be ready (max 15 seconds)
-  for i in 1 2 3; do
+  # Wait for frontend to be ready (max 30 seconds, check every 2s)
+  echo "[BOOT] Waiting for frontend to start (up to 30s)..."
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
     if curl -s http://localhost:3001/ > /dev/null 2>&1; then
       echo "[BOOT] Frontend ready (PID: $FRONTEND_PID)"
       break
     fi
-    echo "[BOOT] Waiting for frontend to start (attempt $i)..."
-    sleep 5
+    sleep 2
   done
 else
   echo "[BOOT] Frontend build not found — running backend only"
