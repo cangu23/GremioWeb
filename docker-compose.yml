@@ -6,6 +6,30 @@ services:
   # For production deployment, use Render.com (see README).
   # ======================================================
 
+  media-engine:
+    build:
+      context: ./media-engine
+      dockerfile: Dockerfile
+    container_name: gremio-media-engine
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - R2_ENDPOINT=${R2_ENDPOINT}
+      - R2_ACCESS_KEY=${R2_ACCESS_KEY}
+      - R2_SECRET_KEY=${R2_SECRET_KEY}
+      - R2_BUCKET=${R2_BUCKET:-gremio-estelar-media}
+      - R2_PUBLIC_URL=${R2_PUBLIC_URL:-https://pub-300debc7f6914a58a1b69e1c8f5015a0.r2.dev}
+    networks:
+      - internal
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   frontend:
     build:
       context: .
@@ -21,6 +45,8 @@ services:
       - PORT=3000
     depends_on:
       - backend
+    networks:
+      - internal
     restart: unless-stopped
 
   backend:
@@ -34,12 +60,17 @@ services:
       - NODE_ENV=production
       - PORT=4000
       - FRONTEND_URL=http://localhost:3000
+      - MEDIA_ENGINE_URL=http://media-engine:8001
       # Requiere DATABASE_URL en tu .env (ej: tu connection string de Neon)
       - DATABASE_URL=${DATABASE_URL}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-dev-access-secret}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-dev-refresh-secret}
       - JWT_ACCESS_EXPIRES_IN=15m
       - JWT_REFRESH_EXPIRES_IN=7d
+    depends_on:
+      - media-engine
+    networks:
+      - internal
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/health"]
@@ -47,3 +78,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+networks:
+  internal:
+    driver: bridge

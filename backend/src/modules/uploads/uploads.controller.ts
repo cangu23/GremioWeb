@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import sharp from 'sharp';
-import cloudinary from '../../lib/cloudinary';
+import { optimizeImage } from '../../lib/media-engine';
+import { ioContext } from '../../websocket/socket.server';
 
 // Allowed MIME types
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -16,7 +16,7 @@ const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFil
   }
 };
 
-// Use memory storage so we can upload the buffer directly to Cloudinary
+// Use memory storage so we can send the buffer directly to the Media Engine
 const memoryStorage = multer.memoryStorage();
 
 export const uploadImage = multer({
@@ -25,139 +25,152 @@ export const uploadImage = multer({
   limits: { fileSize: MAX_FILE_SIZE },
 }).single('image');
 
-// Helper: compress buffer with Sharp, then upload to Cloudinary
-const uploadToCloudinary = async (buffer: Buffer, folder: string): Promise<string> => {
-  // Compress & resize server-side as a safety net
-  const maxWidth = folder.includes('logo') ? 512 : folder.includes('banner') ? 1920 : 1920;
-  const maxHeight = folder.includes('logo') ? 512 : folder.includes('banner') ? 1080 : 1080;
+// ─── Non-blocking optimization helpers ────────────────
 
-  const compressed = await sharp(buffer)
-    .resize({
-      width: maxWidth,
-      height: maxHeight,
-      fit: 'inside',      // Preserve aspect ratio
-      withoutEnlargement: true, // Don't upscale small images
-    })
-    .webp({ quality: 80 })
-    .toBuffer();
+interface PendingUpload {
+  id: string;
+  userId: string;
+  status: 'processing' | 'ready' | 'error';
+  url?: string;
+  error?: string;
+}
 
-  console.log(
-    `📦 [Sharp] ${folder}: ${(buffer.length / 1024).toFixed(1)}KB → ${(compressed.length / 1024).toFixed(1)}KB (${Math.round((1 - compressed.length / buffer.length) * 100)}% reducción)`
-  );
+// In-memory store for pending uploads (could be moved to Redis later)
+const pendingUploads = new Map<string, PendingUpload>();
 
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: `gremio-estelar/${folder}`,
-        resource_type: 'image',
-      },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result!.secure_url);
-      }
-    );
-    uploadStream.end(compressed);
-  });
-};
+/**
+ * Process an image through the Media Engine, then emit Socket.IO event
+ * when ready. This runs asynchronously so the HTTP response returns fast.
+ */
+async function processAndNotify(
+  uploadId: string,
+  buffer: Buffer,
+  userId: string,
+  folder: string,
+  options: { maxWidth?: number; quality?: number; keepAnimation?: boolean } = {}
+): Promise<void> {
+  try {
+    const result = await optimizeImage(buffer, { folder, ...options });
 
-// Upload avatar handler
-export const handleUploadAvatar = async (req: Request, res: Response, next: NextFunction) => {
+    if (result.status === 'ok' && result.url) {
+      pendingUploads.set(uploadId, {
+        id: uploadId,
+        userId,
+        status: 'ready',
+        url: result.url,
+      });
+
+      // Emit Socket.IO event so the frontend can update instantly
+      ioContext.instance?.to(`user:${userId}`).emit('media:ready', {
+        id: uploadId,
+        url: result.url,
+        format: result.format,
+        size_bytes: result.size_bytes,
+        original_size_bytes: result.original_size_bytes,
+        animated: result.animated,
+      });
+    } else {
+      throw new Error(result.error || 'Optimization failed');
+    }
+  } catch (err: any) {
+    pendingUploads.set(uploadId, {
+      id: uploadId,
+      userId,
+      status: 'error',
+      error: err.message,
+    });
+
+    ioContext.instance?.to(`user:${userId}`).emit('media:error', {
+      id: uploadId,
+      error: err.message,
+    });
+  }
+}
+
+// ─── Upload handlers ──────────────────────────────────
+
+// Helper: common upload flow
+async function handleUpload(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  folder: string,
+  options: { maxWidth?: number; quality?: number; keepAnimation?: boolean } = {}
+) {
   try {
     if (!req.file) {
       res.status(400).json({ status: 'error', message: 'No se seleccionó ninguna imagen.' });
       return;
     }
 
-    const url = await uploadToCloudinary(req.file.buffer, 'avatars');
+    const userId = (req as any).user?.id;
+    const isGif = req.file.mimetype === 'image/gif';
 
+    // Generate a unique upload ID for tracking
+    const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    // Start processing in background (non-blocking)
+    processAndNotify(uploadId, req.file.buffer, userId, folder, {
+      keepAnimation: isGif && options.keepAnimation !== false,
+      maxWidth: options.maxWidth,
+      quality: options.quality,
+    });
+
+    // Respond immediately with the upload ID (non-blocking)
     res.json({
-      status: 'success',
-      url,
+      status: 'processing',
+      id: uploadId,
+      message: 'Imagen en procesamiento. Recibirás la URL vía WebSocket cuando esté lista.',
       filename: req.file.originalname,
     });
   } catch (err) {
     next(err);
   }
+}
+
+// Upload avatar handler
+export const handleUploadAvatar = async (req: Request, res: Response, next: NextFunction) => {
+  await handleUpload(req, res, next, 'avatars', { maxWidth: 512, quality: 85 });
 };
 
 // Upload banner handler
 export const handleUploadBanner = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ status: 'error', message: 'No se seleccionó ninguna imagen.' });
-      return;
-    }
-
-    const url = await uploadToCloudinary(req.file.buffer, 'banners');
-
-    res.json({
-      status: 'success',
-      url,
-      filename: req.file.originalname,
-    });
-  } catch (err) {
-    next(err);
-  }
+  await handleUpload(req, res, next, 'banners', { maxWidth: 1920, quality: 82 });
 };
 
 // Upload guild chat image handler
 export const handleUploadGuildImage = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ status: 'error', message: 'No se seleccionó ninguna imagen.' });
-      return;
-    }
-
-    const url = await uploadToCloudinary(req.file.buffer, 'guild');
-
-    res.json({
-      status: 'success',
-      url,
-      filename: req.file.originalname,
-    });
-  } catch (err) {
-    next(err);
-  }
+  await handleUpload(req, res, next, 'guild', { maxWidth: 1200, quality: 80 });
 };
 
 // Upload post image handler
 export const handleUploadPostImage = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ status: 'error', message: 'No se seleccionó ninguna imagen.' });
-      return;
-    }
-
-    const url = await uploadToCloudinary(req.file.buffer, 'posts');
-
-    res.json({
-      status: 'success',
-      url,
-      filename: req.file.originalname,
-    });
-  } catch (err) {
-    next(err);
-  }
+  await handleUpload(req, res, next, 'posts', { maxWidth: 1200, quality: 80 });
 };
 
 // Upload cafe image (logo / banner) handler
 export const handleUploadCafeImage = async (req: Request, res: Response, next: NextFunction) => {
+  const type = (req.query.type as string) || 'logo';
+  const folder = type === 'banner' ? 'cafe-banners' : 'cafe-logos';
+  const maxWidth = type === 'banner' ? 1920 : 512;
+  await handleUpload(req, res, next, folder, { maxWidth, quality: 80 });
+};
+
+// ─── Poll endpoint for upload status (backup if no WebSocket) ───
+
+export const handleUploadStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.file) {
-      res.status(400).json({ status: 'error', message: 'No se seleccionó ninguna imagen.' });
+    const id = req.params.id as string;
+    const upload = pendingUploads.get(id);
+    if (!upload) {
+      res.status(404).json({ status: 'error', message: 'Upload no encontrado.' });
       return;
     }
-
-    const type = (req.query.type as string) || 'logo'; // 'logo' or 'banner'
-    const folder = type === 'banner' ? 'cafe-banners' : 'cafe-logos';
-    const url = await uploadToCloudinary(req.file.buffer, folder);
-
-    res.json({
-      status: 'success',
-      url,
-      type,
-      filename: req.file.originalname,
-    });
+    res.json(upload);
+    // Clean up after polling
+    if (upload.status === 'ready' || upload.status === 'error') {
+      pendingUploads.delete(id);
+    }
   } catch (err) {
     next(err);
   }

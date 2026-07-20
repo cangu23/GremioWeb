@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import UserAvatar from '@/components/ui/UserAvatar';
 import MentionInput from './MentionInput';
+import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import type { CreatePostData } from '../../../../shared/types';
 
 // ==========================================================================
@@ -53,24 +54,6 @@ function validateImage(file: File): string | null {
   return null;
 }
 
-async function uploadImage(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append('image', file);
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'http://localhost:4000';
-  const token = getAccessToken();
-  const res = await fetch(`${baseUrl}/api/uploads/post`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: 'Error al subir imagen' }));
-    throw new Error(err.message || 'Error al subir imagen');
-  }
-  const data = await res.json();
-  return data.url;
-}
-
 // ==========================================================================
 // CreatePost Component
 // ==========================================================================
@@ -89,10 +72,12 @@ export default function CreatePost({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [processingImage, setProcessingImage] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [mentionIds, setMentionIds] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadAndWait } = useSocketMedia();
 
   const processImageFile = (file: File) => {
     const validationError = validateImage(file);
@@ -157,8 +142,14 @@ export default function CreatePost({
       let mediaUrl: string | undefined;
       if (selectedImage) {
         setUploadingImage(true);
-        mediaUrl = await uploadImage(selectedImage);
-        setUploadingImage(false);
+        setProcessingImage(true);
+        try {
+          // Non-blocking upload: sends to backend, gets processing ID, waits for media:ready event
+          mediaUrl = await uploadAndWait(selectedImage, '/uploads/post');
+        } finally {
+          setUploadingImage(false);
+          setProcessingImage(false);
+        }
       }
 
       const post = await apiFetch('/posts', {
@@ -180,6 +171,7 @@ export default function CreatePost({
     } finally {
       setPosting(false);
       setUploadingImage(false);
+      setProcessingImage(false);
     }
   };
 
@@ -284,7 +276,7 @@ export default function CreatePost({
                   disabled={(!content.trim() && !selectedImage) || posting || uploadingImage}
                   style={{ padding: '7px 18px', fontSize: '0.82rem' }}
                 >
-                  {uploadingImage ? 'Subiendo...' : posting ? 'Publicando...' : 'Publicar'}
+                  {processingImage ? 'Procesando imagen...' : uploadingImage ? 'Subiendo...' : posting ? 'Publicando...' : 'Publicar'}
                 </button>
               </div>
             </div>
@@ -412,7 +404,7 @@ export default function CreatePost({
             disabled={!user || (!content.trim() && !selectedImage) || posting || uploadingImage}
             style={{ padding: '10px 24px' }}
           >
-            {uploadingImage ? 'Subiendo imagen...' : posting ? 'Publicando...' : 'Publicar'}
+            {processingImage ? 'Procesando imagen...' : uploadingImage ? 'Subiendo imagen...' : posting ? 'Publicando...' : 'Publicar'}
           </button>
         </div>
       </form>

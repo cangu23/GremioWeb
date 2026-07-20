@@ -70,3 +70,22 @@ export const GUILD_EVENTS = {
   DELETE: 'guild:delete-message',
   DELETED: 'guild:message-deleted',
 } as const;
+
+export const MEDIA_EVENTS = {
+  READY: 'media:ready',
+  ERROR: 'media:error',
+} as const;
+
+export type MediaReadyPayload = {
+  id: string;
+  url: string;
+  format?: string;
+  size_bytes?: number;
+  original_size_bytes?: number;
+  animated?: boolean;
+};
+
+export type MediaErrorPayload = {
+  id: string;
+  error: string;
+};

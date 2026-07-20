@@ -7,6 +7,7 @@ import { apiFetch, getAccessToken } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { connectSocket, getSocket } from '@/lib/socket-client';
 import ClientOnly from '@/lib/ClientOnly';
+import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Socket } from 'socket.io-client';
@@ -100,6 +101,7 @@ function GuildDetailContent() {
   const [pendingImagePreview, setPendingImagePreview] = useState<string | null>(null);
   const pendingPreviewRef = useRef<string | null>(null);
   pendingPreviewRef.current = pendingImagePreview;
+  const { uploadAndWait } = useSocketMedia();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsLogoUrl, setSettingsLogoUrl] = useState('');
@@ -300,21 +302,9 @@ function GuildDetailContent() {
     setUploadingImage(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
-      const formData = new FormData();
-      formData.append('image', file);
-      const res = await fetch(`${baseUrl}/uploads/guild`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getAccessToken()}` },
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.url) {
-        setPendingImageUrl(data.url);
-      } else {
-        setError('Error al subir la imagen');
-        setPendingImagePreview(null);
-      }
+      // Non-blocking upload: sends to backend, gets processing ID, waits for media:ready event
+      const url = await uploadAndWait(file, '/uploads/guild');
+      setPendingImageUrl(url);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al subir imagen');
       setPendingImagePreview(null);

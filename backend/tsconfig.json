@@ -10,7 +10,8 @@
     "skipLibCheck": true
   },
   "ts-node": {
-    "transpileOnly": true
+    "transpileOnly": true,
+    "preferTsExts": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/__tests__/**"]

@@ -4,10 +4,11 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { apiFetch, getAccessToken } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
+import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers } from '@gremio-estelar/shared';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -41,28 +42,7 @@ function VtuberProfileEditor() {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
-
-  const uploadImage = async (file: File, type: 'avatar' | 'banner'): Promise<string> => {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    const token = getAccessToken();
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
-
-    const res = await fetch(`${baseUrl}/uploads/${type}`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ message: 'Error al subir imagen' }));
-      throw new Error(err.message || 'Error al subir imagen');
-    }
-
-    const data = await res.json();
-    return data.url;
-  };
+  const { uploadAndWait } = useSocketMedia();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
@@ -73,7 +53,8 @@ function VtuberProfileEditor() {
 
     setUploading(true);
     try {
-      const url = await uploadImage(file, type);
+      // Non-blocking upload: sends to backend, gets processing ID, waits for media:ready event
+      const url = await uploadAndWait(file, `/uploads/${type}`);
       setUrl(url);
       showToast('Imagen subida correctamente', 'success');
     } catch (err: unknown) {
