@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import http from 'http';
 import AppError from './errors/AppError';
 import mainRouter from './index';
 
@@ -129,6 +130,83 @@ console.log(`${BOOT} Main API router mounted`);
 const uploadsPath = path.join(__dirname, '..', 'uploads');
 console.log(`${BOOT} Static files: /uploads → ${uploadsPath}`);
 app.use('/uploads', express.static(uploadsPath));
+
+// ========== FRONTEND PROXY (Next.js standalone) ==========
+// In production, proxy non-API requests to the Next.js standalone server
+// running on FRONTEND_PORT (default 3001).
+// The startup script (start.sh) starts both servers:
+//   - Frontend: node frontend/server.js on port 3001 (background)
+//   - Backend:  this server on port 4000 (foreground)
+if (process.env.NODE_ENV === 'production') {
+  const FRONTEND_PORT = parseInt(process.env.FRONTEND_PORT || '3001', 10);
+
+  console.log(`${BOOT} Frontend proxy: forwarding to http://localhost:${FRONTEND_PORT}`);
+
+  // Serve Next.js static files directly for performance
+  const frontendPath = path.join(__dirname, '..', '..', 'frontend');
+  const nextStaticPath = path.join(frontendPath, '.next', 'static');
+  const publicPath = path.join(frontendPath, 'public');
+
+  app.use('/_next/static', express.static(nextStaticPath, {
+    maxAge: '1y',
+    immutable: true,
+  }));
+
+  app.use(express.static(publicPath));
+
+  // Catch-all: proxy non-API requests to the Next.js server
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    // Let API routes pass through
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+
+    // Serialize request body and recalculate content-length
+    const bodyStr = req.body && typeof req.body === 'object'
+      ? JSON.stringify(req.body)
+      : '';
+
+    const headers: Record<string, string> = {
+      host: `localhost:${FRONTEND_PORT}`,
+      'content-length': Buffer.byteLength(bodyStr).toString(),
+    };
+    // Forward original headers, but override host + content-length
+    for (const [key, val] of Object.entries(req.headers)) {
+      if (key !== 'host' && key !== 'content-length' && key !== 'content-encoding' && val !== undefined) {
+        headers[key] = Array.isArray(val) ? val.join(', ') : val;
+      }
+    }
+
+    let responded = false;
+    const proxyReq = http.request(
+      {
+        hostname: 'localhost',
+        port: FRONTEND_PORT,
+        path: req.originalUrl,
+        method: req.method,
+        headers,
+      },
+      (proxyRes: any) => {
+        responded = true;
+        res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
+        proxyRes.pipe(res);
+      }
+    );
+
+    proxyReq.on('error', () => {
+      if (responded) return; // Headers already sent, ignore
+      res.status(502).setHeader('Content-Type', 'text/html; charset=utf-8').send(
+        '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#0a0a1a;color:#fff;flex-direction:column;gap:16px">' +
+        '<h1 style="color:#8a2be2">✨ Gremio Estelar</h1>' +
+        '<p>El frontend se está iniciando... Recarga en unos segundos.</p>' +
+        '<button onclick="location.reload()" style="padding:10px 24px;border-radius:8px;border:none;background:#8a2be2;color:#fff;cursor:pointer">Recargar</button>' +
+        '</body></html>'
+      );
+    });
+
+    proxyReq.end(bodyStr);
+  });
+}
 
 // ========== ERROR HANDLING ==========
 
