@@ -94,7 +94,7 @@ const Icons = {
 // Hook: shared navbar state (notification count, equipped badge, socket)
 // Elevado al Navbar padre para evitar duplicación entre AuthNav mobile/desktop
 // ==========================================================================
-function useNavbarState(user: { id: string } | null) {
+function useNavbarState(user: { id: string } | null, isLoading: boolean) {
   const { showToast } = useToast();
   const [unreadCount, setUnreadCount] = useState(0);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
@@ -102,7 +102,7 @@ function useNavbarState(user: { id: string } | null) {
 
   // Equipped badge fetch
   useEffect(() => {
-    if (!user) { setEquippedBadge(null); return; }
+    if (isLoading || !user) { setEquippedBadge(null); return; }
     (async () => {
       try {
         const badge = await apiFetch(`/shop/badge/${user.id}`, {});
@@ -119,7 +119,7 @@ function useNavbarState(user: { id: string } | null) {
   // Notification count: polling + real-time socket + custom refresh event
   // Only runs when user is logged in
   useEffect(() => {
-    if (!user) { setUnreadCount(0); return; }
+    if (isLoading || !user) { setUnreadCount(0); return; }
 
     const fetchUnread = async () => {
       try { const data = await apiFetch('/notifications/unread-count', {}); setUnreadCount(data.count); } catch { }
@@ -153,7 +153,7 @@ function useNavbarState(user: { id: string } | null) {
   // DM unread count: fetch + real-time via socket
   // Only runs when user is logged in
   useEffect(() => {
-    if (!user) { setDmUnreadCount(0); return; }
+    if (isLoading || !user) { setDmUnreadCount(0); return; }
 
     const fetchDmUnread = async () => {
       try { const data = await apiFetch('/dm/unread-count', {}); setDmUnreadCount(data.count); } catch { }
@@ -805,10 +805,10 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
 // Navbar wraps them in desktopNav / mobileMenu for proper CSS layout.
 // ==========================================================================
 export default function Navbar() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { unreadCount, dmUnreadCount, equippedBadge } = useNavbarState(user);
+  const { unreadCount, dmUnreadCount, equippedBadge } = useNavbarState(user, isLoading);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
