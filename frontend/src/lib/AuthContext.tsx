@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { apiFetch, setAccessToken } from './api';
 import { UserProfile, LoginPayload, RegisterPayload } from '@gremio-estelar/shared';
 import { useToast } from './ToastContext';
@@ -16,42 +16,125 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+// ─── sessionStorage cache ────────────────────────────────────────────
+// This lets us survive component re-mounts (e.g. during Next.js
+// client-side navigation or BFCache restore) without flashing the
+// landing page while the background auth check runs.
+const SESSION_CACHE_KEY = 'gremio_user_v2';
 
-  useEffect(() => {
-    const attemptLogin = async (): Promise<boolean> => {
-      try {
-        const session = await apiFetch('/auth/refresh', { method: 'POST' });
-        if (session?.accessToken) {
-          setAccessToken(session.accessToken);
-          const profile = await apiFetch('/users/me');
-          setUser(profile);
-          return true;
-        }
-        return false;
-      } catch {
-        return false;
+function getCachedUser(): UserProfile | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(SESSION_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedUser(user: UserProfile | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (user) {
+      sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(user));
+    } else {
+      sessionStorage.removeItem(SESSION_CACHE_KEY);
+    }
+  } catch { /* sessionStorage may be full or blocked */ }
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Restore cached user optimistically so we never flash a blank / landing
+  // state when the component remounts after a client-side navigation.
+  const [user, setUser] = useState<UserProfile | null>(() => getCachedUser());
+  const [isLoading, setIsLoading] = useState(true);
+  const initialCheckDone = useRef(false);
+
+  // ─── Backend auth refresh ──────────────────────────────────────────
+  const refreshAuth = useCallback(async (): Promise<boolean> => {
+    try {
+      const session = await apiFetch('/auth/refresh', { method: 'POST' });
+      if (session?.accessToken) {
+        setAccessToken(session.accessToken);
+        const profile = await apiFetch('/users/me');
+        setUser(profile);
+        setCachedUser(profile);
+        return true;
       }
-    };
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // ─── Initial check + global event listeners ────────────────────────
+  useEffect(() => {
+    // Guard: only run once even if React StrictMode double-invokes effects
+    if (initialCheckDone.current) return;
+    initialCheckDone.current = true;
 
     const loadUser = async () => {
-      if (!(await attemptLogin())) {
+      const ok = await refreshAuth();
+      if (!ok) {
         setAccessToken(null);
         setUser(null);
+        setCachedUser(null);
       }
       setIsLoading(false);
     };
 
     loadUser();
 
+    // ── 1. Handle 401 interceptor from api.ts  ─────────────────────────
     const handleUnauthorized = () => {
       setAccessToken(null);
       setUser(null);
+      setCachedUser(null);
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+
+    // ── 2. BFCache — browser back/forward cache  ───────────────────────
+    // When the user navigates away and comes back via the browser's
+    // back/forward cache, React components are NOT re-mounted so the
+    // initial useEffect (above) never re-runs. We must re-validate the
+    // session manually here. If the refresh token cookie is still valid,
+    // the user keeps their session; otherwise we clear state gracefully.
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        refreshAuth().then(ok => {
+          if (!ok) {
+            setAccessToken(null);
+            setUser(null);
+            setCachedUser(null);
+          }
+          setIsLoading(false);
+        });
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+
+    // ── 3. Tab switch — user returns after being away  ─────────────────
+    // Silently re-validate the session so that if the access/refresh
+    // token expired while the user was on another tab, we recover
+    // transparently instead of waiting for the next 401.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshAuth();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshAuth]);
+
+  // ─── Helpers ────────────────────────────────────────────────────────
+  const setUserAndCache = useCallback((newUser: UserProfile | null) => {
+    setUser(newUser);
+    setCachedUser(newUser);
   }, []);
 
   const login = async (data: LoginPayload) => {
@@ -60,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify(data)
     });
     setAccessToken(res.accessToken);
-    setUser(res.user);
+    setUserAndCache(res.user);
   };
 
   const googleLogin = async (credential: string) => {
@@ -69,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ credential })
     });
     setAccessToken(res.accessToken);
-    setUser(res.user);
+    setUserAndCache(res.user);
   };
 
   const { showToast } = useToast();
@@ -80,14 +163,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify(data)
     });
     setAccessToken(res.accessToken);
-    setUser(res.user);
+    setUserAndCache(res.user);
     showToast('¡Bienvenido a Gremio Estelar!', 'success');
   };
 
   const logout = async () => {
     await apiFetch('/auth/logout', { method: 'POST' }).catch(() => {});
     setAccessToken(null);
-    setUser(null);
+    setUserAndCache(null);
   };
 
   return (

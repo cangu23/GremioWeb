@@ -116,15 +116,9 @@ export const authenticateWithDiscord = async (code: string, redirectUri: string)
     role: Role.USER,
   });
 
-  // Create VTuber profile
-  await prisma.vTuberProfile.create({
-    data: {
-      userId: newUser.id,
-      displayName: discordUser.username,
-      avatarUrl: discordUser.avatarUrl || null,
-      description: 'Miembro de Gremio Estelar — Conectado con Discord',
-    },
-  });
+  // ── NOTA: NO crear VTuberProfile aquí ──
+  // Los usuarios registrados con Discord deben ser role USER sin perfil VTuber.
+  // Solo quienes apliquen y sean aprobados recibirán un VTuberProfile.
 
   // Generate tokens
   const { accessToken, refreshToken } = generateTokens(newUser.id);

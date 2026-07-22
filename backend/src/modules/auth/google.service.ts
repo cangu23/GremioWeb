@@ -45,26 +45,6 @@ const verifyGoogleToken = async (credential: string): Promise<GoogleTokenPayload
 };
 
 /**
- * Find or create a VTuber profile for a user
- */
-const getOrCreateVtuberProfile = async (userId: string, displayName: string, avatarUrl: string) => {
-  const existing = await prisma.vTuberProfile.findUnique({ where: { userId } });
-  if (existing) {
-    // ⚠️ Only update displayName, NOT the avatar — user may have customized it
-    return existing;
-  }
-  // Create new profile
-  return prisma.vTuberProfile.create({
-    data: {
-      userId,
-      displayName,
-      avatarUrl: avatarUrl || null,
-      description: 'Miembro de Gremio Estelar — Conectado con Google',
-    },
-  });
-};
-
-/**
  * Authenticate or register a user with Google
  */
 export const authenticateWithGoogle = async (credential: string) => {
@@ -120,8 +100,9 @@ export const authenticateWithGoogle = async (credential: string) => {
     role: Role.USER,
   });
 
-  // Create VTuber profile with Google data
-  await getOrCreateVtuberProfile(newUser.id, googleUser.name, googleUser.picture);
+  // ── NOTA: NO crear VTuberProfile aquí ──
+  // Los usuarios registrados con Google deben ser role USER sin perfil VTuber.
+  // Solo quienes apliquen y sean aprobados recibirán un VTuberProfile.
 
   // Generate tokens
   const { accessToken, refreshToken } = generateTokens(newUser.id);
