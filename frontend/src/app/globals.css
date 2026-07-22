@@ -621,6 +621,37 @@ textarea.input {
 }
 
 /* ==========================================================================
+   Admin Panel — Sidebar (CSS puro, sin dependencia de React/style-jsx)
+   ========================================================================== */
+
+/* Desktop (>768px): sidebar siempre visible, hamburguesa oculto */
+@media (min-width: 769px) {
+  .admin-sidebar {
+    transform: translateX(0) !important;
+  }
+  .admin-hamburger {
+    display: none !important;
+  }
+}
+
+/* Mobile (<768px): sidebar oculta por defecto, toggle con clase .open */
+@media (max-width: 768px) {
+  .admin-hamburger {
+    display: flex !important;
+  }
+  .admin-sidebar {
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .admin-sidebar.open {
+    transform: translateX(0) !important;
+  }
+  .admin-main {
+    margin-left: 0 !important;
+  }
+}
+
+/* ==========================================================================
    Home Layout (Facebook-style 3 columns)
    ========================================================================== */
 

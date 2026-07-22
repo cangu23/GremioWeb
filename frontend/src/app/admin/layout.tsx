@@ -74,23 +74,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const auth = useAuth();
   const user = auth.user;
   const isLoading = auth.isLoading;
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Abierta por defecto en desktop
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Solo controla mobile
   const [pendingRequests, setPendingRequests] = useState(0);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Sync sidebar state with viewport: open on desktop, closed on mobile
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 768px)');
-    const handler = (e: MediaQueryListEvent | MediaQueryList) => {
-      setSidebarOpen(!e.matches); // matches = mobile → close sidebar
-    };
-    handler(mq); // Set initial state based on actual viewport
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
   }, []);
 
   useEffect(() => {
@@ -145,16 +133,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Sidebar - Solid dark, serious, structural */}
+      {/* La visibilidad en desktop la controla CSS puro (siempre visible).
+          En mobile la controla la clase .open toggleada por sidebarOpen. */}
       <aside
+        className={`admin-sidebar${sidebarOpen ? ' open' : ''}`}
         style={{
           width: '240px', minHeight: '100vh', background: '#050505',
           borderRight: '1px solid #1a1a20', padding: '24px 16px', position: 'fixed',
           left: 0, top: 0, zIndex: 50, overflowY: 'auto',
-          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-          transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           display: 'flex', flexDirection: 'column', gap: '28px',
         }}
-        className="admin-sidebar"
       >
         <Link href="/admin" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
           <div style={{ width: '8px', height: '24px', background: '#d4af37' }} />
@@ -278,15 +266,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .admin-main .input:focus { border-color: #00e5ff !important; box-shadow: 0 0 0 1px #00e5ff !important; }
         .admin-main .glass { background: #0d0d12 !important; border: 1px solid #1a1a20 !important; border-radius: 6px !important; box-shadow: none !important; backdrop-filter: none !important; }
         .admin-main .btn { border-radius: 4px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; font-size: 0.8rem !important; }
-
-        @media (max-width: 768px) {
-          .admin-hamburger { display: flex !important; }
-          .admin-sidebar { transform: translateX(-100%) !important; }
-          .admin-main { margin-left: 0 !important; }
-        }
-        @media (min-width: 769px) {
-          .admin-hamburger { display: none !important; }
-        }
       `}</style>
     </div>
   );
