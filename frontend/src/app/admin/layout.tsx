@@ -174,7 +174,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   const isActive = pathname === item.href;
                   const activeColor = item.color || '#ffffff';
                   return (
-                    <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
+                    <Link key={item.href} href={item.href} onClick={() => {
+                        // Solo cerrar sidebar en mobile (< 768px)
+                        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                          setSidebarOpen(false);
+                        }
+                      }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 10px',
                         fontSize: '0.85rem', fontWeight: isActive ? 600 : 500,
