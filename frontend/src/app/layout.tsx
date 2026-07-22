@@ -8,7 +8,6 @@ import { ToastProvider } from '@/lib/ToastContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import PageTransition from '@/components/layout/PageTransition';
-import ParticlesBackground from '@/components/landing/ParticlesBackground';
 import './globals.css';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
@@ -36,7 +35,6 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        <ParticlesBackground />
         {GOOGLE_CLIENT_ID ? (
           <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
             <ToastProvider>

@@ -117,6 +117,7 @@ function useNavbarState(user: { id: string } | null) {
   }, [user]);
 
   // Notification count: polling + real-time socket + custom refresh event
+  // Only runs when user is logged in
   useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
 
@@ -124,7 +125,7 @@ function useNavbarState(user: { id: string } | null) {
       try { const data = await apiFetch('/notifications/unread-count', {}); setUnreadCount(data.count); } catch { }
     };
     fetchUnread();
-    const interval = setInterval(fetchUnread, 60000);
+    const interval = setInterval(fetchUnread, 120000); // Cada 2 minutos
 
     // Listen for custom event dispatched when user reads notifications on /notifications page
     const handleNotifsRead = () => setTimeout(fetchUnread, 300);
@@ -150,6 +151,7 @@ function useNavbarState(user: { id: string } | null) {
   }, [user, showToast]);
 
   // DM unread count: fetch + real-time via socket
+  // Only runs when user is logged in
   useEffect(() => {
     if (!user) { setDmUnreadCount(0); return; }
 
@@ -157,7 +159,7 @@ function useNavbarState(user: { id: string } | null) {
       try { const data = await apiFetch('/dm/unread-count', {}); setDmUnreadCount(data.count); } catch { }
     };
     fetchDmUnread();
-    const interval = setInterval(fetchDmUnread, 60000);
+    const interval = setInterval(fetchDmUnread, 120000); // Cada 2 minutos
 
     let sock: any;
     try {

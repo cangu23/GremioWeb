@@ -26,6 +26,7 @@ function extractTwitchChannel(url: string | null): string | null {
 // ==========================================================================
 // Landing sections (for non-authenticated users)
 // ==========================================================================
+import ParticlesBackground from '@/components/landing/ParticlesBackground';
 import HeroSection from '@/components/landing/HeroSection';
 import HowItWorksSection from '@/components/landing/HowItWorksSection';
 import StatsSection from '@/components/landing/StatsSection';
@@ -60,6 +61,7 @@ function SectionDivider() {
 function LandingPage() {
   return (
     <>
+      <ParticlesBackground />
       <HeroSection />
       <SectionDivider />
       <LiveNowSection />

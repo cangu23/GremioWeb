@@ -37,13 +37,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const loadUser = async () => {
-      // Try once, then retry after 1s for transient errors
       if (!(await attemptLogin())) {
-        await new Promise(r => setTimeout(r, 1000));
-        if (!(await attemptLogin())) {
-          setAccessToken(null);
-          setUser(null);
-        }
+        setAccessToken(null);
+        setUser(null);
       }
       setIsLoading(false);
     };
