@@ -194,10 +194,16 @@ function VtuberProfileEditor() {
   );
   if (!user) return null;
 
-
+  // ── Guard: solo VTubers oficiales pueden editar su perfil ──────────
+  // Un usuario normal (role USER) que llegó aquí porque tenía un
+  // VTuberProfile creado automáticamente por Discord/Google antes del
+  // fix no debe ver el editor. Solo ve la pantalla de solicitud.
+  const isOfficialVtuber = user.role === 'VTUBER' || user.vtuberProfile?.isApproved === true;
 
   return (
-    <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px', maxWidth: '900px', margin: '0 auto' }}>
+    <>
+    {isOfficialVtuber ? (
+      <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px', maxWidth: '900px', margin: '0 auto' }}>
       {/* ===== HEADER ===== */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
@@ -739,23 +745,6 @@ function VtuberProfileEditor() {
             {showPreview ? '✎ Volver al editor' : '👁️ Vista previa'}
           </button>
 
-          {/* Request VTuber status */}
-          {user.role !== 'VTUBER' && !user.vtuberProfile?.isApproved && (
-            <button
-              type="button"
-              className="btn"
-              style={{
-                flex: '1', padding: '16px 24px', fontSize: '1.05rem',
-                borderRadius: '14px', minWidth: '200px',
-                background: 'linear-gradient(135deg, #ff007f, #ff9800)',
-                boxShadow: '0 0 30px rgba(255,0,127,0.2)',
-              }}
-              onClick={() => setShowSurvey(true)}
-            >
-              Solicitar ser VTuber Oficial
-            </button>
-          )}
-
           {/* VTuber approved badge */}
           {user.vtuberProfile?.isApproved && user.role === 'VTUBER' && (
             <div
@@ -782,7 +771,54 @@ function VtuberProfileEditor() {
         </p>
       </form>
 
-      {/* ===== SURVEY MODAL ===== */}
+    </div>
+    ) : (
+      <div className="container" style={{
+        paddingTop: '60px', paddingBottom: '40px',
+        maxWidth: '600px', margin: '0 auto',
+        textAlign: 'center',
+      }}>
+        <div style={{
+          fontSize: '3rem', marginBottom: '20px',
+          opacity: 0.3, filter: 'grayscale(0.5)',
+        }}>
+          ✨
+        </div>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '12px' }}>
+          ¿Quieres ser VTuber?
+        </h1>
+        <p style={{
+          color: 'var(--text-muted)', fontSize: '1rem',
+          lineHeight: 1.7, marginBottom: '32px',
+        }}>
+          Esta sección es exclusiva para VTubers oficiales del gremio.
+          Si tienes un modelo VTuber y quieres unirte al grupo,
+          envía tu solicitud y los administradores la evaluarán.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+          <button
+            onClick={() => setShowSurvey(true)}
+            className="btn"
+            style={{
+              padding: '14px 32px', fontSize: '1.05rem',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #ff007f, #ff9800)',
+              boxShadow: '0 0 30px rgba(255,0,127,0.2)',
+            }}
+          >
+            Solicitar ser VTuber Oficial
+          </button>
+          <Link href="/" className="btn btn-outline" style={{
+            padding: '10px 24px', fontSize: '0.9rem',
+            borderRadius: '10px',
+          }}>
+            Volver al inicio
+          </Link>
+        </div>
+      </div>
+    )}
+
+      {/* ===== SURVEY MODAL (available for both VTubers and applicants) ===== */}
       {showSurvey && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
           <div className="glass" style={{
@@ -875,7 +911,7 @@ function VtuberProfileEditor() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
