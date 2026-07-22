@@ -66,14 +66,17 @@ export function useSocketMedia() {
       }
     };
 
+    const currentReady = readyListeners.current;
+    const currentError = errorListeners.current;
+
     socket.on('media:ready', handleReady);
     socket.on('media:error', handleError);
 
     return () => {
       socket.off('media:ready', handleReady);
       socket.off('media:error', handleError);
-      readyListeners.current.clear();
-      errorListeners.current.clear();
+      currentReady.clear();
+      currentError.clear();
     };
   }, []);
 
@@ -111,7 +114,7 @@ export function useSocketMedia() {
     options?: { signal?: AbortSignal }
   ): Promise<string> => {
     const token = getAccessToken();
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
     const formData = new FormData();
     formData.append('image', file);

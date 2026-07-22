@@ -50,6 +50,7 @@ export default function AdminWarningsPage() {
 
   useEffect(() => {
     fetchWarnings(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const handleIssueWarning = async (e: React.FormEvent) => {

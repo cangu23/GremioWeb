@@ -303,6 +303,7 @@ function MessengerContent() {
       })
       .catch(() => {})
       .finally(() => setMessagesLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, activeUserId, socket]);
 
   /* ─── Scroll to bottom on new messages ─── */

@@ -49,6 +49,7 @@ export default function StickersAdminPage() {
       return;
     }
     loadStickers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isLoading, router]);
 
   const loadStickers = async () => {
@@ -68,6 +69,7 @@ export default function StickersAdminPage() {
 
   useEffect(() => {
     if (user?.role === 'ADMIN') loadStickers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, categoryFilter, user]);
 
   const handleCreate = async (e: React.FormEvent) => {

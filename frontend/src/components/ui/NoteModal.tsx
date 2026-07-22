@@ -33,6 +33,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, text]);
 
   const handleSave = async () => {

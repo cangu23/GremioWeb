@@ -260,7 +260,7 @@ export default function StickerPicker({ onSelect, onClose, filterType = 'all' }:
             {search ? (
               <>
                 <p style={{ margin: '0 0 6px', fontSize: '1.5rem' }}>🔍</p>
-                <p style={{ margin: 0 }}>No se encontraron stickers para "{search}"</p>
+                <p style={{ margin: 0 }}>No se encontraron stickers para &quot;{search}&quot;</p>
               </>
             ) : (
               <>

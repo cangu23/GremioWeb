@@ -59,9 +59,6 @@ export function compressImage(file: File, options: CompressOptions = {}): Promis
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              console.log(
-                `📸 [Compress] ${file.name}: ${(file.size / 1024).toFixed(1)}KB → ${(blob.size / 1024).toFixed(1)}KB (${Math.round((1 - blob.size / file.size) * 100)}% reducción)`
-              );
               resolve(blob);
             } else {
               // Fallback: return original file

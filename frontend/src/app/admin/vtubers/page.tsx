@@ -109,6 +109,7 @@ export default function AdminVtubersPage() {
     finally { setLoadingUnapproved(false); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchData(); }, [page, filterVerified, filterApproved]);
   useEffect(() => { fetchUnverified(); fetchUnapproved(); }, []);
   useEffect(() => { setPage(1); }, [search, filterVerified, filterApproved]);
