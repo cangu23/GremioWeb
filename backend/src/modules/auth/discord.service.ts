@@ -93,7 +93,7 @@ export const authenticateWithDiscord = async (code: string, redirectUri: string)
     const { accessToken, refreshToken } = generateTokens(existingUser.id);
 
     const hashedRefreshToken = hashToken(refreshToken);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 días
     await AuthRepository.createRefreshToken(hashedRefreshToken, existingUser.id, expiresAt);
 
     const { password, ...sessionUser } = existingUser;
@@ -124,7 +124,7 @@ export const authenticateWithDiscord = async (code: string, redirectUri: string)
   const { accessToken, refreshToken } = generateTokens(newUser.id);
 
   const hashedRefreshToken = hashToken(refreshToken);
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 días
   await AuthRepository.createRefreshToken(hashedRefreshToken, newUser.id, expiresAt);
 
   const fullUser = await prisma.user.findUnique({

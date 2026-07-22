@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as UserController from './user.controller';
 import { validateRequest } from '../auth/validateRequest';
 import { authenticate } from '../auth/authenticate';
+import { optionalAuth } from '../auth/optionalAuth';
 import { updateUserSchema, updateNoteSchema } from './user.validation';
 
 const router = Router();
@@ -16,7 +17,8 @@ router.put('/note', authenticate, validateRequest(updateNoteSchema), UserControl
 // Public routes
 router.get('/search', UserController.searchUsers);
 router.get('/search/mentions', UserController.searchUsersForMention);
-router.get('/role/:role', UserController.getUsersByRole);
+// Roles sensibles (ADMIN, MODERATOR) solo visibles para admins. Roles públicos (VTUBER, MAID) son abiertos.
+router.get('/role/:role', optionalAuth, UserController.getUsersByRole);
 router.get('/:id', UserController.getPublicUser);
 
 export default router;

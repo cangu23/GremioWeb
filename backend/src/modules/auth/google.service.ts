@@ -73,7 +73,7 @@ export const authenticateWithGoogle = async (credential: string) => {
 
     // Persist refresh token
     const hashedRefreshToken = hashToken(refreshToken);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 días
     await AuthRepository.createRefreshToken(hashedRefreshToken, existingUser.id, expiresAt);
 
     // Return user data (without password)
@@ -109,7 +109,7 @@ export const authenticateWithGoogle = async (credential: string) => {
 
   // Persist refresh token
   const hashedRefreshToken = hashToken(refreshToken);
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 días
   await AuthRepository.createRefreshToken(hashedRefreshToken, newUser.id, expiresAt);
 
   // Fetch full user with profile

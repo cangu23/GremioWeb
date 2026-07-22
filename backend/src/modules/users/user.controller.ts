@@ -34,6 +34,11 @@ export const getPublicUser = async (req: Request, res: Response, next: NextFunct
 export const getUsersByRole = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const role = String(req.params.role || '').toUpperCase();
+    // Roles administrativos solo los puede consultar un ADMIN
+    const sensitiveRoles = ['ADMIN', 'MODERATOR'];
+    if (sensitiveRoles.includes(role) && req.user?.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'No tienes permiso para ver este listado.' });
+    }
     const users = await UserService.getUsersByRole(role);
     res.json(users);
   } catch (error) {

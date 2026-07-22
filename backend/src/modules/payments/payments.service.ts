@@ -1,6 +1,7 @@
 import AppError from '../../errors/AppError';
 import { DEFAULT_TIERS } from '@gremio-estelar/shared';
 import * as PaymentsRepository from './payments.repository';
+import * as UserRepository from '../users/user.repository';
 
 // Tiers
 export const getTiers = async (includeInactive = false) => {
@@ -85,6 +86,15 @@ export const donate = async (donorId: string, payload: {
   }
   if (payload.amount > 1000) {
     throw new AppError('El monto máximo es $1,000 USD', 400);
+  }
+
+  // Solo se puede donar a VTubers
+  const recipient = await UserRepository.findById(payload.recipientId);
+  if (!recipient) {
+    throw new AppError('El usuario receptor no existe', 404);
+  }
+  if (recipient.role !== 'VTUBER') {
+    throw new AppError('Solo puedes donar a VTubers', 403);
   }
 
   return PaymentsRepository.createDonation({
