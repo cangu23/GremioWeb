@@ -103,14 +103,20 @@ async function handleUpload(
       return;
     }
 
-    const userId = (req as any).user?.id;
+    const user = (req as any).user;
     const isGif = req.file.mimetype === 'image/gif';
+
+    // Restringir GIFs a roles premium/VTUBER
+    if (isGif && user?.role === 'USER') {
+      res.status(403).json({ status: 'error', message: 'Usar GIFs es una función exclusiva para VTubers y premium.' });
+      return;
+    }
 
     // Generate a unique upload ID for tracking
     const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     // Start processing in background (non-blocking)
-    processAndNotify(uploadId, req.file.buffer, userId, folder, {
+    processAndNotify(uploadId, req.file.buffer, user?.id, folder, {
       keepAnimation: isGif && options.keepAnimation !== false,
       maxWidth: options.maxWidth,
       quality: options.quality,

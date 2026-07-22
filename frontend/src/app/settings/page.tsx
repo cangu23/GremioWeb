@@ -19,6 +19,7 @@ function UserSettings() {
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
+  const [bannerColor, setBannerColor] = useState('#1a1040');
   const [saving, setSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -49,6 +50,7 @@ function UserSettings() {
       setDisplayName(user.displayName || '');
       setAvatarUrl(user.avatarUrl || '');
       setBio(user.bio || '');
+      setBannerColor(user.bannerColor || '#1a1040');
     }
   }, [user, isLoading, router]);
 
@@ -62,6 +64,7 @@ function UserSettings() {
           displayName: displayName.trim() || undefined,
           avatarUrl: avatarUrl.trim() || undefined,
           bio: bio.trim() || undefined,
+          bannerColor: bannerColor || undefined,
         }),
       });
       showToast('Perfil actualizado correctamente', 'success');
@@ -162,13 +165,42 @@ function UserSettings() {
                 <input
                   ref={avatarInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  accept={user.role === 'USER' ? "image/jpeg,image/png,image/webp" : "image/jpeg,image/png,image/webp,image/gif"}
                   style={{ display: 'none' }}
                   onChange={handleFileSelect}
                 />
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-                Formatos: JPEG, PNG, WebP o GIF. Se recomienda 400x400px o superior.
+                Formatos: JPEG, PNG, WebP{user.role !== 'USER' && ' o GIF'}. Se recomienda 400x400px o superior.
+                {user.role === 'USER' && <span style={{ display: 'block', color: 'var(--accent)', marginTop: '4px' }}>✨ Subir GIFs animados es exclusivo de VTubers y Premium.</span>}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Banner Color */}
+        <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>
+          <h3 style={{
+            fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
+            display: 'flex', alignItems: 'center', gap: '8px',
+          }}>
+            Color del Banner
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <input
+              type="color"
+              value={bannerColor}
+              onChange={(e) => setBannerColor(e.target.value)}
+              style={{
+                width: '60px', height: '40px', padding: 0,
+                border: 'none', borderRadius: '8px', cursor: 'pointer',
+                background: 'none'
+              }}
+            />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text)' }}>Elige un color sólido para tu banner</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Se mostrará en la parte superior de tu perfil.
               </p>
             </div>
           </div>

@@ -14,6 +14,7 @@ export interface User {
   displayName?: string | null;
   avatarUrl?: string | null;
   bio?: string | null;
+  bannerColor?: string | null;
 }
 
 export interface UserProfile extends User {

@@ -40,6 +40,10 @@ interface SocialProfile {
   level: number;
   note: string | null;
   noteUpdatedAt: string | null;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  bannerColor?: string | null;
   vtuberProfile?: {
     id: string;
     displayName: string;
@@ -191,10 +195,11 @@ function ProfileContent() {
 
   const isOwnProfile = currentUser?.id === profile.id;
   const vtuber = profile.vtuberProfile;
-  const avatarUrl = vtuber?.avatarUrl;
+  const avatarUrl = vtuber?.avatarUrl || profile.avatarUrl;
   const bannerUrl = vtuber?.bannerUrl;
-  const displayName = vtuber?.displayName || profile.username;
-  const themeColor = vtuber?.themeColor || 'var(--primary)';
+  const displayName = vtuber?.displayName || profile.displayName || profile.username;
+  const themeColor = vtuber?.themeColor || profile.bannerColor || 'var(--primary)';
+  const bio = vtuber?.description || profile.bio;
 
   // Parse languages
   let languagesList: string[] = [];
@@ -222,7 +227,9 @@ function ProfileContent() {
           height: 'clamp(200px, 30vw, 360px)',
           background: bannerUrl
             ? `url(${bannerUrl}) center/cover`
-            : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
+            : profile.bannerColor
+              ? profile.bannerColor
+              : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
           overflow: 'hidden',
         }}>
           {/* Decorative rings */}
@@ -668,23 +675,24 @@ function ProfileContent() {
             }}
           />
 
-          {/* Description */}
-            {vtuber?.description && (
+          {/* Description / Bio */}
+            {bio && (
               <div className="glass" style={{
                 padding: '24px', borderRadius: '16px',
                 borderLeft: `3px solid ${themeColor}`,
-              }}>                  <h3 style={{
+              }}>
+                <h3 style={{
                     fontSize: '0.85rem', fontWeight: 700, marginBottom: '12px',
                     textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)',
                     display: 'flex', alignItems: 'center', gap: '8px',
                   }}>
-                    <BookOpen size={16} /> Descripción
+                    <BookOpen size={16} /> {vtuber ? 'Descripción' : 'Biografía'}
                   </h3>
                 <p style={{
                   fontSize: '0.95rem', lineHeight: 1.8, color: 'var(--text)',
                   whiteSpace: 'pre-wrap',
                 }}>
-                  {vtuber.description}
+                  {bio}
                 </p>
               </div>
             )}

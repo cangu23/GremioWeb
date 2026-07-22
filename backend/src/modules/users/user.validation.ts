@@ -11,6 +11,8 @@ export const updateUserSchema = z.object({
     username: z.string().min(3).max(30).optional(),
     displayName: z.string().max(50).optional(),
     avatarUrl: z.string().url().optional().or(z.literal('')),
+    bio: z.string().max(2000).optional(),
+    bannerColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Color hex inválido (ej: #8a2be2)').optional().or(z.literal('')),
     bannerUrl: z.string().url().optional().or(z.literal('')),
     description: z.string().max(2000).optional(),
     lore: z.string().max(5000).optional(),
