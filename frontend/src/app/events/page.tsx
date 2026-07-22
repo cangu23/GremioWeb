@@ -196,7 +196,7 @@ function EventsContent() {
             Descubre y participa en eventos de la comunidad
           </p>
         </div>
-        {user && (
+        {user && (user.role === 'VTUBER' || user.role === 'MAID' || user.role === 'ADMIN') && (
           <Link href="/events/create" className="btn" style={{
             padding: '12px 24px', borderRadius: '12px', fontWeight: 700,
             background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
@@ -287,7 +287,7 @@ function EventsContent() {
               ? 'Intenta con otro filtro'
               : 'Sé el primero en crear un evento'}
           </p>
-          {user && !filter && (
+          {user && !filter && (user.role === 'VTUBER' || user.role === 'MAID' || user.role === 'ADMIN') && (
             <Link href="/events/create" className="btn" style={{
               padding: '12px 28px', borderRadius: '12px',
               display: 'inline-flex',

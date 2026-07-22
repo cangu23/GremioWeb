@@ -40,6 +40,12 @@ function CreateEventForm() {
     return null;
   }
 
+  // Solo VTUBER, MAID y ADMIN pueden crear eventos
+  if (user.role !== 'VTUBER' && user.role !== 'MAID' && user.role !== 'ADMIN') {
+    router.push('/events');
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

@@ -5,6 +5,9 @@ import * as NotificationsService from '../notifications/notifications.service';
 import { CreateGuildPayload } from '@gremio-estelar/shared';
 
 export const create = async (payload: CreateGuildPayload, creatorId: string) => {
+  // Cualquier usuario autenticado puede crear gremios (son espacios comunitarios de fans)
+  // Los roles inválidos o cuentas suspendidas son gestionados por middleware de autenticación
+
   // Check by name using findMany since findGuildById searches by id, not name
   const guilds = await GuildsRepository.findAllGuilds();
   const nameTaken = guilds.find(g => g.name.toLowerCase() === payload.name.toLowerCase());

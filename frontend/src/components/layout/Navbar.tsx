@@ -320,6 +320,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 // Quick Create Dropdown (Post, Event, Guild)
 // ==========================================================================
 function CreateDropdown({ closeMenu }: { closeMenu?: () => void }) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -331,10 +332,14 @@ function CreateDropdown({ closeMenu }: { closeMenu?: () => void }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const canCreate = user?.role === 'VTUBER' || user?.role === 'ADMIN' || user?.role === 'MODERATOR';
+
   const actions = [
     { icon: Icons.write, label: 'Nueva Publicación', href: '/feed', color: 'var(--primary)' },
-    { icon: Icons.calendar, label: 'Nuevo Evento', href: '/events/create', color: 'var(--accent)' },
-    { icon: Icons.shield, label: 'Nuevo Gremio', href: '/guilds/create', color: 'var(--success)' },
+    ...(canCreate ? [
+      { icon: Icons.calendar, label: 'Nuevo Evento', href: '/events/create', color: 'var(--accent)' },
+      { icon: Icons.shield, label: 'Nuevo Gremio', href: '/guilds/create', color: 'var(--success)' },
+    ] : []),
   ];
 
   return (

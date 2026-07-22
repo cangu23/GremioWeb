@@ -4,7 +4,8 @@ import * as EventsService from './events.service';
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
-    const event = await EventsService.create(req.body, userId);
+    const userRole = req.user!.role;
+    const event = await EventsService.create(req.body, userId, userRole);
     res.status(201).json(event);
   } catch (error) {
     next(error);

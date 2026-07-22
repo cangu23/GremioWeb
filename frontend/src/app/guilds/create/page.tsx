@@ -35,6 +35,12 @@ function CreateGuildForm() {
 
   if (!user) { router.push('/login'); return null; }
 
+  // Solo VTUBER, ADMIN y MODERATOR pueden crear gremios
+  if (user.role !== 'VTUBER' && user.role !== 'ADMIN' && user.role !== 'MODERATOR') {
+    router.push('/guilds');
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

@@ -159,7 +159,7 @@ function GuildsContent() {
             Encuentra tu comunidad o crea la tuya propia
           </p>
         </div>
-        {user && (
+        {user && (user.role === 'VTUBER' || user.role === 'ADMIN' || user.role === 'MODERATOR') && (
           <Link href="/guilds/create" className="btn" style={{
             padding: '12px 24px', borderRadius: '12px', fontWeight: 700,
             background: 'linear-gradient(135deg, var(--secondary), var(--primary))',
@@ -209,7 +209,7 @@ function GuildsContent() {
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
             Sé el primero en crear uno
           </p>
-          {user && (
+          {user && (user.role === 'VTUBER' || user.role === 'ADMIN' || user.role === 'MODERATOR') && (
             <Link href="/guilds/create" className="btn" style={{
               padding: '12px 28px', borderRadius: '12px',
               display: 'inline-flex',

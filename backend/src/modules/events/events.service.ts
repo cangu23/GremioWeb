@@ -4,7 +4,13 @@ import * as UserRepository from '../users/user.repository';
 import * as NotificationsService from '../notifications/notifications.service';
 import { CreateEventPayload, UpdateEventPayload } from '@gremio-estelar/shared';
 
-export const create = async (payload: CreateEventPayload, creatorId: string) => {
+export const create = async (payload: CreateEventPayload, creatorId: string, creatorRole: string) => {
+  // Solo VTubers, Maids y Admins pueden crear eventos en la plataforma
+  const canCreateEvent = ['VTUBER', 'MAID', 'ADMIN'].includes(creatorRole);
+  if (!canCreateEvent) {
+    throw new AppError('Solo los VTubers y el equipo de la plataforma pueden crear eventos.', 403);
+  }
+
   const eventDate = new Date(payload.date);
   if (isNaN(eventDate.getTime())) {
     throw new AppError('Fecha del evento inválida.', 400);
