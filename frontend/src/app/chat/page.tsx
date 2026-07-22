@@ -17,6 +17,8 @@ import type { Socket } from 'socket.io-client';
 interface UserInfo {
   id: string;
   username: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
   vtuberProfile: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
 }
 
@@ -77,7 +79,7 @@ function formatTimeFull(dateStr: string): string {
 }
 
 function getUsername(user: UserInfo): string {
-  return user.vtuberProfile?.displayName || user.username;
+  return user.displayName || user.vtuberProfile?.displayName || user.username;
 }
 
 function getInitial(user: UserInfo): string {

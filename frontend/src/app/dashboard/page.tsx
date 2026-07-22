@@ -129,8 +129,8 @@ function DashboardContent() {
     );
   }
 
-  const displayName = user.vtuberProfile?.displayName || '';
-  const avatarUrl = user.vtuberProfile?.avatarUrl || '';
+  const displayName = user.displayName || user.vtuberProfile?.displayName || '';
+  const avatarUrl = user.avatarUrl || user.vtuberProfile?.avatarUrl || '';
   const xpProgress = gami ? getXpProgress(gami.xp, gami.level) : null;
 
   /* ===== Section header component ===== */

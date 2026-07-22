@@ -11,6 +11,9 @@ export interface User {
   status: AccountStatus;
   provider: AuthProvider;
   createdAt: Date;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
 }
 
 export interface UserProfile extends User {
@@ -21,9 +24,37 @@ export interface PublicUser {
   id: string;
   username: string;
   role: Role;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
   vtuberProfile?: VTuberProfile | null;
 }
 
-export interface UpdateUserPayload extends UpdateVTuberProfilePayload {
+export interface UpdateUserPayload {
   username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
+  // VTuber-specific fields (handled by VTuberProfile)
+  bannerUrl?: string;
+  description?: string;
+  lore?: string;
+  socialLinks?: Record<string, string>;
+  twitchUrl?: string;
+  youtubeUrl?: string;
+  kickUrl?: string;
+  tiktokUrl?: string;
+  twitterUrl?: string;
+  discordUrl?: string;
+  websiteUrl?: string;
+  streamSchedule?: string;
+  languages?: string[];
+  contentType?: string;
+  live2dModel?: string;
+  model3d?: string;
+  fanName?: string;
+  oshiMark?: string;
+  themeColor?: string;
+  hashtags?: string[];
+  isLive?: boolean;
 }

@@ -143,38 +143,48 @@ export const getUserProfileById = async (id: string) => {
 
 export const updateUserProfile = async (userId: string, data: UpdateUserPayload) => {
   return prisma.$transaction(async (tx) => {
-    const profileFields = [
-      'displayName', 'avatarUrl', 'bannerUrl', 'description', 'lore',
+    // Fields that go directly on the User model
+    const userFields = ['displayName', 'avatarUrl', 'bio'];
+    // Fields that go on the VTuberProfile model
+    const vtuberProfileFields = [
+      'bannerUrl', 'description', 'lore',
       'twitchUrl', 'youtubeUrl', 'kickUrl', 'tiktokUrl', 'twitterUrl',
       'discordUrl', 'websiteUrl', 'streamSchedule', 'contentType',
       'live2dModel', 'model3d', 'fanName', 'oshiMark', 'themeColor', 'isLive',
     ];
     
     const dataRecord = data as unknown as Record<string, unknown>;
-    const hasProfileFields = profileFields.some(f => dataRecord[f] !== undefined) ||
+    const hasVtuberFields = vtuberProfileFields.some(f => dataRecord[f] !== undefined) ||
       data.socialLinks !== undefined || data.languages !== undefined || data.hashtags !== undefined;
     
     const { username, socialLinks, ...rest } = data;
     const languages = dataRecord.languages;
     const hashtags = dataRecord.hashtags;
     
-    // 1. Update user if username provided
-    if (username !== undefined) {
+    // 1. Build user update data (username + basic profile fields)
+    const userUpdateData: Record<string, unknown> = {};
+    if (username !== undefined) userUpdateData.username = username;
+    for (const key of userFields) {
+      if (dataRecord[key] !== undefined) {
+        userUpdateData[key] = dataRecord[key];
+      }
+    }
+    if (Object.keys(userUpdateData).length > 0) {
       await tx.user.update({
         where: { id: userId },
-        data: { username },
+        data: userUpdateData,
       });
     }
 
-    // 2. Update or create VTuberProfile
-    if (hasProfileFields) {
+    // 2. Update or create VTuberProfile (only if VTuber fields are present)
+    if (hasVtuberFields) {
       const existingProfile = await tx.vTuberProfile.findUnique({
         where: { userId },
       });
 
       const profileData: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(rest)) {
-        if (value !== undefined && profileFields.includes(key)) {
+        if (value !== undefined && vtuberProfileFields.includes(key)) {
           profileData[key] = value;
         }
       }

@@ -12,6 +12,8 @@ interface ProfileCardData {
   role: string;
   xp: number;
   level: number;
+  displayName?: string | null;
+  avatarUrl?: string | null;
   note?: string | null;
   noteUpdatedAt?: string | null;
   vtuberProfile?: {
@@ -192,7 +194,7 @@ function CardContent({
   onClose: () => void;
 }) {
   const vtuber = profile.vtuberProfile;
-  const displayName = vtuber?.displayName || profile.username;
+  const displayName = profile.displayName || vtuber?.displayName || profile.username;
   const avatarUrl = vtuber?.avatarUrl;
   const bannerUrl = vtuber?.bannerUrl;
   const themeColor = vtuber?.themeColor || 'var(--primary)';

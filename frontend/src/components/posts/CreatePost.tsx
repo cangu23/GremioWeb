@@ -183,8 +183,8 @@ export default function CreatePost({
   };
 
   // Derived user info
-  const displayName = user?.vtuberProfile?.displayName || user?.username || '';
-  const avatarUrl = user?.vtuberProfile?.avatarUrl || '';
+  const displayName = user?.displayName || user?.vtuberProfile?.displayName || user?.username || '';
+  const avatarUrl = user?.avatarUrl || user?.vtuberProfile?.avatarUrl || '';
 
   // Compact mode: avatar next to textarea
   if (compact) {

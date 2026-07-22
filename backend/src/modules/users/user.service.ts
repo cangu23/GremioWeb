@@ -70,6 +70,9 @@ export const getPublicUser = async (userId: string): Promise<PublicUser> => {
     id: userProfile.id,
     username: userProfile.username,
     role: userProfile.role as unknown as PublicUser['role'],
+    displayName: userProfile.displayName,
+    avatarUrl: userProfile.avatarUrl,
+    bio: userProfile.bio,
     vtuberProfile: userProfile.vtuberProfile as unknown as PublicUser['vtuberProfile'],
   };
 };

@@ -18,6 +18,8 @@ export interface Post {
     id: string;
     username: string;
     role?: string;
+    displayName?: string | null;
+    avatarUrl?: string | null;
     vtuberProfile?: {
       displayName: string;
       avatarUrl: string | null;
@@ -48,6 +50,8 @@ export interface CommentData {
     id: string;
     username: string;
     role?: string;
+    displayName?: string | null;
+    avatarUrl?: string | null;
     vtuberProfile?: {
       displayName: string;
       avatarUrl: string | null;
@@ -100,6 +104,8 @@ export interface LiveVTuberProfile {
 export interface FollowingUser {
   id: string;
   username: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
   vtuberProfile?: {
     displayName: string | null;
     avatarUrl: string | null;

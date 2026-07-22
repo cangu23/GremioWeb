@@ -355,7 +355,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <UserAvatar
             src={post.user.vtuberProfile?.avatarUrl}
-            alt={post.user.vtuberProfile?.displayName || post.user.username}
+            alt={post.user.displayName || post.user.vtuberProfile?.displayName || post.user.username}
             userId={post.user.id}
             isVerified={post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved}
             size={40}
@@ -365,7 +365,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
               display: 'inline-flex', alignItems: 'center', gap: '4px',
             }}>
-              {post.user.vtuberProfile?.displayName || post.user.username}
+              {post.user.displayName || post.user.vtuberProfile?.displayName || post.user.username}
               {(post.user.role === 'VTUBER' || post.user.vtuberProfile?.isApproved) && (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Oficial">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>

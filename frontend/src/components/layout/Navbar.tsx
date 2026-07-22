@@ -407,8 +407,8 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
 
   if (!user) return null;
 
-  const avatarUrl = user.vtuberProfile?.avatarUrl || '';
-  const displayName = user.vtuberProfile?.displayName || user.username;
+  const avatarUrl = user.avatarUrl || user.vtuberProfile?.avatarUrl || '';
+  const displayName = user.displayName || user.vtuberProfile?.displayName || user.username;
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -606,13 +606,13 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
           <Link href={`/profile/${user.id}`} onClick={closeMenu} style={mobileLink}>
             <div style={{
               width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
-              background: user.vtuberProfile?.avatarUrl
-                ? `url(${user.vtuberProfile.avatarUrl}) center/cover`
+              background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
+                ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
                 : 'linear-gradient(135deg, var(--primary), var(--secondary))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'white', fontSize: '0.6rem', fontWeight: 'bold',
             }}>
-              {!user.vtuberProfile?.avatarUrl && (user.vtuberProfile?.displayName || user.username).charAt(0).toUpperCase()}
+              {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && (user.displayName || user.vtuberProfile?.displayName || user.username).charAt(0).toUpperCase()}
             </div>
             <span>Mi Perfil</span>
           </Link>

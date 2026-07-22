@@ -250,8 +250,8 @@ function HomeContent() {
 
   if (!user) return <LandingPage />;
 
-  const displayName = user.vtuberProfile?.displayName || user.username;
-  const avatarUrl = user.vtuberProfile?.avatarUrl || '';
+  const displayName = user.displayName || user.vtuberProfile?.displayName || user.username;
+  const avatarUrl = user.avatarUrl || user.vtuberProfile?.avatarUrl || '';
 
   // ==========================================================================
   // LEFT SIDEBAR
@@ -371,8 +371,8 @@ function HomeContent() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {followingUsers.map(friend => {
-              const displayName = friend.vtuberProfile?.displayName || friend.username;
-              const avatarUrl = friend.vtuberProfile?.avatarUrl || '';
+              const displayName = friend.displayName || friend.vtuberProfile?.displayName || friend.username;
+              const avatarUrl = friend.avatarUrl || friend.vtuberProfile?.avatarUrl || '';
               const isVerified = friend.vtuberProfile?.isVerified || false;
               // Check if this friend is currently live (cross-reference with liveVtubers)
               const liveInfo = liveVtubers.find(lv => lv.userId === friend.id);

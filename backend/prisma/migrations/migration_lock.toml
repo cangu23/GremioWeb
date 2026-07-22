@@ -1,5 +1,4 @@
 # Prisma Migrate lock file
-# Managed by Prisma Migrate. Do not edit manually.
 
 [generator]
 provider = "prisma-client-js"

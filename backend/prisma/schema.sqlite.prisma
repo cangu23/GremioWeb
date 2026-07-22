@@ -29,6 +29,11 @@ model User {
   updatedAt     DateTime       @updatedAt
   password      String?
 
+  // User profile (for non-VTubers)
+  displayName   String?
+  avatarUrl     String?
+  bio           String?
+
   // Note / status (Instagram-style note on avatar)
   note          String?
   noteUpdatedAt DateTime?
