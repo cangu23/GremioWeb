@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 
@@ -86,12 +86,29 @@ const activityLabels: Record<string, string> = {
   RESOLVE_REPORT: 'RESOLVE',
   APPROVE_VTUBER: 'APPROVE',
   VERIFY_VTUBER: 'VERIFY',
+  CLEANUP_USER_PROFILES: 'CLEANUP',
 };
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cleaningUp, setCleaningUp] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState<string | null>(null);
+
+  const handleCleanupProfiles = useCallback(async () => {
+    if (!confirm('⚠️ ¿Estás seguro? Se eliminarán los VTuberProfiles de TODOS los usuarios con role USER. Esta acción no se puede deshacer.')) return;
+    setCleaningUp(true);
+    setCleanupResult(null);
+    try {
+      const result = await apiFetch('/admin/users/cleanup-profiles', { method: 'POST' });
+      setCleanupResult(`✅ ${result.message}`);
+    } catch (err: unknown) {
+      setCleanupResult(`❌ Error: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+    } finally {
+      setCleaningUp(false);
+    }
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -211,6 +228,49 @@ export default function AdminDashboardPage() {
                   {action.label}
                 </Link>
               ))}
+              {/* Cleanup profiles button */}
+              <div style={{
+                marginTop: '12px', paddingTop: '12px',
+                borderTop: '1px solid #1a1a20',
+              }}>
+                <button
+                  onClick={handleCleanupProfiles}
+                  disabled={cleaningUp}
+                  style={{
+                    display: 'block', width: '100%', padding: '10px 16px',
+                    background: cleaningUp ? '#1a1a20' : 'rgba(220, 20, 60, 0.08)',
+                    border: `1px solid ${cleaningUp ? '#333' : '#dc143c'}`,
+                    borderRadius: '2px', color: cleaningUp ? '#666' : '#dc143c',
+                    fontFamily: 'monospace', fontSize: '0.85rem',
+                    cursor: cleaningUp ? 'wait' : 'pointer',
+                    transition: 'all 0.2s',
+                    opacity: cleaningUp ? 0.6 : 1,
+                  }}
+                  onMouseEnter={e => {
+                    if (!cleaningUp) {
+                      e.currentTarget.style.background = 'rgba(220, 20, 60, 0.15)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!cleaningUp) {
+                      e.currentTarget.style.background = 'rgba(220, 20, 60, 0.08)';
+                    }
+                  }}
+                >
+                  {cleaningUp ? '>> LIMPIANDO...' : '>> CLEANUP_USER_PROFILES'}
+                </button>
+                {cleanupResult && (
+                  <div style={{
+                    marginTop: '8px', padding: '8px 12px',
+                    background: '#050505', border: '1px solid #1a1a20',
+                    borderRadius: '2px', fontSize: '0.75rem',
+                    fontFamily: 'monospace', color: '#a0a0a0',
+                    wordBreak: 'break-word',
+                  }}>
+                    {cleanupResult}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

@@ -35,6 +35,7 @@ router.get('/users/:id', validateRequest(adminQuerySchema), AdminController.getU
 router.patch('/users/:id', validateRequest(updateUserAdminSchema), AdminController.updateUser);
 router.delete('/users/:id', AdminController.deleteUser);
 router.post('/users/:id/restore', AdminController.restoreUser);
+router.post('/users/cleanup-profiles', AdminController.cleanupUserProfiles);
 
 // ========== VTUBERS ==========
 router.get('/vtubers', validateRequest(adminQuerySchema), AdminController.listVtubers);

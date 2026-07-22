@@ -233,6 +233,15 @@ export const resolveReport = async (req: Request, res: Response, next: NextFunct
   } catch (err) { next(err); }
 };
 
+// ========== CLEANUP ==========
+
+export const cleanupUserProfiles = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AdminService.cleanupUserProfiles(req.user!.id, req.ip);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
 // ========== LOGS ==========
 
 export const listLogs = async (req: Request, res: Response, next: NextFunction) => {
