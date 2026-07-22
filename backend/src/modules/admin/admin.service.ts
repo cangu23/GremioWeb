@@ -536,6 +536,71 @@ export const resolveReport = async (id: string, data: { status: string; resoluti
 
 // ========== LOGS ==========
 
+// ========== CLEANUP ==========
+
+export const cleanupUserProfiles = async (adminId: string, ip?: string) => {
+  // Find users with role USER that have a vtuberProfile
+  const usersWithProfile = await prisma.user.findMany({
+    where: {
+      role: 'USER',
+      vtuberProfile: { isNot: null },
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      provider: true,
+      createdAt: true,
+      vtuberProfile: {
+        select: {
+          id: true,
+          displayName: true,
+          isApproved: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  if (usersWithProfile.length === 0) {
+    return {
+      removed: 0,
+      affectedUsers: [],
+      message: 'No se encontraron usuarios role USER con VTuberProfile.',
+    };
+  }
+
+  // Prepare report before deleting
+  const affectedUsers = usersWithProfile.map(u => ({
+    id: u.id,
+    username: u.username,
+    provider: u.provider,
+    displayName: u.vtuberProfile?.displayName ?? null,
+  }));
+
+  // Delete profiles
+  const profileIds = usersWithProfile
+    .map(u => u.vtuberProfile?.id)
+    .filter((id): id is string => !!id);
+
+  const result = await prisma.vTuberProfile.deleteMany({
+    where: { id: { in: profileIds } },
+  });
+
+  // Log the cleanup action
+  const summary = affectedUsers.map(u => `${u.username}(${u.provider})`).join(', ');
+  await logAdminAction(adminId, 'CLEANUP_USER_PROFILES', {
+    removed: result.count,
+    users: summary,
+  }, ip);
+
+  return {
+    removed: result.count,
+    affectedUsers,
+    message: `${result.count} VTuberProfile(s) eliminado(s) de usuarios role USER.`,
+  };
+};
+
 export const listLogs = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
   const { page, limit, skip } = extractPagination(query);
 
