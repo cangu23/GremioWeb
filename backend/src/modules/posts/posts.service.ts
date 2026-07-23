@@ -241,9 +241,10 @@ export const deleteComment = async (commentId: string, userId: string, moderatio
   const post = await PostsRepository.findPostById(comment.postId);
   const isPostOwner = post && post.userId === userId;
   const isCommentOwner = comment.userId === userId;
+  const isStaffAction = !isCommentOwner && !isPostOwner;
   let staffUser = null;
 
-  if (!isCommentOwner && !isPostOwner) {
+  if (isStaffAction) {
     staffUser = await UserRepository.findById(userId);
     if (!staffUser || (staffUser.role !== 'ADMIN' && staffUser.role !== 'MODERATOR')) {
       throw new AppError('No tienes permiso para eliminar este comentario', 403);
