@@ -401,149 +401,38 @@ function ProfileContent() {
             @{profile.username}
           </p>
 
-          {/* Note cloud bubble — al lado de la foto de perfil */}
-          {profile.note && (
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              marginTop: '8px', marginBottom: '8px',
-              position: 'relative',
-            }}>
-              <div style={{
-                position: 'relative',
-                padding: '10px 18px',
-                borderRadius: '18px 18px 18px 4px',
-                background: 'linear-gradient(135deg, rgba(30,28,55,0.97), rgba(20,20,40,0.97))',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(139,92,246,0.2)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 40px rgba(139,92,246,0.06)',
-                maxWidth: '320px',
-                animation: 'fadeInUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              }}>
-                {/* Gradient line */}
-                <div style={{
-                  position: 'absolute', top: 0, left: '20%', right: '20%', height: '2px',
-                  background: 'linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent)',
-                  borderRadius: '1px',
-                }} />
-
-                {/* Texto de la nota */}
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.92rem', lineHeight: 1.5,
-                  color: 'var(--text)',
-                  fontStyle: 'italic',
-                  fontWeight: 500,
-                  wordBreak: 'break-word',
-                }}>
-                  &ldquo;{profile.note}&rdquo;
-                </p>
-                {profile.noteUpdatedAt && (
-                  <div style={{
-                    fontSize: '0.65rem', color: 'var(--text-muted)',
-                    marginTop: '6px', opacity: 0.6,
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                  }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    {new Date(profile.noteUpdatedAt).toLocaleDateString('es-ES', {
-                      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-                    })}
-                  </div>
-                )}
-
-                {/* Cloud tail */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-8px', left: '30%', transform: 'rotate(45deg)',
-                  width: '14px', height: '14px',
-                  background: 'rgba(30,28,55,0.97)',
-                  borderRight: '1px solid rgba(139,92,246,0.2)',
-                  borderBottom: '1px solid rgba(139,92,246,0.2)',
-                  borderRadius: '0 0 4px 0',
-                  zIndex: -1,
-                }} />
-
-                {/* Floating particles */}
-                <div style={{
-                  position: 'absolute', top: '-4px', right: '14px',
-                  width: '4px', height: '4px', borderRadius: '50%',
-                  background: 'rgba(139,92,246,0.3)',
-                  animation: 'noteFloat 3s ease-in-out infinite',
-                }} />
-                <div style={{
-                  position: 'absolute', top: '-2px', right: '24px',
-                  width: '3px', height: '3px', borderRadius: '50%',
-                  background: 'rgba(0,212,255,0.2)',
-                  animation: 'noteFloat 3s ease-in-out 1s infinite',
-                }} />
-              </div>
-
-              {/* Edit button for own profile */}
-              {isOwnProfile && (
-                <button
-                  onClick={() => setShowNoteModal(true)}
-                  title="Editar nota"
-                  style={{
-                    background: 'rgba(139,92,246,0.1)',
-                    border: '1px solid rgba(139,92,246,0.2)',
-                    color: 'var(--primary)',
-                    cursor: 'pointer',
-                    width: '32px', height: '32px',
-                    borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.2s',
-                    flexShrink: 0,
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'rgba(139,92,246,0.2)';
-                    e.currentTarget.style.transform = 'scale(1.1)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(139,92,246,0.1)';
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                  </svg>
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Add note button for own profile without note */}
-          {isOwnProfile && !profile.note && (
+          {/* Botón para editar/agregar nota en perfil propio */}
+          {isOwnProfile && (
             <button
               onClick={() => setShowNoteModal(true)}
               style={{
-                background: 'rgba(139,92,246,0.06)',
-                border: '1px dashed rgba(139,92,246,0.3)',
+                background: profile.note ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.06)',
+                border: profile.note ? '1px solid rgba(139,92,246,0.25)' : '1px dashed rgba(139,92,246,0.3)',
                 color: 'var(--text-muted)',
                 cursor: 'pointer',
-                padding: '6px 16px',
+                padding: '5px 14px',
                 borderRadius: '20px',
-                fontSize: '0.8rem',
+                fontSize: '0.78rem',
                 fontWeight: 600,
-                marginTop: '4px',
+                marginTop: '6px',
                 transition: 'all 0.2s',
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(139,92,246,0.12)';
+                e.currentTarget.style.background = 'rgba(139,92,246,0.15)';
                 e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)';
                 e.currentTarget.style.color = 'var(--primary)';
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(139,92,246,0.06)';
-                e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)';
+                e.currentTarget.style.background = profile.note ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.06)';
+                e.currentTarget.style.borderColor = profile.note ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.3)';
                 e.currentTarget.style.color = 'var(--text-muted)';
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
               </svg>
-              Agregar nota
+              {profile.note ? 'Editar nota' : 'Agregar nota'}
             </button>
           )}
 
