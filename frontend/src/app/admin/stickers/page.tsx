@@ -2,10 +2,12 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
+import { refreshStickersCache } from '@/lib/content-renderer';
 
 interface Sticker {
   id: string;
@@ -36,8 +38,32 @@ export default function StickersAdminPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Image preview
+  // Image preview & upload
   const [previewError, setPreviewError] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadAndWait } = useSocketMedia();
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const url = await uploadAndWait(file, '/uploads/sticker');
+      setFormImageUrl(url);
+      setPreviewError(false);
+      if (!formName.trim()) {
+        const base = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        setFormName(base.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al subir la imagen');
+    } finally {
+      setUploading(false);
+      if (e.target) e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -96,6 +122,7 @@ export default function StickersAdminPage() {
       setFormImageUrl('');
       setFormCategory('general');
       setFormType('sticker');
+      refreshStickersCache();
       loadStickers();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al crear sticker');
@@ -109,6 +136,7 @@ export default function StickersAdminPage() {
     try {
       await apiFetch(`/admin/stickers/${id}`, { method: 'DELETE' });
       setStickers(prev => prev.filter(s => s.id !== id));
+      refreshStickersCache();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error al eliminar');
     }
@@ -170,9 +198,41 @@ export default function StickersAdminPage() {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: 0, gridColumn: '1 / -1' }}>
-                <label className="form-label">URL de la Imagen</label>
-                <input className="input" value={formImageUrl} onChange={e => { setFormImageUrl(e.target.value); setPreviewError(false); }}
-                  placeholder="https://ejemplo.com/sticker.webp" required />
+                <label className="form-label">Imagen / GIF del Emoji o Sticker</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    className="input"
+                    value={formImageUrl}
+                    onChange={e => { setFormImageUrl(e.target.value); setPreviewError(false); }}
+                    placeholder="URL o sube una imagen / GIF desde tu equipo..."
+                    required
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    style={{
+                      padding: '10px 16px', borderRadius: '10px',
+                      border: '1px solid var(--glass-border)',
+                      background: 'rgba(255,255,255,0.05)', color: 'var(--text)',
+                      cursor: uploading ? 'wait' : 'pointer',
+                      fontSize: '0.85rem', whiteSpace: 'nowrap',
+                      transition: 'all 0.2s',
+                      opacity: uploading ? 0.6 : 1,
+                    }}
+                    title="Subir archivo desde tu computadora"
+                  >
+                    {uploading ? 'Subiendo...' : '📁 Subir Archivo'}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    style={{ display: 'none' }}
+                    onChange={handleFileUpload}
+                  />
+                </div>
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Categoría</label>

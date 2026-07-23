@@ -154,6 +154,11 @@ export const handleUploadPostImage = async (req: Request, res: Response, next: N
   await handleUpload(req, res, next, 'posts', { maxWidth: 1200, quality: 80 });
 };
 
+// Upload sticker/emoji image handler
+export const handleUploadSticker = async (req: Request, res: Response, next: NextFunction) => {
+  await handleUpload(req, res, next, 'stickers', { maxWidth: 512, quality: 85 });
+};
+
 // Upload cafe image (logo / banner) handler
 export const handleUploadCafeImage = async (req: Request, res: Response, next: NextFunction) => {
   const type = (req.query.type as string) || 'logo';

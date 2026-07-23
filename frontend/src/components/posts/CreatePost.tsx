@@ -332,7 +332,10 @@ export default function CreatePost({
                       <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: '8px', zIndex: 100 }}>
                         <StickerPicker
                           onSelect={(sticker) => {
-                            setSelectedSticker({ imageUrl: sticker.imageUrl, name: sticker.name });
+                            setContent(prev => (prev ? `${prev} :${sticker.name}: ` : `:${sticker.name}: `));
+                            if (sticker.type === 'sticker') {
+                              setSelectedSticker({ imageUrl: sticker.imageUrl, name: sticker.name });
+                            }
                             setShowStickerPicker(false);
                           }}
                           onClose={() => setShowStickerPicker(false)}
@@ -523,7 +526,10 @@ export default function CreatePost({
                     <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: '8px', zIndex: 100 }}>
                       <StickerPicker
                         onSelect={(sticker) => {
-                          setSelectedSticker({ imageUrl: sticker.imageUrl, name: sticker.name });
+                          setContent(prev => (prev ? `${prev} :${sticker.name}: ` : `:${sticker.name}: `));
+                          if (sticker.type === 'sticker') {
+                            setSelectedSticker({ imageUrl: sticker.imageUrl, name: sticker.name });
+                          }
                           setShowStickerPicker(false);
                         }}
                         onClose={() => setShowStickerPicker(false)}

@@ -11,6 +11,7 @@ import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
 import StickerPicker from '@/components/ui/StickerPicker';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import { renderFormattedContent } from '@/lib/content-renderer';
 import type { Socket } from 'socket.io-client';
 
 /* ─────────── Types ─────────── */
@@ -842,7 +843,7 @@ function MessengerContent() {
                                 maxWidth: '100%',
                               }}>
                                 <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
-                                  {msg.content}
+                                  {renderFormattedContent(msg.content)}
                                 </p>
                                 <div style={{
                                   display: 'flex', alignItems: 'center', justifyContent: isMine ? 'flex-end' : 'flex-start',

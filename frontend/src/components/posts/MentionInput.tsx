@@ -332,37 +332,17 @@ export default function MentionInput({
   );
 }
 
+import { renderFormattedContent, useStickersCache } from '@/lib/content-renderer';
+
 // ==========================================================================
-// Helper: Extract @mentions from text for rendering
+// Helper: Extract @mentions, hashtags, emojis & stickers from text
 // ==========================================================================
 export function renderContentWithMentions(
   text: string,
   hashtagLink?: string,
   mentionLinkPrefix?: string,
 ) {
-  // Split by both hashtags and @mentions
-  const parts = text.split(/(#\w+|@\w+)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith('#')) {
-      const tag = part.slice(1);
-      return (
-        <Link key={i} href={hashtagLink ? `${hashtagLink}${tag}` : `/feed?tag=${tag}`}
-          style={{ color: 'var(--primary)', fontWeight: 500 }}>
-          {part}
-        </Link>
-      );
-    }
-    if (part.startsWith('@')) {
-      const username = part.slice(1);
-      return (
-        <Link key={i} href={mentionLinkPrefix ? `${mentionLinkPrefix}${username}` : `/vtubers?q=${encodeURIComponent(username)}`}
-          style={{ color: 'var(--secondary)', fontWeight: 500 }}>
-          {part}
-        </Link>
-      );
-    }
-    return part;
-  });
+  return renderFormattedContent(text, { hashtagLink, mentionLinkPrefix });
 }
 
 // ==========================================================================
