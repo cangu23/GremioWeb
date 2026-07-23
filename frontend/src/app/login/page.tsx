@@ -262,6 +262,7 @@ export default function LoginPage() {
         <ClientOnly
           fallback={
             <div
+              suppressHydrationWarning
               style={{
                 textAlign: 'center',
                 padding: '40px 0',

@@ -917,7 +917,7 @@ function VtuberProfileEditor() {
 
 export default function VtuberProfilePage() {
   return (
-    <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>}>
+    <ClientOnly fallback={<div suppressHydrationWarning className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>}>
       <VtuberProfileEditor />
     </ClientOnly>
   );
