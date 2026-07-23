@@ -48,10 +48,6 @@ function UserSettings() {
       return;
     }
     if (user) {
-      if (user.role === 'VTUBER') {
-        router.push('/vtuber-profile');
-        return;
-      }
       setDisplayName(user.displayName || '');
       setAvatarUrl(user.avatarUrl || '');
       setBio(user.bio || '');
@@ -109,6 +105,22 @@ function UserSettings() {
           Personaliza tu perfil público
         </p>
       </div>
+
+      {user.role === 'VTUBER' && (
+        <div style={{
+          padding: '14px 18px', borderRadius: '14px', marginBottom: '24px',
+          background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
+        }}>
+          <span style={{ fontSize: '0.88rem', color: '#38bdf8', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Eres una VTuber oficial. Para editar tus datos de VTuber (lore, directo, redes), puedes acceder a tu panel VTuber.
+          </span>
+          <Link href="/vtuber-profile" style={{ padding: '6px 14px', borderRadius: '8px', background: '#38bdf8', color: '#000', fontWeight: 700, fontSize: '0.8rem', textDecoration: 'none' }}>
+            Ir a Perfil VTuber →
+          </Link>
+        </div>
+      )}
 
       <form onSubmit={handleSave}>
         {/* Avatar section */}

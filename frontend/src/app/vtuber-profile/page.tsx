@@ -237,9 +237,9 @@ function VtuberProfileEditor() {
         padding: '4px', maxWidth: '320px',
       }}>
         <button
-          onClick={() => setActiveTab('editor')}
+          onClick={() => { setActiveTab('editor'); setShowPreview(false); }}
           style={{
-            flex: 1, padding: '10px 16px', borderRadius: '9px',
+            flex: 1, padding: '10px 16px', borderRadius: '999px',
             border: 'none', cursor: 'pointer',
             background: activeTab === 'editor' ? 'var(--primary)' : 'transparent',
             color: activeTab === 'editor' ? '#fff' : 'var(--text-muted)',
@@ -254,12 +254,12 @@ function VtuberProfileEditor() {
           Editor
         </button>
         <button
-          onClick={() => { setShowPreview(!showPreview); setActiveTab('preview'); }}
+          onClick={() => { setActiveTab('preview'); setShowPreview(true); }}
           style={{
-            flex: 1, padding: '10px 16px', borderRadius: '9px',
+            flex: 1, padding: '10px 16px', borderRadius: '999px',
             border: 'none', cursor: 'pointer',
-            background: activeTab === 'preview' && showPreview ? 'var(--primary)' : 'transparent',
-            color: activeTab === 'preview' && showPreview ? '#fff' : 'var(--text-muted)',
+            background: activeTab === 'preview' ? 'var(--primary)' : 'transparent',
+            color: activeTab === 'preview' ? '#fff' : 'var(--text-muted)',
             fontWeight: 600, fontSize: '0.88rem',
             transition: 'all 0.2s',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',

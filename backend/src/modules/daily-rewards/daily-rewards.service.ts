@@ -1,6 +1,8 @@
 import AppError from '../../errors/AppError';
 import prisma from '../../database/prisma';
 import * as GamificationRepository from '../gamification/gamification.repository';
+import { addStardust } from '../ecosystem/stardust.service';
+import { trackMissionProgress } from '../ecosystem/missions.service';
 import * as GamificationService from '../gamification/gamification.service';
 
 const DAILY_REWARDS = [
@@ -69,8 +71,10 @@ export const claim = async (userId: string) => {
 
   const reward = DAILY_REWARDS.find(r => r.day === status.currentDay) || DAILY_REWARDS[0];
 
-  // Award XP
+  // Award XP & Stardust
   await GamificationRepository.addXpToUser(userId, reward.xp);
+  await addStardust(userId, Math.round(reward.xp / 2), `Recompensa Diaria Día ${reward.day}`).catch(() => {});
+  await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
 
   // Record the claim
   await prisma.dailyReward.create({

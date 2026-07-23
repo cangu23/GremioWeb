@@ -1,6 +1,7 @@
 import AppError from '../../errors/AppError';
 import prisma from '../../database/prisma';
 import * as GamificationRepository from '../gamification/gamification.repository';
+import { addStardust } from '../ecosystem/stardust.service';
 
 // Roulette prize pool
 const PRIZES = [
@@ -50,9 +51,10 @@ export const spin = async (userId: string) => {
 
   const prize = pickPrize();
 
-  // Award XP if the prize is XP
+  // Award XP and Stardust if the prize is XP
   if (prize.value > 0) {
     await GamificationRepository.addXpToUser(userId, prize.value);
+    await addStardust(userId, Math.round(prize.value / 2), `Ruleta: ${prize.label}`).catch(() => {});
   }
 
   // Record spin
