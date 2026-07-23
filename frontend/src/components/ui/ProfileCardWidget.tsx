@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
+import { useAuth } from '@/lib/AuthContext';
 
 // ── Types ──
 interface ProfileCardData {
@@ -193,6 +194,8 @@ function CardContent({
   handleFollow: (e: React.MouseEvent) => Promise<void>;
   onClose: () => void;
 }) {
+  const { user: currentUser } = useAuth();
+  const isOwnProfile = currentUser?.id === profile.id;
   const vtuber = profile.vtuberProfile;
   const displayName = profile.displayName || vtuber?.displayName || profile.username;
   const avatarUrl = vtuber?.avatarUrl;
@@ -441,56 +444,69 @@ function CardContent({
         </div>
 
         {/* ── Follow button ── */}
-        <button
-          onClick={handleFollow}
-          disabled={followLoading}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '10px 28px', borderRadius: '12px',
-            border: isFollowed ? '1px solid rgba(255,255,255,0.12)' : 'none',
-            background: isFollowed
-              ? 'rgba(255,255,255,0.06)'
-              : `linear-gradient(135deg, ${themeColor}, var(--secondary))`,
-            color: isFollowed ? 'var(--text-muted)' : '#fff',
-            fontSize: '0.85rem', fontWeight: 700,
-            cursor: followLoading ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s',
-            marginBottom: '14px',
-            opacity: followLoading ? 0.6 : 1,
-          }}
-          onMouseOver={e => {
-            if (!followLoading) {
-              if (isFollowed) {
-                e.currentTarget.style.background = 'rgba(245,158,11,0.12)';
-                e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)';
-              } else {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = `0 4px 20px rgba(0,0,0,0.3)`;
+        {!isOwnProfile ? (
+          <button
+            onClick={handleFollow}
+            disabled={followLoading}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              padding: '10px 28px', borderRadius: '12px',
+              border: isFollowed ? '1px solid rgba(255,255,255,0.12)' : 'none',
+              background: isFollowed
+                ? 'rgba(255,255,255,0.06)'
+                : `linear-gradient(135deg, ${themeColor}, var(--secondary))`,
+              color: isFollowed ? 'var(--text-muted)' : '#fff',
+              fontSize: '0.85rem', fontWeight: 700,
+              cursor: followLoading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              marginBottom: '14px',
+              opacity: followLoading ? 0.6 : 1,
+            }}
+            onMouseOver={e => {
+              if (!followLoading) {
+                if (isFollowed) {
+                  e.currentTarget.style.background = 'rgba(245,158,11,0.12)';
+                  e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)';
+                } else {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = `0 4px 20px rgba(0,0,0,0.3)`;
+                }
               }
-            }
-          }}
-          onMouseOut={e => {
-            if (!followLoading) {
-              e.currentTarget.style.background = isFollowed ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${themeColor}, var(--secondary))`;
-              e.currentTarget.style.borderColor = isFollowed ? 'rgba(255,255,255,0.12)' : 'none';
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = 'none';
-            }
-          }}
-        >
-          {followLoading ? (
-            <span style={{
-              width: '14px', height: '14px', borderRadius: '50%',
-              border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff',
-              animation: 'pcfPulse 0.6s linear infinite',
-              display: 'inline-block',
-            }} />
-          ) : isFollowed ? '✓ Siguiendo' : (
-            <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg> Seguir</>
-          )}
-        </button>
+            }}
+            onMouseOut={e => {
+              if (!followLoading) {
+                e.currentTarget.style.background = isFollowed ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${themeColor}, var(--secondary))`;
+                e.currentTarget.style.borderColor = isFollowed ? 'rgba(255,255,255,0.12)' : 'none';
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }
+            }}
+          >
+            {followLoading ? (
+              <span style={{
+                width: '14px', height: '14px', borderRadius: '50%',
+                border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff',
+                animation: 'pcfPulse 0.6s linear infinite',
+                display: 'inline-block',
+              }} />
+            ) : isFollowed ? '✓ Siguiendo' : (
+              <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg> Seguir</>
+            )}
+          </button>
+        ) : (
+          <div style={{
+            display: 'inline-block',
+            padding: '6px 16px', borderRadius: '20px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600,
+            marginBottom: '14px',
+          }}>
+            Tu perfil
+          </div>
+        )}
 
         {/* ── Social links row ── */}
         {socialLinks.length > 0 && (
