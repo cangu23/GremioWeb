@@ -238,10 +238,12 @@ export const deleteComment = async (commentId: string, userId: string, moderatio
   const comment = await PostsRepository.findCommentById(commentId);
   if (!comment) throw new AppError('Comentario no encontrado', 404);
 
-  // Allow owner, admin, or moderator to delete
-  const isStaffAction = comment.userId !== userId;
+  const post = await PostsRepository.findPostById(comment.postId);
+  const isPostOwner = post && post.userId === userId;
+  const isCommentOwner = comment.userId === userId;
   let staffUser = null;
-  if (isStaffAction) {
+
+  if (!isCommentOwner && !isPostOwner) {
     staffUser = await UserRepository.findById(userId);
     if (!staffUser || (staffUser.role !== 'ADMIN' && staffUser.role !== 'MODERATOR')) {
       throw new AppError('No tienes permiso para eliminar este comentario', 403);

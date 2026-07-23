@@ -49,6 +49,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
+  const [openCommentMenuId, setOpenCommentMenuId] = useState<string | null>(null);
   const [moderationNote, setModerationNote] = useState('');
   const [comments, setComments] = useState<CommentData[]>([]);
   const [commentText, setCommentText] = useState('');
@@ -73,7 +74,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
     setShowDeleteConfirm(true);
   };
 
-  // Close menu on outside click
+  // Close main post menu on outside click
   useEffect(() => {
     if (!menuOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -82,6 +83,14 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
+
+  // Close comment 3-dots menu on outside click
+  useEffect(() => {
+    if (!openCommentMenuId) return;
+    const handleClickOutside = () => setOpenCommentMenuId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openCommentMenuId]);
 
   // Close context menu on outside click
   useEffect(() => {
@@ -349,7 +358,15 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
         isStaff={isStaff}
         isOwner={isOwner}
         onClose={() => { setShowDeleteConfirm(false); setDeleteCommentId(null); setModerationNote(''); }}
-        onDeleted={() => { onDelete?.(post.id); }}
+        onDeleted={() => {
+          if (deleteCommentId) {
+            setComments(prev => prev.filter(c => c.id !== deleteCommentId));
+            post._count.comments = Math.max(0, post._count.comments - 1);
+            setDeleteCommentId(null);
+          } else {
+            onDelete?.(post.id);
+          }
+        }}
       />
 
       {/* ===== POST HEADER ===== */}
@@ -626,63 +643,90 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', textDecoration: 'none' }}>
-                        {comment.user?.vtuberProfile?.displayName || comment.user?.username}
+                        {comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username}
                       </Link>
-                      {/* Staff moderate button for comments */}
-                      {isStaff && currentUserId && comment.userId !== currentUserId && (
-                        <button
-                          onClick={() => { setDeleteCommentId(comment.id); setShowDeleteConfirm(true); }}
-                          title="Eliminar comentario (moderación)"
-                          style={{
-                            marginLeft: 'auto',
-                            width: '24px', height: '24px', flexShrink: 0,
-                            border: 'none', background: 'rgba(255,77,106,0.08)',
-                            cursor: 'pointer',
-                            color: '#ff4d6a', opacity: 0.5,
-                            borderRadius: '6px',
-                            transition: 'all 0.15s',
-                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            padding: 0,
-                          }}
-                          onMouseOver={e => {
-                            e.currentTarget.style.opacity = '1';
-                            e.currentTarget.style.background = 'rgba(255,77,106,0.2)';
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                          }}
-                          onMouseOut={e => {
-                            e.currentTarget.style.opacity = '0.5';
-                            e.currentTarget.style.background = 'rgba(255,77,106,0.08)';
-                            e.currentTarget.style.transform = 'none';
-                          }}
-                          aria-label="Moderar comentario"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                          </svg>
-                        </button>
-                      )}
-                      {/* Report button for non-staff users */}
-                      {!isStaff && currentUserId && comment.userId !== currentUserId && (
-                        <button
-                          onClick={() => openReportModal('comment', comment.id)}
-                          title="Reportar comentario"
-                          style={{
-                            marginLeft: 'auto',
-                            width: '18px', height: '18px', flexShrink: 0,
-                            border: 'none', background: 'none', cursor: 'pointer',
-                            color: 'var(--text-muted)', opacity: 0.3,
-                            transition: 'opacity 0.15s',
-                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            padding: 0,
-                          }}
-                          onMouseOver={e => (e.currentTarget.style.opacity = '1')}
-                          onMouseOut={e => (e.currentTarget.style.opacity = '0.3')}
-                          aria-label="Reportar comentario"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
-                          </svg>
-                        </button>
+                      {/* 3-dots menu for comment options */}
+                      {currentUserId && (
+                        <div style={{ marginLeft: 'auto', position: 'relative' }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenCommentMenuId(openCommentMenuId === comment.id ? null : comment.id);
+                            }}
+                            title="Opciones del comentario"
+                            style={{
+                              width: '24px', height: '24px', borderRadius: '50%',
+                              border: 'none', background: 'transparent',
+                              color: 'var(--text-muted)', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'all 0.15s',
+                              padding: 0,
+                            }}
+                            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'var(--text)'; }}
+                            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                              <circle cx="12" cy="5" r="2" />
+                              <circle cx="12" cy="12" r="2" />
+                              <circle cx="12" cy="19" r="2" />
+                            </svg>
+                          </button>
+
+                          {openCommentMenuId === comment.id && (
+                            <div style={{
+                              position: 'absolute', top: '100%', right: 0, marginTop: '4px',
+                              background: '#181828', border: '1px solid var(--glass-border)',
+                              borderRadius: '10px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                              padding: '4px', zIndex: 60, minWidth: '150px',
+                            }}>
+                              {(comment.userId === currentUserId || post.userId === currentUserId || isStaff) && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenCommentMenuId(null);
+                                    openModerateModal('comment', comment.id);
+                                  }}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                                    padding: '8px 10px', border: 'none', background: 'none',
+                                    color: '#ff4d6a', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500,
+                                    borderRadius: '6px', textAlign: 'left', transition: 'background 0.15s',
+                                  }}
+                                  onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,106,0.12)')}
+                                  onMouseOut={e => (e.currentTarget.style.background = 'none')}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                  </svg>
+                                  Eliminar
+                                </button>
+                              )}
+                              {comment.userId !== currentUserId && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenCommentMenuId(null);
+                                    openReportModal('comment', comment.id);
+                                  }}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                                    padding: '8px 10px', border: 'none', background: 'none',
+                                    color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500,
+                                    borderRadius: '6px', textAlign: 'left', transition: 'background 0.15s',
+                                  }}
+                                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--text)'; }}
+                                  onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+                                  </svg>
+                                  Reportar
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                     <p style={{ margin: '2px 0 0', fontSize: '0.82rem', lineHeight: 1.4 }}>{renderContentWithMentions(comment.content)}</p>
