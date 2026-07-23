@@ -33,6 +33,7 @@ interface DmMessageData {
   receiverId: string;
   sender: UserInfo;
   receiver: UserInfo;
+  reactions?: Record<string, string[]>; // emoji -> array of userIds
 }
 
 interface ConversationData {
@@ -44,6 +45,7 @@ interface ConversationData {
   receiverId: string;
   sender: UserInfo;
   receiver: UserInfo;
+  isPinned?: boolean;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -88,6 +90,15 @@ function getInitial(user: UserInfo): string {
   return getUsername(user).charAt(0).toUpperCase();
 }
 
+function formatMessagePreview(msg: ConversationData, currentUserId: string): string {
+  const isMine = msg.senderId === currentUserId;
+  const prefix = isMine ? 'Tú: ' : '';
+  const isImage = msg.content.startsWith('http') && (msg.content.includes('/uploads/') || /\.(webp|png|jpg|jpeg|gif)$/i.test(msg.content));
+  if (isImage) return `${prefix}📷 Imagen`;
+  if (msg.content.startsWith(':') && msg.content.endsWith(':')) return `${prefix}✨ Sticker`;
+  return `${prefix}${msg.content}`;
+}
+
 /* ─────────── Main Content ─────────── */
 
 function MessengerContent() {
@@ -103,6 +114,8 @@ function MessengerContent() {
   const [conversations, setConversations] = useState<ConversationData[]>([]);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [convFilter, setConvFilter] = useState('');
+  const [activeCategory, setActiveCategory] = useState<'all' | 'unread' | 'vtubers'>('all');
+  const [pinnedUserIds, setPinnedUserIds] = useState<Set<string>>(new Set());
 
   // Active conversation
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
@@ -115,6 +128,10 @@ function MessengerContent() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reactions state (in-memory per message)
+  const [messageReactions, setMessageReactions] = useState<Record<string, Record<string, number>>>({});
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   // Typing
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
@@ -192,13 +209,12 @@ function MessengerContent() {
       }
 
       setConversations(prev => {
-        const existing = prev.findIndex(c => c.id === msg.id);
-        if (existing >= 0) {
-          const updated = [...prev];
-          updated.splice(existing, 1);
-          return [msg, ...updated];
-        }
-        return [msg, ...prev];
+        const otherId = msg.senderId === currentUser.id ? msg.receiverId : msg.senderId;
+        const filtered = prev.filter(c => {
+          const cOtherId = c.senderId === currentUser.id ? c.receiverId : c.senderId;
+          return cOtherId !== otherId;
+        });
+        return [msg, ...filtered];
       });
     });
 
@@ -307,7 +323,7 @@ function MessengerContent() {
       .finally(() => setMessagesLoading(false));
   }, [currentUser, activeUserId, socket]);
 
-  /* ─── Scroll to bottom on new messages ─── */
+  /* ─── Scroll to bottom on new messages without scrolling window ─── */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
@@ -338,6 +354,29 @@ function MessengerContent() {
     setSending(false);
     setTimeout(() => inputRef.current?.focus(), 50);
   }, [input, socket, activeUserId, sending]);
+
+  /* ─── Toggle Pin Conversation ─── */
+  const togglePinUser = useCallback((userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPinnedUserIds(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  }, []);
+
+  /* ─── Reaction Handler ─── */
+  const handleAddReaction = useCallback((msgId: string, emoji: string) => {
+    setMessageReactions(prev => {
+      const msgRecs = prev[msgId] || {};
+      const currentCount = msgRecs[emoji] || 0;
+      return {
+        ...prev,
+        [msgId]: { ...msgRecs, [emoji]: currentCount + 1 }
+      };
+    });
+  }, []);
 
   /* ─── Typing indicator ─── */
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -389,9 +428,35 @@ function MessengerContent() {
     return unreadMap[otherUserId] || 0;
   };
 
-  const filteredConversations = conversations.filter(conv => {
-    if (!convFilter.trim()) return true;
+  // Deduplicate conversations so each user appears ONLY ONCE
+  const uniqueConversationsMap = new Map<string, ConversationData>();
+  conversations.forEach(conv => {
     const other = getOtherUser(conv, currentUser.id);
+    if (!uniqueConversationsMap.has(other.id)) {
+      uniqueConversationsMap.set(other.id, conv);
+    }
+  });
+  const uniqueConversations = Array.from(uniqueConversationsMap.values());
+
+  // Sort pinned conversations to the very top
+  uniqueConversations.sort((a, b) => {
+    const otherA = getOtherUser(a, currentUser.id);
+    const otherB = getOtherUser(b, currentUser.id);
+    const isPinnedA = pinnedUserIds.has(otherA.id);
+    const isPinnedB = pinnedUserIds.has(otherB.id);
+    if (isPinnedA && !isPinnedB) return -1;
+    if (!isPinnedA && isPinnedB) return 1;
+    return 0;
+  });
+
+  const filteredConversations = uniqueConversations.filter(conv => {
+    const other = getOtherUser(conv, currentUser.id);
+    const unread = getUnreadCount(other.id);
+
+    if (activeCategory === 'unread' && unread === 0) return false;
+    if (activeCategory === 'vtubers' && !other.vtuberProfile) return false;
+
+    if (!convFilter.trim()) return true;
     const name = getUsername(other).toLowerCase();
     const username = other.username.toLowerCase();
     const query = convFilter.toLowerCase();
@@ -399,7 +464,7 @@ function MessengerContent() {
   });
 
   return (
-    <div className="container" style={{ maxWidth: '1200px', paddingTop: '16px', paddingBottom: '0', height: 'calc(100vh - 90px)', display: 'flex', flexDirection: 'column' }}>
+    <div className="container" style={{ maxWidth: '1240px', paddingTop: '16px', paddingBottom: '0', height: 'calc(100vh - 90px)', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -410,25 +475,30 @@ function MessengerContent() {
             <button
               onClick={() => setShowList(true)}
               style={{
-                background: 'none', border: 'none', color: 'var(--text-muted)',
-                cursor: 'pointer', padding: '4px',
-                display: 'none',
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text)',
+                cursor: 'pointer', padding: '6px 12px', borderRadius: '8px',
+                display: 'none', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600,
               }}
               className="mobile-back-btn"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
+              Volver
             </button>
           )}
-          <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700 }}>Mensajes</h1>
+          <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, #fff, var(--primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Mensajes Privados
+          </h1>
           <span style={{
-            fontSize: '0.75rem', padding: '2px 10px', borderRadius: '12px',
-            background: connected ? 'rgba(0,230,118,0.1)' : 'rgba(239,68,68,0.08)',
-            color: connected ? 'var(--success)' : 'var(--error)',
-            fontWeight: 600,
+            fontSize: '0.72rem', padding: '3px 10px', borderRadius: '12px',
+            background: connected ? 'rgba(0,230,118,0.12)' : 'rgba(239,68,68,0.1)',
+            border: connected ? '1px solid rgba(0,230,118,0.3)' : '1px solid rgba(239,68,68,0.2)',
+            color: connected ? '#22c55e' : 'var(--error)',
+            fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px',
           }}>
-            {connected ? 'Conectado' : 'Desconectado'}
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: connected ? '#22c55e' : 'var(--error)', boxShadow: connected ? '0 0 6px #22c55e' : 'none' }} />
+            {connected ? 'En tiempo real' : 'Desconectado'}
           </span>
         </div>
       </div>
@@ -439,49 +509,87 @@ function MessengerContent() {
           .conv-list { width: 100% !important; max-width: 100% !important; border-right: none !important; }
           .conv-list-hidden { display: none !important; }
           .msg-pane-hidden { display: none !important; }
-          .mobile-back-btn { display: flex !important; }
+          .mobile-back-btn { display: inline-flex !important; }
         }
         @keyframes typingDotBounce {
           0%, 80%, 100% { transform: translateY(0); }
           40% { transform: translateY(-4px); }
+        }
+        @keyframes reactionPop {
+          0% { transform: scale(0.6); opacity: 0; }
+          70% { transform: scale(1.2); }
+          100% { transform: scale(1); opacity: 1; }
         }
       `}</style>
 
       {/* Main split view */}
       <div className="messenger-split" style={{
         display: 'flex', flex: 1, overflow: 'hidden', gap: '0',
-        borderRadius: '16px',
+        borderRadius: '18px',
         border: '1px solid var(--glass-border)',
-        background: 'rgba(255,255,255,0.02)',
+        background: 'rgba(18, 16, 28, 0.75)',
+        backdropFilter: 'blur(16px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.37)',
       }}>
         {/* ─── LEFT: Conversation List ─── */}
         <div className={`conv-list ${!showList ? 'conv-list-hidden' : ''}`} style={{
-          width: '320px', maxWidth: '320px', flexShrink: 0,
+          width: '340px', maxWidth: '340px', flexShrink: 0,
           borderRight: '1px solid var(--glass-border)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          background: 'rgba(0,0,0,0.15)',
         }}>
-          {/* Search / Filter & New Chat */}
-          <div style={{ padding: '12px', borderBottom: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <input
-              className="input"
-              style={{ width: '100%', padding: '8px 12px', fontSize: '0.82rem', borderRadius: '8px' }}
-              placeholder="🔍 Buscar chats..."
-              value={convFilter}
-              onChange={e => setConvFilter(e.target.value)}
-            />
+          {/* Search & New Chat */}
+          <div style={{ padding: '12px', borderBottom: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ position: 'relative' }}>
+              <input
+                className="input"
+                style={{ width: '100%', padding: '9px 12px 9px 34px', fontSize: '0.84rem', borderRadius: '10px', background: 'rgba(255,255,255,0.03)' }}
+                placeholder="Buscar chats..."
+                value={convFilter}
+                onChange={e => setConvFilter(e.target.value)}
+              />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)' }}>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '3px', borderRadius: '10px' }}>
+              {[
+                { id: 'all', label: 'Todos' },
+                { id: 'unread', label: 'No leídos' },
+                { id: 'vtubers', label: 'VTubers' },
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id as any)}
+                  style={{
+                    flex: 1, padding: '5px 8px', borderRadius: '7px', border: 'none',
+                    fontSize: '0.74rem', fontWeight: activeCategory === cat.id ? 700 : 500,
+                    cursor: 'pointer',
+                    background: activeCategory === cat.id ? 'var(--primary)' : 'transparent',
+                    color: activeCategory === cat.id ? '#fff' : 'var(--text-muted)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
 
             <button
               onClick={() => setShowNewChat(!showNewChat)}
               style={{
                 width: '100%', padding: '8px 12px', borderRadius: '8px',
-                border: '1px dashed rgba(255,255,255,0.1)',
-                background: 'transparent', color: 'var(--text-muted)',
-                cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500,
+                border: '1px dashed rgba(255,255,255,0.12)',
+                background: showNewChat ? 'rgba(138,43,226,0.1)' : 'transparent',
+                color: showNewChat ? 'var(--primary)' : 'var(--text-muted)',
+                cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 transition: 'all 0.15s',
               }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(138,43,226,0.3)'; e.currentTarget.style.color = 'var(--primary)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+              onMouseLeave={e => { if (!showNewChat) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -490,7 +598,7 @@ function MessengerContent() {
             </button>
 
             {showNewChat && (
-              <div style={{ marginTop: '6px' }}>
+              <div style={{ marginTop: '4px' }}>
                 <input
                   className="input"
                   style={{ width: '100%', padding: '9px 12px', fontSize: '0.85rem' }}
@@ -501,7 +609,7 @@ function MessengerContent() {
                 />
                 {searchingUsers && (
                   <div style={{ padding: '12px', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    Buscando...
+                    Buscando usuarios...
                   </div>
                 )}
                 {searchResults.length > 0 && (
@@ -517,26 +625,26 @@ function MessengerContent() {
                         }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '10px',
-                          padding: '10px 12px', borderRadius: '8px',
+                          padding: '8px 10px', borderRadius: '8px',
                           border: 'none', background: 'transparent', color: 'var(--text)',
-                          cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500,
+                          cursor: 'pointer', fontSize: '0.84rem', fontWeight: 500,
                           width: '100%', textAlign: 'left',
                           transition: 'background 0.12s',
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                       >
                         <div style={{
-                          width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                          width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
                           background: u.vtuberProfile?.avatarUrl
                             ? `url(${u.vtuberProfile.avatarUrl}) center/cover`
                             : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: '#fff', fontSize: '0.65rem', fontWeight: 700,
+                          color: '#fff', fontSize: '0.7rem', fontWeight: 700,
                         }}>
                           {!u.vtuberProfile?.avatarUrl && getInitial(u)}
                         </div>
-                        <span>{getUsername(u)}</span>
+                        <span style={{ fontWeight: 600 }}>{getUsername(u)}</span>
                         <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           @{u.username}
                         </span>
@@ -547,6 +655,7 @@ function MessengerContent() {
               </div>
             )}
           </div>
+
           {/* ─── Contactos Rápidos (Amigos) ─── */}
           {friendsList.length > 0 && (
             <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.1)' }}>
@@ -586,6 +695,7 @@ function MessengerContent() {
                           width: '10px', height: '10px', borderRadius: '50%',
                           background: isOnline ? '#22c55e' : '#555',
                           border: '2px solid var(--bg-deep)',
+                          boxShadow: isOnline ? '0 0 6px #22c55e' : 'none',
                         }} />
                       </div>
                       <span style={{ fontSize: '0.68rem', color: isSelected ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: isSelected ? 600 : 400, maxWidth: '46px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -605,23 +715,20 @@ function MessengerContent() {
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '12px', marginBottom: '2px',
+                    padding: '12px', marginBottom: '4px',
                   }}>
                     <div style={{
-                      width: '36px', height: '36px', borderRadius: '50%',
+                      width: '40px', height: '40px', borderRadius: '50%',
                       background: 'rgba(255,255,255,0.04)', flexShrink: 0,
-                      animation: 'shimmer 2s ease-in-out infinite',
                     }} />
                     <div style={{ flex: 1 }}>
                       <div style={{
                         width: '60%', height: '12px', borderRadius: '6px',
                         background: 'rgba(255,255,255,0.04)', marginBottom: '6px',
-                        animation: 'shimmer 2s ease-in-out infinite',
                       }} />
                       <div style={{
                         width: '80%', height: '10px', borderRadius: '5px',
                         background: 'rgba(255,255,255,0.03)',
-                        animation: 'shimmer 2s ease-in-out infinite',
                       }} />
                     </div>
                   </div>
@@ -635,11 +742,8 @@ function MessengerContent() {
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity={0.4}>
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-                  {convFilter ? 'Sin resultados' : 'No hay conversaciones aún'}
-                </p>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0, opacity: 0.7 }}>
-                  {convFilter ? 'Prueba buscando con otro término' : 'Busca un usuario para iniciar un chat'}
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0, fontWeight: 500 }}>
+                  {convFilter ? 'Sin resultados de búsqueda' : 'No hay chats registrados'}
                 </p>
               </div>
             ) : (
@@ -647,83 +751,109 @@ function MessengerContent() {
                 const other = getOtherUser(conv, currentUser.id);
                 const unread = getUnreadCount(other.id);
                 const isActive = activeUserId === other.id;
+                const isPinned = pinnedUserIds.has(other.id);
+
                 return (
                   <button
                     key={conv.id}
                     onClick={() => selectConversation(other)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: '10px',
-                      padding: '12px', borderRadius: '10px',
-                      border: 'none', background: isActive ? 'rgba(138,43,226,0.12)' : 'transparent',
+                      display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: '10px 12px', borderRadius: '12px',
+                      border: 'none',
+                      borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent',
+                      background: isActive
+                        ? 'linear-gradient(90deg, rgba(138,43,226,0.18), rgba(138,43,226,0.04))'
+                        : isPinned ? 'rgba(255,255,255,0.02)' : 'transparent',
                       color: 'var(--text)', cursor: 'pointer',
                       width: '100%', textAlign: 'left',
-                      transition: 'background 0.12s',
-                      marginBottom: '2px',
+                      transition: 'all 0.15s ease',
+                      marginBottom: '3px',
+                      position: 'relative',
                     }}
                     onMouseEnter={e => {
-                      if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                      if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
                     }}
                     onMouseLeave={e => {
-                      if (!isActive) e.currentTarget.style.background = 'transparent';
+                      if (!isActive) e.currentTarget.style.background = isPinned ? 'rgba(255,255,255,0.02)' : 'transparent';
                     }}
                   >
                     {/* Avatar with online dot */}
                     <div style={{
                       position: 'relative',
-                      width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                      width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
                       background: other.vtuberProfile?.avatarUrl
                         ? `url(${other.vtuberProfile.avatarUrl}) center/cover`
                         : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                      color: '#fff', fontSize: '0.8rem', fontWeight: 700,
                     }}>
                       {!other.vtuberProfile?.avatarUrl && getInitial(other)}
                       <div style={{
-                        position: 'absolute', bottom: '1px', right: '1px',
+                        position: 'absolute', bottom: '0px', right: '0px',
                         width: '11px', height: '11px', borderRadius: '50%',
                         border: '2px solid var(--background)',
                         background: onlineUsers.has(other.id) ? '#22c55e' : '#555',
+                        boxShadow: onlineUsers.has(other.id) ? '0 0 6px #22c55e' : 'none',
                         transition: 'background 0.3s ease',
                       }} />
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      }}>
-                        <div style={{
-                          display: 'flex', alignItems: 'center', gap: '6px',
-                          minWidth: 0, flex: 1,
-                        }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, flex: 1 }}>
                           <span style={{
-                            fontWeight: isActive ? 700 : 600,
-                            fontSize: '0.9rem',
+                            fontWeight: unread > 0 ? 800 : isActive ? 700 : 600,
+                            fontSize: '0.88rem',
                             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                           }}>
                             {getUsername(other)}
                           </span>
-                          <span style={{
-                            display: 'inline-block',
-                            width: '7px', height: '7px', borderRadius: '50%',
-                            background: onlineUsers.has(other.id) ? '#22c55e' : 'rgba(255,255,255,0.15)',
-                            flexShrink: 0,
-                          }} />
+                          {other.vtuberProfile && (
+                            <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(233,30,99,0.15)', color: '#ff4081', fontWeight: 700, flexShrink: 0 }}>
+                              VTuber
+                            </span>
+                          )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.68rem', color: unread > 0 ? 'var(--primary)' : 'var(--text-muted)', fontWeight: unread > 0 ? 700 : 400 }}>
+                          {formatTime(conv.createdAt)}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{
+                          fontSize: '0.78rem',
+                          color: unread > 0 ? 'var(--text)' : 'var(--text-muted)',
+                          fontWeight: unread > 0 ? 700 : 400,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                          maxWidth: '170px',
+                        }}>
+                          {formatMessagePreview(conv, currentUser.id)}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <button
+                            onClick={(e) => togglePinUser(other.id, e)}
+                            title={isPinned ? "Desanclar" : "Anclar chat"}
+                            style={{
+                              border: 'none', background: 'transparent', cursor: 'pointer',
+                              color: isPinned ? '#eab308' : 'rgba(255,255,255,0.2)',
+                              padding: '2px', display: 'flex', alignItems: 'center',
+                              transition: 'color 0.15s',
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill={isPinned ? "#eab308" : "none"} stroke="currentColor" strokeWidth="2">
+                              <line x1="12" y1="17" x2="12" y2="22" /><path d="M5 17h14l-1.5-6V5a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1v6L5 17z" />
+                            </svg>
+                          </button>
                           {unread > 0 && (
                             <span style={{
-                              background: 'var(--secondary)', color: '#fff',
-                              fontSize: '0.63rem', fontWeight: 700,
-                              padding: '2px 7px', borderRadius: '10px',
+                              background: 'linear-gradient(135deg, var(--primary), var(--secondary))', color: '#fff',
+                              fontSize: '0.65rem', fontWeight: 800,
+                              padding: '2px 7px', borderRadius: '10px', boxShadow: '0 0 8px rgba(138,43,226,0.5)',
                             }}>
                               {unread > 99 ? '99+' : unread}
                             </span>
                           )}
-                          <span style={{
-                            fontSize: '0.68rem', color: 'var(--text-muted)',
-                          }}>
-                            {formatTime(conv.createdAt)}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -743,47 +873,42 @@ function MessengerContent() {
               {/* Conversation header */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '12px 18px',
+                padding: '14px 20px',
                 borderBottom: '1px solid var(--glass-border)',
+                background: 'rgba(0,0,0,0.12)',
                 flexShrink: 0, justifyContent: 'space-between',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <button
-                    onClick={() => setShowList(true)}
-                    style={{
-                      background: 'none', border: 'none', color: 'var(--text-muted)',
-                      cursor: 'pointer', padding: '2px', display: 'none',
-                    }}
-                    className="mobile-back-btn"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                  </button>
-                  <Link href={`/profile/${activeUserInfo.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Link href={`/profile/${activeUserInfo.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
                       position: 'relative',
-                      width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+                      width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
                       background: activeUserInfo.vtuberProfile?.avatarUrl
                         ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
                         : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: '0.8rem', fontWeight: 700,
+                      color: '#fff', fontSize: '0.85rem', fontWeight: 700,
                     }}>
                       {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
                       <div style={{
                         position: 'absolute', bottom: '0', right: '0',
-                        width: '10px', height: '10px', borderRadius: '50%',
+                        width: '11px', height: '11px', borderRadius: '50%',
                         border: '2px solid var(--background)',
                         background: onlineUsers.has(activeUserInfo.id) ? '#22c55e' : '#555',
+                        boxShadow: onlineUsers.has(activeUserInfo.id) ? '0 0 8px #22c55e' : 'none',
                       }} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {getUsername(activeUserInfo)}
+                        {activeUserInfo.vtuberProfile && (
+                          <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', background: 'rgba(233,30,99,0.15)', color: '#ff4081', fontWeight: 700 }}>
+                            VTuber
+                          </span>
+                        )}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: onlineUsers.has(activeUserInfo.id) ? '#22c55e' : 'var(--text-muted)', fontWeight: 500 }}>
-                        {onlineUsers.has(activeUserInfo.id) ? 'En línea' : `@${activeUserInfo.username}`}
+                      <div style={{ fontSize: '0.74rem', color: onlineUsers.has(activeUserInfo.id) ? '#22c55e' : 'var(--text-muted)', fontWeight: 500 }}>
+                        {onlineUsers.has(activeUserInfo.id) ? '🟢 En línea' : `@${activeUserInfo.username}`}
                       </div>
                     </div>
                   </Link>
@@ -792,7 +917,7 @@ function MessengerContent() {
                 <Link
                   href={`/profile/${activeUserInfo.id}`}
                   className="btn btn--outline"
-                  style={{ padding: '5px 12px', fontSize: '0.78rem', borderRadius: '8px' }}
+                  style={{ padding: '6px 14px', fontSize: '0.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.03)' }}
                 >
                   Ver Perfil
                 </Link>
@@ -800,14 +925,14 @@ function MessengerContent() {
 
               {/* Messages area */}
               <div style={{
-                flex: 1, overflowY: 'auto', padding: '16px 18px',
-                display: 'flex', flexDirection: 'column', gap: '8px',
+                flex: 1, overflowY: 'auto', padding: '18px 20px',
+                display: 'flex', flexDirection: 'column', gap: '10px',
               }}>
                 {messagesLoading ? (
-                  <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ textAlign: 'center', padding: '60px' }}>
                     <span style={{
-                      width: '18px', height: '18px',
-                      border: '2px solid rgba(255,255,255,0.08)',
+                      width: '24px', height: '24px',
+                      border: '3px solid rgba(255,255,255,0.08)',
                       borderTopColor: 'var(--primary)',
                       borderRadius: '50%',
                       animation: 'spin 0.8s linear infinite',
@@ -817,37 +942,45 @@ function MessengerContent() {
                 ) : messages.length === 0 ? (
                   <div style={{
                     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexDirection: 'column', gap: '12px', padding: '30px 20px', textAlign: 'center',
+                    flexDirection: 'column', gap: '16px', padding: '40px 20px', textAlign: 'center',
                   }}>
                     <div style={{
-                      width: '64px', height: '64px', borderRadius: '50%',
+                      width: '72px', height: '72px', borderRadius: '50%',
                       background: activeUserInfo.vtuberProfile?.avatarUrl
                         ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
                         : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: '1.4rem', fontWeight: 700,
+                      color: '#fff', fontSize: '1.6rem', fontWeight: 700,
+                      boxShadow: '0 0 24px rgba(138,43,226,0.3)',
                     }}>
                       {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
                     </div>
                     <div>
-                      <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{getUsername(activeUserInfo)}</h4>
-                      <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{activeUserInfo.username}</p>
+                      <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>{getUsername(activeUserInfo)}</h4>
+                      <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>@{activeUserInfo.username}</p>
                     </div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
-                      ¡Sé el primero en iniciar esta conversación!
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0, maxWidth: '300px' }}>
+                      ¡Sé el primero en romper el hielo e iniciar esta conversación privada!
                     </p>
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInput('¡Hola! 👋');
-                          setTimeout(() => inputRef.current?.focus(), 50);
-                        }}
-                        className="btn btn--outline"
-                        style={{ padding: '6px 14px', fontSize: '0.8rem', borderRadius: '20px' }}
-                      >
-                        👋 Decir hola
-                      </button>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                      {[
+                        { label: '👋 Decir hola', text: '¡Hola! 👋 ¿Cómo estás?' },
+                        { label: '✨ Sticker rápido', text: ':dance:' },
+                        { label: '🎮 Invitar a jugar', text: '¡Hola! ¿Sale jugar unas partidas?' },
+                      ].map((item, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setInput(item.text);
+                            setTimeout(() => inputRef.current?.focus(), 50);
+                          }}
+                          className="btn btn--outline"
+                          style={{ padding: '7px 16px', fontSize: '0.82rem', borderRadius: '20px', background: 'rgba(255,255,255,0.03)' }}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 ) : (
@@ -855,38 +988,47 @@ function MessengerContent() {
                     const isMine = msg.senderId === currentUser.id;
                     const showAvatar = !isMine && (idx === 0 || messages[idx - 1]?.senderId !== msg.senderId);
                     const isImage = msg.content.startsWith('http') && (msg.content.includes('/uploads/') || /\.(webp|png|jpg|jpeg|gif)$/i.test(msg.content));
+                    const recs = messageReactions[msg.id] || {};
 
                     return (
-                      <div key={msg.id} style={{
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        gap: '8px',
-                        flexDirection: isMine ? 'row-reverse' : 'row',
-                        maxWidth: '85%',
-                        alignSelf: isMine ? 'flex-end' : 'flex-start',
-                        marginLeft: isMine ? 'auto' : '0',
-                      }}>
+                      <div
+                        key={msg.id}
+                        onMouseEnter={() => setHoveredMessageId(msg.id)}
+                        onMouseLeave={() => setHoveredMessageId(null)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-end',
+                          gap: '8px',
+                          flexDirection: isMine ? 'row-reverse' : 'row',
+                          maxWidth: '85%',
+                          alignSelf: isMine ? 'flex-end' : 'flex-start',
+                          marginLeft: isMine ? 'auto' : '0',
+                          position: 'relative',
+                        }}
+                      >
                         {showAvatar && (
                           <div style={{
-                            width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
+                            width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
                             background: activeUserInfo.vtuberProfile?.avatarUrl
                               ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
                               : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontSize: '0.55rem', fontWeight: 700,
+                            color: '#fff', fontSize: '0.6rem', fontWeight: 700,
                           }}>
                             {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
                           </div>
                         )}
-                        {!showAvatar && !isMine && <div style={{ width: '26px', flexShrink: 0 }} />}
+                        {!showAvatar && !isMine && <div style={{ width: '28px', flexShrink: 0 }} />}
                         
                         <div style={{
                           background: isMine
                             ? 'linear-gradient(135deg, var(--primary), #7c6aff)'
                             : 'rgba(255,255,255,0.06)',
                           padding: isImage ? '4px' : '10px 14px',
-                          borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                          borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                           maxWidth: '100%',
+                          boxShadow: isMine ? '0 4px 16px rgba(138,43,226,0.25)' : 'none',
+                          position: 'relative',
                         }}>
                           {isImage ? (
                             <img
@@ -894,21 +1036,37 @@ function MessengerContent() {
                               alt=""
                               onClick={() => setLightboxImage(msg.content)}
                               style={{
-                                maxWidth: '280px', maxHeight: '220px', borderRadius: '12px',
+                                maxWidth: '280px', maxHeight: '220px', borderRadius: '14px',
                                 objectFit: 'cover', display: 'block', cursor: 'zoom-in',
+                                border: '1px solid rgba(255,255,255,0.1)',
                               }}
                             />
                           ) : (
-                            <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                            <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
                               {renderFormattedContent(msg.content)}
                             </p>
+                          )}
+
+                          {/* Message Reactions display */}
+                          {Object.keys(recs).length > 0 && (
+                            <div style={{
+                              display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px',
+                              padding: '2px 4px', borderRadius: '10px', background: 'rgba(0,0,0,0.3)',
+                              animation: 'reactionPop 0.3s ease',
+                            }}>
+                              {Object.entries(recs).map(([emoji, count]) => (
+                                <span key={emoji} style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                  {emoji} <span style={{ fontSize: '0.65rem', opacity: 0.8, fontWeight: 700 }}>{count}</span>
+                                </span>
+                              ))}
+                            </div>
                           )}
 
                           <div style={{
                             display: 'flex', alignItems: 'center', justifyContent: isMine ? 'flex-end' : 'flex-start',
                             gap: '5px', marginTop: '4px', padding: isImage ? '2px 6px 4px' : 0,
                           }}>
-                            <span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>
+                            <span style={{ fontSize: '0.68rem', opacity: 0.8, fontWeight: 500 }}>
                               {formatTimeFull(msg.createdAt)}
                             </span>
                             {isMine && (
@@ -928,6 +1086,33 @@ function MessengerContent() {
                               </span>
                             )}
                           </div>
+
+                          {/* Quick Emoji Reaction Pill on hover */}
+                          {hoveredMessageId === msg.id && (
+                            <div style={{
+                              position: 'absolute', top: '-18px', right: isMine ? '0' : 'auto', left: isMine ? 'auto' : '0',
+                              display: 'flex', gap: '4px', padding: '3px 8px', borderRadius: '16px',
+                              background: 'rgba(25, 20, 40, 0.95)', border: '1px solid rgba(255,255,255,0.15)',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.4)', zIndex: 10,
+                              animation: 'reactionPop 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}>
+                              {['❤️', '🔥', '😂', '👍', '✨'].map(emoji => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => handleAddReaction(msg.id, emoji)}
+                                  style={{
+                                    border: 'none', background: 'transparent', cursor: 'pointer',
+                                    fontSize: '0.85rem', padding: '1px 3px', borderRadius: '4px',
+                                    transition: 'transform 0.1s',
+                                  }}
+                                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.3)'; }}
+                                  onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -939,18 +1124,19 @@ function MessengerContent() {
               {/* Typing indicator */}
               {typingUserId && (
                 <div style={{
-                  padding: '6px 18px', display: 'flex', alignItems: 'center', gap: '8px',
-                  fontSize: '0.78rem', color: 'var(--text-muted)',
+                  padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px',
+                  fontSize: '0.78rem', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.1)',
                 }}>
                   <div style={{
-                    display: 'inline-flex', gap: '3px', alignItems: 'center',
-                    padding: '4px 8px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)',
+                    display: 'inline-flex', gap: '4px', alignItems: 'center',
+                    padding: '4px 10px', borderRadius: '12px', background: 'rgba(138,43,226,0.12)',
+                    border: '1px solid rgba(138,43,226,0.2)',
                   }}>
-                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0s' }} />
-                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0.2s' }} />
-                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0.4s' }} />
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0s' }} />
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0.2s' }} />
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0.4s' }} />
                   </div>
-                  <span>{getUsername(activeUserInfo)} está escribiendo...</span>
+                  <span style={{ fontWeight: 500 }}>{getUsername(activeUserInfo)} está escribiendo...</span>
                 </div>
               )}
 
@@ -958,9 +1144,10 @@ function MessengerContent() {
               <form
                 onSubmit={handleSend}
                 style={{
-                  display: 'flex', gap: '6px',
-                  padding: '12px 18px',
+                  display: 'flex', gap: '8px',
+                  padding: '14px 20px',
                   borderTop: '1px solid var(--glass-border)',
+                  background: 'rgba(0,0,0,0.15)',
                   flexShrink: 0,
                 }}
               >
@@ -995,16 +1182,18 @@ function MessengerContent() {
                   disabled={uploadingImage || !connected}
                   title="Adjuntar imagen"
                   style={{
-                    width: '40px', height: '40px',
-                    borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)',
+                    width: '42px', height: '42px',
+                    borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)',
                     cursor: 'pointer',
-                    background: uploadingImage ? 'rgba(138,43,226,0.15)' : 'rgba(255,255,255,0.04)',
+                    background: uploadingImage ? 'rgba(138,43,226,0.18)' : 'rgba(255,255,255,0.04)',
                     color: uploadingImage ? 'var(--primary)' : 'var(--text-muted)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.15s', flexShrink: 0,
                   }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.12)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                  onMouseOut={e => { if (!uploadingImage) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
                   </svg>
                 </button>
@@ -1015,18 +1204,18 @@ function MessengerContent() {
                     onClick={() => setShowChatStickerPicker(!showChatStickerPicker)}
                     title="Añadir sticker"
                     style={{
-                      width: '40px', height: '40px',
-                      borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)',
+                      width: '42px', height: '42px',
+                      borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)',
                       cursor: 'pointer',
-                      background: showChatStickerPicker ? 'rgba(138,43,226,0.1)' : 'rgba(255,255,255,0.04)',
+                      background: showChatStickerPicker ? 'rgba(138,43,226,0.15)' : 'rgba(255,255,255,0.04)',
                       color: showChatStickerPicker ? 'var(--primary)' : 'var(--text-muted)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       transition: 'all 0.15s',
                     }}
-                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.12)'; e.currentTarget.style.color = 'var(--primary)'; }}
                     onMouseOut={e => { if (!showChatStickerPicker) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                     </svg>
                   </button>
@@ -1043,22 +1232,26 @@ function MessengerContent() {
                     </div>
                   )}
                 </div>
+
                 <input
                   ref={inputRef}
                   className="input"
-                  style={{ flex: 1, padding: '10px 16px', fontSize: '0.88rem' }}
+                  style={{ flex: 1, padding: '11px 18px', fontSize: '0.9rem', borderRadius: '12px', background: 'rgba(255,255,255,0.03)' }}
                   placeholder={uploadingImage ? "Subiendo imagen..." : "Escribe un mensaje..."}
                   value={input}
                   onChange={handleInputChange}
                   disabled={!connected || uploadingImage}
                   maxLength={1000}
                 />
+
                 <button
                   type="submit"
                   className="btn"
                   style={{
-                    padding: '10px 20px', fontSize: '0.85rem', fontWeight: 600,
-                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '11px 22px', fontSize: '0.88rem', fontWeight: 700,
+                    borderRadius: '12px',
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    boxShadow: '0 4px 16px rgba(138,43,226,0.35)',
                   }}
                   disabled={!connected || !input.trim() || sending || uploadingImage}
                 >
@@ -1072,42 +1265,45 @@ function MessengerContent() {
           ) : (
             <div style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexDirection: 'column', gap: '16px',
+              flexDirection: 'column', gap: '18px',
               padding: '40px',
             }}>
-              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity={0.25}>
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                <line x1="12" y1="9" x2="16" y2="9" /><line x1="12" y1="13" x2="14" y2="13" />
-              </svg>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-muted)', margin: 0 }}>
-                Selecciona una conversación
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', opacity: 0.7, margin: 0, textAlign: 'center', maxWidth: '300px' }}>
-                Elige un chat de la lista o busca un usuario para iniciar una conversación privada
-              </p>
-              <button
-                onClick={() => setShowList(true)}
-                className="btn"
-                style={{ padding: '10px 24px', fontSize: '0.85rem', display: 'none' }}
-              >
-                Ver conversaciones
-              </button>
+              <div style={{
+                width: '72px', height: '72px', borderRadius: '24px',
+                background: 'linear-gradient(135deg, rgba(138,43,226,0.2), rgba(233,30,99,0.2))',
+                border: '1px solid rgba(138,43,226,0.3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 30px rgba(138,43,226,0.2)',
+              }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', margin: '0 0 6px' }}>
+                  Selecciona una conversación
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', margin: 0, maxWidth: '320px', lineHeight: 1.45 }}>
+                  Elige un chat de la barra lateral o busca cualquier VTuber/amigo para iniciar un chat privado
+                </p>
+              </div>
             </div>
           )}
         </div>
       </div>
 
+      {/* Lightbox Image View Modal */}
       {lightboxImage && (
         <div
           onClick={() => setLightboxImage(null)}
           style={{
             position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+            background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(12px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '20px', cursor: 'zoom-out',
           }}
         >
-          <img src={lightboxImage} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: '12px', objectFit: 'contain' }} />
+          <img src={lightboxImage} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: '16px', objectFit: 'contain', boxShadow: '0 0 40px rgba(0,0,0,0.8)' }} />
         </div>
       )}
     </div>
@@ -1119,7 +1315,7 @@ export default function ChatPage() {
     <ErrorBoundary>
       <ClientOnly
         fallback={
-          <div className="container" style={{ padding: '80px 20px', textAlign: 'center', maxWidth: '1200px' }}>
+          <div className="container" style={{ padding: '80px 20px', textAlign: 'center', maxWidth: '1240px' }}>
             <p style={{ color: 'var(--text-muted)' }}>Cargando mensajes...</p>
           </div>
         }
