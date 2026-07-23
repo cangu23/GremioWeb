@@ -45,7 +45,15 @@ export function useSocketMedia() {
   const errorListeners = useRef<Map<string, MediaErrorCallback>>(new Map());
 
   useEffect(() => {
-    const socket = getSocket();
+    let socket;
+    try {
+      // Usar connectSocket() para asegurarnos de que el socket esté inicializado
+      // y no dependamos de si Navbar lo ha conectado o no por race conditions.
+      const { connectSocket } = require('@/lib/socket-client');
+      socket = connectSocket();
+    } catch {
+      return;
+    }
     if (!socket) return;
 
     const handleReady = (data: MediaReadyPayload) => {

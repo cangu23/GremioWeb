@@ -83,7 +83,7 @@ function LoginForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} suppressHydrationWarning>
         <div className="form-group">
           <label className="form-label">Correo Electrónico</label>
           <input

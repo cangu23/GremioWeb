@@ -198,7 +198,7 @@ function VtuberProfileEditor() {
   // Un usuario normal (role USER) que llegó aquí porque tenía un
   // VTuberProfile creado automáticamente por Discord/Google antes del
   // fix no debe ver el editor. Solo ve la pantalla de solicitud.
-  const isOfficialVtuber = user.role === 'VTUBER' || user.vtuberProfile?.isApproved === true;
+  const isOfficialVtuber = user.role === 'VTUBER' || user.role === 'ADMIN' || user.vtuberProfile?.isApproved === true;
 
   return (
     <>
