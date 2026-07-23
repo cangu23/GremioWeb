@@ -46,6 +46,31 @@ export const getVtubersDirectory = async (params: {
   const { search, contentType, language, page, limit } = params;
   const skip = (page - 1) * limit;
 
+  // Auto-heal: find any users with role 'VTUBER' missing a VTuberProfile record
+  try {
+    const orphanVtubers = await prisma.user.findMany({
+      where: {
+        role: 'VTUBER',
+        vtuberProfile: null,
+      },
+    });
+
+    for (const orphan of orphanVtubers) {
+      await prisma.vTuberProfile.create({
+        data: {
+          userId: orphan.id,
+          displayName: orphan.displayName || orphan.username,
+          avatarUrl: orphan.avatarUrl || null,
+          isApproved: true,
+          isHidden: false,
+          isVerified: true,
+        },
+      }).catch(() => {});
+    }
+  } catch (err) {
+    console.error('[VTuber AutoHeal] Error healing orphan VTuber profiles:', err);
+  }
+
   const where: any = {
     isApproved: true,
     isHidden: false,
