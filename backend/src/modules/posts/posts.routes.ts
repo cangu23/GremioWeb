@@ -31,6 +31,8 @@ router.post('/:id/unlike', authenticate, PostsController.unlikePost);
 router.get('/:postId/comments', optionalAuth, PostsController.getComments);
 router.post('/:postId/comments', authenticate, validateRequest(createCommentSchema), PostsController.createComment);
 router.delete('/comments/:commentId', authenticate, PostsController.deleteComment);
+router.post('/comments/:commentId/like', authenticate, PostsController.likeComment);
+router.post('/comments/:commentId/unlike', authenticate, PostsController.unlikeComment);
 router.post('/comments/:commentId/report', authenticate, validateRequest(reportCommentSchema), PostsController.reportComment);
 
 export default router;

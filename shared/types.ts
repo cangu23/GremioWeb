@@ -57,8 +57,13 @@ export interface CommentData {
       displayName: string;
       avatarUrl: string | null;
       isApproved?: boolean;
+      isVerified?: boolean;
     } | null;
   };
+  _count?: {
+    likes: number;
+  };
+  isLikedByMe?: boolean;
 }
 
 // ============================================================================

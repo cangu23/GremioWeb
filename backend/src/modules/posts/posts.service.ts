@@ -272,6 +272,25 @@ export const deleteComment = async (commentId: string, userId: string, moderatio
   return { message: 'Comentario eliminado' };
 };
 
+export const likeComment = async (commentId: string, userId: string) => {
+  const comment = await PostsRepository.findCommentById(commentId);
+  if (!comment) throw new AppError('Comentario no encontrado', 404);
+
+  const existing = await PostsRepository.findCommentLike(userId, commentId);
+  if (existing) throw new AppError('Ya te gusta este comentario', 409);
+
+  await PostsRepository.likeComment(userId, commentId);
+  return { message: 'Like agregado al comentario' };
+};
+
+export const unlikeComment = async (commentId: string, userId: string) => {
+  const existing = await PostsRepository.findCommentLike(userId, commentId);
+  if (!existing) throw new AppError('No te gusta este comentario', 404);
+
+  await PostsRepository.unlikeComment(userId, commentId);
+  return { message: 'Like eliminado del comentario' };
+};
+
 // ========== HASHTAGS ==========
 
 export const getTrendingHashtags = async (limit = 10) => {

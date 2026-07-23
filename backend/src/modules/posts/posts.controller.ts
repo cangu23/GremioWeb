@@ -96,6 +96,22 @@ export const deleteComment = async (req: Request, res: Response, next: NextFunct
   } catch (err) { next(err); }
 };
 
+export const likeComment = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const commentId = String(req.params.commentId);
+    const result = await PostsService.likeComment(commentId, req.user!.id);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const unlikeComment = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const commentId = String(req.params.commentId);
+    const result = await PostsService.unlikeComment(commentId, req.user!.id);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
 // ========== HASHTAGS ==========
 
 export const getTrendingHashtags = async (req: Request, res: Response, next: NextFunction) => {

@@ -168,6 +168,34 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
     } catch {}
   };
 
+  const handleCommentLike = async (commentId: string, currentLiked?: boolean) => {
+    if (!currentUserId) return;
+    const nextLiked = !currentLiked;
+    setComments(prev => prev.map(c => {
+      if (c.id !== commentId) return c;
+      const currentCount = c._count?.likes || 0;
+      return {
+        ...c,
+        isLikedByMe: nextLiked,
+        _count: { likes: Math.max(0, currentCount + (nextLiked ? 1 : -1)) },
+      };
+    }));
+
+    try {
+      await apiFetch(`/posts/comments/${commentId}/${currentLiked ? 'unlike' : 'like'}`, { method: 'POST' });
+    } catch {
+      setComments(prev => prev.map(c => {
+        if (c.id !== commentId) return c;
+        const currentCount = c._count?.likes || 0;
+        return {
+          ...c,
+          isLikedByMe: !!currentLiked,
+          _count: { likes: Math.max(0, currentCount + (currentLiked ? 1 : -1)) },
+        };
+      }));
+    }
+  };
+
   // Close lightbox on ESC
   useEffect(() => {
     if (!lightboxImage) return;
@@ -598,54 +626,61 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
               {comments.map(comment => (
-                <div key={comment.id} style={{
-                  display: 'flex', gap: '8px', position: 'relative', paddingRight: '20px',
-                  // Visual feedback for staff on hover when not owner
-                  ...(isStaff && currentUserId && comment.userId !== currentUserId ? {
-                    borderRadius: '6px',
-                    transition: 'background 0.15s',
-                    cursor: contextMenu ? 'default' : undefined,
-                  } : {}),
-                }}
-                  // Ctrl+Click → direct moderation for staff
-                  onClick={(e) => {
-                    if ((e.ctrlKey || e.metaKey) && isStaff && currentUserId && comment.userId !== currentUserId) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      openModerateModal('comment', comment.id);
-                    }
-                  }}
-                  // Right-click → custom context menu for staff
-                  onContextMenu={(e) => {
-                    if (isStaff && currentUserId && comment.userId !== currentUserId) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setContextMenu({ x: e.clientX, y: e.clientY, type: 'comment', commentId: comment.id });
-                    }
-                  }}
-                  onMouseOver={e => {
-                    if (isStaff && currentUserId && comment.userId !== currentUserId) {
-                      e.currentTarget.style.background = 'rgba(255,77,106,0.04)';
-                    }
-                  }}
-                  onMouseOut={e => {
-                    if (isStaff && currentUserId && comment.userId !== currentUserId) {
-                      e.currentTarget.style.background = 'none';
-                    }
+                <div
+                  key={comment.id}
+                  style={{
+                    display: 'flex', gap: '10px',
+                    padding: '10px 12px', borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.04)',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
                   }}
                 >
                   <UserAvatar
                     src={comment.user?.avatarUrl || comment.user?.vtuberProfile?.avatarUrl}
                     alt={comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username || '?'}
                     userId={comment.userId}
-                    size={28}
+                    isVerified={comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved}
+                    size={34}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', textDecoration: 'none' }}>
+                    {/* Comment Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
+                      <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.84rem', color: 'var(--text)', textDecoration: 'none' }}>
                         {comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username}
                       </Link>
-                      {/* 3-dots menu for comment options */}
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        @{comment.user?.username}
+                      </span>
+                      
+                      {/* OP / Author badge */}
+                      {comment.userId === post.userId && (
+                        <span style={{
+                          padding: '1px 6px', borderRadius: '4px',
+                          background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.3)',
+                          color: 'var(--primary)', fontSize: '0.65rem', fontWeight: 700,
+                        }}>
+                          Autor
+                        </span>
+                      )}
+
+                      {/* Staff badge */}
+                      {(comment.user?.role === 'ADMIN' || comment.user?.role === 'MODERATOR') && (
+                        <span style={{
+                          padding: '1px 6px', borderRadius: '4px',
+                          background: 'rgba(255,77,106,0.15)', border: '1px solid rgba(255,77,106,0.3)',
+                          color: '#ff4d6a', fontSize: '0.65rem', fontWeight: 700,
+                        }}>
+                          Staff
+                        </span>
+                      )}
+
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '4px' }}>
+                        • {timeAgo(comment.createdAt)}
+                      </span>
+
+                      {/* 3-dots menu */}
                       {currentUserId && (
                         <div style={{ marginLeft: 'auto', position: 'relative' }}>
                           <button
@@ -654,13 +689,12 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                               e.stopPropagation();
                               setOpenCommentMenuId(openCommentMenuId === comment.id ? null : comment.id);
                             }}
-                            title="Opciones del comentario"
+                            title="Opciones"
                             style={{
-                              width: '24px', height: '24px', borderRadius: '50%',
+                              width: '22px', height: '22px', borderRadius: '50%',
                               border: 'none', background: 'transparent',
                               color: 'var(--text-muted)', cursor: 'pointer',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              transition: 'all 0.15s',
                               padding: 0,
                             }}
                             onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'var(--text)'; }}
@@ -678,7 +712,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                               position: 'absolute', top: '100%', right: 0, marginTop: '4px',
                               background: '#181828', border: '1px solid var(--glass-border)',
                               borderRadius: '10px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                              padding: '4px', zIndex: 60, minWidth: '150px',
+                              padding: '4px', zIndex: 60, minWidth: '140px',
                             }}>
                               {(comment.userId === currentUserId || post.userId === currentUserId || isStaff) && (
                                 <button
@@ -691,7 +725,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                                     display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
                                     padding: '8px 10px', border: 'none', background: 'none',
                                     color: '#ff4d6a', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500,
-                                    borderRadius: '6px', textAlign: 'left', transition: 'background 0.15s',
+                                    borderRadius: '6px', textAlign: 'left',
                                   }}
                                   onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,77,106,0.12)')}
                                   onMouseOut={e => (e.currentTarget.style.background = 'none')}
@@ -713,7 +747,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                                     display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
                                     padding: '8px 10px', border: 'none', background: 'none',
                                     color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500,
-                                    borderRadius: '6px', textAlign: 'left', transition: 'background 0.15s',
+                                    borderRadius: '6px', textAlign: 'left',
                                   }}
                                   onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--text)'; }}
                                   onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -729,12 +763,56 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                         </div>
                       )}
                     </div>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.82rem', lineHeight: 1.4 }}>{renderContentWithMentions(comment.content)}</p>
+
+                    {/* Comment Content */}
+                    <p style={{ margin: '4px 0 0', fontSize: '0.85rem', lineHeight: 1.45, color: 'var(--text)' }}>
+                      {renderContentWithMentions(comment.content)}
+                    </p>
+
+                    {/* Media attachment */}
                     {comment.mediaUrl && (
-                      <div style={{ marginTop: '6px', maxWidth: '180px', borderRadius: '10px', overflow: 'hidden' }}>
-                        <img src={comment.mediaUrl} alt="comment media" style={{ width: '100%', maxHeight: '140px', objectFit: 'contain', display: 'block' }} />
+                      <div style={{ marginTop: '8px', maxWidth: '220px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+                        <img src={comment.mediaUrl} alt="" style={{ width: '100%', maxHeight: '160px', objectFit: 'contain', display: 'block' }} />
                       </div>
                     )}
+
+                    {/* Comment Action Footer (Like & Reply) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleCommentLike(comment.id, comment.isLikedByMe)}
+                        style={{
+                          border: 'none', background: 'none', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: '4px',
+                          color: comment.isLikedByMe ? '#ff4d6a' : 'var(--text-muted)',
+                          fontSize: '0.75rem', fontWeight: comment.isLikedByMe ? 600 : 400,
+                          padding: 0, transition: 'all 0.15s',
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill={comment.isLikedByMe ? '#ff4d6a' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                        </svg>
+                        <span>{(comment._count?.likes || 0) > 0 ? comment._count?.likes : 'Me gusta'}</span>
+                      </button>
+
+                      {currentUserId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCommentText(prev => (prev ? `${prev} @${comment.user?.username} ` : `@${comment.user?.username} `));
+                          }}
+                          style={{
+                            border: 'none', background: 'none', cursor: 'pointer',
+                            color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500,
+                            padding: 0, transition: 'color 0.15s',
+                          }}
+                          onMouseOver={e => (e.currentTarget.style.color = 'var(--primary)')}
+                          onMouseOut={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                        >
+                          Responder
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
