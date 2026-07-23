@@ -147,14 +147,19 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
     const userFields = ['displayName', 'avatarUrl', 'bio', 'bannerColor'];
     // Fields that go on the VTuberProfile model
     const vtuberProfileFields = [
-      'bannerUrl', 'description', 'lore',
+      'displayName', 'avatarUrl', 'bannerUrl', 'description', 'lore',
       'twitchUrl', 'youtubeUrl', 'kickUrl', 'tiktokUrl', 'twitterUrl',
       'discordUrl', 'websiteUrl', 'streamSchedule', 'contentType',
       'live2dModel', 'model3d', 'fanName', 'oshiMark', 'themeColor', 'isLive',
     ];
     
     const dataRecord = data as unknown as Record<string, unknown>;
-    const hasVtuberFields = vtuberProfileFields.some(f => dataRecord[f] !== undefined) ||
+    const existingProfile = await tx.vTuberProfile.findUnique({
+      where: { userId },
+    });
+
+    const hasVtuberFields = existingProfile !== null ||
+      vtuberProfileFields.some(f => dataRecord[f] !== undefined) ||
       data.socialLinks !== undefined || data.languages !== undefined || data.hashtags !== undefined;
     
     const { username, socialLinks, ...rest } = data;
@@ -176,33 +181,34 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       });
     }
 
-    // 2. Update or create VTuberProfile (only if VTuber fields are present)
+    // 2. Update or create VTuberProfile (if existing or if VTuber fields are present)
     if (hasVtuberFields) {
-      const existingProfile = await tx.vTuberProfile.findUnique({
-        where: { userId },
-      });
-
       const profileData: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(rest)) {
         if (value !== undefined && vtuberProfileFields.includes(key)) {
           profileData[key] = value;
         }
       }
+      if (dataRecord.displayName !== undefined) profileData.displayName = dataRecord.displayName;
+      if (dataRecord.avatarUrl !== undefined) profileData.avatarUrl = dataRecord.avatarUrl;
       if (socialLinks !== undefined) profileData.socialLinks = JSON.stringify(socialLinks);
       if (languages !== undefined) profileData.languages = JSON.stringify(languages);
       if (hashtags !== undefined) profileData.hashtags = JSON.stringify(hashtags);
 
       if (existingProfile) {
-        await tx.vTuberProfile.update({
-          where: { userId },
-          data: profileData as Prisma.VTuberProfileUpdateInput,
-        });
+        if (Object.keys(profileData).length > 0) {
+          await tx.vTuberProfile.update({
+            where: { userId },
+            data: profileData as Prisma.VTuberProfileUpdateInput,
+          });
+        }
       } else {
         const user = await tx.user.findUnique({ where: { id: userId } });
         await tx.vTuberProfile.create({
           data: {
             userId,
-            displayName: (profileData.displayName as string) || user?.username || 'VTuber',
+            displayName: (profileData.displayName as string) || (userUpdateData.displayName as string) || user?.username || 'VTuber',
+            avatarUrl: (profileData.avatarUrl as string) || (userUpdateData.avatarUrl as string) || user?.avatarUrl || null,
             ...profileData,
           } as Prisma.VTuberProfileUncheckedCreateInput,
         });

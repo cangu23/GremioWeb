@@ -48,6 +48,10 @@ function UserSettings() {
       return;
     }
     if (user) {
+      if (user.role === 'VTUBER') {
+        router.push('/vtuber-profile');
+        return;
+      }
       setDisplayName(user.displayName || '');
       setAvatarUrl(user.avatarUrl || '');
       setBio(user.bio || '');
