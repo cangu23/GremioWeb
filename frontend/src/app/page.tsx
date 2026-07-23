@@ -13,7 +13,7 @@ import PostCard from '@/components/posts/PostCard';
 import CreatePost from '@/components/posts/CreatePost';
 import SkeletonPostCard from '@/components/posts/SkeletonPostCard';
 import UserAvatar from '@/components/ui/UserAvatar';
-import MissionsWidget from '@/components/ui/MissionsWidget';
+import StardustProgressBar from '@/components/ui/StardustProgressBar';
 import PlanBadge from '@/components/ui/PlanBadge';
 import { usePosts } from '@/lib/hooks/usePosts';
 import type { GuildItem, TrendingHashtag, LiveVTuberProfile, FollowingUser, EventItem } from '../../../shared/types';
@@ -947,8 +947,8 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Daily Missions & Stardust Ecosystem Widget */}
-        <MissionsWidget />
+        {/* Stardust & Missions Progress Bar */}
+        <StardustProgressBar />
 
         <CreatePost
           compact
