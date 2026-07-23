@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import { getSocket } from '@/lib/socket-client';
+import { getSocket, connectSocket } from '@/lib/socket-client';
 import { getAccessToken } from '@/lib/api';
 
 export interface MediaReadyPayload {
@@ -45,11 +45,10 @@ export function useSocketMedia() {
   const errorListeners = useRef<Map<string, MediaErrorCallback>>(new Map());
 
   useEffect(() => {
+    // Usar connectSocket() para asegurarnos de que el socket esté inicializado
+    // y no dependamos de si Navbar lo ha conectado o no por race conditions.
     let socket;
     try {
-      // Usar connectSocket() para asegurarnos de que el socket esté inicializado
-      // y no dependamos de si Navbar lo ha conectado o no por race conditions.
-      const { connectSocket } = require('@/lib/socket-client');
       socket = connectSocket();
     } catch {
       return;

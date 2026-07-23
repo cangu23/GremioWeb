@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers } from '@gremio-estelar/shared';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -917,8 +918,10 @@ function VtuberProfileEditor() {
 
 export default function VtuberProfilePage() {
   return (
-    <ClientOnly fallback={<div suppressHydrationWarning className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>}>
-      <VtuberProfileEditor />
-    </ClientOnly>
+    <ErrorBoundary>
+      <ClientOnly fallback={<div suppressHydrationWarning className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>}>
+        <VtuberProfileEditor />
+      </ClientOnly>
+    </ErrorBoundary>
   );
 }
