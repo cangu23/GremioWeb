@@ -79,6 +79,7 @@ export default function UserAvatar({
           position: 'relative',
           display: 'inline-flex',
           cursor: 'pointer',
+          overflow: 'visible',
           ...(style as React.CSSProperties),
         }}
         className={className}
@@ -193,45 +194,43 @@ export default function UserAvatar({
         <div
           style={{
             position: 'absolute',
-            bottom: '100%',
+            bottom: 'calc(100% + 8px)',
             left: '50%',
             transform: 'translateX(-50%)',
-            marginBottom: '6px',
-            padding: '3px 10px',
+            padding: '4px 10px',
             borderRadius: '14px',
-            background: 'linear-gradient(135deg, rgba(28,25,50,0.95), rgba(15,14,30,0.95))',
+            background: 'linear-gradient(135deg, rgba(28,25,50,0.97), rgba(15,14,30,0.97))',
             backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(139,92,246,0.35)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(139,92,246,0.15)',
-            zIndex: 10,
-            maxWidth: '120px',
+            border: '1px solid rgba(139,92,246,0.4)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.5), 0 0 12px rgba(139,92,246,0.2)',
+            zIndex: 20,
+            maxWidth: '140px',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             fontSize: '0.72rem',
             fontWeight: 600,
-            color: 'var(--text, #fff)',
-            pointerEvents: 'auto',
-            transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            color: '#fff',
+            pointerEvents: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
           }}
         >
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{note}</span>
-          
+
           {/* Bubble tail pointing down to top of avatar */}
           <div
             style={{
               position: 'absolute',
-              bottom: '-4px',
+              bottom: '-5px',
               left: '50%',
               transform: 'translateX(-50%) rotate(45deg)',
-              width: '7px',
-              height: '7px',
-              background: 'rgba(28,25,50,0.95)',
-              borderRight: '1px solid rgba(139,92,246,0.35)',
-              borderBottom: '1px solid rgba(139,92,246,0.35)',
+              width: '8px',
+              height: '8px',
+              background: 'rgba(28,25,50,0.97)',
+              borderRight: '1px solid rgba(139,92,246,0.4)',
+              borderBottom: '1px solid rgba(139,92,246,0.4)',
               borderRadius: '0 0 2px 0',
               zIndex: -1,
             }}
@@ -246,8 +245,7 @@ export default function UserAvatar({
           onMouseLeave={handleNoteBubbleLeave}
           style={{
             position: 'absolute',
-            bottom: '100%', left: '50%', transform: 'translateX(-50%)',
-            marginBottom: '16px',
+            bottom: 'calc(100% + 16px)', left: '50%', transform: 'translateX(-50%)',
             padding: '12px 18px',
             borderRadius: '18px',
             background: 'linear-gradient(135deg, rgba(30,28,55,0.98), rgba(20,20,40,0.98))',

@@ -77,22 +77,34 @@ export const getSocialProfile = async (userId: string, currentUserId?: string) =
 
 export const getFollowers = async (userId: string) => {
   const follows = await SocialRepository.getFollowers(userId);
-  return follows.map(f => ({
-    ...f.follower,
-    vtuberProfile: f.follower.vtuberProfile ? {
-      ...f.follower.vtuberProfile,
-      isVerified: f.follower.vtuberProfile.isVerified ?? false,
-    } : null,
-  }));
+  const now = new Date();
+  return follows.map(f => {
+    const isExpired = f.follower.noteExpiresAt && new Date(f.follower.noteExpiresAt) < now;
+    return {
+      ...f.follower,
+      note: isExpired ? null : f.follower.note,
+      noteUpdatedAt: isExpired ? null : f.follower.noteUpdatedAt,
+      vtuberProfile: f.follower.vtuberProfile ? {
+        ...f.follower.vtuberProfile,
+        isVerified: f.follower.vtuberProfile.isVerified ?? false,
+      } : null,
+    };
+  });
 };
 
 export const getFollowing = async (userId: string) => {
   const follows = await SocialRepository.getFollowing(userId);
-  return follows.map(f => ({
-    ...f.following,
-    vtuberProfile: f.following.vtuberProfile ? {
-      ...f.following.vtuberProfile,
-      isVerified: f.following.vtuberProfile.isVerified ?? false,
-    } : null,
-  }));
+  const now = new Date();
+  return follows.map(f => {
+    const isExpired = f.following.noteExpiresAt && new Date(f.following.noteExpiresAt) < now;
+    return {
+      ...f.following,
+      note: isExpired ? null : f.following.note,
+      noteUpdatedAt: isExpired ? null : f.following.noteUpdatedAt,
+      vtuberProfile: f.following.vtuberProfile ? {
+        ...f.following.vtuberProfile,
+        isVerified: f.following.vtuberProfile.isVerified ?? false,
+      } : null,
+    };
+  });
 };

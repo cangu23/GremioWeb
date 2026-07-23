@@ -140,12 +140,23 @@ export const updateUser = async (id: string, data: Record<string, unknown>) => {
 };
 
 export const getUserProfileById = async (id: string) => {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id },
     include: {
       vtuberProfile: true,
     },
   });
+
+  if (user && user.noteExpiresAt && user.noteExpiresAt < new Date()) {
+    return {
+      ...user,
+      note: null,
+      noteUpdatedAt: null,
+      noteExpiresAt: null,
+    };
+  }
+
+  return user;
 };
 
 export const updateUserProfile = async (userId: string, data: UpdateUserPayload) => {

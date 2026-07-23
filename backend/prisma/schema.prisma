@@ -35,6 +35,7 @@ model User {
   // Note / status (Instagram-style note on avatar)
   note          String?
   noteUpdatedAt DateTime?
+  noteExpiresAt DateTime?
 
   // Gamification & Ecosystem
   xp            Int            @default(0)

@@ -6,11 +6,20 @@ interface NoteModalProps {
   isOpen: boolean;
   currentNote: string;
   onClose: () => void;
-  onSave: (note: string) => Promise<void>;
+  onSave: (note: string, durationHours?: number) => Promise<void>;
 }
+
+const DURATION_OPTIONS = [
+  { value: 1, label: '1 h', title: '1 hora' },
+  { value: 4, label: '4 h', title: '4 horas' },
+  { value: 8, label: '8 h', title: '8 horas' },
+  { value: 24, label: '24 h', title: '24 horas' },
+  { value: 0, label: 'Sin límite', title: 'Hasta eliminar' },
+];
 
 export default function NoteModal({ isOpen, currentNote, onClose, onSave }: NoteModalProps) {
   const [text, setText] = useState(currentNote);
+  const [duration, setDuration] = useState<number>(24);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -19,6 +28,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
   useEffect(() => {
     if (isOpen) {
       setText(currentNote);
+      setDuration(24);
       setError('');
       // Focus after animation
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -34,7 +44,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, text]);
+  }, [isOpen, text, duration]);
 
   const handleSave = async () => {
     const trimmed = text.trim();
@@ -45,7 +55,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
     setSaving(true);
     setError('');
     try {
-      await onSave(trimmed || '');
+      await onSave(trimmed || '', duration);
     } catch {
       setError('Error al guardar. Intenta de nuevo.');
     } finally {
@@ -82,7 +92,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
         style={{
           position: 'relative',
           width: '90%', maxWidth: '440px',
-          padding: '32px 28px 24px',
+          padding: '28px 24px 20px',
           borderRadius: '20px',
           animation: 'noteScaleIn 0.25s ease',
           boxShadow: '0 32px 80px rgba(0,0,0,0.5), 0 0 40px rgba(139,92,246,0.08)',
@@ -99,7 +109,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: '20px',
+          marginBottom: '16px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {/* Pencil icon */}
@@ -149,7 +159,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
         </div>
 
         {/* Textarea */}
-        <div style={{ position: 'relative', marginBottom: '8px' }}>
+        <div style={{ position: 'relative', marginBottom: '6px' }}>
           <textarea
             ref={inputRef}
             value={text}
@@ -193,7 +203,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
         {/* Character counter + error */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: '20px', minHeight: '20px',
+          marginBottom: '14px', minHeight: '18px',
         }}>
           {error ? (
             <span style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: 500 }}>
@@ -210,6 +220,52 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
           }}>
             {charsLeft} restantes
           </span>
+        </div>
+
+        {/* Duración de la nota */}
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{
+            fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)',
+            marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px'
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Duración de la nota
+          </div>
+
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px',
+            background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.06)'
+          }}>
+            {DURATION_OPTIONS.map(opt => {
+              const isSelected = duration === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setDuration(opt.value)}
+                  title={opt.title}
+                  style={{
+                    padding: '7px 2px',
+                    borderRadius: '8px',
+                    border: isSelected ? '1px solid var(--primary)' : '1px solid transparent',
+                    background: isSelected ? 'rgba(139,92,246,0.2)' : 'transparent',
+                    color: isSelected ? '#fff' : 'var(--text-muted)',
+                    fontSize: '0.76rem',
+                    fontWeight: isSelected ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Actions */}

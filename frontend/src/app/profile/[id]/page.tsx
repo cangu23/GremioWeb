@@ -748,10 +748,10 @@ function ProfileContent() {
             isOpen={showNoteModal}
             currentNote={profile.note || ''}
             onClose={() => setShowNoteModal(false)}
-            onSave={async (note: string) => {
+            onSave={async (note: string, durationHours?: number) => {
               const data = await apiFetch('/user/note', {
                 method: 'PUT',
-                body: JSON.stringify({ note: note || null }),
+                body: JSON.stringify({ note: note || null, durationHours }),
               });
               setProfile(prev => prev ? { ...prev, note: data.note, noteUpdatedAt: data.noteUpdatedAt } : prev);
               setShowNoteModal(false);

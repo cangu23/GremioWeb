@@ -48,16 +48,33 @@ export const searchUsers = async (query: string) => {
   return UserRepository.searchByUsername(query);
 };
 
-export const updateNote = async (userId: string, note: string | null) => {
+export const updateNote = async (userId: string, note: string | null, durationHours?: number | null) => {
   const trimmed = note?.trim() || null;
   if (trimmed && trimmed.length > 100) {
     throw new AppError('La nota no puede tener más de 100 caracteres', 400);
   }
+
+  let noteExpiresAt: Date | null = null;
+  if (trimmed) {
+    // If durationHours === 0, explicit no-expiry. Otherwise default to 24h or specified hours.
+    if (durationHours === 0) {
+      noteExpiresAt = null;
+    } else {
+      const hours = durationHours && durationHours > 0 ? durationHours : 24;
+      noteExpiresAt = new Date(Date.now() + hours * 3600 * 1000);
+    }
+  }
+
   const updated = await UserRepository.updateUser(userId, {
     note: trimmed,
     noteUpdatedAt: trimmed ? new Date() : null,
+    noteExpiresAt,
   });
-  return { note: updated.note, noteUpdatedAt: updated.noteUpdatedAt };
+  return {
+    note: updated.note,
+    noteUpdatedAt: updated.noteUpdatedAt,
+    noteExpiresAt: updated.noteExpiresAt,
+  };
 };
 
 export const getPublicUser = async (userId: string): Promise<PublicUser> => {

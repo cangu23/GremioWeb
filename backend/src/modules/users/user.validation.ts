@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const updateNoteSchema = z.object({
   body: z.object({
     note: z.string().max(100).nullable(),
+    durationHours: z.number().min(0).max(168).optional().nullable(),
   }),
 });
 
