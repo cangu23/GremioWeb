@@ -118,13 +118,18 @@ export default function AdminUsersPage() {
     try {
       if (action === 'delete') {
         await apiFetch(`/admin/users/${userId}`, { method: 'DELETE' });
+      } else if (action === 'vtuber') {
+        await apiFetch(`/admin/users/${userId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ role: 'VTUBER', isVerified: true }),
+        });
       } else {
         await apiFetch(`/admin/users/${userId}`, {
           method: 'PATCH',
           body: JSON.stringify({ status: action === 'restore' ? 'ACTIVE' : action.toUpperCase() }),
         });
       }
-      showToast(`Usuario ${label}do`, 'success');
+      showToast(`Usuario ${label} con éxito`, 'success');
       fetchUsers();
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -243,6 +248,11 @@ export default function AdminUsersPage() {
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                           <button onClick={() => openEdit(user)} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(138,43,226,0.2)', color: '#8a2be2', border: '1px solid rgba(138,43,226,0.3)' }}>Editar</button>
+                          {user.role !== 'VTUBER' && (
+                            <button onClick={() => confirmAction(user.id, 'vtuber', 'promover a VTuber')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.3)' }}>
+                              + VTuber
+                            </button>
+                          )}
                           {user.status === 'ACTIVE' && (
                             <button onClick={() => confirmAction(user.id, 'suspend', 'suspender')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.3)' }}>Suspender</button>
                           )}

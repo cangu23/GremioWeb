@@ -91,30 +91,35 @@ export const approveRequest = async (id: string, adminId: string) => {
     generatedById: adminId,
   });
 
-  // Create VTuber profile if it doesn't exist
-  const user = await AdminRepository.findUserById(request.userId);
-  if (!user?.vtuberProfile) {
-    await prisma.vTuberProfile.create({
-      data: {
-        userId: request.userId,
-        displayName: request.displayName,
-        description: request.description,
-        avatarUrl: request.avatarUrl,
-        lore: request.lore,
-      },
-    });
-  } else {
-    // Update existing profile
-    await prisma.vTuberProfile.update({
-      where: { userId: request.userId },
-      data: {
-        displayName: request.displayName,
-        description: request.description ?? undefined,
-        avatarUrl: request.avatarUrl ?? undefined,
-        lore: request.lore ?? undefined,
-      },
-    });
-  }
+  // Update User role directly to VTUBER
+  await prisma.user.update({
+    where: { id: request.userId },
+    data: { role: 'VTUBER' },
+  });
+
+  // Create or Update VTuber profile with isApproved: true and isVerified: true
+  await prisma.vTuberProfile.upsert({
+    where: { userId: request.userId },
+    create: {
+      userId: request.userId,
+      displayName: request.displayName,
+      description: request.description || null,
+      avatarUrl: request.avatarUrl || null,
+      lore: request.lore || null,
+      isApproved: true,
+      isHidden: false,
+      isVerified: true,
+    },
+    update: {
+      displayName: request.displayName,
+      description: request.description ?? undefined,
+      avatarUrl: request.avatarUrl ?? undefined,
+      lore: request.lore ?? undefined,
+      isApproved: true,
+      isHidden: false,
+      isVerified: true,
+    },
+  });
 
   // Log admin action
   await AdminRepository.createAdminLog({
@@ -133,8 +138,8 @@ export const approveRequest = async (id: string, adminId: string) => {
     data: {
       userId: request.userId,
       type: 'vtuber_approved',
-      title: 'Solicitud de VTuber Aprobada',
-      message: `Tu solicitud para ser VTuber oficial ha sido aprobada. Usa tu código único: ${codeResult.rawCode}\n\nCanjéalo en tu perfil para activar tu rol.`,
+      title: '✨ ¡Tu solicitud de VTuber ha sido APROBADA!',
+      message: `¡Felicidades, ${request.displayName}! Tu solicitud para ser VTuber oficial ha sido aprobada por la administración. Ya tienes el rol de VTuber y tu insignia de verificación activada.`,
       referenceId: request.id,
     },
   });

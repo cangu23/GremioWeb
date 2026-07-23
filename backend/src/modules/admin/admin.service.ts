@@ -92,18 +92,31 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 
   const updated = await AdminRepository.updateUser(id, data);
 
-  if (data.role && data.role !== user.role && user.vtuberProfile) {
-    if (data.role !== 'VTUBER') {
-      await prisma.vTuberProfile.update({
-        where: { userId: id },
-        data: { isApproved: false, isHidden: true },
-      });
-    } else {
-      await prisma.vTuberProfile.update({
-        where: { userId: id },
-        data: { isApproved: true, isHidden: false },
-      });
-    }
+  // Sync VTuber profile automatically (creates profile if missing)
+  const targetRole = data.role || user.role;
+  if (targetRole === 'VTUBER' || data.isVerified !== undefined) {
+    const isVer = data.isVerified !== undefined ? data.isVerified : true;
+    await prisma.vTuberProfile.upsert({
+      where: { userId: id },
+      create: {
+        userId: id,
+        displayName: user.displayName || user.username,
+        avatarUrl: user.avatarUrl || null,
+        isApproved: true,
+        isHidden: false,
+        isVerified: isVer,
+      },
+      update: {
+        isApproved: true,
+        isHidden: false,
+        isVerified: isVer,
+      },
+    });
+  } else if (data.role && data.role !== 'VTUBER' && user.vtuberProfile) {
+    await prisma.vTuberProfile.update({
+      where: { userId: id },
+      data: { isApproved: false, isHidden: true },
+    });
   }
 
   if (changes.length > 0) {
