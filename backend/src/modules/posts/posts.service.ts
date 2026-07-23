@@ -5,6 +5,8 @@ import { CreatePostPayload, CreateCommentPayload } from '@gremio-estelar/shared'
 import * as UserRepository from '../users/user.repository';
 import * as SocialRepository from '../social/social.repository';
 import * as AdminRepository from '../admin/admin.repository';
+import { trackMissionProgress } from '../ecosystem/missions.service';
+import { addStardust } from '../ecosystem/stardust.service';
 import prisma from '../../database/prisma';
 
 // ========== POSTS ==========
@@ -44,6 +46,10 @@ export const createPost = async (payload: CreatePostPayload, userId: string, men
   // Fetch the complete post with relations
   const fullPost = await PostsRepository.findPostById(post.id);
   if (!fullPost) throw new AppError('Error al crear publicación', 500);
+
+  // Gamification: Track missions & award stardust
+  trackMissionProgress(userId, 'POST_CREATE').catch(() => {});
+  addStardust(userId, 5, 'Publicación creada').catch(() => {});
 
   return formatPost(fullPost);
 };
@@ -160,6 +166,10 @@ export const likePost = async (postId: string, userId: string) => {
 
   await PostsRepository.likePost(userId, postId);
 
+  // Gamification: Track missions & award stardust
+  trackMissionProgress(userId, 'POST_LIKE').catch(() => {});
+  addStardust(userId, 2, 'Like agregado').catch(() => {});
+
   // Notify post owner
   if (post.userId !== userId) {
     const liker = await UserRepository.findById(userId);
@@ -199,6 +209,10 @@ export const createComment = async (postId: string, payload: CreateCommentPayloa
       await NotificationsService.notifyComment(commenter.username, postId, post.userId).catch(() => {});
     }
   }
+
+  // Gamification: Track missions & award stardust
+  trackMissionProgress(userId, 'COMMENT_CREATE').catch(() => {});
+  addStardust(userId, 3, 'Comentario agregado').catch(() => {});
 
   // Process mentions & notify
   const commenter = await UserRepository.findById(userId);

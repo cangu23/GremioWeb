@@ -36,9 +36,18 @@ model User {
   note          String?
   noteUpdatedAt DateTime?
 
-  // Gamification
+  // Gamification & Ecosystem
   xp            Int            @default(0)
   level         Int            @default(1)
+  stardust      Int            @default(0)
+  plan          String         @default("FREE")
+  activeTitle   String?
+  profileMusic  String?
+  profileBg     String?
+  profileFrame  String?
+  profilePet    String?
+  profileParticles String?
+  profileTheme  String?
 
   // Relations
   vtuberProfile VTuberProfile?
@@ -102,10 +111,17 @@ model User {
   likes         Like[]
   mentions      PostMention[]
 
-  // Payments
+  // Payments & Platform Subscriptions
   subscriptions UserSubscription[]
   donationsSent     Donation[] @relation("donor")
   donationsReceived Donation[] @relation("recipient")
+  platformSubscription PlatformSubscription?
+
+  // Ecosystem & Gamification
+  stardustTransactions StardustTransaction[]
+  userMissions         UserMissionProgress[]
+  userTitles           UserTitle[]
+  userSeasonPasses     UserSeasonPass[]
 
   @@index([username])
   @@index([xp])
@@ -749,4 +765,130 @@ model UserPurchase {
 
   @@index([userId])
   @@index([itemId])
+}
+
+// ========== ECOSYSTEM: STARDUST & MISSIONS ==========
+
+model StardustTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int                      // Positive = earned, negative = spent
+  reason    String                   // e.g. "daily_login", "post_like", "mission_complete", "shop_purchase"
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Mission {
+  id             String                @id @default(cuid())
+  title          String
+  description    String
+  type           String                @default("DAILY") // DAILY, WEEKLY, SEASONAL
+  goal           Int                   @default(1)
+  action         String                // "POST_CREATE", "POST_LIKE", "COMMENT_CREATE", "DAILY_LOGIN", "VTUBER_VISIT", "EVENT_JOIN"
+  xpReward       Int                   @default(50)
+  stardustReward Int                   @default(20)
+  active         Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+
+  userProgress   UserMissionProgress[]
+}
+
+model UserMissionProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  missionId   String
+  progress    Int       @default(0)
+  completed   Boolean   @default(false)
+  claimedAt   DateTime?
+  resetAt     DateTime
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission     Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionId, resetAt])
+  @@index([userId])
+}
+
+model PlatformSubscription {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  plan             String    @default("ASTRO") // ASTRO, NOVA, STELLAR
+  status           String    @default("ACTIVE")
+  currentPeriodEnd DateTime
+  cancelledAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Title {
+  id               String      @id @default(cuid())
+  name             String      @unique
+  description      String?
+  color            String?
+  icon             String?
+  requirementType  String      @default("ACHIEVEMENT") // ACHIEVEMENT, LEVEL, SEASONAL, PLAN
+  requirementValue String?
+
+  userTitles       UserTitle[]
+}
+
+model UserTitle {
+  id       String   @id @default(cuid())
+  userId   String
+  titleId  String
+  earnedAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title    Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, titleId])
+}
+
+// ========== ECOSYSTEM: SEASONS & STELLAR PASS ==========
+
+model Season {
+  id          String           @id @default(cuid())
+  name        String
+  theme       String?          // e.g. "Lluvia de Estrellas", "Festival Maid", "Sakura"
+  number      Int              @default(1)
+  startsAt    DateTime
+  endsAt      DateTime
+  active      Boolean          @default(true)
+
+  passLevels  PassLevel[]
+  userPasses  UserSeasonPass[]
+}
+
+model PassLevel {
+  id            String   @id @default(cuid())
+  seasonId      String
+  level         Int
+  freeReward    String?  // JSON string: { type: "stardust" | "xp" | "title", amount: 100, label: "100 Stardust" }
+  premiumReward String?  // JSON string: { type: "stardust" | "xp" | "title", amount: 300, label: "Título Leyenda" }
+
+  season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, level])
+}
+
+model UserSeasonPass {
+  id            String    @id @default(cuid())
+  userId        String
+  seasonId      String
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  isPremium     Boolean   @default(false)
+  claimedLevels String?   // JSON array string of claimed level numbers e.g. "[1,2,3]"
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  season        Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seasonId])
+  @@index([userId])
 }

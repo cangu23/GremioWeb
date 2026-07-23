@@ -25,6 +25,7 @@ import shopRoutes from './modules/shop/shop.routes';
 import dailyRewardsRoutes from './modules/daily-rewards/daily-rewards.routes';
 import rouletteRoutes from './modules/roulette/roulette.routes';
 import warningsRoutes from './modules/warnings/warnings.routes';
+import ecosystemRoutes from './modules/ecosystem/ecosystem.routes';
 import * as StickersController from './modules/admin/stickers.controller';
 
 const BOOT = '[BOOT]';
@@ -107,6 +108,9 @@ console.log(`${BOOT}   [OK] /api/roulette`);
 
 router.use('/warnings', warningsRoutes);
 console.log(`${BOOT}   [OK] /api/warnings`);
+
+router.use('/ecosystem', ecosystemRoutes);
+console.log(`${BOOT}   [OK] /api/ecosystem (stardust, missions, subscriptions, titles)`);
 
 // Public stickers endpoint (no auth required, for sticker picker)
 router.get('/stickers', StickersController.getActiveStickers);

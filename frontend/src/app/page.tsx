@@ -13,6 +13,8 @@ import PostCard from '@/components/posts/PostCard';
 import CreatePost from '@/components/posts/CreatePost';
 import SkeletonPostCard from '@/components/posts/SkeletonPostCard';
 import UserAvatar from '@/components/ui/UserAvatar';
+import MissionsWidget from '@/components/ui/MissionsWidget';
+import PlanBadge from '@/components/ui/PlanBadge';
 import { usePosts } from '@/lib/hooks/usePosts';
 import type { GuildItem, TrendingHashtag, LiveVTuberProfile, FollowingUser, EventItem } from '../../../shared/types';
 
@@ -258,6 +260,8 @@ function HomeContent() {
   // ==========================================================================
   const sidebarLinks = [
     { icon: NavIcons.feed, label: 'Feed', href: '/feed', color: 'var(--primary)' },
+    { icon: <span style={{ fontSize: '18px' }}>⭐</span>, label: 'Pase Estelar', href: '/pass', color: '#38bdf8' },
+    { icon: <span style={{ fontSize: '18px' }}>✨</span>, label: 'Planes Premium', href: '/premium', color: '#fbbf24' },
     { icon: NavIcons.events, label: 'Eventos', href: '/events' },
     { icon: NavIcons.guilds, label: 'Gremios', href: '/guilds' },
     { icon: NavIcons.vtubers, label: 'VTubers', href: '/vtubers' },
@@ -942,6 +946,9 @@ function HomeContent() {
             {error}
           </div>
         )}
+
+        {/* Daily Missions & Stardust Ecosystem Widget */}
+        <MissionsWidget />
 
         <CreatePost
           compact

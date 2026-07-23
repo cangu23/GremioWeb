@@ -495,6 +495,26 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
             <span>Dashboard</span>
           </Link>
 
+          <Link href="/pass"
+            onClick={() => setOpen(false)}
+            style={menuItemStyle}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ color: '#38bdf8', display: 'inline-flex' }}>⭐</span>
+            <span style={{ color: '#38bdf8', fontWeight: 600 }}>Pase Estelar</span>
+          </Link>
+
+          <Link href="/premium"
+            onClick={() => setOpen(false)}
+            style={menuItemStyle}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ color: '#fbbf24', display: 'inline-flex' }}>✨</span>
+            <span style={{ color: '#fbbf24', fontWeight: 600 }}>Planes Premium</span>
+          </Link>
+
           <Link href="/shop"
             onClick={() => setOpen(false)}
             style={menuItemStyle}

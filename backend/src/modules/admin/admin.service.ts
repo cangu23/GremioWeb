@@ -92,6 +92,20 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 
   const updated = await AdminRepository.updateUser(id, data);
 
+  if (data.role && data.role !== user.role && user.vtuberProfile) {
+    if (data.role !== 'VTUBER') {
+      await prisma.vTuberProfile.update({
+        where: { userId: id },
+        data: { isApproved: false, isHidden: true },
+      });
+    } else {
+      await prisma.vTuberProfile.update({
+        where: { userId: id },
+        data: { isApproved: true, isHidden: false },
+      });
+    }
+  }
+
   if (changes.length > 0) {
     await logAdminAction(adminId, data.status === 'BANNED' ? 'BAN_USER' : data.status === 'SUSPENDED' ? 'SUSPEND_USER' : 'UPDATE_USER', {
       targetUserId: id,
@@ -172,6 +186,18 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
   if (!profile) throw new AppError('Perfil VTuber no encontrado', 404);
 
   const updated = await AdminRepository.updateVtuberProfile(id, data);
+
+  if (data.isApproved === false || data.isHidden === true) {
+    await prisma.user.update({
+      where: { id: profile.userId },
+      data: { role: 'USER' },
+    });
+  } else if (data.isApproved === true && data.isHidden === false) {
+    await prisma.user.update({
+      where: { id: profile.userId },
+      data: { role: 'VTUBER' },
+    });
+  }
 
   const changes: string[] = [];
   if (data.isVerified !== undefined && data.isVerified !== profile.isVerified) {

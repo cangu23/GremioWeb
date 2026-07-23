@@ -46,7 +46,13 @@ export const getVtubersDirectory = async (params: {
   const { search, contentType, language, page, limit } = params;
   const skip = (page - 1) * limit;
 
-  const where: any = { isApproved: true, isHidden: false };
+  const where: any = {
+    isApproved: true,
+    isHidden: false,
+    user: {
+      role: 'VTUBER',
+    },
+  };
 
   if (search) {
     where.OR = [
@@ -126,7 +132,14 @@ export const getLiveVtubers = async () => {
   });
 
   const profiles = await prisma.vTuberProfile.findMany({
-    where: { isLive: true, isApproved: true, isHidden: false },
+    where: {
+      isLive: true,
+      isApproved: true,
+      isHidden: false,
+      user: {
+        role: 'VTUBER',
+      },
+    },
     orderBy: { updatedAt: 'desc' },
     include: {
       user: {
@@ -163,7 +176,14 @@ export const getLiveVtubers = async () => {
 export const getFeaturedVtubers = async () => {
   // Get up to 6 featured VTubers
   const profiles = await prisma.vTuberProfile.findMany({
-    where: { isFeatured: true },
+    where: {
+      isFeatured: true,
+      isApproved: true,
+      isHidden: false,
+      user: {
+        role: 'VTUBER',
+      },
+    },
     orderBy: { updatedAt: 'desc' },
     take: 6,
     include: featuredProfileIncludes,
