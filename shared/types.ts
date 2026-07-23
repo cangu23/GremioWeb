@@ -44,6 +44,7 @@ export type CreatePostData = Post;
 export interface CommentData {
   id: string;
   content: string;
+  mediaUrl?: string | null;
   createdAt: string;
   userId: string;
   user: {

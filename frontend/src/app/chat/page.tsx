@@ -11,7 +11,7 @@ import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
 import StickerPicker from '@/components/ui/StickerPicker';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { renderFormattedContent } from '@/lib/content-renderer';
+import { renderFormattedContent, useStickersCache } from '@/lib/content-renderer';
 import type { Socket } from 'socket.io-client';
 
 /* ─────────── Types ─────────── */
@@ -91,6 +91,7 @@ function getInitial(user: UserInfo): string {
 /* ─────────── Main Content ─────────── */
 
 function MessengerContent() {
+  useStickersCache();
   const { user: currentUser, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();

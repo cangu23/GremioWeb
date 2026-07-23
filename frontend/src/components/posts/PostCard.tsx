@@ -9,6 +9,7 @@ import ModerateModal from './ModerateModal';
 import ReportModal from './ReportModal';
 import MentionInput, { renderContentWithMentions } from './MentionInput';
 import StickerPicker from '@/components/ui/StickerPicker';
+import { useStickersCache } from '@/lib/content-renderer';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -39,6 +40,7 @@ function timeAgo(date: string): string {
 // PostCard Component
 // ==========================================================================
 export default function PostCard({ post, onLike, currentUserId, currentUserRole, onDelete, highlight }: PostCardProps) {
+  useStickersCache();
   const [showComments, setShowComments] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -684,6 +686,11 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                       )}
                     </div>
                     <p style={{ margin: '2px 0 0', fontSize: '0.82rem', lineHeight: 1.4 }}>{renderContentWithMentions(comment.content)}</p>
+                    {comment.mediaUrl && (
+                      <div style={{ marginTop: '6px', maxWidth: '180px', borderRadius: '10px', overflow: 'hidden' }}>
+                        <img src={comment.mediaUrl} alt="comment media" style={{ width: '100%', maxHeight: '140px', objectFit: 'contain', display: 'block' }} />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

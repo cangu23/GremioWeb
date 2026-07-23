@@ -95,16 +95,18 @@ export function refreshStickersCache(): Promise<void> {
 
 // Hook to ensure stickers cache is loaded in client components
 export function useStickersCache() {
-  const [, setTick] = useState(0);
+  const [stickersMap, setStickersMap] = useState<Record<string, CustomSticker> | null>(globalStickersMap);
 
   useEffect(() => {
-    loadStickersCache();
-    const update = () => setTick(t => t + 1);
+    loadStickersCache().then(() => {
+      setStickersMap(globalStickersMap);
+    });
+    const update = () => setStickersMap(globalStickersMap ? { ...globalStickersMap } : null);
     listeners.add(update);
     return () => { listeners.delete(update); };
   }, []);
 
-  return globalStickersMap;
+  return stickersMap;
 }
 
 // ==========================================================================
@@ -119,8 +121,13 @@ export function renderFormattedContent(
 ): React.ReactNode[] {
   if (!text) return [];
 
+  // Ensure background cache fetch is initiated
+  if (!globalStickersMap) {
+    loadStickersCache();
+  }
+
   // Split by hashtags (#tag), mentions (@user), and shortcodes (:name:)
-  const parts = text.split(/(#[\wáéíóúÁÉÍÓÚñÑ]+|@[\w.]+|:[a-zA-Z0-9_-]+:)/g);
+  const parts = text.split(/(#[\wáéíóúÁÉÍÓÚñÑ]+|@[\w.]+|:[a-zA-Z0-9_.-]+:)/g);
 
   return parts.map((part, i) => {
     // 1. Hashtags (#tag)
@@ -157,7 +164,7 @@ export function renderFormattedContent(
 
       // a) Check standard emojis
       if (STANDARD_EMOJIS[code]) {
-        return <span key={i} title={part} style={{ margin: '0 1px' }}>{STANDARD_EMOJIS[code]}</span>;
+        return <span key={i} title={part} style={{ margin: '0 1px', fontSize: '1.1em' }}>{STANDARD_EMOJIS[code]}</span>;
       }
 
       // b) Check custom stickers/emojis from database cache
@@ -171,8 +178,8 @@ export function renderFormattedContent(
             alt={part}
             title={`:${custom.name}:`}
             style={{
-              width: isEmoji ? '1.4em' : '64px',
-              height: isEmoji ? '1.4em' : '64px',
+              width: isEmoji ? '1.5em' : '72px',
+              height: isEmoji ? '1.5em' : '72px',
               verticalAlign: isEmoji ? '-0.25em' : 'middle',
               objectFit: 'contain',
               display: isEmoji ? 'inline-block' : 'inline-block',
@@ -208,4 +215,16 @@ export function renderFormattedContent(
     // Regular text
     return part;
   });
+}
+
+// React component wrapper to ensure reactive re-renders when stickers load
+export function FormattedText({
+  text,
+  options,
+}: {
+  text: string;
+  options?: { hashtagLink?: string; mentionLinkPrefix?: string };
+}) {
+  useStickersCache();
+  return <>{renderFormattedContent(text, options)}</>;
 }

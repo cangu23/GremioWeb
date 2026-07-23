@@ -123,10 +123,33 @@ export const getActiveStickers = async (req: Request, res: Response, next: NextF
     if (type) where.type = String(type);
     if (category) where.category = String(category);
 
-    const stickers = await prisma.sticker.findMany({
+    let stickers = await prisma.sticker.findMany({
       where,
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
+
+    if (stickers.length === 0 && !type && !category) {
+      const anyUser = await prisma.user.findFirst();
+      if (anyUser) {
+        await prisma.sticker.createMany({
+          data: [
+            { name: 'hola', imageUrl: 'https://api.iconify.design/fluent-emoji:waving-hand.svg', category: 'general', type: 'emoji', addedById: anyUser.id },
+            { name: 'corazon', imageUrl: 'https://api.iconify.design/fluent-emoji:sparkling-heart.svg', category: 'hearts', type: 'emoji', addedById: anyUser.id },
+            { name: 'fuego', imageUrl: 'https://api.iconify.design/fluent-emoji:fire.svg', category: 'reaction', type: 'emoji', addedById: anyUser.id },
+            { name: 'fiesta', imageUrl: 'https://api.iconify.design/fluent-emoji:party-popper.svg', category: 'celebration', type: 'emoji', addedById: anyUser.id },
+            { name: 'estrella', imageUrl: 'https://api.iconify.design/fluent-emoji:glowing-star.svg', category: 'general', type: 'emoji', addedById: anyUser.id },
+            { name: 'risas', imageUrl: 'https://api.iconify.design/fluent-emoji:rolling-on-the-floor-laughing.svg', category: 'meme', type: 'emoji', addedById: anyUser.id },
+            { name: 'gremio_sparkle', imageUrl: 'https://api.iconify.design/fluent-emoji:sparkles.svg', category: 'general', type: 'sticker', addedById: anyUser.id },
+            { name: 'maid_heart', imageUrl: 'https://api.iconify.design/fluent-emoji:heart-with-ribbon.svg', category: 'hearts', type: 'sticker', addedById: anyUser.id },
+          ],
+          skipDuplicates: true,
+        });
+        stickers = await prisma.sticker.findMany({
+          where,
+          orderBy: [{ category: 'asc' }, { name: 'asc' }],
+        });
+      }
+    }
 
     res.json(stickers);
   } catch (err) { next(err); }
