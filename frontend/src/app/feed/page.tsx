@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import PostCard from '@/components/posts/PostCard';
 import CreatePost from '@/components/posts/CreatePost';
 import SkeletonPostCard from '@/components/posts/SkeletonPostCard';
@@ -169,10 +170,12 @@ function FeedContent() {
 
 export default function FeedPage() {
   return (
-    <Suspense fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando feed...</div>}>
-      <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando feed...</div>}>
-        <FeedContent />
-      </ClientOnly>
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando feed...</div>}>
+        <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando feed...</div>}>
+          <FeedContent />
+        </ClientOnly>
+      </Suspense>
+    </ErrorBoundary>
   );
 }

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import Link from 'next/link';
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
@@ -252,7 +253,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        <main style={{ padding: '32px', flex: 1 }}>{children}</main>
+        <main style={{ padding: '32px', flex: 1 }}>
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
+        </main>
       </div>
 
       <style jsx global>{`

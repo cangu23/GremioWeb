@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
 import StickerPicker from '@/components/ui/StickerPicker';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import type { Socket } from 'socket.io-client';
 
 /* ─────────── Types ─────────── */
@@ -979,14 +980,16 @@ function MessengerContent() {
 
 export default function ChatPage() {
   return (
-    <ClientOnly
-      fallback={
-        <div className="container" style={{ padding: '80px 20px', textAlign: 'center', maxWidth: '1200px' }}>
-          <p style={{ color: 'var(--text-muted)' }}>Cargando mensajes...</p>
-        </div>
-      }
-    >
-      <MessengerContent />
-    </ClientOnly>
+    <ErrorBoundary>
+      <ClientOnly
+        fallback={
+          <div className="container" style={{ padding: '80px 20px', textAlign: 'center', maxWidth: '1200px' }}>
+            <p style={{ color: 'var(--text-muted)' }}>Cargando mensajes...</p>
+          </div>
+        }
+      >
+        <MessengerContent />
+      </ClientOnly>
+    </ErrorBoundary>
   );
 }

@@ -11,6 +11,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import RecentActivity from '@/components/landing/RecentActivity';
 import UserAvatar from '@/components/ui/UserAvatar';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 interface GamificationData {
   xp: number;
@@ -433,17 +434,19 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <div className="container" style={{ paddingBottom: '40px', paddingTop: '24px' }}>
-      <ClientOnly
-        fallback={
-          <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', color: 'var(--text-muted)', flexDirection: 'column', gap: '16px' }}>
-            <span style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <p>Cargando dashboard...</p>
-          </div>
-        }
-      >
-        <DashboardContent />
-      </ClientOnly>
-    </div>
+    <ErrorBoundary>
+      <div className="container" style={{ paddingBottom: '40px', paddingTop: '24px' }}>
+        <ClientOnly
+          fallback={
+            <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', color: 'var(--text-muted)', flexDirection: 'column', gap: '16px' }}>
+              <span style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <p>Cargando dashboard...</p>
+            </div>
+          }
+        >
+          <DashboardContent />
+        </ClientOnly>
+      </div>
+    </ErrorBoundary>
   );
 }

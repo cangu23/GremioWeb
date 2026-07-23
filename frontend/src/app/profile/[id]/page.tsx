@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink } from '@/components/ui/Icons';
 import FriendButton from '@/components/social/FriendButton';
 import NoteModal from '@/components/ui/NoteModal';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 interface SocialUser {
   id: string;
@@ -1294,8 +1295,10 @@ function ProfileContent() {
 
 export default function ProfilePage() {
   return (
-    <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando perfil...</div>}>
-      <ProfileContent />
-    </ClientOnly>
+    <ErrorBoundary>
+      <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando perfil...</div>}>
+        <ProfileContent />
+      </ClientOnly>
+    </ErrorBoundary>
   );
 }

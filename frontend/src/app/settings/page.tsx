@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import Link from 'next/link';
 
 function UserSettings() {
@@ -354,8 +355,10 @@ function UserSettings() {
 
 export default function SettingsPage() {
   return (
-    <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>}>
-      <UserSettings />
-    </ClientOnly>
+    <ErrorBoundary>
+      <ClientOnly fallback={<div className="container" style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>}>
+        <UserSettings />
+      </ClientOnly>
+    </ErrorBoundary>
   );
 }
