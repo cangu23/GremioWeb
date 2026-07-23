@@ -49,9 +49,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(() => getCachedUser());
   const [isLoading, setIsLoading] = useState(true);
   const initialCheckDone = useRef(false);
+  const isRefreshing = useRef(false);
 
   // ─── Backend auth refresh ──────────────────────────────────────────
   const refreshAuth = useCallback(async (): Promise<boolean> => {
+    // Prevent concurrent refresh calls. The refresh token is rotated on
+    // every call, so two concurrent calls will cause one to fail, which
+    // would incorrectly log the user out.
+    if (isRefreshing.current) return true;
+    isRefreshing.current = true;
     try {
       const session = await apiFetch('/auth/refresh', { method: 'POST' });
       if (session?.accessToken) {
@@ -64,6 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     } catch {
       return false;
+    } finally {
+      isRefreshing.current = false;
     }
   }, []);
 
@@ -87,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // ── 1. Handle 401 interceptor from api.ts  ─────────────────────────
     const handleUnauthorized = () => {
+      isRefreshing.current = false;
       setAccessToken(null);
       setUser(null);
       setCachedUser(null);
@@ -99,8 +108,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // initial useEffect (above) never re-runs. We must re-validate the
     // session manually here. If the refresh token cookie is still valid,
     // the user keeps their session; otherwise we clear state gracefully.
+    //
+    // IMPORTANT: We set isLoading=true FIRST so that components show a
+    // loading/skeleton state instead of immediately redirecting to login.
+    // Without this, the old user state is briefly shown, then the user
+    // is kicked to login when refreshAuth() fails.
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
+        setIsLoading(true);
         refreshAuth().then(ok => {
           if (!ok) {
             setAccessToken(null);
@@ -117,6 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Silently re-validate the session so that if the access/refresh
     // token expired while the user was on another tab, we recover
     // transparently instead of waiting for the next 401.
+    //
+    // Note: refreshAuth() has an isRefreshing guard, so if BFCache
+    // restore fires both pageshow and visibilitychange simultaneously,
+    // only the first call proceeds. The second is a no-op.
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         refreshAuth();
