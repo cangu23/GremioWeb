@@ -5,8 +5,8 @@ import * as NotificationsService from '../notifications/notifications.service';
 import { CreateEventPayload, UpdateEventPayload } from '@gremio-estelar/shared';
 
 export const create = async (payload: CreateEventPayload, creatorId: string, creatorRole: string) => {
-  // Solo VTubers, Maids y Admins pueden crear eventos en la plataforma
-  const canCreateEvent = ['VTUBER', 'MAID', 'ADMIN'].includes(creatorRole);
+  // Solo VTubers, Maids, Moderadores y Admins pueden crear eventos en la plataforma
+  const canCreateEvent = ['VTUBER', 'MAID', 'MODERATOR', 'ADMIN'].includes(creatorRole);
   if (!canCreateEvent) {
     throw new AppError('Solo los VTubers y el equipo de la plataforma pueden crear eventos.', 403);
   }

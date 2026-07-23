@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import fs from 'fs';
 import AppError from './errors/AppError';
 import mainRouter from './index';
 
@@ -127,6 +128,21 @@ console.log(`${BOOT} Main API router mounted`);
 // ========== STATIC FILES ==========
 // Serve uploaded files (avatars, banners)
 const uploadsPath = path.join(__dirname, '..', 'uploads');
+try {
+  if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+  }
+  const avatarPath = path.join(uploadsPath, 'avatar');
+  if (!fs.existsSync(avatarPath)) {
+    fs.mkdirSync(avatarPath, { recursive: true });
+  }
+  const bannerPath = path.join(uploadsPath, 'banner');
+  if (!fs.existsSync(bannerPath)) {
+    fs.mkdirSync(bannerPath, { recursive: true });
+  }
+} catch (err) {
+  console.warn(`${BOOT} Warning: could not initialize uploads directory:`, err);
+}
 console.log(`${BOOT} Static files: /uploads → ${uploadsPath}`);
 app.use('/uploads', express.static(uploadsPath));
 

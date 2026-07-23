@@ -38,7 +38,7 @@ export const generateCode = async (data: {
   role: string;
   generatedById: string;
 }) => {
-  const validRoles = ['VTUBER', 'MODERATOR', 'ADMIN'];
+  const validRoles = ['VTUBER', 'MAID', 'MODERATOR', 'ADMIN'];
   if (!validRoles.includes(data.role)) {
     throw new AppError(`Rol inválido. Debe ser: ${validRoles.join(', ')}`, 400);
   }
@@ -164,6 +164,26 @@ export const redeemCode = async (rawCode: string, userId: string) => {
   const updatedUser = await AdminRepository.updateUser(userId, {
     role: matchedCode.role,
   });
+
+  // If redeemed role is VTUBER, ensure vTuberProfile is created and approved automatically
+  if (matchedCode.role === 'VTUBER') {
+    await prisma.vTuberProfile.upsert({
+      where: { userId },
+      create: {
+        userId,
+        displayName: currentUser?.displayName || currentUser?.username || 'VTuber',
+        avatarUrl: currentUser?.avatarUrl || null,
+        isApproved: true,
+        isVerified: true,
+        isHidden: false,
+      },
+      update: {
+        isApproved: true,
+        isVerified: true,
+        isHidden: false,
+      },
+    });
+  }
 
   // Log admin action
   await AdminRepository.createAdminLog({

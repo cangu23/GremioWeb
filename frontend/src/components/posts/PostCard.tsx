@@ -448,9 +448,10 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               display: 'inline-flex', alignItems: 'center', gap: '4px',
             }}>
               {post.user.displayName || post.user.vtuberProfile?.displayName || post.user.username}
-              {(post.user.role === 'VTUBER' || post.user.vtuberProfile?.isApproved) && (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Oficial">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              {(post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved || post.user.role === 'VTUBER') && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
+                  <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
+                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
             </Link>
@@ -730,8 +731,14 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* Comment Header */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
-                      <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.84rem', color: 'var(--text)', textDecoration: 'none' }}>
+                      <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.84rem', color: 'var(--text)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         {comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username}
+                        {(comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved || comment.user?.role === 'VTUBER') && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
+                            <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
+                            <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
                       </Link>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                         @{comment.user?.username}

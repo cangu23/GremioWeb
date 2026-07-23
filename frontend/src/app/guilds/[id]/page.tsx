@@ -252,6 +252,7 @@ function GuildDetailContent() {
       console.warn('[Guild Socket]', err.message);
     });
 
+    const currentTypingTimeout = typingTimeoutRef.current;
     return () => {
       sock.off('guild:message', onMessage);
       sock.off('guild:message:deleted', onMessageDeleted);
@@ -260,7 +261,7 @@ function GuildDetailContent() {
       sock.off('guild:typing', onTyping);
       sock.off('guild:error');
       // Clean up typing timeouts
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (currentTypingTimeout) clearTimeout(currentTypingTimeout);
       cleanup.forEach(t => clearTimeout(t));
       cleanup.clear();
     };
@@ -1204,25 +1205,26 @@ function GuildDetailContent() {
                             textDecoration: 'none', color: 'var(--text)', flex: 1, minWidth: 0,
                           }}
                         >
-                          <div style={{ position: 'relative' }}>
+                          <div style={{ position: 'relative', width: '32px', height: '32px', flexShrink: 0 }}>
                             <div style={{
-                              width: '32px', height: '32px', borderRadius: '50%',
+                              width: '100%', height: '100%', borderRadius: '50%',
                               background: member.user.vtuberProfile?.avatarUrl
                                 ? `url(${member.user.vtuberProfile.avatarUrl}) center/cover`
                                 : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: 'white', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0,
+                              color: 'white', fontSize: '0.7rem', fontWeight: 'bold',
                               overflow: 'hidden', opacity: isOnline ? 1 : 0.5,
                             }}>
                               {!member.user.vtuberProfile?.avatarUrl && (member.user.vtuberProfile?.displayName || member.user.username).charAt(0).toUpperCase()}
                             </div>
                             {/* Online/Offline indicator */}
                             <div style={{
-                              position: 'absolute', bottom: '-1px', right: '-1px',
-                              width: '12px', height: '12px', borderRadius: '50%',
+                              position: 'absolute', bottom: '-2px', right: '-2px',
+                              width: '11px', height: '11px', borderRadius: '50%',
                               background: isOnline ? '#00e676' : 'rgba(255,255,255,0.15)',
-                              border: isOnline ? '2px solid var(--bg)' : '2px solid var(--bg)',
+                              border: '2px solid var(--bg, #0d0d14)',
                               transition: 'background 0.3s ease',
+                              zIndex: 2,
                             }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>

@@ -19,7 +19,9 @@ interface RewardDay {
 
 interface RewardStatus {
   canClaim: boolean;
+  claimedToday?: boolean;
   currentDay: number;
+  lastClaimedDay?: number | null;
   nextRewardAt: string | null;
   rewards: RewardDay[];
   history: Array<{ day: number; xpAwarded: number; bonus: boolean; claimedAt: string }>;
@@ -157,12 +159,12 @@ function RewardsContent() {
             </svg>
           </div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '4px' }}>
-            {status?.canClaim ? '¡Recompensa disponible!' : 'Recompensa reclamada'}
+            {status?.canClaim ? '¡Recompensa disponible!' : 'Recompensa de hoy reclamada'}
           </h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
             {status?.canClaim
               ? `Reclama tu recompensa del día ${status.currentDay}`
-              : `Próxima recompensa en: ${timeLeft}`}
+              : `Has reclamado el Día ${status?.currentDay || 1} hoy. Próxima recompensa en: ${timeLeft}`}
           </p>
           {status?.canClaim && (
             <button onClick={handleClaim} disabled={claiming} className="btn" style={{ padding: '12px 32px', fontSize: '1rem' }}>

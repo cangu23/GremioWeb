@@ -152,13 +152,14 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
   return prisma.$transaction(async (tx) => {
     // Fields that go directly on the User model
     const userFields = ['displayName', 'avatarUrl', 'bio', 'bannerColor'];
-    // Fields that go on the VTuberProfile model
-    const vtuberProfileFields = [
-      'displayName', 'avatarUrl', 'bannerUrl', 'description', 'lore',
+    // Fields that specifically belong to VTuberProfile (excluding shared userFields)
+    const vtuberSpecificFields = [
+      'bannerUrl', 'description', 'lore',
       'twitchUrl', 'youtubeUrl', 'kickUrl', 'tiktokUrl', 'twitterUrl',
       'discordUrl', 'websiteUrl', 'streamSchedule', 'contentType',
       'live2dModel', 'model3d', 'fanName', 'oshiMark', 'themeColor', 'isLive',
     ];
+    const vtuberProfileFields = ['displayName', 'avatarUrl', ...vtuberSpecificFields];
     
     const dataRecord = data as unknown as Record<string, unknown>;
     const existingProfile = await tx.vTuberProfile.findUnique({
@@ -166,7 +167,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
     });
 
     const hasVtuberFields = existingProfile !== null ||
-      vtuberProfileFields.some(f => dataRecord[f] !== undefined) ||
+      vtuberSpecificFields.some(f => dataRecord[f] !== undefined) ||
       data.socialLinks !== undefined || data.languages !== undefined || data.hashtags !== undefined;
     
     const { username, socialLinks, ...rest } = data;

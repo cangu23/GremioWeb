@@ -33,28 +33,29 @@ export const buyItem = async (userId: string, itemId: string) => {
     );
   }
 
-  // Check if already purchased (permanent items only)
+  // Check if already purchased
   const type = item.type;
   const isConsumable = type === 'NAME_CHANGE' || type === 'PIN_POST';
-  let remaining: number | undefined;
+  const existing = await ShopRepository.findUserPurchase(userId, itemId);
 
-  if (!isConsumable) {
-    const existing = await ShopRepository.findUserPurchase(userId, itemId);
-    if (existing) {
-      throw new AppError('Ya tienes este ítem', 400);
-    }
-  } else {
-    // Consumables: set remaining uses
-    remaining = type === 'NAME_CHANGE' ? 1 : 3;
+  if (!isConsumable && existing) {
+    throw new AppError('Ya tienes este ítem', 400);
   }
 
   // Deduct points
   await GamificationRepository.addXpToUser(userId, -item.price);
 
-  // Create purchase record
-  const purchase = isConsumable
-    ? await ShopRepository.createPurchase(userId, itemId, remaining)
-    : await ShopRepository.createPurchase(userId, itemId);
+  let purchase;
+  if (isConsumable && existing) {
+    const usesToAdd = type === 'NAME_CHANGE' ? 1 : 3;
+    const newRemaining = (existing.remaining || 0) + usesToAdd;
+    purchase = await ShopRepository.updatePurchaseRemaining(existing.id, newRemaining);
+  } else if (isConsumable) {
+    const initialUses = type === 'NAME_CHANGE' ? 1 : 3;
+    purchase = await ShopRepository.createPurchase(userId, itemId, initialUses);
+  } else {
+    purchase = await ShopRepository.createPurchase(userId, itemId);
+  }
 
   return {
     purchase,

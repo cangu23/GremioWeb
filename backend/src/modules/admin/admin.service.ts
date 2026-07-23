@@ -79,6 +79,16 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
   const user = await AdminRepository.findUserById(id);
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
+  // Safety check: prevent an admin from demoting or banning themselves
+  if (id === adminId) {
+    if (data.role && data.role !== 'ADMIN') {
+      throw new AppError('No puedes degradar tu propio rango de Administrador', 400);
+    }
+    if (data.status === 'BANNED' || data.status === 'SUSPENDED') {
+      throw new AppError('No puedes suspender o banear tu propia cuenta de Administrador', 400);
+    }
+  }
+
   const changes: string[] = [];
   if (data.role && data.role !== user.role) {
     changes.push(`rol: ${user.role} → ${data.role}`);

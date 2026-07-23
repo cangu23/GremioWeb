@@ -680,22 +680,26 @@ function MessengerContent() {
                       onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.05)'; }}
                       onMouseLeave={e => { e.currentTarget.style.opacity = isSelected ? '1' : '0.85'; e.currentTarget.style.transform = 'scale(1)'; }}
                     >
-                      <div style={{
-                        position: 'relative', width: '38px', height: '38px', borderRadius: '50%',
-                        background: (friend.avatarUrl || friend.vtuberProfile?.avatarUrl)
-                          ? `url(${friend.avatarUrl || friend.vtuberProfile?.avatarUrl}) center/cover`
-                          : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#fff', fontSize: '0.75rem', fontWeight: 700,
-                        boxShadow: isSelected ? '0 0 0 2px var(--primary)' : 'none',
-                      }}>
-                        {!(friend.avatarUrl || friend.vtuberProfile?.avatarUrl) && getInitial(friend)}
+                      <div style={{ position: 'relative', width: '38px', height: '38px', flexShrink: 0 }}>
                         <div style={{
-                          position: 'absolute', bottom: 0, right: 0,
-                          width: '10px', height: '10px', borderRadius: '50%',
+                          width: '100%', height: '100%', borderRadius: '50%',
+                          background: (friend.avatarUrl || friend.vtuberProfile?.avatarUrl)
+                            ? `url(${friend.avatarUrl || friend.vtuberProfile?.avatarUrl}) center/cover`
+                            : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                          boxShadow: isSelected ? '0 0 0 2px var(--primary)' : 'none',
+                          overflow: 'hidden',
+                        }}>
+                          {!(friend.avatarUrl || friend.vtuberProfile?.avatarUrl) && getInitial(friend)}
+                        </div>
+                        <div style={{
+                          position: 'absolute', bottom: '-2px', right: '-2px',
+                          width: '11px', height: '11px', borderRadius: '50%',
                           background: isOnline ? '#22c55e' : '#555',
-                          border: '2px solid var(--bg-deep)',
+                          border: '2px solid var(--bg-deep, #0a0a12)',
                           boxShadow: isOnline ? '0 0 6px #22c55e' : 'none',
+                          zIndex: 2,
                         }} />
                       </div>
                       <span style={{ fontSize: '0.68rem', color: isSelected ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: isSelected ? 600 : 400, maxWidth: '46px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -779,23 +783,26 @@ function MessengerContent() {
                     }}
                   >
                     {/* Avatar with online dot */}
-                    <div style={{
-                      position: 'relative',
-                      width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
-                      background: other.vtuberProfile?.avatarUrl
-                        ? `url(${other.vtuberProfile.avatarUrl}) center/cover`
-                        : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: '0.8rem', fontWeight: 700,
-                    }}>
-                      {!other.vtuberProfile?.avatarUrl && getInitial(other)}
+                    <div style={{ position: 'relative', width: '42px', height: '42px', flexShrink: 0 }}>
                       <div style={{
-                        position: 'absolute', bottom: '0px', right: '0px',
-                        width: '11px', height: '11px', borderRadius: '50%',
-                        border: '2px solid var(--background)',
+                        width: '100%', height: '100%', borderRadius: '50%',
+                        background: (other.avatarUrl || other.vtuberProfile?.avatarUrl)
+                          ? `url(${other.avatarUrl || other.vtuberProfile?.avatarUrl}) center/cover`
+                          : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', fontSize: '0.8rem', fontWeight: 700,
+                        overflow: 'hidden',
+                      }}>
+                        {!(other.avatarUrl || other.vtuberProfile?.avatarUrl) && getInitial(other)}
+                      </div>
+                      <div style={{
+                        position: 'absolute', bottom: '-2px', right: '-2px',
+                        width: '12px', height: '12px', borderRadius: '50%',
+                        border: '2px solid var(--background, #0a0a0c)',
                         background: onlineUsers.has(other.id) ? '#22c55e' : '#555',
                         boxShadow: onlineUsers.has(other.id) ? '0 0 6px #22c55e' : 'none',
                         transition: 'background 0.3s ease',
+                        zIndex: 2,
                       }} />
                     </div>
 

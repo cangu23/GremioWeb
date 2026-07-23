@@ -59,14 +59,14 @@ async function awardXpBase(userId: string, xpAmount: number) {
 
   await GamificationRepository.addXpToUser(userId, xpAmount);
 
-  const newTotal = user.xp + xpAmount;
-  const newLevel = getLevelFromXp(newTotal);
+  let runningTotal = user.xp + xpAmount;
+  let runningLevel = getLevelFromXp(runningTotal);
 
   let levelUp = false;
-  if (newLevel > user.level) {
-    await GamificationRepository.setUserLevel(userId, newLevel);
+  if (runningLevel > user.level) {
+    await GamificationRepository.setUserLevel(userId, runningLevel);
     levelUp = true;
-    await NotificationsService.notifyLevelUp(newLevel, userId).catch(() => {});
+    await NotificationsService.notifyLevelUp(runningLevel, userId).catch(() => {});
   }
 
   // Check for achievements that might have been unlocked
@@ -79,7 +79,7 @@ async function awardXpBase(userId: string, xpAmount: number) {
     if (userAchievementIds.includes(achievement.id)) continue;
 
     // Check if the achievement criteria are met
-    const unlocked = await checkAchievementCriteria(userId, achievement, newTotal, newLevel);
+    const unlocked = await checkAchievementCriteria(userId, achievement, runningTotal, runningLevel);
     if (unlocked) {
       const awarded = await GamificationRepository.awardAchievementToUser(userId, achievement.id);
       newAchievements.push(awarded.achievement);
@@ -88,11 +88,12 @@ async function awardXpBase(userId: string, xpAmount: number) {
       // Also award the XP from the achievement
       if (achievement.xpReward > 0) {
         await GamificationRepository.addXpToUser(userId, achievement.xpReward);
-        // Check level again
-        const afterAchievementXp = newTotal + achievement.xpReward;
-        const afterLevel = getLevelFromXp(afterAchievementXp);
-        if (afterLevel > newLevel) {
+        runningTotal += achievement.xpReward;
+        const afterLevel = getLevelFromXp(runningTotal);
+        if (afterLevel > runningLevel) {
           await GamificationRepository.setUserLevel(userId, afterLevel);
+          runningLevel = afterLevel;
+          levelUp = true;
         }
       }
     }
@@ -100,8 +101,8 @@ async function awardXpBase(userId: string, xpAmount: number) {
 
   return {
     xpAwarded: xpAmount,
-    totalXp: newTotal,
-    level: newLevel,
+    totalXp: runningTotal,
+    level: runningLevel,
     levelUp,
     newAchievements,
   };

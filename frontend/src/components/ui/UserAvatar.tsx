@@ -130,7 +130,7 @@ export default function UserAvatar({
         <div
           style={{
             position: 'absolute',
-            bottom: 0, right: 0,
+            bottom: '-2px', right: '-2px',
             width: noteDotSize, height: noteDotSize,
             borderRadius: '50%',
             background: 'var(--primary)',

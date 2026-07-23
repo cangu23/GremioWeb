@@ -22,77 +22,79 @@ import * as StickersController from './stickers.controller';
 
 const router = Router();
 
-// All admin routes require ADMIN role
-router.use(authenticate, authorize(Role.ADMIN));
+// Base authentication and staff authorization (ADMIN or MODERATOR)
+router.use(authenticate, authorize(Role.ADMIN, Role.MODERATOR));
 
-// ========== DASHBOARD ==========
+const adminOnly = authorize(Role.ADMIN);
+
+// ========== DASHBOARD (Staff) ==========
 router.get('/dashboard/stats', validateRequest(adminQuerySchema), AdminController.getDashboardStats);
 router.get('/dashboard/activity', validateRequest(adminQuerySchema), AdminController.getRecentActivity);
 
-// ========== USERS ==========
-router.get('/users', validateRequest(adminQuerySchema), AdminController.listUsers);
-router.get('/users/:id', validateRequest(adminQuerySchema), AdminController.getUserDetail);
-router.patch('/users/:id', validateRequest(updateUserAdminSchema), AdminController.updateUser);
-router.delete('/users/:id', AdminController.deleteUser);
-router.post('/users/:id/restore', AdminController.restoreUser);
-router.post('/users/cleanup-profiles', AdminController.cleanupUserProfiles);
+// ========== USERS (Admin Only) ==========
+router.get('/users', adminOnly, validateRequest(adminQuerySchema), AdminController.listUsers);
+router.get('/users/:id', adminOnly, validateRequest(adminQuerySchema), AdminController.getUserDetail);
+router.patch('/users/:id', adminOnly, validateRequest(updateUserAdminSchema), AdminController.updateUser);
+router.delete('/users/:id', adminOnly, AdminController.deleteUser);
+router.post('/users/:id/restore', adminOnly, AdminController.restoreUser);
+router.post('/users/cleanup-profiles', adminOnly, AdminController.cleanupUserProfiles);
 
-// ========== VTUBERS ==========
+// ========== VTUBERS (Staff View, Admin Edit) ==========
 router.get('/vtubers', validateRequest(adminQuerySchema), AdminController.listVtubers);
 router.get('/vtubers/:id', validateRequest(adminQuerySchema), AdminController.getVtuberDetail);
-router.patch('/vtubers/:id', validateRequest(updateVtuberAdminSchema), AdminController.updateVtuber);
+router.patch('/vtubers/:id', adminOnly, validateRequest(updateVtuberAdminSchema), AdminController.updateVtuber);
 
-// ========== EVENTS ==========
+// ========== EVENTS (Staff View, Admin Edit) ==========
 router.get('/events', validateRequest(adminQuerySchema), AdminController.listEvents);
 router.get('/events/:id', validateRequest(adminQuerySchema), AdminController.getEventDetail);
-router.patch('/events/:id', validateRequest(updateEventAdminSchema), AdminController.updateEvent);
-router.delete('/events/:id', AdminController.deleteEvent);
+router.patch('/events/:id', adminOnly, validateRequest(updateEventAdminSchema), AdminController.updateEvent);
+router.delete('/events/:id', adminOnly, AdminController.deleteEvent);
 
-// ========== GUILDS ==========
+// ========== GUILDS (Staff View, Admin Edit) ==========
 router.get('/guilds', validateRequest(adminQuerySchema), AdminController.listGuilds);
 router.get('/guilds/:id', validateRequest(adminQuerySchema), AdminController.getGuildDetail);
-router.patch('/guilds/:id', validateRequest(updateGuildAdminSchema), AdminController.updateGuild);
-router.delete('/guilds/:id', AdminController.deleteGuild);
+router.patch('/guilds/:id', adminOnly, validateRequest(updateGuildAdminSchema), AdminController.updateGuild);
+router.delete('/guilds/:id', adminOnly, AdminController.deleteGuild);
 
-// ========== POSTS ==========
+// ========== POSTS (Moderation — Staff) ==========
 router.get('/posts', validateRequest(adminQuerySchema), AdminController.listPosts);
 router.get('/posts/:id', validateRequest(adminQuerySchema), AdminController.getPostDetail);
 router.patch('/posts/:id', validateRequest(updatePostAdminSchema), AdminController.updatePost);
 router.delete('/posts/:id', AdminController.deletePost);
 router.post('/posts/:id/restore', AdminController.restorePost);
 
-// ========== COMMENTS ==========
+// ========== COMMENTS (Moderation — Staff) ==========
 router.get('/comments', validateRequest(adminQuerySchema), AdminController.listComments);
 router.patch('/comments/:id', validateRequest(updateCommentAdminSchema), AdminController.updateComment);
 router.delete('/comments/:id', AdminController.deleteComment);
 
-// ========== REPORTS ==========
+// ========== REPORTS (Moderation — Staff) ==========
 router.get('/reports', validateRequest(adminQuerySchema), AdminController.listReports);
 router.post('/reports', validateRequest(createReportSchema), AdminController.createReport);
 router.patch('/reports/:id', validateRequest(resolveReportSchema), AdminController.resolveReport);
 
-// ========== INVITATION CODES ==========
-router.post('/codes/generate', CodesController.generateCode);
-router.get('/codes', validateRequest(adminQuerySchema), CodesController.listCodes);
-router.delete('/codes/:id', CodesController.revokeCode);
+// ========== INVITATION CODES (Admin Only) ==========
+router.post('/codes/generate', adminOnly, CodesController.generateCode);
+router.get('/codes', adminOnly, validateRequest(adminQuerySchema), CodesController.listCodes);
+router.delete('/codes/:id', adminOnly, CodesController.revokeCode);
 
-// ========== VTUBER REQUESTS ==========
+// ========== VTUBER REQUESTS (Staff View & Approve) ==========
 router.get('/vtuber-requests', validateRequest(adminQuerySchema), RequestsController.listRequests);
 router.get('/vtuber-requests/:id', validateRequest(adminQuerySchema), RequestsController.getRequestDetail);
 router.post('/vtuber-requests/:id/approve', RequestsController.approveRequest);
 router.post('/vtuber-requests/:id/reject', RequestsController.rejectRequest);
 
-// ========== LOGS ==========
+// ========== LOGS (Staff) ==========
 router.get('/logs', validateRequest(adminQuerySchema), AdminController.listLogs);
 
-// ========== CAFE SETTINGS ==========
-router.get('/settings', validateRequest(adminQuerySchema), SettingsController.getAllSettings);
-router.patch('/settings', SettingsController.updateSettings);
+// ========== CAFE SETTINGS (Admin Only) ==========
+router.get('/settings', adminOnly, validateRequest(adminQuerySchema), SettingsController.getAllSettings);
+router.patch('/settings', adminOnly, SettingsController.updateSettings);
 
-// ========== STICKERS / EMOJIS (Admin CRUD) ==========
-router.get('/stickers', validateRequest(adminQuerySchema), StickersController.listStickers);
-router.post('/stickers', StickersController.createSticker);
-router.patch('/stickers/:id', StickersController.updateSticker);
-router.delete('/stickers/:id', StickersController.deleteSticker);
+// ========== STICKERS / EMOJIS (Admin Only) ==========
+router.get('/stickers', adminOnly, validateRequest(adminQuerySchema), StickersController.listStickers);
+router.post('/stickers', adminOnly, StickersController.createSticker);
+router.patch('/stickers/:id', adminOnly, StickersController.updateSticker);
+router.delete('/stickers/:id', adminOnly, StickersController.deleteSticker);
 
 export default router;

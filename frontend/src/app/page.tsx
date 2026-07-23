@@ -397,24 +397,26 @@ function HomeContent() {
                 }}
                   onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
                   onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>
-                  <div style={{
-                    width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                    background: avatarUrl
-                      ? `url(${avatarUrl}) center/cover`
-                      : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', fontWeight: 'bold', fontSize: '0.65rem',
-                    overflow: 'hidden',
-                    position: 'relative',
-                  }}>
-                    {!avatarUrl && displayName.charAt(0).toUpperCase()}
+                  <div style={{ position: 'relative', width: '28px', height: '28px', flexShrink: 0 }}>
+                    <div style={{
+                      width: '100%', height: '100%', borderRadius: '50%',
+                      background: avatarUrl
+                        ? `url(${avatarUrl}) center/cover`
+                        : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontWeight: 'bold', fontSize: '0.65rem',
+                      overflow: 'hidden',
+                    }}>
+                      {!avatarUrl && displayName.charAt(0).toUpperCase()}
+                    </div>
                     {/* Status dot: live (purple) > online (green) > offline (gray) */}
                     <div style={{
-                      position: 'absolute', bottom: '-1px', right: '-1px',
+                      position: 'absolute', bottom: '-2px', right: '-2px',
                       width: '10px', height: '10px', borderRadius: '50%',
                       background: statusColor,
                       border: '2px solid var(--bg-deep)',
                       boxShadow: isLive ? `0 0 6px var(--primary-glow)` : 'none',
+                      zIndex: 2,
                     }} />
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>

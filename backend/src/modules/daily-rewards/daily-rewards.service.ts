@@ -25,15 +25,21 @@ export const getStatus = async (userId: string) => {
   const now = Date.now();
   const canClaim = !lastClaim || (now - lastClaim.claimedAt.getTime() >= 24 * 60 * 60 * 1000);
 
-  // Calculate current streak day
+  // Calculate streak day
   let currentDay = 1;
+  let claimedToday = false;
+
   if (lastClaim) {
     const hoursSinceClaim = (now - lastClaim.claimedAt.getTime()) / (1000 * 60 * 60);
-    if (hoursSinceClaim < 48) {
-      // Within the window, continue streak
+    if (!canClaim) {
+      // Already claimed within the 24h window
+      currentDay = lastClaim.day;
+      claimedToday = true;
+    } else if (hoursSinceClaim < 48) {
+      // Can claim today, continue streak
       currentDay = lastClaim.day >= 7 ? 1 : lastClaim.day + 1;
     } else {
-      // Streak broken, reset
+      // Streak broken, reset to Day 1
       currentDay = 1;
     }
   }
@@ -50,7 +56,9 @@ export const getStatus = async (userId: string) => {
 
   return {
     canClaim,
+    claimedToday,
     currentDay,
+    lastClaimedDay: lastClaim ? lastClaim.day : null,
     nextRewardAt: lastClaim ? new Date(lastClaim.claimedAt.getTime() + 24 * 60 * 60 * 1000).toISOString() : null,
     rewards: DAILY_REWARDS,
     history: history.map(h => ({

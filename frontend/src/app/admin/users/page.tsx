@@ -10,6 +10,7 @@ interface User {
   id: string;
   username: string;
   email: string;
+  avatarUrl?: string | null;
   role: string;
   status: string;
   createdAt: string;
@@ -198,13 +199,13 @@ export default function AdminUsersPage() {
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{ width: '32px', height: '32px', borderRadius: '50%',
-                            background: user.vtuberProfile?.avatarUrl
-                              ? `url(${user.vtuberProfile.avatarUrl}) center/cover`
+                            background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
+                              ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
                               : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '0.8rem', fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden',
                           }}>
-                            {!user.vtuberProfile?.avatarUrl && user.username.charAt(0).toUpperCase()}
+                            {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && user.username.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>

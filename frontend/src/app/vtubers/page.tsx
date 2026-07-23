@@ -309,24 +309,25 @@ function LiveMiniCard({ v }: { v: VTuberProfile }) {
         onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#e91e63'; }}
         onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(233,30,99,0.15)'; }}
       >
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
           <div style={{
-            width: '40px', height: '40px', borderRadius: '50%',
+            width: '100%', height: '100%', borderRadius: '50%',
             background: v.avatarUrl
               ? `url(${v.avatarUrl}) center/cover`
               : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            flexShrink: 0, overflow: 'hidden',
+            overflow: 'hidden',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'white', fontWeight: 'bold', fontSize: '0.9rem',
           }}>
             {!v.avatarUrl && v.displayName.charAt(0).toUpperCase()}
           </div>
           <div style={{
-            position: 'absolute', bottom: '-1px', right: '-1px',
+            position: 'absolute', bottom: '-2px', right: '-2px',
             width: 11, height: 11, borderRadius: '50%',
             background: '#e91e63',
-            border: '2px solid var(--background)',
+            border: '2px solid var(--background, #0f0f15)',
             boxShadow: '0 0 4px rgba(233,30,99,0.5)',
+            zIndex: 2,
           }} />
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>

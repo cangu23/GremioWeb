@@ -142,31 +142,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    color: 'var(--text-muted)',
-                    transition: 'all 0.2s ease',
-                    textDecoration: 'none',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'var(--primary-subtle)';
-                    e.currentTarget.style.borderColor = 'rgba(138,43,226,0.3)';
-                    e.currentTarget.style.color = 'var(--primary)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                    e.currentTarget.style.color = 'var(--text-muted)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
+                  className="footer-social-icon"
                 >
                   {social.icon}
                 </a>
@@ -191,15 +167,7 @@ export default function Footer() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  style={{
-                    fontSize: '0.875rem',
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                    transition: 'color 0.2s ease',
-                    display: 'inline-block',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  className="footer-link-item"
                 >
                   {link.label}
                 </Link>
@@ -238,14 +206,7 @@ export default function Footer() {
               <Link
                 key={link.href}
                 href={link.href}
-                style={{
-                  fontSize: '0.8rem',
-                  color: 'var(--text-muted)',
-                  textDecoration: 'none',
-                  transition: 'color 0.2s ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; }}
+                className="footer-bottom-link"
               >
                 {link.label}
               </Link>
@@ -259,8 +220,46 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Responsive styles */}
+      {/* Responsive & hover styles */}
       <style>{`
+        .footer-social-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: var(--text-muted);
+          transition: all 0.2s ease;
+          text-decoration: none;
+        }
+        .footer-social-icon:hover {
+          background: var(--primary-subtle);
+          border-color: rgba(138,43,226,0.3);
+          color: var(--primary);
+          transform: translateY(-2px);
+        }
+        .footer-link-item {
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          text-decoration: none;
+          transition: color 0.2s ease;
+          display: inline-block;
+        }
+        .footer-link-item:hover {
+          color: var(--text-primary);
+        }
+        .footer-bottom-link {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+          text-decoration: none;
+          transition: color 0.2s ease;
+        }
+        .footer-bottom-link:hover {
+          color: var(--text-secondary);
+        }
         @media (max-width: 900px) {
           .footer-grid {
             grid-template-columns: 1fr 1fr !important;

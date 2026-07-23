@@ -443,76 +443,101 @@ function CardContent({
           ))}
         </div>
 
-        {/* ── Follow button ── */}
-        {!isOwnProfile ? (
-          <button
-            onClick={handleFollow}
-            disabled={followLoading}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '10px 28px', borderRadius: '12px',
-              border: isFollowed ? '1px solid rgba(255,255,255,0.12)' : 'none',
-              background: isFollowed
-                ? 'rgba(255,255,255,0.06)'
-                : `linear-gradient(135deg, ${themeColor}, var(--secondary))`,
-              color: isFollowed ? 'var(--text-muted)' : '#fff',
-              fontSize: '0.85rem', fontWeight: 700,
-              cursor: followLoading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-              marginBottom: '14px',
-              opacity: followLoading ? 0.6 : 1,
-            }}
-            onMouseOver={e => {
-              if (!followLoading) {
-                if (isFollowed) {
-                  e.currentTarget.style.background = 'rgba(245,158,11,0.12)';
-                  e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)';
-                } else {
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = `0 4px 20px rgba(0,0,0,0.3)`;
+        {/* ── Actions column (Follow button top, View profile bottom) ── */}
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+          width: '100%', marginBottom: '14px',
+        }}>
+          {!isOwnProfile ? (
+            <button
+              onClick={handleFollow}
+              disabled={followLoading}
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                width: '100%', maxWidth: '240px',
+                padding: '10px 20px', borderRadius: '12px',
+                border: isFollowed ? '1px solid rgba(255,255,255,0.12)' : 'none',
+                background: isFollowed
+                  ? 'rgba(255,255,255,0.06)'
+                  : `linear-gradient(135deg, ${themeColor}, var(--secondary))`,
+                color: isFollowed ? 'var(--text-muted)' : '#fff',
+                fontSize: '0.85rem', fontWeight: 700,
+                cursor: followLoading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+                opacity: followLoading ? 0.6 : 1,
+              }}
+              onMouseOver={e => {
+                if (!followLoading) {
+                  if (isFollowed) {
+                    e.currentTarget.style.background = 'rgba(245,158,11,0.12)';
+                    e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)';
+                  } else {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = `0 4px 20px rgba(0,0,0,0.3)`;
+                  }
                 }
-              }
+              }}
+              onMouseOut={e => {
+                if (!followLoading) {
+                  e.currentTarget.style.background = isFollowed ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${themeColor}, var(--secondary))`;
+                  e.currentTarget.style.borderColor = isFollowed ? 'rgba(255,255,255,0.12)' : 'none';
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }
+              }}
+            >
+              {followLoading ? (
+                <span style={{
+                  width: '14px', height: '14px', borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff',
+                  animation: 'pcfPulse 0.6s linear infinite',
+                  display: 'inline-block',
+                }} />
+              ) : isFollowed ? '✓ Siguiendo' : (
+                <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg> Seguir</>
+              )}
+            </button>
+          ) : (
+            <div style={{
+              display: 'inline-block',
+              padding: '6px 16px', borderRadius: '20px',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600,
+            }}>
+              Tu perfil
+            </div>
+          )}
+
+          {/* ── View profile link ── */}
+          <Link
+            href={`/profile/${profile.id}`}
+            onClick={onClose}
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              width: '100%', maxWidth: '240px',
+              padding: '8px 16px', borderRadius: '10px',
+              fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600,
+              background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)',
+              textDecoration: 'none', transition: 'all 0.15s',
             }}
-            onMouseOut={e => {
-              if (!followLoading) {
-                e.currentTarget.style.background = isFollowed ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${themeColor}, var(--secondary))`;
-                e.currentTarget.style.borderColor = isFollowed ? 'rgba(255,255,255,0.12)' : 'none';
-                e.currentTarget.style.transform = 'none';
-                e.currentTarget.style.boxShadow = 'none';
-              }
-            }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.18)'; e.currentTarget.style.color = '#fff'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.08)'; e.currentTarget.style.color = 'var(--primary)'; }}
           >
-            {followLoading ? (
-              <span style={{
-                width: '14px', height: '14px', borderRadius: '50%',
-                border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff',
-                animation: 'pcfPulse 0.6s linear infinite',
-                display: 'inline-block',
-              }} />
-            ) : isFollowed ? '✓ Siguiendo' : (
-              <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg> Seguir</>
-            )}
-          </button>
-        ) : (
-          <div style={{
-            display: 'inline-block',
-            padding: '6px 16px', borderRadius: '20px',
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600,
-            marginBottom: '14px',
-          }}>
-            Tu perfil
-          </div>
-        )}
+            Ver perfil completo
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+            </svg>
+          </Link>
+        </div>
 
         {/* ── Social links row ── */}
         {socialLinks.length > 0 && (
           <div style={{
             display: 'flex', justifyContent: 'center', gap: '8px',
-            marginBottom: '14px', flexWrap: 'wrap',
+            flexWrap: 'wrap',
           }}>
             {socialLinks.map(link => (
               <a
@@ -556,24 +581,6 @@ function CardContent({
             ))}
           </div>
         )}
-
-        {/* ── View profile link ── */}
-        <Link
-          href={`/profile/${profile.id}`}
-          onClick={onClose}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '4px',
-            fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600,
-            textDecoration: 'none', transition: 'color 0.15s',
-          }}
-          onMouseOver={e => { e.currentTarget.style.color = 'var(--secondary)'; }}
-          onMouseOut={e => { e.currentTarget.style.color = 'var(--primary)'; }}
-        >
-          Ver perfil completo
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-          </svg>
-        </Link>
       </div>
     </>
   );

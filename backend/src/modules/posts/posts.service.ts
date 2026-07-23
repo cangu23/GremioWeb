@@ -56,14 +56,24 @@ export const createPost = async (payload: CreatePostPayload, userId: string, men
 
 export const getFeed = async (currentUserId?: string, page = 1, limit = 20) => {
   const posts = await PostsRepository.findAllPosts(page, limit);
-  return Promise.all(posts.map(async (p) => {
+  let likedPostIds = new Set<string>();
+
+  if (currentUserId && posts.length > 0) {
+    const postIds = posts.map(p => p.id);
+    const likes = await prisma.like.findMany({
+      where: { userId: currentUserId, postId: { in: postIds } },
+      select: { postId: true },
+    });
+    likedPostIds = new Set(likes.map(l => l.postId!).filter(Boolean));
+  }
+
+  return posts.map((p) => {
     const formatted = formatPost(p);
     if (currentUserId) {
-      const like = await PostsRepository.findPostLike(currentUserId, p.id);
-      formatted.isLikedByMe = !!like;
+      formatted.isLikedByMe = likedPostIds.has(p.id);
     }
     return formatted;
-  }));
+  });
 };
 
 export const getPersonalizedFeed = async (userId: string, page = 1, limit = 20) => {
@@ -75,12 +85,22 @@ export const getPersonalizedFeed = async (userId: string, page = 1, limit = 20) 
   followingIds.push(userId);
   
   const posts = await PostsRepository.findPostsByUsers(followingIds, page, limit);
-  return Promise.all(posts.map(async (p) => {
+  let likedPostIds = new Set<string>();
+
+  if (posts.length > 0) {
+    const postIds = posts.map(p => p.id);
+    const likes = await prisma.like.findMany({
+      where: { userId, postId: { in: postIds } },
+      select: { postId: true },
+    });
+    likedPostIds = new Set(likes.map(l => l.postId!).filter(Boolean));
+  }
+
+  return posts.map((p) => {
     const formatted = formatPost(p);
-    const like = await PostsRepository.findPostLike(userId, p.id);
-    formatted.isLikedByMe = !!like;
+    formatted.isLikedByMe = likedPostIds.has(p.id);
     return formatted;
-  }));
+  });
 };
 
 export const updatePost = async (postId: string, payload: { content?: string; mediaUrl?: string }, userId: string) => {
@@ -98,14 +118,24 @@ export const updatePost = async (postId: string, payload: { content?: string; me
 
 export const getUserPosts = async (targetUserId: string, currentUserId?: string, page = 1, limit = 20) => {
   const posts = await PostsRepository.findPostsByUser(targetUserId, page, limit);
-  return Promise.all(posts.map(async (p) => {
+  let likedPostIds = new Set<string>();
+
+  if (currentUserId && posts.length > 0) {
+    const postIds = posts.map(p => p.id);
+    const likes = await prisma.like.findMany({
+      where: { userId: currentUserId, postId: { in: postIds } },
+      select: { postId: true },
+    });
+    likedPostIds = new Set(likes.map(l => l.postId!).filter(Boolean));
+  }
+
+  return posts.map((p) => {
     const formatted = formatPost(p);
     if (currentUserId) {
-      const like = await PostsRepository.findPostLike(currentUserId, p.id);
-      formatted.isLikedByMe = !!like;
+      formatted.isLikedByMe = likedPostIds.has(p.id);
     }
     return formatted;
-  }));
+  });
 };
 
 export const getPostById = async (id: string, currentUserId?: string) => {
@@ -234,17 +264,21 @@ export const createComment = async (postId: string, payload: CreateCommentPayloa
 
 export const getComments = async (postId: string, currentUserId?: string) => {
   const comments = await PostsRepository.findCommentsByPost(postId);
-  return Promise.all(comments.map(async (c) => {
-    let isLikedByMe = false;
-    if (currentUserId) {
-      const like = await PostsRepository.findCommentLike(currentUserId, c.id);
-      isLikedByMe = !!like;
-    }
-    return {
-      ...c,
-      isLikedByMe,
-      createdAt: c.createdAt.toISOString(),
-    };
+  let likedCommentIds = new Set<string>();
+
+  if (currentUserId && comments.length > 0) {
+    const commentIds = comments.map(c => c.id);
+    const likes = await prisma.like.findMany({
+      where: { userId: currentUserId, commentId: { in: commentIds } },
+      select: { commentId: true },
+    });
+    likedCommentIds = new Set(likes.map(l => l.commentId!).filter(Boolean));
+  }
+
+  return comments.map((c) => ({
+    ...c,
+    isLikedByMe: currentUserId ? likedCommentIds.has(c.id) : false,
+    createdAt: c.createdAt.toISOString(),
   }));
 };
 

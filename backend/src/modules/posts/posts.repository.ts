@@ -5,7 +5,16 @@ const postIncludes = {
     select: {
       id: true,
       username: true,
-      vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+      role: true,
+      avatarUrl: true,
+      vtuberProfile: {
+        select: {
+          displayName: true,
+          avatarUrl: true,
+          isVerified: true,
+          isApproved: true,
+        },
+      },
     },
   },
   _count: { select: { comments: true, likes: true } },
@@ -132,7 +141,16 @@ export const createComment = (data: {
         select: {
           id: true,
           username: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+          role: true,
+          avatarUrl: true,
+          vtuberProfile: {
+            select: {
+              displayName: true,
+              avatarUrl: true,
+              isVerified: true,
+              isApproved: true,
+            },
+          },
         },
       },
       _count: { select: { likes: true } },
@@ -149,7 +167,16 @@ export const findCommentsByPost = (postId: string) => {
         select: {
           id: true,
           username: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+          role: true,
+          avatarUrl: true,
+          vtuberProfile: {
+            select: {
+              displayName: true,
+              avatarUrl: true,
+              isVerified: true,
+              isApproved: true,
+            },
+          },
         },
       },
       _count: { select: { likes: true } },
@@ -165,7 +192,16 @@ export const findCommentById = (id: string) => {
         select: {
           id: true,
           username: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+          role: true,
+          avatarUrl: true,
+          vtuberProfile: {
+            select: {
+              displayName: true,
+              avatarUrl: true,
+              isVerified: true,
+              isApproved: true,
+            },
+          },
         },
       },
       _count: { select: { likes: true } },
