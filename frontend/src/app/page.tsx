@@ -271,7 +271,7 @@ function HomeContent() {
   // RIGHT SIDEBAR
   // ==========================================================================
   const RightSidebar = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'sticky', top: '88px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '16px' }}>
       {/* Welcome card */}
       <div className="glass" style={{ padding: '16px', textAlign: 'center' }}>
         <Link href={`/profile/${user.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -909,7 +909,7 @@ function HomeContent() {
       </div>
 
       {/* ===== CENTER FEED ===== */}
-      <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="home-feed-center" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Feed mode toggle */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
