@@ -906,20 +906,22 @@ function MessengerContent() {
 
                           <div style={{
                             display: 'flex', alignItems: 'center', justifyContent: isMine ? 'flex-end' : 'flex-start',
-                            gap: '4px', marginTop: '4px', padding: isImage ? '2px 6px 4px' : 0,
+                            gap: '5px', marginTop: '4px', padding: isImage ? '2px 6px 4px' : 0,
                           }}>
-                            <span style={{ fontSize: '0.62rem', opacity: 0.65 }}>
+                            <span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 500 }}>
                               {formatTimeFull(msg.createdAt)}
                             </span>
                             {isMine && (
-                              <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '2px' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '3px' }}>
                                 {msg.read ? (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6CB4EE" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  /* Bright double checkmark for read */
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 4px rgba(56,189,248,0.5))' }}>
                                     <path d="M18 6L7 17l-5-5" />
                                     <path d="M22 10l-7.5 7.5" />
                                   </svg>
                                 ) : (
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  /* Clear single checkmark for sent */
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M20 6L9 17l-5-5" />
                                   </svg>
                                 )}
