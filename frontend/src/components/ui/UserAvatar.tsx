@@ -188,7 +188,58 @@ export default function UserAvatar({
 
 
 
-      {/* Note cloud bubble */}
+      {/* Discord / Instagram style Note Bubble floating above avatar */}
+      {hasNote && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            marginBottom: '6px',
+            padding: '3px 10px',
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, rgba(28,25,50,0.95), rgba(15,14,30,0.95))',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(139,92,246,0.35)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4), 0 0 12px rgba(139,92,246,0.15)',
+            zIndex: 10,
+            maxWidth: '120px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            color: 'var(--text, #fff)',
+            pointerEvents: 'auto',
+            transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{note}</span>
+          
+          {/* Bubble tail pointing down to top of avatar */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-4px',
+              left: '50%',
+              transform: 'translateX(-50%) rotate(45deg)',
+              width: '7px',
+              height: '7px',
+              background: 'rgba(28,25,50,0.95)',
+              borderRight: '1px solid rgba(139,92,246,0.35)',
+              borderBottom: '1px solid rgba(139,92,246,0.35)',
+              borderRadius: '0 0 2px 0',
+              zIndex: -1,
+            }}
+          />
+        </div>
+      )}
+
+      {/* Note expanded cloud bubble on hover */}
       {hasNote && showNote && (
         <div
           onMouseEnter={handleNoteBubbleEnter}
@@ -196,13 +247,13 @@ export default function UserAvatar({
           style={{
             position: 'absolute',
             bottom: '100%', left: '50%', transform: 'translateX(-50%)',
-            marginBottom: '12px',
+            marginBottom: '16px',
             padding: '12px 18px',
-            borderRadius: '18px 18px 18px 4px',
-            background: 'linear-gradient(135deg, rgba(30,28,55,0.97), rgba(20,20,40,0.97))',
+            borderRadius: '18px',
+            background: 'linear-gradient(135deg, rgba(30,28,55,0.98), rgba(20,20,40,0.98))',
             backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(139,92,246,0.2)',
-            boxShadow: '0 12px 48px rgba(0,0,0,0.5), 0 0 60px rgba(139,92,246,0.06)',
+            border: '1px solid rgba(139,92,246,0.4)',
+            boxShadow: '0 12px 48px rgba(0,0,0,0.6), 0 0 60px rgba(139,92,246,0.2)',
             zIndex: 100,
             minWidth: '150px',
             maxWidth: '280px',
@@ -236,39 +287,19 @@ export default function UserAvatar({
               hace {timeAgo(noteUpdatedAt)}
             </div>
           )}
-          {/* Cloud tail (more rounded, puff-like) */}
+          {/* Cloud tail */}
           <div
             style={{
               position: 'absolute',
               bottom: '-8px', left: '50%', transform: 'translateX(-50%) rotate(45deg)',
               width: '14px', height: '14px',
-              background: 'rgba(30,28,55,0.97)',
-              borderRight: '1px solid rgba(139,92,246,0.2)',
-              borderBottom: '1px solid rgba(139,92,246,0.2)',
+              background: 'rgba(30,28,55,0.98)',
+              borderRight: '1px solid rgba(139,92,246,0.4)',
+              borderBottom: '1px solid rgba(139,92,246,0.4)',
               borderRadius: '0 0 4px 0',
               zIndex: -1,
             }}
           />
-
-          {/* Floating particles (decorative) */}
-          <div style={{
-            position: 'absolute', top: '-4px', right: '16px',
-            width: '4px', height: '4px', borderRadius: '50%',
-            background: 'rgba(139,92,246,0.3)',
-            animation: 'noteFloat 3s ease-in-out infinite',
-          }} />
-          <div style={{
-            position: 'absolute', top: '-2px', right: '26px',
-            width: '3px', height: '3px', borderRadius: '50%',
-            background: 'rgba(0,212,255,0.2)',
-            animation: 'noteFloat 3s ease-in-out 1s infinite',
-          }} />
-          <div style={{
-            position: 'absolute', top: '-6px', right: '22px',
-            width: '2px', height: '2px', borderRadius: '50%',
-            background: 'rgba(139,92,246,0.2)',
-            animation: 'noteFloat 3s ease-in-out 0.5s infinite',
-          }} />
         </div>
       )}
     </div>
