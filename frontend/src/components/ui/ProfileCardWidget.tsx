@@ -295,7 +295,46 @@ function CardContent({
         <div style={{
           position: 'absolute', bottom: '-40px', left: '50%', transform: 'translateX(-50%)',
           zIndex: 3,
+          overflow: 'visible',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
         }}>
+          {/* Note pill floating above avatar */}
+          {profile.note && (
+            <div style={{
+              marginBottom: '6px',
+              padding: '4px 12px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, rgba(28,25,50,0.97), rgba(15,14,30,0.97))',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(139,92,246,0.4)',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.5), 0 0 10px rgba(139,92,246,0.2)',
+              maxWidth: '180px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              color: '#fff',
+              position: 'relative',
+              animation: 'pcfBubbleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}>
+              {profile.note}
+              {/* Tail pointing down to avatar */}
+              <div style={{
+                position: 'absolute',
+                bottom: '-5px',
+                left: '50%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '8px', height: '8px',
+                background: 'rgba(28,25,50,0.97)',
+                borderRight: '1px solid rgba(139,92,246,0.4)',
+                borderBottom: '1px solid rgba(139,92,246,0.4)',
+                borderRadius: '0 0 2px 0',
+                zIndex: -1,
+              }} />
+            </div>
+          )}
+
           <div style={{
             width: '80px', height: '80px', borderRadius: '50%',
             background: avatarUrl
@@ -313,59 +352,6 @@ function CardContent({
           >
             {!avatarUrl && getInitial(displayName)}
           </div>
-
-          {/* Note cloud bubble near avatar */}
-          {profile.note && (
-            <div style={{
-              marginTop: '8px',
-              display: 'flex', justifyContent: 'center',
-            }}>
-              <div style={{
-                position: 'relative',
-                padding: '8px 14px',
-                borderRadius: '14px 14px 14px 4px',
-                background: 'linear-gradient(135deg, rgba(30,28,55,0.98), rgba(20,20,40,0.98))',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(139,92,246,0.2)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                maxWidth: '280px',
-                animation: 'pcfBubbleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              }}>
-                {/* Gradient line */}
-                <div style={{
-                  position: 'absolute', top: 0, left: '20%', right: '20%', height: '2px',
-                  background: 'linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent)',
-                  borderRadius: '1px',
-                }} />
-
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.8rem', lineHeight: 1.5,
-                  color: 'rgba(255,255,255,0.85)',
-                  fontStyle: 'italic',
-                  fontWeight: 500,
-                  wordBreak: 'break-word',
-                }}>
-                  &ldquo;{profile.note}&rdquo;
-                </p>
-                {profile.noteUpdatedAt && (
-                  <div style={{
-                    fontSize: '0.6rem', color: 'var(--text-muted)',
-                    marginTop: '4px', opacity: 0.6,
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                  }}>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    {new Date(profile.noteUpdatedAt).toLocaleDateString('es-ES', {
-                      day: 'numeric', month: 'short',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

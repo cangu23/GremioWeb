@@ -284,7 +284,44 @@ function ProfileContent() {
         <div style={{
           position: 'absolute', bottom: '-60px', left: '50%', transform: 'translateX(-50%)',
           zIndex: 3, textAlign: 'center',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          overflow: 'visible',
         }}>
+          {/* Note bubble floating above avatar */}
+          {profile.note && (
+            <div style={{
+              marginBottom: '8px',
+              padding: '5px 14px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(28,25,50,0.97), rgba(15,14,30,0.97))',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(139,92,246,0.45)',
+              boxShadow: '0 4px 18px rgba(0,0,0,0.5), 0 0 14px rgba(139,92,246,0.2)',
+              maxWidth: '220px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              color: '#fff',
+              position: 'relative',
+            }}>
+              {profile.note}
+              {/* Tail */}
+              <div style={{
+                position: 'absolute',
+                bottom: '-5px', left: '50%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '9px', height: '9px',
+                background: 'rgba(28,25,50,0.97)',
+                borderRight: '1px solid rgba(139,92,246,0.45)',
+                borderBottom: '1px solid rgba(139,92,246,0.45)',
+                borderRadius: '0 0 2px 0',
+                zIndex: -1,
+              }} />
+            </div>
+          )}
+
           <div style={{
             width: 'clamp(100px, 15vw, 140px)',
             height: 'clamp(100px, 15vw, 140px)',
