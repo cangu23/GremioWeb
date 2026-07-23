@@ -162,21 +162,7 @@ export default function UserAvatar({
         </div>
       )}
 
-      {/* Verified badge */}
-      {isVerified && (
-        <div
-          style={{
-            position: 'absolute',
-            top: -2, right: -2,
-            zIndex: 2,
-          }}
-        >
-          <svg width={Math.round(size * 0.35)} height={Math.round(size * 0.35)} viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
-            <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-      )}
+
 
       {/* Note tooltip */}
       {hasNote && showNote && (
