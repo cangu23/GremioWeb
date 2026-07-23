@@ -89,6 +89,9 @@ function VtuberProfileEditor() {
   ];
   const [themeColor, setThemeColor] = useState('');
 
+  // Stream live state
+  const [isLive, setIsLive] = useState(false);
+
   // Arrays
   const [languagesInput, setLanguagesInput] = useState('');
   const [hashtagsInput, setHashtagsInput] = useState('');
@@ -116,6 +119,7 @@ function VtuberProfileEditor() {
       setTwitterUrl(p.twitterUrl || '');
       setDiscordUrl(p.discordUrl || '');
       setWebsiteUrl(p.websiteUrl || '');
+      setIsLive(!!p.isLive);
       try {
         const langs = p.languages ? JSON.parse(p.languages) : [];
         setLanguagesInput(langs.join(', '));
@@ -154,6 +158,7 @@ function VtuberProfileEditor() {
           twitterUrl: twitterUrl || undefined,
           discordUrl: discordUrl || undefined,
           websiteUrl: websiteUrl || undefined,
+          isLive,
           languages: languages.length > 0 ? languages : undefined,
           hashtags: hashtags.length > 0 ? hashtags : undefined,
         }),
@@ -682,6 +687,36 @@ function VtuberProfileEditor() {
           </h3>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <div className="form-group" style={{ marginBottom: 0, gridColumn: 'span 2' }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Detección Automática de Transmisión
+                <span style={{
+                  padding: '2px 8px', borderRadius: '8px',
+                  background: isLive ? 'rgba(233,30,99,0.15)' : 'rgba(255,255,255,0.05)',
+                  fontSize: '0.7rem', fontWeight: 700,
+                  color: isLive ? '#e91e63' : 'var(--text-muted)',
+                }}>
+                  {isLive ? '🔴 EN VIVO AHORA' : '⚫ FUERA DE LÍNEA'}
+                </span>
+              </label>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '12px 18px', borderRadius: '12px',
+                background: isLive ? 'rgba(233,30,99,0.12)' : 'rgba(255,255,255,0.03)',
+                border: isLive ? '1px solid rgba(233,30,99,0.3)' : '1px solid var(--glass-border)',
+                color: isLive ? '#fff' : 'var(--text-muted)',
+                fontSize: '0.88rem', fontWeight: 500,
+              }}>
+                <span style={{
+                  width: '10px', height: '10px', borderRadius: '50%',
+                  background: isLive ? '#e91e63' : '#666',
+                  boxShadow: isLive ? '0 0 10px #e91e63' : 'none',
+                }} />
+                {isLive
+                  ? 'El sistema detectó que tu canal está en vivo. Se muestra en el directorio y banner.'
+                  : 'El sistema verifica automáticamente tu canal de Twitch cada minuto al iniciar directo.'}
+              </div>
+            </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Horario de Streams</label>
               <input className="input" value={streamSchedule} onChange={e => setStreamSchedule(e.target.value)}

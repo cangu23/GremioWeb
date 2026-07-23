@@ -71,8 +71,9 @@ async function getAccessToken(): Promise<string> {
  * - twitch.tv/channelname
  */
 export function extractChannelName(url: string | null): string | null {
-  if (!url) return null;
-  const match = url.match(/(?:twitch\.tv\/)([a-zA-Z0-9_]+)/);
+  if (!url || !url.trim()) return null;
+  const clean = url.trim().replace(/^@/, '');
+  const match = clean.match(/(?:twitch\.tv\/)?([a-zA-Z0-9_]{2,25})/i);
   return match ? match[1].toLowerCase() : null;
 }
 

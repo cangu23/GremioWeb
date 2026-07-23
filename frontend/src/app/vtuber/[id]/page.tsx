@@ -96,8 +96,9 @@ function parseLanguages(raw: string | null): string[] {
 }
 
 function extractTwitchChannel(url: string | null): string | null {
-  if (!url) return null;
-  const match = url.match(/(?:twitch\.tv\/)([a-zA-Z0-9_]+)/);
+  if (!url || !url.trim()) return null;
+  const clean = url.trim().replace(/^@/, '');
+  const match = clean.match(/(?:twitch\.tv\/)?([a-zA-Z0-9_]{2,25})/i);
   return match ? match[1].toLowerCase() : null;
 }
 
@@ -746,6 +747,7 @@ function VtuberPublicProfile() {
           const channel = extractTwitchChannel(vtuber.twitchUrl);
           if (!channel) return null;
           const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+          const parentParams = `parent=${encodeURIComponent(host)}&parent=localhost&parent=127.0.0.1`;
           return (
             <div style={{ marginBottom: '32px' }}>
               <div className="glass" style={{
@@ -772,7 +774,7 @@ function VtuberPublicProfile() {
                     — {displayName} está transmitiendo
                   </span>
                   <a
-                    href={vtuber.twitchUrl}
+                    href={vtuber.twitchUrl.startsWith('http') ? vtuber.twitchUrl : `https://twitch.tv/${channel}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -800,7 +802,7 @@ function VtuberPublicProfile() {
                   background: '#0a0a0a',
                 }}>
                   <iframe
-                    src={`https://player.twitch.tv/?channel=${channel}&parent=${host}&muted=true`}
+                    src={`https://player.twitch.tv/?channel=${channel}&${parentParams}&muted=true`}
                     style={{
                       position: 'absolute',
                       top: 0, left: 0,

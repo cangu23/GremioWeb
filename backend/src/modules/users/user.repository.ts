@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../database';
 import { CreateUserPayload } from './user.types';
 import { UpdateUserPayload } from '@gremio-estelar/shared';
+import { checkSingleVTuber } from '../vtubers/stream-monitor.service';
 
 export const findByEmail = async (email: string) => {
   return prisma.user.findUnique({
@@ -221,9 +222,15 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       }
     }
 
-    return tx.user.findUnique({
+    const result = await tx.user.findUnique({
       where: { id: userId },
       include: { vtuberProfile: true },
     });
+
+    if (result?.vtuberProfile?.id && result.vtuberProfile.twitchUrl) {
+      checkSingleVTuber(result.vtuberProfile.id).catch(() => {});
+    }
+
+    return result;
   });
 };

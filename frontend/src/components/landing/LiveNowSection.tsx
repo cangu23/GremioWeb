@@ -20,9 +20,14 @@ interface LiveVTuber {
 }
 
 function getEmbedUrl(url: string): string | null {
-  if (!url) return null;
-  const twitchMatch = url.match(/(?:twitch\.tv\/)([a-zA-Z0-9_]+)/);
-  if (twitchMatch) return `https://player.twitch.tv/?channel=${twitchMatch[1]}&parent=${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}&autoplay=true&muted=true`;
+  if (!url || !url.trim()) return null;
+  const clean = url.trim().replace(/^@/, '');
+  const twitchMatch = clean.match(/(?:twitch\.tv\/)?([a-zA-Z0-9_]{2,25})/i);
+  if (twitchMatch && (clean.includes('twitch') || !clean.includes('http'))) {
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const parentParams = `parent=${encodeURIComponent(host)}&parent=localhost&parent=127.0.0.1`;
+    return `https://player.twitch.tv/?channel=${twitchMatch[1].toLowerCase()}&${parentParams}&autoplay=true&muted=true`;
+  }
   const ytChannelMatch = url.match(/(?:youtube\.com\/@)([a-zA-Z0-9_]+)/);
   if (ytChannelMatch) return `https://www.youtube.com/embed/live_stream?channel=${ytChannelMatch[1]}&autoplay=1&muted=1`;
   const ytVideoMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
