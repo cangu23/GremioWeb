@@ -501,7 +501,9 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
             onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
             onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <span style={{ color: '#38bdf8', display: 'inline-flex' }}>⭐</span>
+            <span style={{ color: '#38bdf8', display: 'inline-flex' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#38bdf8" stroke="#38bdf8" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </span>
             <span style={{ color: '#38bdf8', fontWeight: 600 }}>Pase Estelar</span>
           </Link>
 
@@ -511,7 +513,9 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
             onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
             onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <span style={{ color: '#fbbf24', display: 'inline-flex' }}>✨</span>
+            <span style={{ color: '#fbbf24', display: 'inline-flex' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+            </span>
             <span style={{ color: '#fbbf24', fontWeight: 600 }}>Planes Premium</span>
           </Link>
 

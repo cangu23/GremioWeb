@@ -19,6 +19,31 @@ interface Mission {
   claimedAt: string | null;
 }
 
+function StarIcon({ size = 14, color = '#fbbf24' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function ScrollIcon({ size = 18, color = 'var(--primary)' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.7 0 3-1.3 3-3z"/>
+      <path d="M15 2H6a2 2 0 0 0-2 2v2"/>
+    </svg>
+  );
+}
+
+function SparklesIcon({ size = 14, color = '#000' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" />
+    </svg>
+  );
+}
+
 export default function MissionsWidget() {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -78,10 +103,11 @@ export default function MissionsWidget() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
-            📜 Misiones Diarias
+            <ScrollIcon size={20} color="#38bdf8" />
+            Misiones Diarias
           </h3>
           <span style={{ fontSize: '0.76rem', color: 'var(--text-muted, #a1a1aa)' }}>
-            Completa retos para ganar XP y Stardust ⭐
+            Completa retos para ganar XP y Stardust
           </span>
         </div>
 
@@ -95,7 +121,7 @@ export default function MissionsWidget() {
           border: '1px solid rgba(251, 191, 36, 0.4)',
           boxShadow: '0 0 15px rgba(251, 191, 36, 0.2)',
         }}>
-          <span style={{ fontSize: '1rem' }}>⭐</span>
+          <StarIcon size={15} color="#fbbf24" />
           <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#fbbf24' }}>
             {stardust} Stardust
           </span>
@@ -114,6 +140,9 @@ export default function MissionsWidget() {
           const isReady = m.completed && !isClaimed;
           const pct = Math.min(100, Math.round((m.currentProgress / m.goal) * 100));
 
+          // Clean title of unicode emojis if present
+          const cleanTitle = m.title.replace(/^[\u1F00-\u1F9FF\u2600-\u26FF\u2700-\u27BF]\s*/, '');
+
           return (
             <div
               key={m.id}
@@ -131,10 +160,10 @@ export default function MissionsWidget() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <span style={{ fontWeight: 700, fontSize: '0.88rem', color: isClaimed ? '#71717a' : '#fff' }}>
-                    {m.title}
+                    {cleanTitle}
                   </span>
-                  <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 600 }}>
-                    +{m.stardustReward} ⭐ | +{m.xpReward} XP
+                  <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    +{m.stardustReward} <StarIcon size={11} color="#fbbf24" /> | +{m.xpReward} XP
                   </span>
                 </div>
 
@@ -182,9 +211,13 @@ export default function MissionsWidget() {
                       fontSize: '0.82rem',
                       cursor: 'pointer',
                       boxShadow: '0 0 12px rgba(251, 191, 36, 0.4)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
                     }}
                   >
-                    Reclamar ✨
+                    <SparklesIcon size={13} color="#000" />
+                    Reclamar
                   </button>
                 ) : (
                   <span style={{ fontSize: '0.78rem', color: '#71717a', padding: '6px 12px' }}>
