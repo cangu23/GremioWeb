@@ -177,6 +177,16 @@ export default function ProfileCardWidget({ userId, onClose }: ProfileCardWidget
           0%, 100% { box-shadow: 0 0 20px rgba(139,92,246,0.1); }
           50% { box-shadow: 0 0 40px rgba(139,92,246,0.2); }
         }
+        @keyframes pcfBubbleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.85) translateY(6px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
       `}</style>
     </div>
   );
@@ -303,6 +313,59 @@ function CardContent({
           >
             {!avatarUrl && getInitial(displayName)}
           </div>
+
+          {/* Note cloud bubble near avatar */}
+          {profile.note && (
+            <div style={{
+              marginTop: '8px',
+              display: 'flex', justifyContent: 'center',
+            }}>
+              <div style={{
+                position: 'relative',
+                padding: '8px 14px',
+                borderRadius: '14px 14px 14px 4px',
+                background: 'linear-gradient(135deg, rgba(30,28,55,0.98), rgba(20,20,40,0.98))',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(139,92,246,0.2)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                maxWidth: '280px',
+                animation: 'pcfBubbleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}>
+                {/* Gradient line */}
+                <div style={{
+                  position: 'absolute', top: 0, left: '20%', right: '20%', height: '2px',
+                  background: 'linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent)',
+                  borderRadius: '1px',
+                }} />
+
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.8rem', lineHeight: 1.5,
+                  color: 'rgba(255,255,255,0.85)',
+                  fontStyle: 'italic',
+                  fontWeight: 500,
+                  wordBreak: 'break-word',
+                }}>
+                  &ldquo;{profile.note}&rdquo;
+                </p>
+                {profile.noteUpdatedAt && (
+                  <div style={{
+                    fontSize: '0.6rem', color: 'var(--text-muted)',
+                    marginTop: '4px', opacity: 0.6,
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    {new Date(profile.noteUpdatedAt).toLocaleDateString('es-ES', {
+                      day: 'numeric', month: 'short',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -373,38 +436,7 @@ function CardContent({
           </p>
         )}
 
-        {/* ── Note / Status Message ── */}
-        {profile.note && (
-          <div style={{
-            margin: '0 auto 14px',
-            maxWidth: '320px',
-            padding: '10px 14px',
-            background: 'rgba(139,92,246,0.06)',
-            border: '1px solid rgba(139,92,246,0.1)',
-            borderRadius: '10px',
-          }}>
-            <p style={{
-              margin: 0,
-              fontSize: '0.82rem', lineHeight: 1.5,
-              color: 'rgba(255,255,255,0.7)',
-              fontStyle: 'italic',
-              wordBreak: 'break-word',
-            }}>
-              &ldquo;{profile.note}&rdquo;
-            </p>
-            {profile.noteUpdatedAt && (
-              <div style={{
-                fontSize: '0.62rem', color: 'var(--text-muted)',
-                marginTop: '6px', opacity: 0.6,
-              }}>
-                {new Date(profile.noteUpdatedAt).toLocaleDateString('es-ES', {
-                  day: 'numeric', month: 'short',
-                  hour: '2-digit', minute: '2-digit',
-                })}
-              </div>
-            )}
-          </div>
-        )}
+
 
         {/* ── Stats row ── */}
         <div style={{
