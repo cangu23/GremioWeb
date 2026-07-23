@@ -309,7 +309,7 @@ function MessengerContent() {
 
   /* ─── Scroll to bottom on new messages ─── */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   /* ─── Select a conversation ─── */
