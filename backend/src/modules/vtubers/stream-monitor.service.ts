@@ -56,13 +56,19 @@ async function checkAllVTubers(): Promise<number> {
     if (channelNames.length === 0) return 0;
 
     // Check which channels are live via Twitch API
-    // If this throws, the catch block handles it — we skip offline updates on API failure.
     const liveChannels = await checkLiveChannels(channelNames);
+    const liveLowerSet = new Set(liveChannels.map(c => c.toLowerCase()));
 
-    // Channels confirmed live by the API: set isLive = true
-    const liveProfileIds = liveChannels
-      .map((channel) => channelMap.get(channel))
-      .filter(Boolean) as string[];
+    const liveProfileIds: string[] = [];
+    const offlineProfileIds: string[] = [];
+
+    for (const [channel, profileId] of channelMap.entries()) {
+      if (liveLowerSet.has(channel.toLowerCase())) {
+        liveProfileIds.push(profileId);
+      } else {
+        offlineProfileIds.push(profileId);
+      }
+    }
 
     if (liveProfileIds.length > 0) {
       await prisma.vTuberProfile.updateMany({
@@ -70,14 +76,6 @@ async function checkAllVTubers(): Promise<number> {
         data: { isLive: true, lastLiveAt: new Date() },
       });
     }
-
-    // Channels NOT live (confirmed by API response): set isLive = false
-    const offlineChannels = channelNames.filter(
-      (name) => !liveChannels.includes(name)
-    );
-    const offlineProfileIds = offlineChannels
-      .map((channel) => channelMap.get(channel))
-      .filter(Boolean) as string[];
 
     if (offlineProfileIds.length > 0) {
       await prisma.vTuberProfile.updateMany({
