@@ -714,3 +714,46 @@ textarea.input {
     padding: 0 12px;
   }
 }
+
+/* ==========================================================================
+   HIDDEN SCROLLBARS SYSTEM (Seamless Scroll Without Visible Bars)
+   ========================================================================== */
+
+/* Hide scrollbars for Chrome, Safari, Edge, Opera */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hide scrollbars for Firefox & IE */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.custom-scrollbar,
+.thin-scrollbar,
+.no-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar,
+.thin-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Scroll containment & overflow fixes */
+body {
+  overflow-x: hidden;
+}
+
+.glass-modal,
+.modal-overlay,
+.custom-scroll-container {
+  overscroll-behavior: contain;
+}
