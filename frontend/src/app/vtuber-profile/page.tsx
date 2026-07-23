@@ -239,28 +239,36 @@ function VtuberProfileEditor() {
         <button
           onClick={() => setActiveTab('editor')}
           style={{
-            flex: 1, padding: '10px 20px', borderRadius: '9px',
+            flex: 1, padding: '10px 16px', borderRadius: '9px',
             border: 'none', cursor: 'pointer',
             background: activeTab === 'editor' ? 'var(--primary)' : 'transparent',
             color: activeTab === 'editor' ? '#fff' : 'var(--text-muted)',
-            fontWeight: 600, fontSize: '0.9rem',
+            fontWeight: 600, fontSize: '0.88rem',
             transition: 'all 0.2s',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
           }}
         >
-          ✎ Editor
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Editor
         </button>
         <button
           onClick={() => { setShowPreview(!showPreview); setActiveTab('preview'); }}
           style={{
-            flex: 1, padding: '10px 20px', borderRadius: '9px',
+            flex: 1, padding: '10px 16px', borderRadius: '9px',
             border: 'none', cursor: 'pointer',
             background: activeTab === 'preview' && showPreview ? 'var(--primary)' : 'transparent',
             color: activeTab === 'preview' && showPreview ? '#fff' : 'var(--text-muted)',
-            fontWeight: 600, fontSize: '0.9rem',
+            fontWeight: 600, fontSize: '0.88rem',
             transition: 'all 0.2s',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
           }}
         >
-          👁️ Vista previa
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+          Vista previa
         </button>
       </div>
 
@@ -273,7 +281,10 @@ function VtuberProfileEditor() {
             color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 600,
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            👁️ Así te ve la comunidad — Vista previa en vivo
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            Así te ve la comunidad — Vista previa en vivo
           </div>
 
           {/* Banner preview - matches public profile exactly */}
@@ -691,12 +702,16 @@ function VtuberProfileEditor() {
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 Detección Automática de Transmisión
                 <span style={{
-                  padding: '2px 8px', borderRadius: '8px',
+                  padding: '3px 10px', borderRadius: '8px',
                   background: isLive ? 'rgba(233,30,99,0.15)' : 'rgba(255,255,255,0.05)',
-                  fontSize: '0.7rem', fontWeight: 700,
+                  fontSize: '0.72rem', fontWeight: 700,
                   color: isLive ? '#e91e63' : 'var(--text-muted)',
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
                 }}>
-                  {isLive ? '🔴 EN VIVO AHORA' : '⚫ FUERA DE LÍNEA'}
+                  <svg width="8" height="8" viewBox="0 0 8 8">
+                    <circle cx="4" cy="4" r="3.5" fill={isLive ? '#e91e63' : 'var(--text-muted)'} />
+                  </svg>
+                  {isLive ? 'EN VIVO AHORA' : 'FUERA DE LÍNEA'}
                 </span>
               </label>
               <div style={{

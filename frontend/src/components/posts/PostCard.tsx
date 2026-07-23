@@ -68,6 +68,38 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
+  // Like & Dislike states + animation triggers
+  const [isDislikedByMe, setIsDislikedByMe] = useState(false);
+  const [dislikeCount, setDislikeCount] = useState(0);
+  const [likeAnimating, setLikeAnimating] = useState(false);
+  const [dislikeAnimating, setDislikeAnimating] = useState(false);
+  const [animatingCommentId, setAnimatingCommentId] = useState<string | null>(null);
+
+  const handleLikeClick = () => {
+    setLikeAnimating(true);
+    setTimeout(() => setLikeAnimating(false), 500);
+
+    if (isDislikedByMe) {
+      setIsDislikedByMe(false);
+      setDislikeCount(prev => Math.max(0, prev - 1));
+    }
+
+    onLike(post.id, post.isLikedByMe);
+  };
+
+  const handleDislikeClick = () => {
+    setDislikeAnimating(true);
+    setTimeout(() => setDislikeAnimating(false), 500);
+
+    const newDisliked = !isDislikedByMe;
+    setIsDislikedByMe(newDisliked);
+    setDislikeCount(prev => Math.max(0, prev + (newDisliked ? 1 : -1)));
+
+    if (newDisliked && post.isLikedByMe) {
+      onLike(post.id, true);
+    }
+  };
+
   // Quick moderation open helper
   const openModerateModal = (targetType: 'post' | 'comment', commentId?: string) => {
     setDeleteCommentId(targetType === 'comment' ? (commentId || null) : null);
@@ -170,6 +202,9 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
 
   const handleCommentLike = async (commentId: string, currentLiked?: boolean) => {
     if (!currentUserId) return;
+    setAnimatingCommentId(commentId);
+    setTimeout(() => setAnimatingCommentId(null), 500);
+
     const nextLiked = !currentLiked;
     setComments(prev => prev.map(c => {
       if (c.id !== commentId) return c;
@@ -577,28 +612,76 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           </div>
         )}
 
-        {/* ===== LIKE / COMMENT COUNTS ===== */}
+        {/* ===== LIKE / DISLIKE / COMMENT COUNTS ===== */}
         <div style={{ display: 'flex', gap: '16px', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '4px' }}>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{post._count.likes} {post._count.likes === 1 ? 'like' : 'likes'}</span>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{post._count.comments} {post._count.comments === 1 ? 'comentario' : 'comentarios'}</span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{post._count.likes} {post._count.likes === 1 ? 'me gusta' : 'me gusta'}</span>
+          {dislikeCount > 0 && (
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{dislikeCount} {dislikeCount === 1 ? 'no me gusta' : 'no me gusta'}</span>
+          )}
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>{post._count.comments} {post._count.comments === 1 ? 'comentario' : 'comentarios'}</span>
         </div>
 
         {/* ===== ACTION BUTTONS ===== */}
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button onClick={() => onLike(post.id, post.isLikedByMe)} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flex: 1,
-            background: post.isLikedByMe ? 'rgba(139,92,246,0.08)' : 'none', border: 'none',
-            cursor: 'pointer', color: post.isLikedByMe ? 'var(--primary)' : 'var(--text-muted)',
-            fontSize: '0.82rem', padding: '6px 8px', borderRadius: '6px',
-            transition: 'all 0.2s', fontWeight: post.isLikedByMe ? 600 : 400,
-          }}
-            onMouseOver={e => { if (!post.isLikedByMe) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { if (!post.isLikedByMe) e.currentTarget.style.background = 'none'; }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={post.isLikedByMe ? '#8B5CF6' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {/* LIKE BUTTON */}
+          <button
+            type="button"
+            onClick={handleLikeClick}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flex: 1,
+              background: post.isLikedByMe ? 'rgba(139,92,246,0.12)' : 'transparent',
+              border: post.isLikedByMe ? '1px solid rgba(139,92,246,0.3)' : '1px solid transparent',
+              cursor: 'pointer', color: post.isLikedByMe ? 'var(--primary)' : 'var(--text-muted)',
+              fontSize: '0.84rem', padding: '7px 10px', borderRadius: '10px',
+              transition: 'all 0.2s ease', fontWeight: post.isLikedByMe ? 600 : 500,
+            }}
+            onMouseOver={e => { if (!post.isLikedByMe) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+            onMouseOut={e => { if (!post.isLikedByMe) e.currentTarget.style.background = 'transparent'; }}
+          >
+            <svg
+              width="17" height="17" viewBox="0 0 24 24"
+              fill={post.isLikedByMe ? 'var(--primary)' : 'none'}
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{
+                animation: likeAnimating ? 'postHeartPop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none',
+                filter: post.isLikedByMe ? 'drop-shadow(0 0 6px rgba(139,92,246,0.5))' : 'none',
+              }}
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
             </svg>
-            Like
+            <span>Me gusta</span>
           </button>
+
+          {/* DISLIKE BUTTON */}
+          <button
+            type="button"
+            onClick={handleDislikeClick}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flex: 1,
+              background: isDislikedByMe ? 'rgba(255,77,106,0.12)' : 'transparent',
+              border: isDislikedByMe ? '1px solid rgba(255,77,106,0.3)' : '1px solid transparent',
+              cursor: 'pointer', color: isDislikedByMe ? '#ff4d6a' : 'var(--text-muted)',
+              fontSize: '0.84rem', padding: '7px 10px', borderRadius: '10px',
+              transition: 'all 0.2s ease', fontWeight: isDislikedByMe ? 600 : 500,
+            }}
+            onMouseOver={e => { if (!isDislikedByMe) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+            onMouseOut={e => { if (!isDislikedByMe) e.currentTarget.style.background = 'transparent'; }}
+          >
+            <svg
+              width="17" height="17" viewBox="0 0 24 24"
+              fill={isDislikedByMe ? '#ff4d6a' : 'none'}
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{
+                animation: dislikeAnimating ? 'postHeartPop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none',
+                filter: isDislikedByMe ? 'drop-shadow(0 0 6px rgba(255,77,106,0.5))' : 'none',
+              }}
+            >
+              <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10zM17 2h3a2 2 0 012 2v7a2 2 0 01-2 2h-3"/>
+            </svg>
+            <span>No me gusta</span>
+          </button>
+
+          {/* COMMENT BUTTON */}
           <button onClick={toggleComments} style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flex: 1,
             background: 'none', border: 'none', cursor: 'pointer',
@@ -789,7 +872,14 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                           padding: 0, transition: 'all 0.15s',
                         }}
                       >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill={comment.isLikedByMe ? '#ff4d6a' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          width="13" height="13" viewBox="0 0 24 24"
+                          fill={comment.isLikedByMe ? '#ff4d6a' : 'none'}
+                          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                          style={{
+                            animation: animatingCommentId === comment.id ? 'postHeartPop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none',
+                          }}
+                        >
                           <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
                         </svg>
                         <span>{(comment._count?.likes || 0) > 0 ? comment._count?.likes : 'Me gusta'}</span>
@@ -871,6 +961,15 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           )}
         </div>
       )}
+      {/* Inline Keyframe Animations */}
+      <style>{`
+        @keyframes postHeartPop {
+          0% { transform: scale(1); }
+          40% { transform: scale(1.45) rotate(-12deg); }
+          80% { transform: scale(0.9) rotate(4deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
+      `}</style>
     </div>
   );
 }
