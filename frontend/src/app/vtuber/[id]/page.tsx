@@ -67,6 +67,8 @@ interface ProfileData {
   createdAt: string;
   xp: number;
   level: number;
+  displayName?: string | null;
+  avatarUrl?: string | null;
   vtuberProfile: VTuberProfileData | null;
   _count: { followers: number; following: number };
   isFollowedByMe: boolean;
@@ -270,7 +272,7 @@ function VtuberPublicProfile() {
 
   const isOwnProfile = currentUser?.id === profile.id;
   const vtuber = profile.vtuberProfile;
-  const avatarUrl = vtuber?.avatarUrl;
+  const avatarUrl = vtuber?.avatarUrl || profile.avatarUrl;
   const bannerUrl = vtuber?.bannerUrl;
   const displayName = vtuber?.displayName || profile.username;
   const themeColor = vtuber?.themeColor || 'var(--primary)';

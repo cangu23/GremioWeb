@@ -198,7 +198,7 @@ function CardContent({
   const isOwnProfile = currentUser?.id === profile.id;
   const vtuber = profile.vtuberProfile;
   const displayName = profile.displayName || vtuber?.displayName || profile.username;
-  const avatarUrl = vtuber?.avatarUrl;
+  const avatarUrl = vtuber?.avatarUrl || profile.avatarUrl;
   const bannerUrl = vtuber?.bannerUrl;
   const themeColor = vtuber?.themeColor || 'var(--primary)';
   const isVtubers = profile.role === 'VTUBER' || vtuber?.isApproved;

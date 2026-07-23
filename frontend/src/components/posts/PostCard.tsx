@@ -337,8 +337,8 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           : post.user?.username || ''
         }
         authorAvatarUrl={deleteCommentId
-          ? comments.find(c => c.id === deleteCommentId)?.user?.vtuberProfile?.avatarUrl || undefined
-          : post.user?.vtuberProfile?.avatarUrl || undefined
+          ? (comments.find(c => c.id === deleteCommentId)?.user?.avatarUrl || comments.find(c => c.id === deleteCommentId)?.user?.vtuberProfile?.avatarUrl || undefined)
+          : (post.user?.avatarUrl || post.user?.vtuberProfile?.avatarUrl || undefined)
         }
         authorId={deleteCommentId
           ? comments.find(c => c.id === deleteCommentId)?.userId || ''
@@ -354,7 +354,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
       <div style={{ padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <UserAvatar
-            src={post.user.vtuberProfile?.avatarUrl}
+            src={post.user.avatarUrl || post.user.vtuberProfile?.avatarUrl}
             alt={post.user.displayName || post.user.vtuberProfile?.displayName || post.user.username}
             userId={post.user.id}
             isVerified={post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved}
@@ -615,19 +615,12 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                     }
                   }}
                 >
-                  <Link href={`/profile/${comment.userId}`}>
-                    <div style={{
-                      width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                      background: comment.user?.vtuberProfile?.avatarUrl
-                        ? `url(${comment.user.vtuberProfile.avatarUrl}) center/cover`
-                        : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'white', fontSize: '0.7rem', fontWeight: 'bold',
-                      overflow: 'hidden',
-                    }}>
-                      {!comment.user?.vtuberProfile?.avatarUrl && (comment.user?.vtuberProfile?.displayName || comment.user?.username || '?').charAt(0).toUpperCase()}
-                    </div>
-                  </Link>
+                  <UserAvatar
+                    src={comment.user?.avatarUrl || comment.user?.vtuberProfile?.avatarUrl}
+                    alt={comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username || '?'}
+                    userId={comment.userId}
+                    size={28}
+                  />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text)', textDecoration: 'none' }}>

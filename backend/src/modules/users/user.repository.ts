@@ -47,6 +47,8 @@ export const searchByUsernameForMention = async (query: string) => {
     select: {
       id: true,
       username: true,
+      displayName: true,
+      avatarUrl: true,
       role: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
     },
@@ -94,6 +96,8 @@ export const searchByUsername = async (query: string) => {
     select: {
       id: true,
       username: true,
+      displayName: true,
+      avatarUrl: true,
       role: true,
       note: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
@@ -109,6 +113,8 @@ export const findByRole = async (role: string) => {
     select: {
       id: true,
       username: true,
+      displayName: true,
+      avatarUrl: true,
       role: true,
       note: true,
       vtuberProfile: {

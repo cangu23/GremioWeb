@@ -32,6 +32,7 @@ export default function UserAvatar({
 }: UserAvatarProps) {
   const [showNote, setShowNote] = useState(false);
   const [profileCardUserId, setProfileCardUserId] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
   const hasNote = !!note;
   const ringSize = size + 6; // 3px padding per side
   const noteDotSize = Math.max(10, Math.round(size * 0.28));
@@ -88,8 +89,8 @@ export default function UserAvatar({
         style={{
           width: size, height: size,
           borderRadius: '50%',
-          background: src
-            ? `url(${src}) center/cover`
+          background: (src && !imageError)
+            ? 'transparent'
             : 'linear-gradient(135deg, var(--primary), var(--secondary))',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'white', fontWeight: 'bold', fontSize: `${Math.round(size * 0.45)}px`,
@@ -109,7 +110,19 @@ export default function UserAvatar({
           e.currentTarget.style.boxShadow = 'none';
         }}
       >
-        {!src && alt.charAt(0).toUpperCase()}
+        {src && !imageError ? (
+          <img
+            src={src}
+            alt={alt}
+            onError={() => setImageError(true)}
+            style={{
+              width: '100%', height: '100%',
+              objectFit: 'cover', display: 'block',
+            }}
+          />
+        ) : (
+          (alt || '?').charAt(0).toUpperCase()
+        )}
       </div>
 
       {/* Note dot indicator (small dot at bottom-right) */}

@@ -10,6 +10,8 @@ import Link from 'next/link';
 interface MentionUser {
   id: string;
   username: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
   role?: string;
   vtuberProfile?: {
     displayName: string;
@@ -270,8 +272,8 @@ export default function MentionInput({
                 height: '26px',
                 borderRadius: '50%',
                 flexShrink: 0,
-                background: user.vtuberProfile?.avatarUrl
-                  ? `url(${user.vtuberProfile.avatarUrl}) center/cover`
+                background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
+                  ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
                   : 'linear-gradient(135deg, var(--secondary), var(--primary))',
                 display: 'flex',
                 alignItems: 'center',
@@ -281,11 +283,11 @@ export default function MentionInput({
                 fontWeight: 700,
                 overflow: 'hidden',
               }}>
-                {!user.vtuberProfile?.avatarUrl && (user.vtuberProfile?.displayName || user.username).charAt(0).toUpperCase()}
+                {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && (user.displayName || user.vtuberProfile?.displayName || user.username).charAt(0).toUpperCase()}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <span style={{ fontWeight: 600 }}>
-                  {user.vtuberProfile?.displayName || user.username}
+                  {user.displayName || user.vtuberProfile?.displayName || user.username}
                 </span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '4px' }}>
                   @{user.username}
