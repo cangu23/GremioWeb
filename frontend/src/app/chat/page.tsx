@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { connectSocket, disconnectSocket, DM_EVENTS } from '@/lib/socket-client';
+import { connectSocket, DM_EVENTS } from '@/lib/socket-client';
 import { apiFetch } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -102,6 +102,7 @@ function MessengerContent() {
   // Conversations list
   const [conversations, setConversations] = useState<ConversationData[]>([]);
   const [conversationsLoading, setConversationsLoading] = useState(true);
+  const [convFilter, setConvFilter] = useState('');
 
   // Active conversation
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
@@ -111,6 +112,9 @@ function MessengerContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [showChatStickerPicker, setShowChatStickerPicker] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Typing
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
@@ -121,11 +125,22 @@ function MessengerContent() {
   // Mobile state
   const [showList, setShowList] = useState(true);
 
-  // Unread count per user (tracked separately from active messages for accuracy)
+  // Unread count per user
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
 
-  // Online users from socket presence events
+  // Online users & friends list
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const [friendsList, setFriendsList] = useState<UserInfo[]>([]);
+
+  /* ─── Fetch friends / following list ─── */
+  useEffect(() => {
+    if (!currentUser) return;
+    apiFetch(`/social/following/${currentUser.id}`, {})
+      .then((data: any[]) => {
+        if (Array.isArray(data)) setFriendsList(data);
+      })
+      .catch(() => {});
+  }, [currentUser]);
 
   /* ─── Handle `?user=` query param ─── */
   useEffect(() => {
@@ -152,37 +167,30 @@ function MessengerContent() {
     sock.on('connect', () => setConnected(true));
     sock.on('disconnect', () => setConnected(false));
 
-    // If socket is already connected (e.g. from Navbar), reflect immediately
     if (sock.connected) {
       setConnected(true);
     }
 
-    // Track typing timeout ref for cleanup
     const typingClearRef = { current: null as ReturnType<typeof setTimeout> | null };
 
-    // Handle new incoming DM
     sock.on(DM_EVENTS.MESSAGE, (msg: DmMessageData) => {
       const isForActiveChat = activeUserId && (msg.senderId === activeUserId || msg.senderId === currentUser.id);
 
-      // If the message is for the active conversation, append it
       if (isForActiveChat) {
         setMessages(prev => {
           if (prev.some(m => m.id === msg.id)) return prev;
           return [...prev, msg];
         });
-        // Mark as read if received
         if (msg.receiverId === currentUser.id && sock.connected) {
           sock.emit(DM_EVENTS.READ, { messageIds: [msg.id] });
         }
       }
 
-      // Update unread counts
       if (msg.receiverId === currentUser.id && !isForActiveChat) {
         const senderId = msg.senderId;
         setUnreadMap(prev => ({ ...prev, [senderId]: (prev[senderId] || 0) + 1 }));
       }
 
-      // Update conversation list: add or move to top
       setConversations(prev => {
         const existing = prev.findIndex(c => c.id === msg.id);
         if (existing >= 0) {
@@ -194,12 +202,10 @@ function MessengerContent() {
       });
     });
 
-    // Handle typing indicators
     sock.on(DM_EVENTS.TYPING, (data: { userId: string; isTyping: boolean }) => {
       if (data.userId === activeUserId) {
         setTypingUserId(data.isTyping ? data.userId : null);
       }
-      // Auto-clear after 3s, resetting on each new event
       if (data.isTyping) {
         if (typingClearRef.current) clearTimeout(typingClearRef.current);
         typingClearRef.current = setTimeout(() => {
@@ -214,11 +220,10 @@ function MessengerContent() {
       sock.off('disconnect');
       sock.off(DM_EVENTS.MESSAGE);
       sock.off(DM_EVENTS.TYPING);
-      // Don't call disconnectSocket() — socket is shared globally
     };
   }, [currentUser, isLoading, router, activeUserId]);
 
-  /* ─── Socket presence tracking (separate effect: doesn't depend on activeUserId) ─── */
+  /* ─── Socket presence tracking ─── */
   useEffect(() => {
     if (!currentUser) return;
 
@@ -229,12 +234,10 @@ function MessengerContent() {
       return;
     }
 
-    // Receive initial online user list
     sock.on('user:online-list', (data: { onlineIds: string[] }) => {
       setOnlineUsers(new Set(data.onlineIds));
     });
 
-    // User came online
     sock.on('user:online', (data: { userId: string }) => {
       setOnlineUsers(prev => {
         const next = new Set(prev);
@@ -243,7 +246,6 @@ function MessengerContent() {
       });
     });
 
-    // User went offline
     sock.on('user:offline', (data: { userId: string }) => {
       setOnlineUsers(prev => {
         const next = new Set(prev);
@@ -266,8 +268,6 @@ function MessengerContent() {
     apiFetch('/dm/conversations', {})
       .then((data: ConversationData[]) => {
         setConversations(data || []);
-
-        // If we have an activeUserId from URL, find user info
         if (activeUserId) {
           const conv = (data || []).find(c =>
             c.senderId === activeUserId || c.receiverId === activeUserId
@@ -285,13 +285,11 @@ function MessengerContent() {
   useEffect(() => {
     if (!currentUser || !activeUserId) return;
     setMessagesLoading(true);
-    // Clear unread for this user when opening the chat
     setUnreadMap(prev => { const next = { ...prev }; delete next[activeUserId]; return next; });
     apiFetch(`/dm/conversations/${activeUserId}`, {})
       .then((data: DmMessageData[]) => {
         setMessages(data || []);
 
-        // Mark unread as read via socket
         const unreadIds = (data || [])
           .filter(m => m.receiverId === currentUser.id && !m.read)
           .map(m => m.id);
@@ -299,7 +297,6 @@ function MessengerContent() {
           socket.emit(DM_EVENTS.READ, { messageIds: unreadIds });
         }
 
-        // Find user info if not set
         if (!activeUserInfo && data && data.length > 0) {
           const lastMsg = data[data.length - 1];
           const other = lastMsg.senderId === currentUser.id ? lastMsg.receiver : lastMsg.sender;
@@ -308,7 +305,6 @@ function MessengerContent() {
       })
       .catch(() => {})
       .finally(() => setMessagesLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, activeUserId, socket]);
 
   /* ─── Scroll to bottom on new messages ─── */
@@ -321,7 +317,6 @@ function MessengerContent() {
     setActiveUserId(otherUser.id);
     setActiveUserInfo(otherUser);
     setShowList(false);
-    // Update URL without reload
     const url = new URL(window.location.href);
     url.searchParams.set('user', otherUser.id);
     window.history.replaceState({}, '', url.toString());
@@ -373,8 +368,6 @@ function MessengerContent() {
     setSearchingUsers(false);
   }, []);
 
-  /* ─── Loading / Auth states ─── */
-
   if (isLoading) {
     return (
       <div className="container" style={{ textAlign: 'center', padding: '80px 20px', maxWidth: '1200px' }}>
@@ -392,12 +385,18 @@ function MessengerContent() {
 
   if (!currentUser) return null;
 
-  /* ─── Helper to get unread count for a user ─── */
   const getUnreadCount = (otherUserId: string): number => {
     return unreadMap[otherUserId] || 0;
   };
 
-  /* ─── Render ─── */
+  const filteredConversations = conversations.filter(conv => {
+    if (!convFilter.trim()) return true;
+    const other = getOtherUser(conv, currentUser.id);
+    const name = getUsername(other).toLowerCase();
+    const username = other.username.toLowerCase();
+    const query = convFilter.toLowerCase();
+    return name.includes(query) || username.includes(query);
+  });
 
   return (
     <div className="container" style={{ maxWidth: '1200px', paddingTop: '16px', paddingBottom: '0', height: 'calc(100vh - 90px)', display: 'flex', flexDirection: 'column' }}>
@@ -434,7 +433,6 @@ function MessengerContent() {
         </div>
       </div>
 
-      {/* Mobile responsive styles */}
       <style>{`
         @media (max-width: 720px) {
           .messenger-split { flex-direction: column !important; }
@@ -442,6 +440,10 @@ function MessengerContent() {
           .conv-list-hidden { display: none !important; }
           .msg-pane-hidden { display: none !important; }
           .mobile-back-btn { display: flex !important; }
+        }
+        @keyframes typingDotBounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-4px); }
         }
       `}</style>
 
@@ -458,29 +460,37 @@ function MessengerContent() {
           borderRight: '1px solid var(--glass-border)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
-          {/* Search / New Chat */}
-          <div style={{ padding: '12px', borderBottom: '1px solid var(--glass-border)' }}>
+          {/* Search / Filter & New Chat */}
+          <div style={{ padding: '12px', borderBottom: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <input
+              className="input"
+              style={{ width: '100%', padding: '8px 12px', fontSize: '0.82rem', borderRadius: '8px' }}
+              placeholder="🔍 Buscar chats..."
+              value={convFilter}
+              onChange={e => setConvFilter(e.target.value)}
+            />
+
             <button
               onClick={() => setShowNewChat(!showNewChat)}
               style={{
-                width: '100%', padding: '10px 14px', borderRadius: '10px',
+                width: '100%', padding: '8px 12px', borderRadius: '8px',
                 border: '1px dashed rgba(255,255,255,0.1)',
                 background: 'transparent', color: 'var(--text-muted)',
-                cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500,
-                display: 'flex', alignItems: 'center', gap: '8px',
+                cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 transition: 'all 0.15s',
               }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(138,43,226,0.3)'; e.currentTarget.style.color = 'var(--primary)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
               </svg>
               Nueva conversación
             </button>
 
             {showNewChat && (
-              <div style={{ marginTop: '10px' }}>
+              <div style={{ marginTop: '6px' }}>
                 <input
                   className="input"
                   style={{ width: '100%', padding: '9px 12px', fontSize: '0.85rem' }}
@@ -537,6 +547,56 @@ function MessengerContent() {
               </div>
             )}
           </div>
+          {/* ─── Contactos Rápidos (Amigos) ─── */}
+          {friendsList.length > 0 && (
+            <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.1)' }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                Contactos Rápidos
+              </div>
+              <div className="no-scrollbar" style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '2px' }}>
+                {friendsList.map(friend => {
+                  const isOnline = onlineUsers.has(friend.id);
+                  const isSelected = activeUserId === friend.id;
+                  return (
+                    <button
+                      key={friend.id}
+                      onClick={() => selectConversation(friend)}
+                      title={getUsername(friend)}
+                      style={{
+                        border: 'none', background: 'transparent', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                        padding: 0, minWidth: '46px', flexShrink: 0, opacity: isSelected ? 1 : 0.85,
+                        transition: 'transform 0.15s, opacity 0.15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.05)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.opacity = isSelected ? '1' : '0.85'; e.currentTarget.style.transform = 'scale(1)'; }}
+                    >
+                      <div style={{
+                        position: 'relative', width: '38px', height: '38px', borderRadius: '50%',
+                        background: (friend.avatarUrl || friend.vtuberProfile?.avatarUrl)
+                          ? `url(${friend.avatarUrl || friend.vtuberProfile?.avatarUrl}) center/cover`
+                          : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                        boxShadow: isSelected ? '0 0 0 2px var(--primary)' : 'none',
+                      }}>
+                        {!(friend.avatarUrl || friend.vtuberProfile?.avatarUrl) && getInitial(friend)}
+                        <div style={{
+                          position: 'absolute', bottom: 0, right: 0,
+                          width: '10px', height: '10px', borderRadius: '50%',
+                          background: isOnline ? '#22c55e' : '#555',
+                          border: '2px solid var(--bg-deep)',
+                        }} />
+                      </div>
+                      <span style={{ fontSize: '0.68rem', color: isSelected ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: isSelected ? 600 : 400, maxWidth: '46px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {getUsername(friend)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Conversation items */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '6px' }}>
@@ -567,7 +627,7 @@ function MessengerContent() {
                   </div>
                 ))}
               </div>
-            ) : conversations.length === 0 ? (
+            ) : filteredConversations.length === 0 ? (
               <div style={{
                 padding: '40px 20px', textAlign: 'center',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
@@ -576,14 +636,14 @@ function MessengerContent() {
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-                  No hay conversaciones aún
+                  {convFilter ? 'Sin resultados' : 'No hay conversaciones aún'}
                 </p>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0, opacity: 0.7 }}>
-                  Busca un usuario para iniciar un chat
+                  {convFilter ? 'Prueba buscando con otro término' : 'Busca un usuario para iniciar un chat'}
                 </p>
               </div>
             ) : (
-              conversations.map((conv) => {
+              filteredConversations.map((conv) => {
                 const other = getOtherUser(conv, currentUser.id);
                 const unread = getUnreadCount(other.id);
                 const isActive = activeUserId === other.id;
@@ -594,7 +654,7 @@ function MessengerContent() {
                     style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
                       padding: '12px', borderRadius: '10px',
-                      border: 'none', background: isActive ? 'rgba(138,43,226,0.08)' : 'transparent',
+                      border: 'none', background: isActive ? 'rgba(138,43,226,0.12)' : 'transparent',
                       color: 'var(--text)', cursor: 'pointer',
                       width: '100%', textAlign: 'left',
                       transition: 'background 0.12s',
@@ -606,29 +666,27 @@ function MessengerContent() {
                     onMouseLeave={e => {
                       if (!isActive) e.currentTarget.style.background = 'transparent';
                     }}
-                >
-                  {/* Avatar with online dot */}
-                  <div style={{
-                    position: 'relative',
-                    width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-                    background: other.vtuberProfile?.avatarUrl
-                      ? `url(${other.vtuberProfile.avatarUrl}) center/cover`
-                      : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontSize: '0.75rem', fontWeight: 700,
-                  }}>
-                    {!other.vtuberProfile?.avatarUrl && getInitial(other)}
-                    {/* Online indicator dot */}
+                  >
+                    {/* Avatar with online dot */}
                     <div style={{
-                      position: 'absolute', bottom: '1px', right: '1px',
-                      width: '11px', height: '11px', borderRadius: '50%',
-                      border: '2px solid var(--background)',
-                      background: onlineUsers.has(other.id) ? '#22c55e' : '#555',
-                      transition: 'background 0.3s ease',
-                    }} />
-                  </div>
+                      position: 'relative',
+                      width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                      background: other.vtuberProfile?.avatarUrl
+                        ? `url(${other.vtuberProfile.avatarUrl}) center/cover`
+                        : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                    }}>
+                      {!other.vtuberProfile?.avatarUrl && getInitial(other)}
+                      <div style={{
+                        position: 'absolute', bottom: '1px', right: '1px',
+                        width: '11px', height: '11px', borderRadius: '50%',
+                        border: '2px solid var(--background)',
+                        background: onlineUsers.has(other.id) ? '#22c55e' : '#555',
+                        transition: 'background 0.3s ease',
+                      }} />
+                    </div>
 
-                  {/* Info: solo nombre + online + badge, sin preview de mensaje */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -685,70 +743,65 @@ function MessengerContent() {
               {/* Conversation header */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '14px 18px',
+                padding: '12px 18px',
                 borderBottom: '1px solid var(--glass-border)',
-                flexShrink: 0,
+                flexShrink: 0, justifyContent: 'space-between',
               }}>
-                <button
-                  onClick={() => setShowList(true)}
-                  style={{
-                    background: 'none', border: 'none', color: 'var(--text-muted)',
-                    cursor: 'pointer', padding: '2px', display: 'none',
-                  }}
-                  className="mobile-back-btn"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 18 9 12 15 6" />
-                  </svg>
-                </button>
-                <Link href={`/profile/${activeUserInfo.id}`} style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  textDecoration: 'none', color: 'inherit', flex: 1,
-                }}>
-                  <div style={{
-                    position: 'relative',
-                    width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                    background: activeUserInfo.vtuberProfile?.avatarUrl
-                      ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
-                      : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontSize: '0.7rem', fontWeight: 700,
-                  }}>
-                    {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
-                    {/* Online indicator dot */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    onClick={() => setShowList(true)}
+                    style={{
+                      background: 'none', border: 'none', color: 'var(--text-muted)',
+                      cursor: 'pointer', padding: '2px', display: 'none',
+                    }}
+                    className="mobile-back-btn"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <Link href={`/profile/${activeUserInfo.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
-                      position: 'absolute', bottom: '0', right: '0',
-                      width: '10px', height: '10px', borderRadius: '50%',
-                      border: '2px solid var(--background)',
-                      background: onlineUsers.has(activeUserInfo.id) ? '#22c55e' : '#555',
-                      transition: 'background 0.3s ease',
-                    }} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      {getUsername(activeUserInfo)}
-                      {activeUserInfo.vtuberProfile?.isVerified && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                        </svg>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        width: '6px', height: '6px', borderRadius: '50%',
-                        background: onlineUsers.has(activeUserInfo.id) ? '#22c55e' : 'rgba(255,255,255,0.2)',
+                      position: 'relative',
+                      width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+                      background: activeUserInfo.vtuberProfile?.avatarUrl
+                        ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
+                        : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#fff', fontSize: '0.8rem', fontWeight: 700,
+                    }}>
+                      {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
+                      <div style={{
+                        position: 'absolute', bottom: '0', right: '0',
+                        width: '10px', height: '10px', borderRadius: '50%',
+                        border: '2px solid var(--background)',
+                        background: onlineUsers.has(activeUserInfo.id) ? '#22c55e' : '#555',
                       }} />
-                      {onlineUsers.has(activeUserInfo.id) ? 'En línea' : 'Desconectado'}
                     </div>
-                  </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {getUsername(activeUserInfo)}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: onlineUsers.has(activeUserInfo.id) ? '#22c55e' : 'var(--text-muted)', fontWeight: 500 }}>
+                        {onlineUsers.has(activeUserInfo.id) ? 'En línea' : `@${activeUserInfo.username}`}
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+
+                <Link
+                  href={`/profile/${activeUserInfo.id}`}
+                  className="btn btn--outline"
+                  style={{ padding: '5px 12px', fontSize: '0.78rem', borderRadius: '8px' }}
+                >
+                  Ver Perfil
                 </Link>
               </div>
 
               {/* Messages area */}
               <div style={{
                 flex: 1, overflowY: 'auto', padding: '16px 18px',
-                display: 'flex', flexDirection: 'column', gap: '6px',
+                display: 'flex', flexDirection: 'column', gap: '8px',
               }}>
                 {messagesLoading ? (
                   <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -764,117 +817,138 @@ function MessengerContent() {
                 ) : messages.length === 0 ? (
                   <div style={{
                     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexDirection: 'column', gap: '8px',
+                    flexDirection: 'column', gap: '12px', padding: '30px 20px', textAlign: 'center',
                   }}>
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity={0.3}>
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-                      No hay mensajes aún
+                    <div style={{
+                      width: '64px', height: '64px', borderRadius: '50%',
+                      background: activeUserInfo.vtuberProfile?.avatarUrl
+                        ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
+                        : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#fff', fontSize: '1.4rem', fontWeight: 700,
+                    }}>
+                      {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{getUsername(activeUserInfo)}</h4>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{activeUserInfo.username}</p>
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+                      ¡Sé el primero en iniciar esta conversación!
                     </p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0, opacity: 0.7 }}>
-                      Envía un mensaje para iniciar la conversación
-                    </p>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInput('¡Hola! 👋');
+                          setTimeout(() => inputRef.current?.focus(), 50);
+                        }}
+                        className="btn btn--outline"
+                        style={{ padding: '6px 14px', fontSize: '0.8rem', borderRadius: '20px' }}
+                      >
+                        👋 Decir hola
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <>
-                    {/* Date divider for today */}
-                    {(() => {
-                      const today = new Date().toDateString();
-                      const yesterday = new Date(Date.now() - 86400000).toDateString();
-                      let lastDate = '';
-                      return messages.map((msg, idx) => {
-                        const msgDate = new Date(msg.createdAt).toDateString();
-                        let divider = null;
-                        if (msgDate !== lastDate) {
-                          lastDate = msgDate;
-                          let label = msgDate === today ? 'Hoy' :
-                            msgDate === yesterday ? 'Ayer' :
-                            new Date(msg.createdAt).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-                          divider = (
-                            <div key={`divider-${msg.id}`} style={{
-                              textAlign: 'center', padding: '12px 0 8px',
-                              fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600,
-                              textTransform: 'uppercase', letterSpacing: '0.05em',
-                            }}>
-                              <span style={{
-                                padding: '4px 14px', borderRadius: '10px',
-                                background: 'rgba(255,255,255,0.03)',
-                              }}>
-                                {label}
-                              </span>
-                            </div>
-                          );
-                        }
+                  messages.map((msg, idx) => {
+                    const isMine = msg.senderId === currentUser.id;
+                    const showAvatar = !isMine && (idx === 0 || messages[idx - 1]?.senderId !== msg.senderId);
+                    const isImage = msg.content.startsWith('http') && (msg.content.includes('/uploads/') || /\.(webp|png|jpg|jpeg|gif)$/i.test(msg.content));
 
-                        const isMine = msg.senderId === currentUser.id;
-                        const showAvatar = !isMine && (idx === 0 || messages[idx - 1]?.senderId !== msg.senderId);
-
-                        return (
-                          <div key={msg.id}>
-                            {divider}
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'flex-end',
-                              gap: '8px',
-                              flexDirection: isMine ? 'row-reverse' : 'row',
-                              maxWidth: '85%',
-                              alignSelf: isMine ? 'flex-end' : 'flex-start',
-                              marginLeft: isMine ? 'auto' : '0',
-                            }}>
-                              {showAvatar && (
-                                <div style={{
-                                  width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
-                                  background: activeUserInfo.vtuberProfile?.avatarUrl
-                                    ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
-                                    : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  color: '#fff', fontSize: '0.55rem', fontWeight: 700,
-                                }}>
-                                  {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
-                                </div>
-                              )}
-                              {!showAvatar && !isMine && <div style={{ width: '26px', flexShrink: 0 }} />}
-                              <div style={{
-                                background: isMine
-                                  ? 'linear-gradient(135deg, var(--primary), #7c6aff)'
-                                  : 'rgba(255,255,255,0.06)',
-                                padding: '10px 14px',
-                                borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                                maxWidth: '100%',
-                              }}>
-                                <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
-                                  {renderFormattedContent(msg.content)}
-                                </p>
-                                <div style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: isMine ? 'flex-end' : 'flex-start',
-                                  gap: '4px', marginTop: '4px',
-                                }}>
-                                  <span style={{ fontSize: '0.62rem', opacity: 0.5 }}>
-                                    {formatTimeFull(msg.createdAt)}
-                                  </span>
-                                  {isMine && (
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill={msg.read ? 'var(--accent)' : 'rgba(255,255,255,0.3)'} style={{ opacity: msg.read ? 1 : 0.4 }}>
-                                      <path d="M9 12l2 2 4-4" stroke={msg.read ? 'var(--accent)' : 'rgba(255,255,255,0.3)'} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                                      <path d="M9 12l2 2 4-4" />
-                                    </svg>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                    return (
+                      <div key={msg.id} style={{
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        gap: '8px',
+                        flexDirection: isMine ? 'row-reverse' : 'row',
+                        maxWidth: '85%',
+                        alignSelf: isMine ? 'flex-end' : 'flex-start',
+                        marginLeft: isMine ? 'auto' : '0',
+                      }}>
+                        {showAvatar && (
+                          <div style={{
+                            width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
+                            background: activeUserInfo.vtuberProfile?.avatarUrl
+                              ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
+                              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#fff', fontSize: '0.55rem', fontWeight: 700,
+                          }}>
+                            {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
                           </div>
-                        );
-                      });
-                    })()}
-                  </>
+                        )}
+                        {!showAvatar && !isMine && <div style={{ width: '26px', flexShrink: 0 }} />}
+                        
+                        <div style={{
+                          background: isMine
+                            ? 'linear-gradient(135deg, var(--primary), #7c6aff)'
+                            : 'rgba(255,255,255,0.06)',
+                          padding: isImage ? '4px' : '10px 14px',
+                          borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                          maxWidth: '100%',
+                        }}>
+                          {isImage ? (
+                            <img
+                              src={msg.content}
+                              alt=""
+                              onClick={() => setLightboxImage(msg.content)}
+                              style={{
+                                maxWidth: '280px', maxHeight: '220px', borderRadius: '12px',
+                                objectFit: 'cover', display: 'block', cursor: 'zoom-in',
+                              }}
+                            />
+                          ) : (
+                            <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                              {renderFormattedContent(msg.content)}
+                            </p>
+                          )}
+
+                          <div style={{
+                            display: 'flex', alignItems: 'center', justifyContent: isMine ? 'flex-end' : 'flex-start',
+                            gap: '4px', marginTop: '4px', padding: isImage ? '2px 6px 4px' : 0,
+                          }}>
+                            <span style={{ fontSize: '0.62rem', opacity: 0.65 }}>
+                              {formatTimeFull(msg.createdAt)}
+                            </span>
+                            {isMine && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '2px' }}>
+                                {msg.read ? (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6CB4EE" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M18 6L7 17l-5-5" />
+                                    <path d="M22 10l-7.5 7.5" />
+                                  </svg>
+                                ) : (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M20 6L9 17l-5-5" />
+                                  </svg>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
                 <div ref={messagesEndRef} />
               </div>
 
               {/* Typing indicator */}
               {typingUserId && (
-                <div style={{ padding: '4px 18px', fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                  {getUsername(activeUserInfo)} está escribiendo...
+                <div style={{
+                  padding: '6px 18px', display: 'flex', alignItems: 'center', gap: '8px',
+                  fontSize: '0.78rem', color: 'var(--text-muted)',
+                }}>
+                  <div style={{
+                    display: 'inline-flex', gap: '3px', alignItems: 'center',
+                    padding: '4px 8px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)',
+                  }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0s' }} />
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0.2s' }} />
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)', animation: 'typingDotBounce 1.4s infinite 0.4s' }} />
+                  </div>
+                  <span>{getUsername(activeUserInfo)} está escribiendo...</span>
                 </div>
               )}
 
@@ -888,6 +962,51 @@ function MessengerContent() {
                   flexShrink: 0,
                 }}
               >
+                {/* Hidden image file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !socket || !activeUserId) return;
+                    setUploadingImage(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('image', file);
+                      const res = await apiFetch('/uploads/post', { method: 'POST', body: formData });
+                      if (res.url) {
+                        socket.emit(DM_EVENTS.MESSAGE, { receiverId: activeUserId, content: res.url });
+                      }
+                    } catch {} finally {
+                      setUploadingImage(false);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+
+                {/* Media upload button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage || !connected}
+                  title="Adjuntar imagen"
+                  style={{
+                    width: '40px', height: '40px',
+                    borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)',
+                    cursor: 'pointer',
+                    background: uploadingImage ? 'rgba(138,43,226,0.15)' : 'rgba(255,255,255,0.04)',
+                    color: uploadingImage ? 'var(--primary)' : 'var(--text-muted)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s', flexShrink: 0,
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </button>
+
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <button
                     type="button"
@@ -926,10 +1045,10 @@ function MessengerContent() {
                   ref={inputRef}
                   className="input"
                   style={{ flex: 1, padding: '10px 16px', fontSize: '0.88rem' }}
-                  placeholder="Escribe un mensaje..."
+                  placeholder={uploadingImage ? "Subiendo imagen..." : "Escribe un mensaje..."}
                   value={input}
                   onChange={handleInputChange}
-                  disabled={!connected}
+                  disabled={!connected || uploadingImage}
                   maxLength={1000}
                 />
                 <button
@@ -939,7 +1058,7 @@ function MessengerContent() {
                     padding: '10px 20px', fontSize: '0.85rem', fontWeight: 600,
                     display: 'flex', alignItems: 'center', gap: '6px',
                   }}
-                  disabled={!connected || !input.trim() || sending}
+                  disabled={!connected || !input.trim() || sending || uploadingImage}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -949,7 +1068,6 @@ function MessengerContent() {
               </form>
             </>
           ) : (
-            /* Empty state — no conversation selected */
             <div style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexDirection: 'column', gap: '16px',
@@ -976,6 +1094,20 @@ function MessengerContent() {
           )}
         </div>
       </div>
+
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px', cursor: 'zoom-out',
+          }}
+        >
+          <img src={lightboxImage} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: '12px', objectFit: 'contain' }} />
+        </div>
+      )}
     </div>
   );
 }
