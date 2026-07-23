@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import ProfileCardWidget from './ProfileCardWidget';
 
 interface UserAvatarProps {
@@ -36,6 +36,7 @@ export default function UserAvatar({
   const hasNote = !!note;
   const ringSize = size + 6; // 3px padding per side
   const noteDotSize = Math.max(10, Math.round(size * 0.28));
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openProfileCard = useCallback(() => {
     if (userId) setProfileCardUserId(userId);
@@ -43,6 +44,27 @@ export default function UserAvatar({
 
   const closeProfileCard = useCallback(() => {
     setProfileCardUserId(null);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    if (hasNote) {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+      setShowNote(true);
+    }
+  }, [hasNote]);
+
+  const handleMouseLeave = useCallback(() => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowNote(false);
+    }, 300); // Small delay to allow moving to the bubble
+  }, []);
+
+  const handleNoteBubbleEnter = useCallback(() => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+  }, []);
+
+  const handleNoteBubbleLeave = useCallback(() => {
+    setShowNote(false);
   }, []);
 
   const avatarContent = (
@@ -60,6 +82,8 @@ export default function UserAvatar({
           ...(style as React.CSSProperties),
         }}
         className={className}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={(e) => {
           if (userId) {
             e.preventDefault();
@@ -164,46 +188,87 @@ export default function UserAvatar({
 
 
 
-      {/* Note tooltip */}
+      {/* Note cloud bubble */}
       {hasNote && showNote && (
         <div
+          onMouseEnter={handleNoteBubbleEnter}
+          onMouseLeave={handleNoteBubbleLeave}
           style={{
             position: 'absolute',
             bottom: '100%', left: '50%', transform: 'translateX(-50%)',
-            marginBottom: '8px',
-            padding: '8px 14px',
-            borderRadius: '12px',
-            background: 'rgba(20,20,35,0.96)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(139,92,246,0.3)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            marginBottom: '12px',
+            padding: '12px 18px',
+            borderRadius: '18px 18px 18px 4px',
+            background: 'linear-gradient(135deg, rgba(30,28,55,0.97), rgba(20,20,40,0.97))',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(139,92,246,0.2)',
+            boxShadow: '0 12px 48px rgba(0,0,0,0.5), 0 0 60px rgba(139,92,246,0.06)',
             zIndex: 100,
-            minWidth: '140px',
-            maxWidth: '250px',
+            minWidth: '150px',
+            maxWidth: '280px',
             whiteSpace: 'nowrap',
-            animation: 'fadeInUp 0.15s ease',
+            animation: 'noteCloudIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            cursor: 'default',
+            pointerEvents: 'auto',
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 500 }}>
+          {/* Decorative top gradient line */}
+          <div style={{
+            position: 'absolute', top: 0, left: '20%', right: '20%', height: '2px',
+            background: 'linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent)',
+            borderRadius: '1px',
+          }} />
+
+          {/* Note text */}
+          <div style={{ fontSize: '0.88rem', color: 'var(--text)', fontWeight: 500, lineHeight: 1.5 }}>
             {note}
           </div>
           {noteUpdatedAt && (
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px', opacity: 0.7 }}>
+            <div style={{
+              fontSize: '0.65rem', color: 'var(--text-muted)',
+              marginTop: '6px', opacity: 0.6,
+              display: 'flex', alignItems: 'center', gap: '4px',
+            }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
               hace {timeAgo(noteUpdatedAt)}
             </div>
           )}
-          {/* Arrow */}
+          {/* Cloud tail (more rounded, puff-like) */}
           <div
             style={{
               position: 'absolute',
-              top: '100%', left: '50%', transform: 'translateX(-50%)',
-              width: 0, height: 0,
-              borderLeft: '6px solid transparent',
-              borderRight: '6px solid transparent',
-              borderTop: '6px solid rgba(20,20,35,0.96)',
+              bottom: '-8px', left: '50%', transform: 'translateX(-50%) rotate(45deg)',
+              width: '14px', height: '14px',
+              background: 'rgba(30,28,55,0.97)',
+              borderRight: '1px solid rgba(139,92,246,0.2)',
+              borderBottom: '1px solid rgba(139,92,246,0.2)',
+              borderRadius: '0 0 4px 0',
+              zIndex: -1,
             }}
           />
+
+          {/* Floating particles (decorative) */}
+          <div style={{
+            position: 'absolute', top: '-4px', right: '16px',
+            width: '4px', height: '4px', borderRadius: '50%',
+            background: 'rgba(139,92,246,0.3)',
+            animation: 'noteFloat 3s ease-in-out infinite',
+          }} />
+          <div style={{
+            position: 'absolute', top: '-2px', right: '26px',
+            width: '3px', height: '3px', borderRadius: '50%',
+            background: 'rgba(0,212,255,0.2)',
+            animation: 'noteFloat 3s ease-in-out 1s infinite',
+          }} />
+          <div style={{
+            position: 'absolute', top: '-6px', right: '22px',
+            width: '2px', height: '2px', borderRadius: '50%',
+            background: 'rgba(139,92,246,0.2)',
+            animation: 'noteFloat 3s ease-in-out 0.5s infinite',
+          }} />
         </div>
       )}
     </div>
