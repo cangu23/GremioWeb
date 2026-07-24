@@ -478,18 +478,19 @@ function ProfileContent() {
             )}
             {vtuber?.isLive && (
               <span style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '4px 12px', borderRadius: '20px',
-                background: 'rgba(245,158,11,0.12)',
-                border: '1px solid rgba(245,158,11,0.3)',
-                fontSize: '0.8rem', fontWeight: 600, color: 'var(--warm)',
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                padding: '4px 14px', borderRadius: '20px',
+                background: 'linear-gradient(135deg, #ff0055, #ff2a6d)',
+                boxShadow: '0 0 14px rgba(255,0,85,0.6)',
+                fontSize: '0.8rem', fontWeight: 800, color: '#fff',
+                letterSpacing: '0.04em',
               }}>
                 <span style={{
                   width: '8px', height: '8px', borderRadius: '50%',
-                  background: 'var(--warm)',
+                  background: '#fff',
                   animation: 'pulse 1.5s ease-in-out infinite',
                 }} />
-                EN VIVO
+                EN VIVO AHORA
               </span>
             )}
           </div>

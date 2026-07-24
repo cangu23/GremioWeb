@@ -72,9 +72,15 @@ async function getAccessToken(): Promise<string> {
  */
 export function extractChannelName(url: string | null): string | null {
   if (!url || !url.trim()) return null;
-  const clean = url.trim().replace(/^@/, '');
-  const match = clean.match(/(?:twitch\.tv\/)?([a-zA-Z0-9_]{2,25})/i);
-  return match ? match[1].toLowerCase() : null;
+  let clean = url.trim();
+  // Remove protocol and www
+  clean = clean.replace(/^(https?:\/\/)?(www\.)?/i, '');
+  // Remove twitch.tv/
+  clean = clean.replace(/^twitch\.tv\//i, '');
+  // Remove leading @ and trailing path/params
+  clean = clean.replace(/^@/, '').split('/')[0].split('?')[0];
+  const match = clean.match(/^[a-zA-Z0-9_]{2,25}$/);
+  return match ? clean.toLowerCase() : null;
 }
 
 /**

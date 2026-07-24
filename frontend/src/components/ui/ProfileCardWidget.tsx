@@ -277,10 +277,12 @@ function CardContent({
           {isLive && (
             <div style={{
               position: 'absolute', top: '12px', left: '12px', zIndex: 3,
-              padding: '3px 10px', borderRadius: '8px',
-              background: 'rgba(245,158,11,0.9)',
-              fontSize: '0.62rem', fontWeight: 700, color: '#fff',
-              display: 'flex', alignItems: 'center', gap: '4px',
+              padding: '4px 12px', borderRadius: '12px',
+              background: 'linear-gradient(135deg, #ff0055, #ff2a6d)',
+              fontSize: '0.65rem', fontWeight: 800, color: '#fff',
+              display: 'flex', alignItems: 'center', gap: '5px',
+              boxShadow: '0 0 12px rgba(255,0,85,0.7)',
+              letterSpacing: '0.04em',
             }}>
               <span style={{
                 width: '6px', height: '6px', borderRadius: '50%',

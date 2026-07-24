@@ -143,15 +143,12 @@ export const getVtubersDirectory = async (params: {
 };
 
 export const getLiveVtubers = async () => {
-  // Auto-expire stale live statuses older than 2 hours or with missing lastLiveAt
-  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  // Auto-expire stale live statuses older than 6 hours
+  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
   await prisma.vTuberProfile.updateMany({
     where: {
       isLive: true,
-      OR: [
-        { lastLiveAt: { lt: twoHoursAgo } },
-        { lastLiveAt: null },
-      ],
+      lastLiveAt: { lt: sixHoursAgo },
     },
     data: { isLive: false },
   });

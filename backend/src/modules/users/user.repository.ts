@@ -210,6 +210,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       }
       if (dataRecord.displayName !== undefined) profileData.displayName = dataRecord.displayName;
       if (dataRecord.avatarUrl !== undefined) profileData.avatarUrl = dataRecord.avatarUrl;
+      if (dataRecord.isLive === true) profileData.lastLiveAt = new Date();
       if (socialLinks !== undefined) profileData.socialLinks = JSON.stringify(socialLinks);
       if (languages !== undefined) profileData.languages = JSON.stringify(languages);
       if (hashtags !== undefined) profileData.hashtags = JSON.stringify(hashtags);

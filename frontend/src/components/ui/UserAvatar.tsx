@@ -121,7 +121,8 @@ export default function UserAvatar({
           color: 'white', fontWeight: 'bold', fontSize: `${Math.round(size * 0.45)}px`,
           overflow: 'hidden', flexShrink: 0,
           position: 'relative', zIndex: 1,
-          border: isLive ? '2px solid var(--warm)' : '2px solid transparent',
+          border: isLive ? '2px solid #ff0055' : '2px solid transparent',
+          boxShadow: isLive ? '0 0 14px rgba(255,0,85,0.6)' : 'none',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         }}
         onMouseEnter={(e) => {
@@ -132,7 +133,7 @@ export default function UserAvatar({
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = 'none';
+          e.currentTarget.style.boxShadow = isLive ? '0 0 14px rgba(255,0,85,0.6)' : 'none';
         }}
       >
         {src && !imageError ? (
@@ -176,13 +177,17 @@ export default function UserAvatar({
         <div
           style={{
             position: 'absolute',
-            bottom: -2, left: '50%', transform: 'translateX(-50%)',
-            padding: '1px 6px', borderRadius: '6px',
-            background: 'var(--warm)',
-            fontSize: '0.55rem', fontWeight: 700, color: '#fff',
+            bottom: -3, left: '50%', transform: 'translateX(-50%)',
+            padding: '2px 8px', borderRadius: '10px',
+            background: 'linear-gradient(135deg, #ff0055, #ff2a6d)',
+            fontSize: '0.58rem', fontWeight: 800, color: '#fff',
+            letterSpacing: '0.04em',
             zIndex: 3, whiteSpace: 'nowrap',
+            boxShadow: '0 0 10px rgba(255,0,85,0.7)',
+            display: 'flex', alignItems: 'center', gap: '4px',
           }}
         >
+          <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#fff' }} />
           LIVE
         </div>
       )}

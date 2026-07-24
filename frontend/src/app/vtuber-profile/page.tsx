@@ -699,21 +699,44 @@ function VtuberProfileEditor() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             <div className="form-group" style={{ marginBottom: 0, gridColumn: 'span 2' }}>
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Detección Automática de Transmisión
-                <span style={{
-                  padding: '3px 10px', borderRadius: '8px',
-                  background: isLive ? 'rgba(233,30,99,0.15)' : 'rgba(255,255,255,0.05)',
-                  fontSize: '0.72rem', fontWeight: 700,
-                  color: isLive ? '#e91e63' : 'var(--text-muted)',
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                }}>
-                  <svg width="8" height="8" viewBox="0 0 8 8">
-                    <circle cx="4" cy="4" r="3.5" fill={isLive ? '#e91e63' : 'var(--text-muted)'} />
-                  </svg>
-                  {isLive ? 'EN VIVO AHORA' : 'FUERA DE LÍNEA'}
-                </span>
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  Estado de Transmisión (En Vivo)
+                  <span style={{
+                    padding: '4px 12px', borderRadius: '12px',
+                    background: isLive ? 'rgba(233,30,99,0.2)' : 'rgba(255,255,255,0.05)',
+                    fontSize: '0.75rem', fontWeight: 700,
+                    color: isLive ? '#ff2a6d' : 'var(--text-muted)',
+                    border: isLive ? '1px solid rgba(233,30,99,0.4)' : '1px solid transparent',
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  }}>
+                    <span style={{
+                      width: '8px', height: '8px', borderRadius: '50%',
+                      background: isLive ? '#ff2a6d' : '#666',
+                      boxShadow: isLive ? '0 0 8px #ff2a6d' : 'none',
+                    }} />
+                    {isLive ? '🔴 EN VIVO AHORA' : '⚪ FUERA DE LÍNEA'}
+                  </span>
+                </label>
+
+                {/* Manual toggle switch */}
+                <button
+                  type="button"
+                  onClick={() => setIsLive(!isLive)}
+                  style={{
+                    padding: '8px 18px', borderRadius: '20px',
+                    border: isLive ? '1px solid #ff2a6d' : '1px solid rgba(255,255,255,0.2)',
+                    background: isLive ? 'linear-gradient(135deg, #ff2a6d, #ff0055)' : 'rgba(255,255,255,0.08)',
+                    color: '#fff',
+                    fontWeight: 700, fontSize: '0.82rem',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                    boxShadow: isLive ? '0 4px 14px rgba(255,0,85,0.4)' : 'none',
+                  }}
+                >
+                  {isLive ? '⏹ Marcar Fuera de Línea' : '🔴 Marcar EN VIVO'}
+                </button>
+              </div>
+
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '12px 18px', borderRadius: '12px',
@@ -724,12 +747,13 @@ function VtuberProfileEditor() {
               }}>
                 <span style={{
                   width: '10px', height: '10px', borderRadius: '50%',
-                  background: isLive ? '#e91e63' : '#666',
-                  boxShadow: isLive ? '0 0 10px #e91e63' : 'none',
+                  background: isLive ? '#ff2a6d' : '#666',
+                  boxShadow: isLive ? '0 0 10px #ff2a6d' : 'none',
+                  flexShrink: 0,
                 }} />
                 {isLive
-                  ? 'El sistema detectó que tu canal está en vivo. Se muestra en el directorio y banner.'
-                  : 'El sistema verifica automáticamente tu canal de Twitch cada minuto al iniciar directo.'}
+                  ? 'Estás marcado como EN VIVO. Tu perfil se promocionará activamente en el banner principal y directorio.'
+                  : 'Puedes activar tu estado EN VIVO manualmente arriba o dejar que el sistema lo detecte por Twitch.'}
               </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
