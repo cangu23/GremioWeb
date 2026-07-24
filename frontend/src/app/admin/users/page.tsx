@@ -125,15 +125,21 @@ export default function AdminUsersPage() {
           body: JSON.stringify({ role: 'VTUBER', isVerified: true }),
         });
       } else {
+        const statusMap: Record<string, string> = {
+          ban: 'BANNED',
+          suspend: 'SUSPENDED',
+          restore: 'ACTIVE',
+        };
+        const targetStatus = statusMap[action] || action.toUpperCase();
         await apiFetch(`/admin/users/${userId}`, {
           method: 'PATCH',
-          body: JSON.stringify({ status: action === 'restore' ? 'ACTIVE' : action.toUpperCase() }),
+          body: JSON.stringify({ status: targetStatus }),
         });
       }
       showToast(`Usuario ${label} con éxito`, 'success');
       fetchUsers();
     } catch (err: any) {
-      showToast(err.message, 'error');
+      showToast(err.message || 'Error al ejecutar acción', 'error');
     }
   };
 
@@ -246,22 +252,22 @@ export default function AdminUsersPage() {
                       <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
                         {new Date(user.createdAt).toLocaleDateString('es-ES')}
                       </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                          <button onClick={() => openEdit(user)} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(138,43,226,0.2)', color: '#8a2be2', border: '1px solid rgba(138,43,226,0.3)' }}>Editar</button>
+                      <td style={{ padding: '12px 16px', minWidth: '280px', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'nowrap' }}>
+                          <button onClick={() => openEdit(user)} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(138,43,226,0.2)', color: '#a855f7', border: '1px solid rgba(138,43,226,0.4)', fontWeight: 600 }}>Editar</button>
                           {user.role !== 'VTUBER' && (
-                            <button onClick={() => confirmAction(user.id, 'vtuber', 'promover a VTuber')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.3)' }}>
+                            <button onClick={() => confirmAction(user.id, 'vtuber', 'promover a VTuber')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.4)', fontWeight: 600 }}>
                               + VTuber
                             </button>
                           )}
                           {user.status === 'ACTIVE' && (
-                            <button onClick={() => confirmAction(user.id, 'suspend', 'suspender')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.3)' }}>Suspender</button>
+                            <button onClick={() => confirmAction(user.id, 'suspend', 'suspender')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.4)', fontWeight: 600 }}>Suspender</button>
                           )}
                           {(user.status === 'SUSPENDED' || user.status === 'BANNED') && (
-                            <button onClick={() => confirmAction(user.id, 'restore', 'restaurar')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.3)' }}>Restaurar</button>
+                            <button onClick={() => confirmAction(user.id, 'restore', 'restaurar')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.4)', fontWeight: 600 }}>Restaurar</button>
                           )}
                           {user.status !== 'BANNED' && (
-                            <button onClick={() => confirmAction(user.id, 'ban', 'banear')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.3)' }}>Banear</button>
+                            <button onClick={() => confirmAction(user.id, 'ban', 'banear')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.4)', fontWeight: 600 }}>Banear</button>
                           )}
                         </div>
                       </td>
