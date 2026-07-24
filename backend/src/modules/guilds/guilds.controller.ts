@@ -4,7 +4,8 @@ import * as GuildsService from './guilds.service';
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
-    const guild = await GuildsService.create(req.body, userId);
+    const userRole = req.user!.role;
+    const guild = await GuildsService.create(req.body, userId, userRole);
     res.status(201).json(guild);
   } catch (error) {
     next(error);

@@ -210,12 +210,17 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
 
   const updated = await AdminRepository.updateVtuberProfile(id, data);
 
-  if (data.isApproved === false || data.isHidden === true) {
+  // Sync user role based on VTuber profile status changes.
+  // Only demote to USER if explicitly revoking approval.
+  // Hiding the profile temporarily should NOT remove the VTUBER role.
+  if (data.isApproved === false) {
+    // Explicitly revoked approval → demote to USER
     await prisma.user.update({
       where: { id: profile.userId },
       data: { role: 'USER' },
     });
-  } else if (data.isApproved === true && data.isHidden === false) {
+  } else if (data.isApproved === true) {
+    // Re-approving → always restore VTUBER role regardless of isHidden
     await prisma.user.update({
       where: { id: profile.userId },
       data: { role: 'VTUBER' },

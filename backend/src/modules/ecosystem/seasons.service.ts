@@ -66,11 +66,12 @@ export const getUserSeasonPass = async (userId: string) => {
   const season = await getOrCreateActiveSeason();
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { plan: true, role: true },
+    select: { plan: true, role: true, level: true },
   });
 
   const isVip = user?.role === 'VTUBER' || user?.role === 'MAID' || user?.role === 'ADMIN';
   const isPremiumUser = isVip || (user?.plan && user.plan !== 'FREE');
+  const userLevel = Math.max(1, user?.level || 1);
 
   let userPass = await prisma.userSeasonPass.findUnique({
     where: { userId_seasonId: { userId, seasonId: season.id } },
@@ -81,17 +82,23 @@ export const getUserSeasonPass = async (userId: string) => {
       data: {
         userId,
         seasonId: season.id,
-        level: 1,
+        level: userLevel,
         xp: 0,
         isPremium: !!isPremiumUser,
         claimedLevels: '[]',
       },
     });
-  } else if (userPass.isPremium !== !!isPremiumUser) {
-    userPass = await prisma.userSeasonPass.update({
-      where: { id: userPass.id },
-      data: { isPremium: !!isPremiumUser },
-    });
+  } else {
+    const updatedLevel = Math.max(userPass.level, userLevel);
+    if (userPass.level !== updatedLevel || userPass.isPremium !== !!isPremiumUser) {
+      userPass = await prisma.userSeasonPass.update({
+        where: { id: userPass.id },
+        data: {
+          level: updatedLevel,
+          isPremium: !!isPremiumUser,
+        },
+      });
+    }
   }
 
   const passLevels = await prisma.passLevel.findMany({
@@ -122,6 +129,31 @@ export const getUserSeasonPass = async (userId: string) => {
   };
 };
 
+/**
+ * Helper to grant a title to user if they don't already have it
+ */
+const grantTitleToUser = async (userId: string, titleLabel: string) => {
+  const cleanName = titleLabel.replace(/^(Título:\s*)/i, '').trim();
+  let title = await prisma.title.findUnique({ where: { name: cleanName } });
+  if (!title) {
+    title = await prisma.title.create({
+      data: {
+        name: cleanName,
+        description: `Título obtenido en el Pase Estelar`,
+        requirementType: 'SEASONAL',
+      },
+    });
+  }
+  const existingUserTitle = await prisma.userTitle.findUnique({
+    where: { userId_titleId: { userId, titleId: title.id } },
+  });
+  if (!existingUserTitle) {
+    await prisma.userTitle.create({
+      data: { userId, titleId: title.id },
+    });
+  }
+};
+
 export const claimPassLevel = async (userId: string, levelNumber: number) => {
   const { userPass, levels } = await getUserSeasonPass(userId);
   const targetLevel = levels.find(l => l.level === levelNumber);
@@ -150,6 +182,9 @@ export const claimPassLevel = async (userId: string, levelNumber: number) => {
     } else if (targetLevel.freeReward.type === 'xp') {
       await awardCustomXp(userId, targetLevel.freeReward.amount).catch(() => {});
       summary += `+${targetLevel.freeReward.amount} XP `;
+    } else if (targetLevel.freeReward.type === 'title') {
+      await grantTitleToUser(userId, targetLevel.freeReward.label).catch(() => {});
+      summary += `Título desbloqueado: "${targetLevel.freeReward.label}" `;
     }
   }
 
@@ -161,6 +196,9 @@ export const claimPassLevel = async (userId: string, levelNumber: number) => {
     } else if (targetLevel.premiumReward.type === 'xp') {
       await awardCustomXp(userId, targetLevel.premiumReward.amount).catch(() => {});
       summary += `+${targetLevel.premiumReward.amount} XP (Premium) `;
+    } else if (targetLevel.premiumReward.type === 'title') {
+      await grantTitleToUser(userId, targetLevel.premiumReward.label).catch(() => {});
+      summary += `Título Premium desbloqueado: "${targetLevel.premiumReward.label}" `;
     }
   }
 

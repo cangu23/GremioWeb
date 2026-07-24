@@ -14,10 +14,13 @@ export const getFeed = async (req: Request, res: Response, next: NextFunction) =
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(50, Number(req.query.limit) || 20);
-    const personalized = req.query.personalized === 'true';
+    const mode = String(req.query.mode || (req.query.personalized === 'true' ? 'following' : 'for-you'));
     
-    if (personalized && req.user) {
+    if (mode === 'following' && req.user) {
       const posts = await PostsService.getPersonalizedFeed(req.user.id, page, limit);
+      res.json(posts);
+    } else if (mode === 'for-you') {
+      const posts = await PostsService.getAlgorithmicFeed(req.user?.id, page, limit);
       res.json(posts);
     } else {
       const posts = await PostsService.getFeed(req.user?.id, page, limit);

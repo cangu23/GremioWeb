@@ -4,9 +4,12 @@ import * as UserRepository from '../users/user.repository';
 import * as NotificationsService from '../notifications/notifications.service';
 import { CreateGuildPayload } from '@gremio-estelar/shared';
 
-export const create = async (payload: CreateGuildPayload, creatorId: string) => {
-  // Cualquier usuario autenticado puede crear gremios (son espacios comunitarios de fans)
-  // Los roles inválidos o cuentas suspendidas son gestionados por middleware de autenticación
+export const create = async (payload: CreateGuildPayload, creatorId: string, creatorRole: string) => {
+  // Solo VTubers, Maids, Moderadores y Admins pueden crear gremios
+  const canCreateGuild = ['VTUBER', 'MAID', 'MODERATOR', 'ADMIN'].includes(creatorRole);
+  if (!canCreateGuild) {
+    throw new AppError('Solo los VTubers y el equipo de la plataforma pueden crear gremios.', 403);
+  }
 
   // Check by name using findMany since findGuildById searches by id, not name
   const guilds = await GuildsRepository.findAllGuilds();

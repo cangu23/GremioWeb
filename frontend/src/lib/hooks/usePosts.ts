@@ -7,9 +7,11 @@ import type { Post } from '../../../../shared/types';
 // ==========================================================================
 // Types
 // ==========================================================================
+export type FeedMode = 'for-you' | 'following' | 'global';
+
 interface UsePostsOptions {
   user?: { id: string } | null;
-  initialFeedMode?: 'global' | 'following';
+  initialFeedMode?: FeedMode;
   /** Whether to fetch immediately on mount (default: true) */
   autoFetch?: boolean;
 }
@@ -22,8 +24,8 @@ interface UsePostsReturn {
   page: number;
   hasMore: boolean;
   loadingMore: boolean;
-  feedMode: 'global' | 'following';
-  setFeedMode: React.Dispatch<React.SetStateAction<'global' | 'following'>>;
+  feedMode: FeedMode;
+  setFeedMode: React.Dispatch<React.SetStateAction<FeedMode>>;
   setPage: React.Dispatch<React.SetStateAction<number>>;
   loadMore: () => void;
   handleLike: (postId: string, isLiked: boolean) => Promise<void>;
@@ -34,7 +36,7 @@ interface UsePostsReturn {
 // Hook
 // ==========================================================================
 export function usePosts(options?: UsePostsOptions): UsePostsReturn {
-  const { user, initialFeedMode = 'global', autoFetch = true } = options || {};
+  const { user, initialFeedMode = 'for-you', autoFetch = true } = options || {};
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(autoFetch);
@@ -42,12 +44,11 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [feedMode, setFeedMode] = useState<'global' | 'following'>(initialFeedMode);
+  const [feedMode, setFeedMode] = useState<FeedMode>(initialFeedMode);
 
   const fetchFeed = useCallback(async (pageNum = 1, append = false) => {
     try {
-      const mode = feedMode === 'following' && user ? 'true' : 'false';
-      const data = await apiFetch(`/posts?limit=20&page=${pageNum}&personalized=${mode}`, {});
+      const data = await apiFetch(`/posts?limit=20&page=${pageNum}&mode=${feedMode}`, {});
       if (append) {
         setPosts(prev => [...prev, ...data]);
       } else {
@@ -60,7 +61,7 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [feedMode, user]);
+  }, [feedMode]);
 
   const loadMore = useCallback(() => {
     setLoadingMore(true);

@@ -924,21 +924,36 @@ function HomeContent() {
             </svg>
             Inicio
           </h1>
-          <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '3px' }}>
-            <button onClick={() => { setFeedMode('global'); setPage(1); }} style={{
-              padding: '5px 12px', fontSize: '0.78rem', borderRadius: '6px', border: 'none',
-              background: feedMode === 'global' ? 'var(--primary)' : 'transparent',
-              color: feedMode === 'global' ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: feedMode === 'global' ? 600 : 400,
-              transition: 'all 0.2s',
-            }}>Global</button>
+          <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '4px', border: '1px solid var(--glass-border)' }}>
+            <button onClick={() => { setFeedMode('for-you'); setPage(1); }} style={{
+              padding: '6px 14px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
+              background: feedMode === 'for-you' ? 'linear-gradient(135deg, var(--primary), #8b5cf6)' : 'transparent',
+              color: feedMode === 'for-you' ? 'white' : 'var(--text-muted)',
+              cursor: 'pointer', fontWeight: feedMode === 'for-you' ? 600 : 400,
+              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
+              boxShadow: feedMode === 'for-you' ? '0 2px 10px rgba(139,92,246,0.3)' : 'none',
+            }}>
+              <span>Para Ti</span> ✨
+            </button>
             <button onClick={() => { setFeedMode('following'); setPage(1); }} style={{
-              padding: '5px 12px', fontSize: '0.78rem', borderRadius: '6px', border: 'none',
+              padding: '6px 14px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
               background: feedMode === 'following' ? 'var(--primary)' : 'transparent',
               color: feedMode === 'following' ? 'white' : 'var(--text-muted)',
               cursor: 'pointer', fontWeight: feedMode === 'following' ? 600 : 400,
-              transition: 'all 0.2s',
-            }}>Siguiendo</button>
+              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
+              boxShadow: feedMode === 'following' ? '0 2px 10px rgba(233,30,99,0.3)' : 'none',
+            }}>
+              <span>Siguiendo</span> 👥
+            </button>
+            <button onClick={() => { setFeedMode('global'); setPage(1); }} style={{
+              padding: '6px 14px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
+              background: feedMode === 'global' ? 'rgba(255,255,255,0.12)' : 'transparent',
+              color: feedMode === 'global' ? 'white' : 'var(--text-muted)',
+              cursor: 'pointer', fontWeight: feedMode === 'global' ? 600 : 400,
+              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
+            }}>
+              <span>Global</span> 🌐
+            </button>
           </div>
         </div>
 

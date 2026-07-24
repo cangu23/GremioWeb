@@ -10,6 +10,7 @@ import ReportModal from './ReportModal';
 import MentionInput, { renderContentWithMentions } from './MentionInput';
 import StickerPicker from '@/components/ui/StickerPicker';
 import { useStickersCache } from '@/lib/content-renderer';
+import MediaLightbox from './MediaLightbox';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -967,6 +968,14 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             </form>
           )}
         </div>
+      )}
+      {/* Lightbox Modal */}
+      {lightboxImage && (
+        <MediaLightbox
+          src={lightboxImage}
+          isVideo={/\.(mp4|webm|ogg)($|\?)/i.test(lightboxImage)}
+          onClose={() => setLightboxImage(null)}
+        />
       )}
       {/* Inline Keyframe Animations */}
       <style>{`

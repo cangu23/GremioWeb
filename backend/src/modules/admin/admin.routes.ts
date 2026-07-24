@@ -10,7 +10,9 @@ import {
   updateEventAdminSchema,
   updateGuildAdminSchema,
   updatePostAdminSchema,
+  updatePostModerationSchema,
   updateCommentAdminSchema,
+  updateCommentModerationSchema,
   createReportSchema,
   resolveReportSchema,
 } from './admin.validation';
@@ -59,13 +61,29 @@ router.delete('/guilds/:id', adminOnly, AdminController.deleteGuild);
 // ========== POSTS (Moderation — Staff) ==========
 router.get('/posts', validateRequest(adminQuerySchema), AdminController.listPosts);
 router.get('/posts/:id', validateRequest(adminQuerySchema), AdminController.getPostDetail);
-router.patch('/posts/:id', validateRequest(updatePostAdminSchema), AdminController.updatePost);
+// Moderators can only hide/pin posts. Editing the actual content requires ADMIN.
+router.patch('/posts/:id', (req, res, next) => {
+  if (req.body.content !== undefined) {
+    return adminOnly(req, res, () => {
+      validateRequest(updatePostAdminSchema)(req, res, next);
+    });
+  }
+  return validateRequest(updatePostModerationSchema)(req, res, next);
+}, AdminController.updatePost);
 router.delete('/posts/:id', AdminController.deletePost);
 router.post('/posts/:id/restore', AdminController.restorePost);
 
 // ========== COMMENTS (Moderation — Staff) ==========
 router.get('/comments', validateRequest(adminQuerySchema), AdminController.listComments);
-router.patch('/comments/:id', validateRequest(updateCommentAdminSchema), AdminController.updateComment);
+// Moderators can only hide comments. Editing comment text requires ADMIN.
+router.patch('/comments/:id', (req, res, next) => {
+  if (req.body.content !== undefined) {
+    return adminOnly(req, res, () => {
+      validateRequest(updateCommentAdminSchema)(req, res, next);
+    });
+  }
+  return validateRequest(updateCommentModerationSchema)(req, res, next);
+}, AdminController.updateComment);
 router.delete('/comments/:id', AdminController.deleteComment);
 
 // ========== REPORTS (Moderation — Staff) ==========

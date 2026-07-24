@@ -51,9 +51,19 @@ export const findPostById = (id: string) => {
 export const findAllPosts = (page = 1, limit = 20) => {
   const skip = (page - 1) * limit;
   return prisma.post.findMany({
+    where: { isHidden: false },
     orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
     skip,
     take: limit,
+    include: postIncludes,
+  });
+};
+
+export const findRecentPostsForAlgorithmicFeed = (takeCount = 100) => {
+  return prisma.post.findMany({
+    where: { isHidden: false },
+    orderBy: { createdAt: 'desc' },
+    take: takeCount,
     include: postIncludes,
   });
 };

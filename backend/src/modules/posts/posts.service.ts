@@ -76,6 +76,78 @@ export const getFeed = async (currentUserId?: string, page = 1, limit = 20) => {
   });
 };
 
+/**
+ * Algorithmic "Para Ti" feed ranking algorithm
+ */
+export const getAlgorithmicFeed = async (currentUserId?: string, page = 1, limit = 20) => {
+  const candidates = await PostsRepository.findRecentPostsForAlgorithmicFeed(150);
+  if (candidates.length === 0) return [];
+
+  // Get set of followed creator IDs if user is logged in
+  let followingSet = new Set<string>();
+  if (currentUserId) {
+    const following = await SocialRepository.getFollowing(currentUserId);
+    followingSet = new Set(following.map(f => f.followingId));
+  }
+
+  const nowMs = Date.now();
+
+  // Score each post
+  const scoredPosts = candidates.map((post) => {
+    const hoursOld = Math.max(0, (nowMs - new Date(post.createdAt).getTime()) / (1000 * 60 * 60));
+    
+    // Engagement
+    const likes = post._count?.likes || 0;
+    const comments = post._count?.comments || 0;
+    const engagementScore = (likes * 1.5) + (comments * 3.0);
+
+    // Feature bonuses
+    const isPinnedBonus = post.isPinned ? 50 : 0;
+    const mediaBonus = post.mediaUrl || post.pollData ? 6 : 0;
+
+    // Creator status bonus
+    const isVtuber = post.user?.role === 'VTUBER' || post.user?.vtuberProfile?.isApproved;
+    const isVerified = post.user?.vtuberProfile?.isVerified;
+    const creatorBonus = isVerified ? 12 : isVtuber ? 8 : (post.user?.role === 'MAID' ? 6 : 0);
+
+    // Follow affinity bonus
+    const followBonus = currentUserId && followingSet.has(post.userId) ? 15 : 0;
+
+    // Gravity time decay formula: Score = (Base + Engagement + Bonuses) / (hoursOld + 2)^1.35
+    const basePoints = 10 + engagementScore + isPinnedBonus + mediaBonus + creatorBonus + followBonus;
+    const timeDecay = Math.pow(hoursOld + 2, 1.35);
+    const score = basePoints / timeDecay;
+
+    return { post, score };
+  });
+
+  // Sort candidates by algorithmic score descending
+  scoredPosts.sort((a, b) => b.score - a.score);
+
+  // Paginate
+  const skip = (page - 1) * limit;
+  const paginated = scoredPosts.slice(skip, skip + limit).map(sp => sp.post);
+
+  // Check liked status for current user
+  let likedPostIds = new Set<string>();
+  if (currentUserId && paginated.length > 0) {
+    const postIds = paginated.map(p => p.id);
+    const likes = await prisma.like.findMany({
+      where: { userId: currentUserId, postId: { in: postIds } },
+      select: { postId: true },
+    });
+    likedPostIds = new Set(likes.map(l => l.postId!).filter(Boolean));
+  }
+
+  return paginated.map((p) => {
+    const formatted = formatPost(p);
+    if (currentUserId) {
+      formatted.isLikedByMe = likedPostIds.has(p.id);
+    }
+    return formatted;
+  });
+};
+
 export const getPersonalizedFeed = async (userId: string, page = 1, limit = 20) => {
   // Get users this user follows
   const following = await SocialRepository.getFollowing(userId);

@@ -102,12 +102,28 @@ export const updatePostAdminSchema = z.object({
   }),
 });
 
+// Moderation-only schema (no content editing — for MODERATOR role)
+export const updatePostModerationSchema = z.object({
+  body: z.object({
+    isHidden: z.boolean().optional(),
+    isPinned: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
+  }),
+});
+
 // ========== COMMENT MANAGEMENT ==========
 
 export const updateCommentAdminSchema = z.object({
   body: z.object({
     isHidden: z.boolean().optional(),
     content: z.string().min(1).max(500).optional(),
+  }),
+});
+
+// Moderation-only schema (no content editing — for MODERATOR role)
+export const updateCommentModerationSchema = z.object({
+  body: z.object({
+    isHidden: z.boolean().optional(),
   }),
 });
 
