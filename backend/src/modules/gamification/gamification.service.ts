@@ -23,13 +23,14 @@ export const getMyGamificationProfile = async (userId: string) => {
 
 export const getLeaderboard = async (limit = 50) => {
   const users = await GamificationRepository.getLeaderboard(limit);
-  return users.map((u: { id: string; username: string; xp: number; level: number; vtuberProfile: { displayName: string | null; avatarUrl: string | null } | null }, i: number) => ({
+  return users.map((u, i) => ({
     id: u.id,
     username: u.username,
     xp: u.xp,
     level: u.level,
-    avatarUrl: u.vtuberProfile?.avatarUrl ?? null,
-    displayName: u.vtuberProfile?.displayName ?? null,
+    role: u.role,
+    avatarUrl: u.avatarUrl || u.vtuberProfile?.avatarUrl || null,
+    displayName: u.displayName || u.vtuberProfile?.displayName || u.username,
     rank: i + 1,
   }));
 };

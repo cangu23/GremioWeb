@@ -53,12 +53,15 @@ export const setUserLevel = (userId: string, level: number) =>
 
 export const getLeaderboard = (limit = 50) =>
   prisma.user.findMany({
-    where: { role: { not: 'ADMIN' } },
+    where: { status: 'ACTIVE' },
     orderBy: { xp: 'desc' },
     take: limit,
     select: {
       id: true,
       username: true,
+      displayName: true,
+      avatarUrl: true,
+      role: true,
       xp: true,
       level: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true } },

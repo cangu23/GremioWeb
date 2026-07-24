@@ -70,11 +70,11 @@ function LeaderboardContent() {
     return <div className="container" style={{ padding: '40px', color: 'var(--error)' }}>Error: {error}</div>;
   }
 
-  const getRankIcon = (rank: number) => {
-    if (rank === 1) return '#1';
-    if (rank === 2) return '#2';
-    if (rank === 3) return '#3';
-    return `#${rank}`;
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) return <span style={{ fontSize: '1.4rem' }} title="Primer Lugar (Oro)">🥇</span>;
+    if (rank === 2) return <span style={{ fontSize: '1.4rem' }} title="Segundo Lugar (Plata)">🥈</span>;
+    if (rank === 3) return <span style={{ fontSize: '1.4rem' }} title="Tercer Lugar (Bronce)">🥉</span>;
+    return <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>#{rank}</span>;
   };
 
   const getXpForNextLevel = (level: number) => {
@@ -84,9 +84,9 @@ function LeaderboardContent() {
 
   return (
     <>
-      <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>Clasificación</h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '30px' }}>
-        Los VTubers con más experiencia en Gremio Estelar
+      <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>Clasificación Estelar</h1>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>
+        Los creadores y miembros con más experiencia y actividad en Gremio Estelar
       </p>
 
       {entries.length === 0 ? (
@@ -125,7 +125,7 @@ function LeaderboardContent() {
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <td style={{ padding: '16px', fontSize: '1.2rem', fontWeight: 700 }}>
-                        {getRankIcon(entry.rank)}
+                        {getRankBadge(entry.rank)}
                       </td>
                       <td style={{ padding: '16px' }}>
                         <Link
