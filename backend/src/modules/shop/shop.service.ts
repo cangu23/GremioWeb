@@ -1,6 +1,7 @@
 import AppError from '../../errors/AppError';
 import * as ShopRepository from './shop.repository';
-import * as GamificationRepository from '../gamification/gamification.repository';
+import { spendStardust } from '../ecosystem/stardust.service';
+import prisma from '../../database/prisma';
 
 // ─── List shop items ───
 
@@ -14,21 +15,29 @@ export const getInventory = async (userId: string) => {
   return ShopRepository.findUserPurchases(userId);
 };
 
-// ─── Buy an item ───
+// ─── Get public equipped items for a user (for profile display) ───
+
+export const getPublicEquipped = async (userId: string) => {
+  return ShopRepository.findEquippedItems(userId);
+};
+
+// ─── Buy an item (paid with Stardust) ───
 
 export const buyItem = async (userId: string, itemId: string) => {
   const item = await ShopRepository.findItemById(itemId);
   if (!item) throw new AppError('Ítem no encontrado', 404);
   if (!item.active) throw new AppError('Este ítem ya no está disponible', 400);
 
-  // Get user's XP (usable as currency)
-  const profile = await GamificationRepository.getUserGamificationProfile(userId);
-  if (!profile) throw new AppError('Usuario no encontrado', 404);
+  // Check user stardust balance
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stardust: true },
+  });
+  if (!user) throw new AppError('Usuario no encontrado', 404);
 
-  // Check if user has enough points
-  if (profile.xp < item.price) {
+  if (user.stardust < item.price) {
     throw new AppError(
-      `No tienes suficientes puntos. Necesitas ${item.price} pts, tienes ${profile.xp} pts.`,
+      `No tienes suficiente Stardust. Necesitas ⭐ ${item.price}, tienes ⭐ ${user.stardust}.`,
       400
     );
   }
@@ -42,8 +51,8 @@ export const buyItem = async (userId: string, itemId: string) => {
     throw new AppError('Ya tienes este ítem', 400);
   }
 
-  // Deduct points
-  await GamificationRepository.addXpToUser(userId, -item.price);
+  // Deduct stardust
+  const result = await spendStardust(userId, item.price, `Compra en tienda: ${item.name}`);
 
   let purchase;
   if (isConsumable && existing) {
@@ -59,7 +68,7 @@ export const buyItem = async (userId: string, itemId: string) => {
 
   return {
     purchase,
-    balance: profile.xp - item.price,
+    balance: result.newBalance,
   };
 };
 
@@ -105,7 +114,6 @@ export const useConsumable = async (userId: string, itemId: string) => {
   const newRemaining = purchase.remaining - 1;
 
   if (newRemaining <= 0) {
-    // Delete the purchase record when exhausted
     await ShopRepository.deletePurchase(purchase.id);
   } else {
     await ShopRepository.updatePurchaseRemaining(purchase.id, newRemaining);
@@ -120,51 +128,54 @@ export const getEquippedBadge = async (userId: string) => {
   return ShopRepository.findEquippedByType(userId, 'BADGE');
 };
 
-// ─── Get equipped color ───
-
-export const getEquippedColors = async (userId: string) => {
-  const purchases = await ShopRepository.findUserPurchases(userId);
-  return purchases
-    .filter((p) => p.item.type === 'COLOR' && p.equipped)
-    .map((p) => JSON.parse(p.item.data || '{}'));
-};
-
-// ─── Get purchased custom banner ───
-
-export const getCustomBanner = async (userId: string) => {
-  const banners = await ShopRepository.findEquippedByType(userId, 'BANNER');
-  return banners ? JSON.parse(banners.item.data || '{}').bannerUrl : null;
-};
-
 // ─── Seed default shop items ───
 
 export const seedDefaultItems = async () => {
   const defaults = [
-    // Badges
-    { name: 'Estrella Dorada', description: 'Una insignia dorada que brilla en tu perfil', type: 'BADGE', price: 100, data: JSON.stringify({ icon: '⭐', label: 'Estrella' }), sortOrder: 1 },
-    { name: 'Corazón de Fuego', description: 'Una insignia llameante para los más apasionados', type: 'BADGE', price: 200, data: JSON.stringify({ icon: '🔥', label: 'Ardiente' }), sortOrder: 2 },
-    { name: 'Luna Plateada', description: 'Brilla con la luz de la luna en tu perfil', type: 'BADGE', price: 350, data: JSON.stringify({ icon: '🌙', label: 'Lunar' }), sortOrder: 3 },
-    { name: 'Dragón Legendario', description: 'La insignia más rara. Solo los más dedicados la tienen.', type: 'BADGE', price: 1000, data: JSON.stringify({ icon: '🐉', label: 'Legendario' }), sortOrder: 4 },
-    
-    // Theme colors (exclusivos de tienda)
-    { name: 'Amanecer', description: 'Un degradado naranja-dorado para tu perfil', type: 'COLOR', price: 150, data: JSON.stringify({ color: '#ff6b35' }), sortOrder: 10 },
-    { name: 'Oscuridad Eterna', description: 'Un color púrpura oscuro misterioso', type: 'COLOR', price: 150, data: JSON.stringify({ color: '#2d1b69' }), sortOrder: 11 },
-    { name: 'Fuego Helado', description: 'Un tono azul eléctrico intenso', type: 'COLOR', price: 150, data: JSON.stringify({ color: '#00d4ff' }), sortOrder: 12 },
-    { name: 'Rosa Neón', description: 'Un vibrante rosa neón para destacar', type: 'COLOR', price: 150, data: JSON.stringify({ color: '#ff006e' }), sortOrder: 13 },
-    { name: 'Oro Puro', description: 'Un elegante color dorado', type: 'COLOR', price: 250, data: JSON.stringify({ color: '#ffd700' }), sortOrder: 14 },
+    // ── Badges ──
+    { name: 'Estrella Dorada', description: 'Una insignia dorada que brilla en tu perfil', type: 'BADGE', price: 100, data: JSON.stringify({ icon: '⭐', color: '#ffd700', label: 'Estrella' }), sortOrder: 1 },
+    { name: 'Corazón de Fuego', description: 'Una insignia llameante para los más apasionados', type: 'BADGE', price: 200, data: JSON.stringify({ icon: '🔥', color: '#ff4500', label: 'Ardiente' }), sortOrder: 2 },
+    { name: 'Luna Plateada', description: 'Brilla con la luz de la luna en tu perfil', type: 'BADGE', price: 350, data: JSON.stringify({ icon: '🌙', color: '#c0c0c0', label: 'Lunar' }), sortOrder: 3 },
+    { name: 'Dragón Legendario', description: 'La insignia más rara. Solo los más dedicados la tienen.', type: 'BADGE', price: 1000, data: JSON.stringify({ icon: '🐉', color: '#8b0000', label: 'Legendario' }), sortOrder: 4 },
+    { name: 'Rosa Sakura', description: 'Una insignia floral delicada y elegante', type: 'BADGE', price: 250, data: JSON.stringify({ icon: '🌸', color: '#ff69b4', label: 'Sakura' }), sortOrder: 5 },
+    { name: 'Zorro Kitsune', description: 'El espíritu del zorro mítico', type: 'BADGE', price: 500, data: JSON.stringify({ icon: '🦊', color: '#ff6b35', label: 'Kitsune' }), sortOrder: 6 },
 
-    // Banners
-    { name: 'Atardecer Pixelado', description: 'Un banner estilo pixel art de un atardecer', type: 'BANNER', price: 300, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80' }), sortOrder: 20 },
-    { name: 'Galaxia Estelar', description: 'Un banner con una galaxia llena de estrellas', type: 'BANNER', price: 300, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&q=80' }), sortOrder: 21 },
+    // ── Títulos ──
+    { name: 'Nuevo en la Escena', description: 'Para los que acaban de llegar a Gremio Estelar', type: 'TITLE', price: 80, data: JSON.stringify({ text: '✨ Nuevo en la Escena', color: '#00d4ff', gradient: 'linear-gradient(90deg, #00d4ff, #a78bfa)' }), sortOrder: 10 },
+    { name: 'Fan Oficial', description: 'Eres un fan dedicado de la comunidad VTuber', type: 'TITLE', price: 150, data: JSON.stringify({ text: '💜 Fan Oficial', color: '#a78bfa', gradient: 'linear-gradient(90deg, #a78bfa, #ec4899)' }), sortOrder: 11 },
+    { name: 'Cazador de Estrellas', description: 'Siempre al acecho de contenido nuevo', type: 'TITLE', price: 300, data: JSON.stringify({ text: '⭐ Cazador de Estrellas', color: '#ffd700', gradient: 'linear-gradient(90deg, #ffd700, #ff6b35)' }), sortOrder: 12 },
+    { name: 'Leyenda del Gremio', description: 'Tu nombre es conocido por todos', type: 'TITLE', price: 800, data: JSON.stringify({ text: '👑 Leyenda del Gremio', color: '#ffd700', gradient: 'linear-gradient(90deg, #ffd700, #ff6b35, #ff0080)' }), sortOrder: 13 },
+    { name: 'VTuber Aprendiz', description: 'El inicio de un gran viaje', type: 'TITLE', price: 400, data: JSON.stringify({ text: '🌟 VTuber Aprendiz', color: '#8b5cf6', gradient: 'linear-gradient(90deg, #8b5cf6, #ec4899)' }), sortOrder: 14 },
 
-    // Hover effects
-    { name: 'Brillo Mágico', description: 'Un brillo suave alrededor de tu avatar', type: 'HOVER', price: 200, data: JSON.stringify({ effect: 'glow' }), sortOrder: 30 },
-    { name: 'Aura de Fuego', description: 'Llamas sutiles alrededor de tu avatar', type: 'HOVER', price: 400, data: JSON.stringify({ effect: 'fire' }), sortOrder: 31 },
-    { name: 'Destellos Estelares', description: 'Destellos de estrellas al pasar el mouse', type: 'HOVER', price: 600, data: JSON.stringify({ effect: 'sparkle' }), sortOrder: 32 },
+    // ── Marcos de avatar (FRAME) ──
+    { name: 'Marco Dorado', description: 'Un elegante marco dorado con destellos', type: 'FRAME', price: 300, data: JSON.stringify({ borderColor: '#ffd700', borderStyle: 'solid', glow: 'rgba(255,215,0,0.5)', label: 'Dorado' }), sortOrder: 20 },
+    { name: 'Marco Neón Morado', description: 'Un marco de luz neón ultravioleta', type: 'FRAME', price: 400, data: JSON.stringify({ borderColor: '#a78bfa', borderStyle: 'solid', glow: 'rgba(167,139,250,0.6)', label: 'Neón' }), sortOrder: 21 },
+    { name: 'Marco de Fuego', description: 'Llamas ardientes rodean tu avatar', type: 'FRAME', price: 600, data: JSON.stringify({ borderColor: '#ff4500', borderStyle: 'solid', glow: 'rgba(255,69,0,0.6)', gradient: 'conic-gradient(from 0deg, #ff4500, #ff8c00, #ffd700, #ff4500)', label: 'Fuego' }), sortOrder: 22 },
+    { name: 'Marco Galaxia', description: 'El cosmos envuelve tu avatar', type: 'FRAME', price: 800, data: JSON.stringify({ borderColor: '#00d4ff', borderStyle: 'solid', glow: 'rgba(0,212,255,0.5)', gradient: 'conic-gradient(from 0deg, #8b5cf6, #00d4ff, #ec4899, #8b5cf6)', label: 'Galaxia' }), sortOrder: 23 },
+    { name: 'Marco Rosa Sakura', description: 'Delicado y floral, perfecto para fans del anime', type: 'FRAME', price: 350, data: JSON.stringify({ borderColor: '#ff69b4', borderStyle: 'solid', glow: 'rgba(255,105,180,0.5)', label: 'Sakura' }), sortOrder: 24 },
 
-    // Consumables
-    { name: 'Cambio de Nombre', description: 'Permite cambiar tu nombre de usuario una vez', type: 'NAME_CHANGE', price: 500, data: JSON.stringify({}), sortOrder: 40 },
-    { name: 'Post Destacado', description: 'Fija un post en tu perfil por 24 horas (3 usos)', type: 'PIN_POST', price: 200, data: JSON.stringify({ uses: 3 }), sortOrder: 41 },
+    // ── Colores de acento ──
+    { name: 'Amanecer', description: 'Un degradado naranja-dorado para tu perfil', type: 'COLOR', price: 150, data: JSON.stringify({ color: '#ff6b35' }), sortOrder: 30 },
+    { name: 'Oscuridad Eterna', description: 'Un color púrpura oscuro misterioso', type: 'COLOR', price: 150, data: JSON.stringify({ color: '#2d1b69' }), sortOrder: 31 },
+    { name: 'Fuego Helado', description: 'Un tono azul eléctrico intenso', type: 'COLOR', price: 150, data: JSON.stringify({ color: '#00d4ff' }), sortOrder: 32 },
+    { name: 'Rosa Neón', description: 'Un vibrante rosa neón para destacar', type: 'COLOR', price: 150, data: JSON.stringify({ color: '#ff006e' }), sortOrder: 33 },
+    { name: 'Oro Puro', description: 'Un elegante color dorado', type: 'COLOR', price: 250, data: JSON.stringify({ color: '#ffd700' }), sortOrder: 34 },
+    { name: 'Verde Neon', description: 'Intenso verde fosforescente', type: 'COLOR', price: 200, data: JSON.stringify({ color: '#00ff88' }), sortOrder: 35 },
+
+    // ── Banners ──
+    { name: 'Atardecer Pixelado', description: 'Un banner estilo pixel art de un atardecer', type: 'BANNER', price: 400, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80' }), sortOrder: 40 },
+    { name: 'Galaxia Estelar', description: 'Un banner con una galaxia llena de estrellas', type: 'BANNER', price: 400, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&q=80' }), sortOrder: 41 },
+    { name: 'Aurora Boreal', description: 'Las luces del norte iluminan tu perfil', type: 'BANNER', price: 500, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80' }), sortOrder: 42 },
+    { name: 'Ciudad Cyberpunk', description: 'Neon lights en la ciudad del futuro', type: 'BANNER', price: 500, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1519608825926-d7b8c4c91dea?w=800&q=80' }), sortOrder: 43 },
+
+    // ── Efectos de hover ──
+    { name: 'Brillo Mágico', description: 'Un brillo suave alrededor de tu avatar', type: 'HOVER', price: 200, data: JSON.stringify({ effect: 'glow' }), sortOrder: 50 },
+    { name: 'Aura de Fuego', description: 'Llamas sutiles alrededor de tu avatar', type: 'HOVER', price: 400, data: JSON.stringify({ effect: 'fire' }), sortOrder: 51 },
+    { name: 'Destellos Estelares', description: 'Destellos de estrellas al pasar el mouse', type: 'HOVER', price: 600, data: JSON.stringify({ effect: 'sparkle' }), sortOrder: 52 },
+
+    // ── Consumibles ──
+    { name: 'Cambio de Nombre', description: 'Permite cambiar tu nombre de usuario una vez', type: 'NAME_CHANGE', price: 500, data: JSON.stringify({}), sortOrder: 60 },
+    { name: 'Post Destacado', description: 'Fija un post en tu perfil por 24 horas (3 usos)', type: 'PIN_POST', price: 200, data: JSON.stringify({ uses: 3 }), sortOrder: 61 },
   ];
 
   for (const item of defaults) {

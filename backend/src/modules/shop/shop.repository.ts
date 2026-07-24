@@ -84,3 +84,10 @@ export const findEquippedByType = (userId: string, type: string) =>
     where: { userId, equipped: true, item: { type } },
     include: { item: true },
   });
+
+export const findEquippedItems = (userId: string) =>
+  prisma.userPurchase.findMany({
+    where: { userId, equipped: true },
+    include: { item: true },
+  });
+

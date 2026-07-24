@@ -16,8 +16,9 @@ router.post('/buy/:itemId', authenticate, ShopController.buyItem);
 router.post('/equip/:itemId', authenticate, ShopController.equipItem);
 router.post('/use/:itemId', authenticate, ShopController.useConsumable);
 
-// Badge display (public)
+// Public equipped items for a user
 router.get('/badge/:userId', optionalAuth, ShopController.getUserEquippedBadge);
+router.get('/inventory/public/:userId', optionalAuth, ShopController.getPublicEquipped);
 
 // Admin - seed items
 router.post('/seed', authenticate, authorize(Role.ADMIN), ShopController.seedItems);

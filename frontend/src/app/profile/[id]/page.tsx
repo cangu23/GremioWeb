@@ -113,6 +113,7 @@ function ProfileContent() {
   const [mediaPostsLoading, setMediaPostsLoading] = useState(true);
   const [galleryImage, setGalleryImage] = useState<string | null>(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
+  const [equippedItems, setEquippedItems] = useState<any[]>([]);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -122,6 +123,13 @@ function ProfileContent() {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error');
     }
+  }, [id]);
+
+  const fetchEquipped = useCallback(async () => {
+    try {
+      const data = await apiFetch(`/shop/inventory/public/${id}`);
+      setEquippedItems(data || []);
+    } catch {}
   }, [id]);
 
   const fetchPosts = useCallback(async () => {
@@ -145,9 +153,10 @@ function ProfileContent() {
 
   useEffect(() => {
     fetchProfile();
+    fetchEquipped();
     fetchPosts();
     fetchMediaPosts();
-  }, [fetchProfile, fetchPosts, fetchMediaPosts]);
+  }, [fetchProfile, fetchEquipped, fetchPosts, fetchMediaPosts]);
 
   const handleFollow = async () => {
     if (!currentUser) { router.push('/login'); return; }
@@ -194,13 +203,31 @@ function ProfileContent() {
   if (error) return <div className="container" style={{ padding: '40px', textAlign: 'center' }}><p style={{ color: 'var(--error)' }}>Error: {error}</p></div>;
   if (!profile) return <div className="container" style={{ padding: '40px', textAlign: 'center' }}><p style={{ color: 'var(--text-muted)' }}>Cargando perfil...</p></div>;
 
+  const parseItemData = (data: string | null) => {
+    try { return data ? JSON.parse(data) : {}; } catch { return {}; }
+  };
+
   const isOwnProfile = currentUser?.id === profile.id;
   const vtuber = profile.vtuberProfile;
   const avatarUrl = vtuber?.avatarUrl || profile.avatarUrl;
-  const bannerUrl = vtuber?.bannerUrl;
   const displayName = vtuber?.displayName || profile.displayName || profile.username;
-  const themeColor = vtuber?.themeColor || profile.bannerColor || 'var(--primary)';
   const bio = vtuber?.description || profile.bio;
+
+  // Equipped shop items
+  const equippedBadge = equippedItems.find((p: any) => p.item?.type === 'BADGE');
+  const equippedTitle = equippedItems.find((p: any) => p.item?.type === 'TITLE');
+  const equippedFrame = equippedItems.find((p: any) => p.item?.type === 'FRAME');
+  const equippedBanner = equippedItems.find((p: any) => p.item?.type === 'BANNER');
+  const equippedColor = equippedItems.find((p: any) => p.item?.type === 'COLOR');
+
+  const badgeData = equippedBadge ? parseItemData(equippedBadge.item.data) : null;
+  const titleData = equippedTitle ? parseItemData(equippedTitle.item.data) : null;
+  const frameData = equippedFrame ? parseItemData(equippedFrame.item.data) : null;
+  const bannerData = equippedBanner ? parseItemData(equippedBanner.item.data) : null;
+  const colorData = equippedColor ? parseItemData(equippedColor.item.data) : null;
+
+  const bannerUrl = bannerData?.bannerUrl || vtuber?.bannerUrl;
+  const themeColor = colorData?.color || vtuber?.themeColor || profile.bannerColor || 'var(--primary)';
 
   // Parse languages
   let languagesList: string[] = [];
@@ -322,40 +349,61 @@ function ProfileContent() {
             </div>
           )}
 
+          {/* Avatar Container with Frame Support */}
           <div style={{
+            position: 'relative',
             width: 'clamp(100px, 15vw, 140px)',
             height: 'clamp(100px, 15vw, 140px)',
-            borderRadius: '50%',
-            background: avatarUrl
-              ? 'transparent'
-              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            border: '4px solid var(--background)',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.4), 0 0 40px rgba(138,43,226,0.15)',
             margin: '0 auto 16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 'clamp(2rem, 4vw, 3.5rem)', color: 'white', fontWeight: 'bold',
-            overflow: 'hidden', position: 'relative',
-            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 12px 60px rgba(138,43,226,0.3), 0 0 60px rgba(138,43,226,0.15)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,0,0,0.4), 0 0 40px rgba(138,43,226,0.15)'; }}
-          >
-            {avatarUrl ? (
-              <Image
-                src={avatarUrl}
-                alt={displayName}
-                width={0}
-                height={0}
-                sizes="100vw"
-                unoptimized
-                style={{
-                  width: '100%', height: '100%', objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
-            ) : (
-              displayName.charAt(0).toUpperCase()
+          }}>
+            {/* FRAME Effect (if equipped) */}
+            {frameData && (
+              <div style={{
+                position: 'absolute',
+                inset: '-6px',
+                borderRadius: '50%',
+                background: frameData.gradient || frameData.borderColor || '#ffd700',
+                boxShadow: `0 0 24px ${frameData.glow || 'rgba(255,215,0,0.5)'}`,
+                zIndex: 0,
+                animation: frameData.gradient ? 'spin 8s linear infinite' : 'none',
+              }} />
             )}
+
+            <div style={{
+              position: 'relative',
+              zIndex: 1,
+              width: '100%', height: '100%',
+              borderRadius: '50%',
+              background: avatarUrl
+                ? 'transparent'
+                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+              border: '4px solid var(--background)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.4), 0 0 40px rgba(138,43,226,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 'clamp(2rem, 4vw, 3.5rem)', color: 'white', fontWeight: 'bold',
+              overflow: 'hidden',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+            }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt={displayName}
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  unoptimized
+                  style={{
+                    width: '100%', height: '100%', objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -377,6 +425,19 @@ function ProfileContent() {
               gap: '8px',
             }}>
               {displayName}
+              {/* Equipped Shop Badge */}
+              {badgeData?.icon && (
+                <span
+                  title={equippedBadge.item.name}
+                  style={{
+                    fontSize: '1.5rem',
+                    filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.5))',
+                    cursor: 'default',
+                  }}
+                >
+                  {badgeData.icon}
+                </span>
+              )}
               {vtuber?.isApproved && (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff007f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="VTuber Oficial">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -434,9 +495,26 @@ function ProfileContent() {
           </div>
 
           {/* Username */}
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginBottom: '8px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginBottom: titleData?.text ? '4px' : '8px' }}>
             @{profile.username}
           </p>
+
+          {/* Equipped Title Tag */}
+          {titleData?.text && (
+            <div style={{ marginBottom: '8px' }}>
+              <span style={{
+                fontSize: '0.82rem', fontWeight: 800,
+                padding: '4px 14px', borderRadius: '20px',
+                background: titleData.gradient || 'linear-gradient(90deg, #ffd700, #ff6b35)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                border: '1px solid rgba(255,255,255,0.15)',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                display: 'inline-block',
+              }}>
+                {titleData.text}
+              </span>
+            </div>
+          )}
 
           {/* Botón para editar/agregar nota en perfil propio */}
           {isOwnProfile && (

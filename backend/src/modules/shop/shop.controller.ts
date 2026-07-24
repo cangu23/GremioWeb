@@ -69,6 +69,17 @@ export const getUserEquippedBadge = async (req: Request, res: Response, next: Ne
   }
 };
 
+// Get all equipped items for a specific user (public)
+export const getPublicEquipped = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.params.userId as string;
+    const items = await ShopService.getPublicEquipped(userId);
+    res.json(items);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── Seed default shop items (admin) ───
 export const seedItems = async (_req: Request, res: Response, next: NextFunction) => {
   try {
