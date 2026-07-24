@@ -1,0 +1,46 @@
+name: Continuous Deployment (CasaOS / Home Server)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Server via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH to Home Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            set -e
+            echo "🚀 [CI/CD] Conexión SSH establecida. Iniciando actualización..."
+            
+            # Definir la ruta del proyecto en el servidor
+            PROJECT_DIR="${{ secrets.SERVER_PROJECT_PATH || '/DATA/AppData/gremioweb' }}"
+            
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "❌ Error: El directorio $PROJECT_DIR no existe en el servidor."
+              exit 1
+            fi
+
+            cd "$PROJECT_DIR"
+            
+            echo "📥 [CI/CD] Descargando últimos cambios desde la rama main..."
+            git fetch origin main
+            git reset --hard origin/main
+            
+            echo "⚙️ [CI/CD] Otorgando permisos a deploy.sh..."
+            chmod +x deploy.sh
+            
+            echo "🛠️ [CI/CD] Ejecutando deploy.sh (compilación, inicio y autolimpieza)..."
+            ./deploy.sh
+            
+            echo "🎉 [CI/CD] ¡Despliegue automático finalizado con éxito!"
