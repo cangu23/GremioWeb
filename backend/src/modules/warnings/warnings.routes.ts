@@ -6,8 +6,8 @@ import * as WarningsController from './warnings.controller';
 
 const router = Router();
 
-// All warning routes require ADMIN role
-router.use(authenticate, authorize(Role.ADMIN));
+// Warning routes require ADMIN or MODERATOR role
+router.use(authenticate, authorize(Role.ADMIN, Role.MODERATOR));
 
 router.post('/issue', WarningsController.issueWarning);
 router.get('/user/:userId', WarningsController.getUserWarnings);

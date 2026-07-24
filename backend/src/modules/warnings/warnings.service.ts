@@ -3,11 +3,17 @@ import prisma from '../../database/prisma';
 import * as AdminRepository from '../admin/admin.repository';
 import * as NotificationsService from '../notifications/notifications.service';
 
-export const issueWarning = async (userId: string, warnedById: string, reason: string, ip?: string) => {
+export const issueWarning = async (inputUserId: string, warnedById: string, reason: string, ip?: string) => {
   if (!reason?.trim()) throw new AppError('Debes proporcionar una razón para la advertencia', 400);
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new AppError('Usuario no encontrado', 404);
+  const cleanInput = inputUserId.replace(/^@/, '').trim();
+  let user = await prisma.user.findUnique({ where: { id: cleanInput } });
+  if (!user) {
+    user = await prisma.user.findUnique({ where: { username: cleanInput } });
+  }
+  if (!user) throw new AppError('Usuario no encontrado. Ingresa un ID o nombre de usuario válido.', 404);
+
+  const userId = user.id;
 
   // Count existing warnings
   const existingWarnings = await prisma.warning.count({ where: { userId } });

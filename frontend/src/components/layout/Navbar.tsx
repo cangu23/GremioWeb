@@ -529,7 +529,7 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
             <span style={{ color: 'var(--warm)' }}>Tienda</span>
           </Link>
 
-          {user.role === 'ADMIN' && (
+          {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
             <Link href="/admin"
               onClick={() => setOpen(false)}
               style={menuItemStyle}
@@ -537,7 +537,7 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
               onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
             >
               <span style={{ color: 'var(--primary)', display: 'inline-flex' }}>{Icons.trending}</span>
-              <span style={{ color: 'var(--primary)' }}>Admin</span>
+              <span style={{ color: 'var(--primary)' }}>{user.role === 'ADMIN' ? 'Panel Admin' : 'Panel Moderación'}</span>
             </Link>
           )}
 
@@ -640,10 +640,10 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
 
           <div style={{ height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />
 
-          {user.role === 'ADMIN' && (
+          {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
             <Link href="/admin" onClick={closeMenu} style={{ ...mobileLink, color: 'var(--primary)', fontWeight: 600 }}>
               <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}><Settings size={18} color="var(--primary)" /></span>
-              <span>Admin</span>
+              <span>{user.role === 'ADMIN' ? 'Panel Admin' : 'Panel Moderación'}</span>
             </Link>
           )}
 
