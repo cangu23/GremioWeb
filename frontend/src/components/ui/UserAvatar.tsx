@@ -40,10 +40,7 @@ export function extractAvatarDecoration(
         p.item.type === 'AVATAR_FRAME' ||
         p.item.type === 'FRAME' ||
         p.item.type === 'DECORATION' ||
-        p.item.type === 'HOVER' ||
-        p.item.type === 'EFFECT' ||
-        p.item.type === 'COLOR' ||
-        p.item.type === 'BADGE'
+        p.item.type === 'AVATAR_BORDER'
       )
     );
 
@@ -59,8 +56,8 @@ export function extractAvatarDecoration(
           if (parsed?.frameUrl || parsed?.imageUrl || parsed?.url) {
             return { frameUrl: parsed.frameUrl || parsed.imageUrl || parsed.url };
           }
-          if (parsed?.gradient || parsed?.style || parsed?.color) {
-            return { equippedFrame: parsed.gradient || parsed.style || parsed.color };
+          if (parsed?.gradient || parsed?.style || parsed?.borderColor) {
+            return { equippedFrame: parsed.gradient || parsed.style || parsed.borderColor };
           }
         } catch {
           if (typeof item.data === 'string' && (item.data.includes('http') || item.data.includes('/uploads/'))) {
@@ -188,7 +185,7 @@ export default function UserAvatar({
             top: '-18%', left: '-18%',
             width: '136%', height: '136%',
             pointerEvents: 'none',
-            zIndex: 4,
+            zIndex: 2,
             backgroundImage: `url(${activeFrameUrl})`,
             backgroundPosition: 'center',
             backgroundSize: 'contain',
@@ -203,7 +200,7 @@ export default function UserAvatar({
             width: size + 6, height: size + 6,
             borderRadius: '50%',
             pointerEvents: 'none',
-            zIndex: 3,
+            zIndex: 0,
             background: activeEquippedFrame.includes('gradient') || activeEquippedFrame.includes('linear') || activeEquippedFrame.includes('conic')
               ? activeEquippedFrame
               : 'linear-gradient(135deg, #ff007f, #7928ca, #00dfd8)',
@@ -225,7 +222,7 @@ export default function UserAvatar({
           color: 'white', fontWeight: 'bold', fontSize: `${Math.round(size * 0.45)}px`,
           overflow: 'hidden', flexShrink: 0,
           position: 'relative', zIndex: 1,
-          border: isLive ? '2px solid #ff0055' : '2px solid transparent',
+          border: isLive ? '2px solid #ff0055' : (activeEquippedFrame || activeFrameUrl) ? '2px solid var(--background, #0a0a0c)' : '2px solid transparent',
           boxShadow: isLive ? '0 0 14px rgba(255,0,85,0.6)' : 'none',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         }}
