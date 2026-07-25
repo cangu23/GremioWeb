@@ -101,3 +101,60 @@ export const findGuildsByUser = (userId: string) => {
     orderBy: { joinedAt: 'desc' },
   });
 };
+
+export const findPendingJoinRequests = (guildId: string) => {
+  return prisma.guildJoinRequest.findMany({
+    where: { guildId, status: 'PENDING' },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+};
+
+export const findJoinRequestByUser = (guildId: string, userId: string) => {
+  return prisma.guildJoinRequest.findFirst({
+    where: { guildId, userId },
+    orderBy: { createdAt: 'desc' },
+  });
+};
+
+export const createJoinRequest = (guildId: string, userId: string, message?: string) => {
+  return prisma.guildJoinRequest.create({
+    data: {
+      guildId,
+      userId,
+      message: message || null,
+      status: 'PENDING',
+    },
+  });
+};
+
+export const updateJoinRequestStatus = (requestId: string, status: 'APPROVED' | 'REJECTED') => {
+  return prisma.guildJoinRequest.update({
+    where: { id: requestId },
+    data: { status },
+    include: {
+      guild: true,
+      user: true,
+    },
+  });
+};
+
+export const findJoinRequestById = (requestId: string) => {
+  return prisma.guildJoinRequest.findUnique({
+    where: { id: requestId },
+    include: {
+      guild: true,
+      user: true,
+    },
+  });
+};

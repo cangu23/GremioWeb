@@ -32,11 +32,11 @@ function GuildCard({ guild, viewMode }: { guild: GuildItem; viewMode: 'grid' | '
         <div
           className="glass"
           style={{
-            borderRadius: '20px',
+            borderRadius: '22px',
             border: '1px solid var(--glass-border)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             cursor: 'pointer',
-            overflow: 'visible',
+            overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
@@ -55,48 +55,53 @@ function GuildCard({ guild, viewMode }: { guild: GuildItem; viewMode: 'grid' | '
         >
           {/* Cover Header */}
           <div style={{
-            height: '95px',
+            height: '105px',
             position: 'relative',
-            borderRadius: '20px 20px 0 0',
-            overflow: 'hidden',
             background: guild.coverUrl
               ? `url(${guild.coverUrl}) center/cover`
               : 'linear-gradient(135deg, #2a1548, #4c1d95, #1e1b4b)',
           }}>
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'linear-gradient(180deg, transparent 40%, rgba(10,10,12,0.85) 100%)',
+              background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(10,10,18,0.75) 100%)',
             }} />
+
+            {/* Guild Logo — Positioned overlapping the bottom of the cover banner */}
+            <div style={{
+              position: 'absolute',
+              bottom: '-22px',
+              left: '20px',
+              width: '62px',
+              height: '62px',
+              borderRadius: '16px',
+              background: guild.logoUrl
+                ? `url(${guild.logoUrl}) center/cover`
+                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.7rem', color: 'white', fontWeight: 'bold', flexShrink: 0,
+              border: '4px solid #141326',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.6)',
+              zIndex: 5,
+            }}>
+              {!guild.logoUrl && guild.name.charAt(0).toUpperCase()}
+            </div>
+
             {guild.isMember && (
               <span style={{
                 position: 'absolute', top: '12px', right: '12px',
-                fontSize: '0.68rem', padding: '3px 10px', borderRadius: '20px',
-                background: guild.myRole === 'LEADER' ? 'rgba(255,0,127,0.85)' : 'rgba(138,43,226,0.85)',
+                fontSize: '0.68rem', padding: '4px 12px', borderRadius: '20px',
+                background: guild.myRole === 'LEADER' ? 'rgba(255,0,127,0.9)' : 'rgba(138,43,226,0.9)',
                 color: '#fff', fontWeight: 800, letterSpacing: '0.04em',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)',
+                zIndex: 5,
               }}>
                 {guild.myRole === 'LEADER' ? '👑 LÍDER' : 'MIEMBRO'}
               </span>
             )}
           </div>
 
-          {/* Logo overlay & Content */}
-          <div style={{ padding: '0 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: '-30px', marginBottom: '12px' }}>
-              <div style={{
-                width: '64px', height: '64px', borderRadius: '16px',
-                background: guild.logoUrl
-                  ? `url(${guild.logoUrl}) center/cover`
-                  : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.7rem', color: 'white', fontWeight: 'bold', flexShrink: 0,
-                border: '3px solid var(--background, #0a0a0c)',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-              }}>
-                {!guild.logoUrl && guild.name.charAt(0).toUpperCase()}
-              </div>
-            </div>
-
+          {/* Content */}
+          <div style={{ padding: '30px 20px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {guild.name}
             </h3>

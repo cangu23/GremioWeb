@@ -25,6 +25,12 @@ router.delete('/:id/members/:userId', authenticate, GuildsController.kickMember)
 router.put('/:id/members/:userId/role', authenticate, GuildsController.changeMemberRole);
 router.post('/:id/members/:userId/transfer', authenticate, GuildsController.transferLeadership);
 
+// Join Requests
+router.get('/:id/requests', authenticate, GuildsController.getPendingRequests);
+router.post('/:id/requests', authenticate, GuildsController.requestJoin);
+router.post('/:id/requests/:requestId/approve', authenticate, GuildsController.approveRequest);
+router.post('/:id/requests/:requestId/reject', authenticate, GuildsController.rejectRequest);
+
 // Channels (nested under guild)
 router.use('/:guildId/channels', channelsRouter);
 

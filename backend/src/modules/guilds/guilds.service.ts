@@ -209,3 +209,92 @@ export const transferLeadership = async (guildId: string, targetUserId: string, 
 export const getMyGuilds = async (userId: string) => {
   return GuildsRepository.findGuildsByUser(userId);
 };
+
+export const getPendingRequests = async (guildId: string, userId: string) => {
+  const member = await GuildsRepository.findMember(guildId, userId);
+  if (!member || (member.role !== 'LEADER' && member.role !== 'OFFICER')) {
+    throw new AppError('No tienes permiso para ver las solicitudes de ingreso.', 403);
+  }
+  return GuildsRepository.findPendingJoinRequests(guildId);
+};
+
+export const requestJoin = async (guildId: string, userId: string, message?: string) => {
+  const guild = await GuildsRepository.findGuildById(guildId);
+  if (!guild) {
+    throw new AppError('Gremio no encontrado.', 404);
+  }
+
+  const existingMember = await GuildsRepository.findMember(guildId, userId);
+  if (existingMember) {
+    throw new AppError('Ya eres miembro de este gremio.', 400);
+  }
+
+  const existingRequest = await GuildsRepository.findJoinRequestByUser(guildId, userId);
+  if (existingRequest && existingRequest.status === 'PENDING') {
+    throw new AppError('Ya tienes una solicitud pendiente para este gremio.', 400);
+  }
+
+  const request = await GuildsRepository.createJoinRequest(guildId, userId, message);
+
+  // Notify leader
+  const user = await UserRepository.findById(userId);
+  if (user && guild.creatorId !== userId) {
+    await NotificationsService.notifyGuildJoinRequest(user.username, guild.name, guildId, guild.creatorId).catch(() => {});
+  }
+
+  return { message: 'Solicitud enviada correctamente. El administrador del gremio la revisará pronto.', request };
+};
+
+export const approveRequest = async (guildId: string, requestId: string, requesterId: string) => {
+  const requester = await GuildsRepository.findMember(guildId, requesterId);
+  if (!requester || (requester.role !== 'LEADER' && requester.role !== 'OFFICER')) {
+    throw new AppError('No tienes permiso para aceptar miembros.', 403);
+  }
+
+  const joinReq = await GuildsRepository.findJoinRequestById(requestId);
+  if (!joinReq || joinReq.guildId !== guildId) {
+    throw new AppError('Solicitud no encontrada.', 404);
+  }
+
+  if (joinReq.status !== 'PENDING') {
+    throw new AppError('Esta solicitud ya fue procesada.', 400);
+  }
+
+  // Update status to APPROVED
+  await GuildsRepository.updateJoinRequestStatus(requestId, 'APPROVED');
+
+  // Add user to guild members if not already
+  const isAlreadyMember = await GuildsRepository.findMember(guildId, joinReq.userId);
+  if (!isAlreadyMember) {
+    await GuildsRepository.addMember(guildId, joinReq.userId, 'MEMBER');
+  }
+
+  // Notify user
+  await NotificationsService.notifyGuildRequestApproved(joinReq.guild.name, guildId, joinReq.userId).catch(() => {});
+
+  return { message: `Solicitud aprobada. @${joinReq.user.username} ahora es miembro del gremio.` };
+};
+
+export const rejectRequest = async (guildId: string, requestId: string, requesterId: string) => {
+  const requester = await GuildsRepository.findMember(guildId, requesterId);
+  if (!requester || (requester.role !== 'LEADER' && requester.role !== 'OFFICER')) {
+    throw new AppError('No tienes permiso para rechazar solicitudes.', 403);
+  }
+
+  const joinReq = await GuildsRepository.findJoinRequestById(requestId);
+  if (!joinReq || joinReq.guildId !== guildId) {
+    throw new AppError('Solicitud no encontrada.', 404);
+  }
+
+  if (joinReq.status !== 'PENDING') {
+    throw new AppError('Esta solicitud ya fue procesada.', 400);
+  }
+
+  // Update status to REJECTED
+  await GuildsRepository.updateJoinRequestStatus(requestId, 'REJECTED');
+
+  // Notify user
+  await NotificationsService.notifyGuildRequestRejected(joinReq.guild.name, joinReq.userId).catch(() => {});
+
+  return { message: 'Solicitud rechazada.' };
+};

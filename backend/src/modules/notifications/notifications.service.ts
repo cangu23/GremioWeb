@@ -60,6 +60,35 @@ export const notifyGuildJoined = async (memberUsername: string, guildName: strin
   });
 };
 
+export const notifyGuildJoinRequest = async (applicantUsername: string, guildName: string, guildId: string, leaderId: string) => {
+  return NotificationsRepository.createNotification({
+    userId: leaderId,
+    type: 'GUILD_JOIN_REQUEST',
+    title: 'Solicitud de ingreso al gremio',
+    message: `@${applicantUsername} solicitó unirse a tu gremio "${guildName}"`,
+    referenceId: guildId,
+  });
+};
+
+export const notifyGuildRequestApproved = async (guildName: string, guildId: string, userId: string) => {
+  return NotificationsRepository.createNotification({
+    userId,
+    type: 'GUILD_REQUEST_APPROVED',
+    title: '¡Solicitud aprobada!',
+    message: `Tu solicitud para unirte al gremio "${guildName}" ha sido aceptada.`,
+    referenceId: guildId,
+  });
+};
+
+export const notifyGuildRequestRejected = async (guildName: string, userId: string) => {
+  return NotificationsRepository.createNotification({
+    userId,
+    type: 'GUILD_REQUEST_REJECTED',
+    title: 'Solicitud no aprobada',
+    message: `Tu solicitud para unirte al gremio "${guildName}" no fue aceptada.`,
+  });
+};
+
 export const notifyAchievement = async (achievementName: string, userId: string, achievementId: string) => {
   return NotificationsRepository.createNotification({
     userId,

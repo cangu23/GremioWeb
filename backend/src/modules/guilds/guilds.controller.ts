@@ -123,3 +123,50 @@ export const getMyGuilds = async (req: Request, res: Response, next: NextFunctio
     next(error);
   }
 };
+
+export const getPendingRequests = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const requesterId = req.user!.id;
+    const guildId = String(req.params.id);
+    const requests = await GuildsService.getPendingRequests(guildId, requesterId);
+    res.status(200).json(requests);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const requestJoin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const guildId = String(req.params.id);
+    const { message } = req.body;
+    const result = await GuildsService.requestJoin(guildId, userId, message);
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const approveRequest = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const requesterId = req.user!.id;
+    const guildId = String(req.params.id);
+    const requestId = String(req.params.requestId);
+    const result = await GuildsService.approveRequest(guildId, requestId, requesterId);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const rejectRequest = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const requesterId = req.user!.id;
+    const guildId = String(req.params.id);
+    const requestId = String(req.params.requestId);
+    const result = await GuildsService.rejectRequest(guildId, requestId, requesterId);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};

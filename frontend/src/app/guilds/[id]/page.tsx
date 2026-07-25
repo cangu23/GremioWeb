@@ -10,6 +10,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import UserAvatar from '@/components/ui/UserAvatar';
 import type { Socket } from 'socket.io-client';
 
 interface GuildMember {
@@ -63,6 +64,22 @@ interface ChatMessage {
   };
 }
 
+interface JoinRequestItem {
+  id: string;
+  guildId: string;
+  userId: string;
+  message?: string | null;
+  status: string;
+  createdAt: string;
+  user: {
+    id: string;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    vtuberProfile?: { displayName: string; avatarUrl: string | null } | null;
+  };
+}
+
 const roleConfig: Record<string, { label: string; color: string; bg: string }> = {
   LEADER: { label: 'Líder', color: '#ff007f', bg: 'rgba(255,0,127,0.15)' },
   OFFICER: { label: 'Oficial', color: '#8a2be2', bg: 'rgba(138,43,226,0.15)' },
@@ -104,11 +121,19 @@ function GuildDetailContent() {
   const { uploadAndWait } = useSocketMedia();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'general' | 'members' | 'requests' | 'danger'>('general');
+  const [settingsName, setSettingsName] = useState('');
   const [settingsLogoUrl, setSettingsLogoUrl] = useState('');
   const [settingsCoverUrl, setSettingsCoverUrl] = useState('');
   const [settingsDescription, setSettingsDescription] = useState('');
+  const [settingsTags, setSettingsTags] = useState('');
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsError, setSettingsError] = useState('');
+  const [pendingRequests, setPendingRequests] = useState<JoinRequestItem[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -540,23 +565,73 @@ function GuildDetailContent() {
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Error'); setActionLoading(false); }
   };
 
+  const fetchPendingRequests = useCallback(async () => {
+    if (!id) return;
+    setLoadingRequests(true);
+    try {
+      const data = await apiFetch(`/guilds/${id}/requests`);
+      setPendingRequests(data || []);
+    } catch {
+      setPendingRequests([]);
+    } finally {
+      setLoadingRequests(false);
+    }
+  }, [id]);
+
   const handleOpenSettings = () => {
     if (!guild) return;
+    setSettingsName(guild.name || '');
     setSettingsLogoUrl(guild.logoUrl || '');
     setSettingsCoverUrl(guild.coverUrl || '');
-    setSettingsDescription(guild.description);
+    setSettingsDescription(guild.description || '');
+    setSettingsTags(guild.tags || '');
+    setSettingsTab('general');
     setSettingsError('');
     setShowSettings(true);
+    if (guild.myRole === 'LEADER' || guild.myRole === 'OFFICER') {
+      fetchPendingRequests();
+    }
+  };
+
+  const handleApproveRequest = async (requestId: string, username: string) => {
+    setProcessingRequestId(requestId);
+    try {
+      await apiFetch(`/guilds/${id}/requests/${requestId}/approve`, { method: 'POST' });
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      await fetchGuild();
+    } catch (err: unknown) {
+      setSettingsError(err instanceof Error ? err.message : 'Error al aprobar solicitud');
+    } finally {
+      setProcessingRequestId(null);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    setProcessingRequestId(requestId);
+    try {
+      await apiFetch(`/guilds/${id}/requests/${requestId}/reject`, { method: 'POST' });
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+    } catch (err: unknown) {
+      setSettingsError(err instanceof Error ? err.message : 'Error al rechazar solicitud');
+    } finally {
+      setProcessingRequestId(null);
+    }
   };
 
   const handleSaveSettings = async () => {
+    if (!settingsName.trim()) {
+      setSettingsError('El nombre del gremio no puede estar vacío');
+      return;
+    }
     setSettingsSaving(true);
     setSettingsError('');
     try {
       const updated = await apiFetch(`/guilds/${id}`, {
         method: 'PUT',
         body: JSON.stringify({
-          description: settingsDescription,
+          name: settingsName.trim(),
+          description: settingsDescription.trim(),
+          tags: settingsTags.trim() || undefined,
           logoUrl: settingsLogoUrl || undefined,
           coverUrl: settingsCoverUrl || undefined,
         }),
@@ -565,6 +640,34 @@ function GuildDetailContent() {
       setShowSettings(false);
     } catch (err: unknown) {
       setSettingsError(err instanceof Error ? err.message : 'Error al guardar');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const handleUploadLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setSettingsSaving(true);
+      const url = await uploadAndWait(file, '/uploads/guild');
+      if (url) setSettingsLogoUrl(url);
+    } catch (err: unknown) {
+      setSettingsError(err instanceof Error ? err.message : 'Error al subir la imagen');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const handleUploadCoverFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setSettingsSaving(true);
+      const url = await uploadAndWait(file, '/uploads/guild');
+      if (url) setSettingsCoverUrl(url);
+    } catch (err: unknown) {
+      setSettingsError(err instanceof Error ? err.message : 'Error al subir la portada');
     } finally {
       setSettingsSaving(false);
     }
@@ -1397,19 +1500,22 @@ function GuildDetailContent() {
       {showSettings && (
         <>
           <div
-            style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
             onClick={() => setShowSettings(false)}
           />
           <div style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            zIndex: 1000, width: '480px', maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto',
-            background: 'rgba(20,20,35,0.96)', backdropFilter: 'blur(16px)',
-            border: '1px solid var(--glass-border)', borderRadius: '16px',
-            padding: '32px', boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+            zIndex: 1000, width: '540px', maxWidth: '94vw', maxHeight: '88vh', overflowY: 'auto',
+            background: 'rgba(18,18,32,0.97)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(138,43,226,0.3)', borderRadius: '20px',
+            padding: '28px', boxShadow: '0 24px 80px rgba(0,0,0,0.7)',
             animation: 'fadeIn 0.2s ease',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>⚙ Ajustes del Gremio</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>⚙ Ajustes del Gremio</h2>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Administra la información, miembros y presencia de tu comunidad.</p>
+              </div>
               <button onClick={() => setShowSettings(false)} style={{
                 background: 'none', border: 'none', color: 'var(--text-muted)',
                 cursor: 'pointer', fontSize: '1.2rem', padding: '4px 8px', borderRadius: '6px',
@@ -1419,88 +1525,409 @@ function GuildDetailContent() {
               >✕</button>
             </div>
 
+            {/* Navigation Tabs */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              <button
+                onClick={() => setSettingsTab('general')}
+                style={{
+                  flex: 1, padding: '8px 14px', borderRadius: '9px', border: 'none', cursor: 'pointer',
+                  background: settingsTab === 'general' ? 'var(--primary)' : 'transparent',
+                  color: settingsTab === 'general' ? '#fff' : 'var(--text-muted)',
+                  fontWeight: 700, fontSize: '0.82rem', transition: 'all 0.2s',
+                }}
+              >
+                ⚙ General
+              </button>
+              <button
+                onClick={() => setSettingsTab('members')}
+                style={{
+                  flex: 1, padding: '8px 14px', borderRadius: '99px', border: 'none', cursor: 'pointer',
+                  background: settingsTab === 'members' ? 'var(--primary)' : 'transparent',
+                  color: settingsTab === 'members' ? '#fff' : 'var(--text-muted)',
+                  fontWeight: 700, fontSize: '0.82rem', transition: 'all 0.2s',
+                }}
+              >
+                👥 Miembros ({guild?.members?.length || 0})
+              </button>
+              <button
+                onClick={() => setSettingsTab('requests')}
+                style={{
+                  flex: 1, padding: '8px 14px', borderRadius: '9px', border: 'none', cursor: 'pointer',
+                  background: settingsTab === 'requests' ? 'var(--primary)' : 'transparent',
+                  color: settingsTab === 'requests' ? '#fff' : 'var(--text-muted)',
+                  fontWeight: 700, fontSize: '0.82rem', transition: 'all 0.2s',
+                  position: 'relative',
+                }}
+              >
+                📋 Solicitudes
+                {pendingRequests.length > 0 && (
+                  <span style={{
+                    marginLeft: '6px', padding: '2px 7px', borderRadius: '10px',
+                    background: '#ff007f', color: '#fff', fontSize: '0.7rem', fontWeight: 800,
+                  }}>
+                    {pendingRequests.length}
+                  </span>
+                )}
+              </button>
+              {guild?.myRole === 'LEADER' && (
+                <button
+                  onClick={() => setSettingsTab('danger')}
+                  style={{
+                    flex: 1, padding: '8px 14px', borderRadius: '9px', border: 'none', cursor: 'pointer',
+                    background: settingsTab === 'danger' ? 'rgba(255,77,79,0.25)' : 'transparent',
+                    color: settingsTab === 'danger' ? '#ff4d4f' : 'rgba(255,77,79,0.7)',
+                    fontWeight: 700, fontSize: '0.82rem', transition: 'all 0.2s',
+                  }}
+                >
+                  ⚠️ Peligro
+                </button>
+              )}
+            </div>
+
             {settingsError && (
               <div style={{
-                padding: '10px 14px', borderRadius: '8px', marginBottom: '16px',
-                background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.2)',
-                color: 'var(--error)', fontSize: '0.85rem',
+                padding: '10px 14px', borderRadius: '10px', marginBottom: '16px',
+                background: 'rgba(255,77,79,0.12)', border: '1px solid rgba(255,77,79,0.3)',
+                color: 'var(--error)', fontSize: '0.85rem', fontWeight: 600,
               }}>⚠ {settingsError}</div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>Logo URL</label>
-                <input
-                  value={settingsLogoUrl}
-                  onChange={e => setSettingsLogoUrl(e.target.value)}
-                  placeholder="https://ejemplo.com/logo.png"
-                  type="url"
-                  style={{
-                    width: '100%', padding: '10px 14px', borderRadius: '8px',
-                    background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)',
-                    color: 'var(--text)', fontSize: '0.9rem', outline: 'none',
-                  }}
-                />
-                {settingsLogoUrl && (
-                  <div style={{ marginTop: '8px', width: '64px', height: '64px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                    <img src={settingsLogoUrl} alt="Logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            {/* TAB: GENERAL */}
+            {settingsTab === 'general' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>Nombre del Gremio</label>
+                  <input
+                    value={settingsName}
+                    onChange={e => setSettingsName(e.target.value)}
+                    placeholder="Nombre de la comunidad"
+                    type="text"
+                    style={{
+                      width: '100%', padding: '10px 14px', borderRadius: '10px',
+                      background: 'rgba(0,0,0,0.35)', border: '1px solid var(--glass-border)',
+                      color: 'var(--text)', fontSize: '0.9rem', outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>Descripción</label>
+                  <textarea
+                    value={settingsDescription}
+                    onChange={e => setSettingsDescription(e.target.value)}
+                    rows={3}
+                    placeholder="De qué trata tu comunidad..."
+                    style={{
+                      width: '100%', padding: '10px 14px', borderRadius: '10px',
+                      background: 'rgba(0,0,0,0.35)', border: '1px solid var(--glass-border)',
+                      color: 'var(--text)', fontSize: '0.9rem', outline: 'none', resize: 'vertical',
+                      fontFamily: 'inherit', lineHeight: 1.6,
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>Etiquetas / Tags (separadas por coma)</label>
+                  <input
+                    value={settingsTags}
+                    onChange={e => setSettingsTags(e.target.value)}
+                    placeholder="gaming, vtuber, anime, chill"
+                    type="text"
+                    style={{
+                      width: '100%', padding: '10px 14px', borderRadius: '10px',
+                      background: 'rgba(0,0,0,0.35)', border: '1px solid var(--glass-border)',
+                      color: 'var(--text)', fontSize: '0.9rem', outline: 'none',
+                    }}
+                  />
+                </div>
+
+                {/* Logo Section */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>Logo del Gremio</label>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      value={settingsLogoUrl}
+                      onChange={e => setSettingsLogoUrl(e.target.value)}
+                      placeholder="https://ejemplo.com/logo.png"
+                      type="url"
+                      style={{
+                        flex: 1, padding: '10px 14px', borderRadius: '10px',
+                        background: 'rgba(0,0,0,0.35)', border: '1px solid var(--glass-border)',
+                        color: 'var(--text)', fontSize: '0.88rem', outline: 'none',
+                      }}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={logoFileInputRef}
+                      style={{ display: 'none' }}
+                      onChange={handleUploadLogoFile}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => logoFileInputRef.current?.click()}
+                      className="btn btn--outline"
+                      style={{ padding: '9px 14px', borderRadius: '10px', fontSize: '0.8rem', flexShrink: 0, fontWeight: 700 }}
+                    >
+                      📁 Subir Foto
+                    </button>
+                  </div>
+                  {settingsLogoUrl && (
+                    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '56px', height: '56px', borderRadius: '14px', overflow: 'hidden', border: '2px solid var(--primary)' }}>
+                        <img src={settingsLogoUrl} alt="Logo preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      </div>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Vista previa del logo</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cover Banner Section */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>Portada / Banner del Gremio</label>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      value={settingsCoverUrl}
+                      onChange={e => setSettingsCoverUrl(e.target.value)}
+                      placeholder="https://ejemplo.com/banner.png"
+                      type="url"
+                      style={{
+                        flex: 1, padding: '10px 14px', borderRadius: '10px',
+                        background: 'rgba(0,0,0,0.35)', border: '1px solid var(--glass-border)',
+                        color: 'var(--text)', fontSize: '0.88rem', outline: 'none',
+                      }}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={coverFileInputRef}
+                      style={{ display: 'none' }}
+                      onChange={handleUploadCoverFile}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => coverFileInputRef.current?.click()}
+                      className="btn btn--outline"
+                      style={{ padding: '9px 14px', borderRadius: '10px', fontSize: '0.8rem', flexShrink: 0, fontWeight: 700 }}
+                    >
+                      📁 Subir Portada
+                    </button>
+                  </div>
+                  {settingsCoverUrl && (
+                    <div style={{ marginTop: '10px' }}>
+                      <div style={{ width: '100%', height: '90px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--primary)' }}>
+                        <img src={settingsCoverUrl} alt="Cover preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '12px', justifyContent: 'flex-end' }}>
+                  <button onClick={() => setShowSettings(false)} style={{
+                    padding: '10px 20px', borderRadius: '10px', fontWeight: 600, fontSize: '0.85rem',
+                    background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)',
+                    border: 'none', cursor: 'pointer',
+                  }}>Cancelar</button>
+                  <button onClick={handleSaveSettings} disabled={settingsSaving} style={{
+                    padding: '10px 24px', borderRadius: '10px', fontWeight: 800, fontSize: '0.85rem',
+                    background: 'linear-gradient(135deg, var(--secondary), var(--primary))',
+                    color: 'white', border: 'none', cursor: 'pointer',
+                    opacity: settingsSaving ? 0.7 : 1,
+                  }}>
+                    {settingsSaving ? 'Guardando...' : 'Guardar Cambios'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: MEMBERS */}
+            {settingsTab === 'members' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 8px' }}>
+                  Administra los miembros, asigna cargos de Oficial o transfiere la propiedad del gremio.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '360px', overflowY: 'auto' }}>
+                  {guild?.members.map(member => (
+                    <div key={member.id} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 14px', borderRadius: '12px',
+                      background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '36px', height: '36px', borderRadius: '50%',
+                          background: member.user.vtuberProfile?.avatarUrl
+                            ? `url(${member.user.vtuberProfile.avatarUrl}) center/cover`
+                            : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff', fontSize: '0.8rem', fontWeight: 800,
+                        }}>
+                          {!member.user.vtuberProfile?.avatarUrl && (member.user.vtuberProfile?.displayName || member.user.username).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 700 }}>
+                            {member.user.vtuberProfile?.displayName || member.user.username}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                            @{member.user.username} • <span style={{ color: roleConfig[member.role]?.color || 'var(--text-muted)', fontWeight: 600 }}>{roleConfig[member.role]?.label || member.role}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {guild.myRole === 'LEADER' && member.user.id !== user?.id && (
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            onClick={() => handleChangeRole(member.id, member.user.id, member.role === 'OFFICER' ? 'MEMBER' : 'OFFICER')}
+                            style={{
+                              padding: '5px 10px', borderRadius: '8px', border: '1px solid var(--glass-border)',
+                              background: member.role === 'OFFICER' ? 'rgba(138,43,226,0.2)' : 'rgba(255,255,255,0.05)',
+                              color: member.role === 'OFFICER' ? 'var(--primary)' : 'var(--text-muted)',
+                              fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
+                            }}
+                          >
+                            {member.role === 'OFFICER' ? '⭐ Oficial' : '+ Hacer Oficial'}
+                          </button>
+                          <button
+                            onClick={() => handleKickMember(member.id, member.user.id, member.user.username)}
+                            style={{
+                              padding: '5px 10px', borderRadius: '8px', border: '1px solid rgba(255,77,79,0.3)',
+                              background: 'rgba(255,77,79,0.1)', color: '#ff4d4f',
+                              fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
+                            }}
+                          >
+                            🚫 Expulsar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: REQUESTS */}
+            {settingsTab === 'requests' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 4px' }}>📋 Solicitudes de Ingreso Pendientes</h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Acepta o rechaza a los usuarios que desean formar parte de tu comunidad.
+                  </p>
+                </div>
+
+                {loadingRequests ? (
+                  <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                    Cargando solicitudes...
+                  </div>
+                ) : pendingRequests.length === 0 ? (
+                  <div style={{
+                    padding: '36px 20px', textAlign: 'center', borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--glass-border)',
+                  }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📬</div>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      No hay solicitudes pendientes en este momento.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '380px', overflowY: 'auto' }}>
+                    {pendingRequests.map(req => {
+                      const reqUser = req.user;
+                      const reqName = reqUser.vtuberProfile?.displayName || reqUser.displayName || reqUser.username;
+                      const reqAvatar = reqUser.vtuberProfile?.avatarUrl || reqUser.avatarUrl;
+                      const isProcessing = processingRequestId === req.id;
+
+                      return (
+                        <div key={req.id} style={{
+                          padding: '14px 16px', borderRadius: '14px',
+                          background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)',
+                          display: 'flex', flexDirection: 'column', gap: '10px',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <UserAvatar src={reqAvatar} alt={reqName} user={reqUser} size={42} />
+                              <div>
+                                <div style={{ fontSize: '0.92rem', fontWeight: 700 }}>{reqName}</div>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>@{reqUser.username}</div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button
+                                onClick={() => handleApproveRequest(req.id, reqUser.username)}
+                                disabled={isProcessing}
+                                className="btn btn--primary"
+                                style={{
+                                  padding: '7px 16px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 800,
+                                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                                  boxShadow: '0 4px 12px rgba(16,185,129,0.3)',
+                                }}
+                              >
+                                {isProcessing ? '...' : '✅ Aceptar'}
+                              </button>
+                              <button
+                                onClick={() => handleRejectRequest(req.id)}
+                                disabled={isProcessing}
+                                className="btn btn--outline"
+                                style={{
+                                  padding: '7px 14px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700,
+                                  color: '#ff4d4f', borderColor: 'rgba(255,77,79,0.3)',
+                                }}
+                              >
+                                ❌ Rechazar
+                              </button>
+                            </div>
+                          </div>
+
+                          {req.message && (
+                            <div style={{
+                              padding: '8px 12px', borderRadius: '8px',
+                              background: 'rgba(0,0,0,0.3)', fontSize: '0.82rem',
+                              color: 'var(--text-muted)', fontStyle: 'italic',
+                              borderLeft: '3px solid var(--primary)',
+                            }}>
+                              &quot;{req.message}&quot;
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
+            )}
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>Portada URL</label>
-                <input
-                  value={settingsCoverUrl}
-                  onChange={e => setSettingsCoverUrl(e.target.value)}
-                  placeholder="https://ejemplo.com/banner.png"
-                  type="url"
-                  style={{
-                    width: '100%', padding: '10px 14px', borderRadius: '8px',
-                    background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)',
-                    color: 'var(--text)', fontSize: '0.9rem', outline: 'none',
-                  }}
-                />
-                {settingsCoverUrl && (
-                  <div style={{ marginTop: '8px', width: '100%', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                    <img src={settingsCoverUrl} alt="Cover preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>Descripción</label>
-                <textarea
-                  value={settingsDescription}
-                  onChange={e => setSettingsDescription(e.target.value)}
-                  rows={4}
-                  style={{
-                    width: '100%', padding: '10px 14px', borderRadius: '8px',
-                    background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)',
-                    color: 'var(--text)', fontSize: '0.9rem', outline: 'none', resize: 'vertical',
-                    fontFamily: 'inherit', lineHeight: 1.6,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: '24px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowSettings(false)} style={{
-                padding: '10px 20px', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem',
-                background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)',
-                border: 'none', cursor: 'pointer',
-              }}>Cancelar</button>
-              <button onClick={handleSaveSettings} disabled={settingsSaving} style={{
-                padding: '10px 24px', borderRadius: '8px', fontWeight: 700, fontSize: '0.85rem',
-                background: 'linear-gradient(135deg, var(--secondary), var(--primary))',
-                color: 'white', border: 'none', cursor: 'pointer',
-                opacity: settingsSaving ? 0.7 : 1,
+            {/* TAB: DANGER ZONE */}
+            {settingsTab === 'danger' && guild?.myRole === 'LEADER' && (
+              <div style={{
+                padding: '20px', borderRadius: '14px',
+                background: 'rgba(255,77,79,0.06)', border: '1px solid rgba(255,77,79,0.25)',
+                display: 'flex', flexDirection: 'column', gap: '14px',
               }}>
-                {settingsSaving ? 'Guardando...' : 'Guardar cambios'}
-              </button>
-            </div>
+                <div>
+                  <h4 style={{ margin: '0 0 6px', color: '#ff4d4f', fontSize: '1rem', fontWeight: 800 }}>⚠️ Eliminar Gremio Definitivamente</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    Esta acción es irreversible. Se borrarán todos los canales, mensajes y la comunidad será disuelta permanentemente.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    onClick={handleDelete}
+                    disabled={actionLoading}
+                    style={{
+                      padding: '12px 24px', borderRadius: '10px', border: 'none',
+                      background: 'linear-gradient(135deg, #ff4d4f, #d9363e)',
+                      color: '#fff', fontWeight: 800, fontSize: '0.88rem', cursor: 'pointer',
+                      boxShadow: '0 4px 16px rgba(255,77,79,0.3)',
+                    }}
+                  >
+                    {actionLoading ? 'Eliminando...' : '🗑️ Confirmar y Eliminar Gremio'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
