@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
+import UserAvatar from './UserAvatar';
 
 // ── Types ──
 interface ProfileCardData {
@@ -36,6 +37,7 @@ interface ProfileCardData {
   } | null;
   _count: { followers: number; following: number };
   isFollowedByMe: boolean;
+  purchases?: any[];
 }
 
 interface ProfileCardWidgetProps {
@@ -337,23 +339,14 @@ function CardContent({
             </div>
           )}
 
-          <div style={{
-            width: '80px', height: '80px', borderRadius: '50%',
-            background: avatarUrl
-              ? `url(${avatarUrl}) center/cover`
-              : `linear-gradient(135deg, ${themeColor}, var(--secondary))`,
-            border: '3px solid #1a1a2e',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontWeight: 'bold', fontSize: '1.6rem',
-            overflow: 'hidden', flexShrink: 0,
-            transition: 'transform 0.2s',
-          }}
-            onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-            onMouseOut={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-          >
-            {!avatarUrl && getInitial(displayName)}
-          </div>
+          <UserAvatar
+            src={avatarUrl}
+            alt={displayName}
+            user={profile}
+            size={80}
+            isVerified={isVerified}
+            isLive={isLive}
+          />
         </div>
       </div>
 
