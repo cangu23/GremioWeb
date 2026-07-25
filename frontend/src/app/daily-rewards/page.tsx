@@ -184,9 +184,13 @@ function RewardsContent() {
         <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '16px' }}>Recompensas de la semana</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
           {(status?.rewards || []).map((reward) => {
-            const isClaimed = status?.history.some(h => h.day === reward.day);
+            const isClaimed = status
+              ? status.claimedToday
+                ? reward.day <= status.currentDay
+                : reward.day < status.currentDay
+              : false;
             const isCurrent = status?.currentDay === reward.day;
-            const isPast = (status?.history.some(h => h.day === reward.day));
+            const isPast = isClaimed && !isCurrent;
             return (
               <div key={reward.day} className="glass" style={{
                 padding: '16px', textAlign: 'center', borderRadius: '12px',
