@@ -80,7 +80,6 @@ function ContentTypeIcon({ type, size = 14 }: { type: string; size?: number }) {
     case 'asmr': return <Headphones {...props} />;
     case 'chatting':
     case 'just-chatting':
-    case 'vtuber':
     default: return <MessageSquare {...props} />;
   }
 }
@@ -92,20 +91,26 @@ function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string
     <div
       className="glass"
       style={{
-        padding: '20px 24px',
+        padding: '24px 28px',
         borderRadius: '16px',
         textAlign: 'center',
         flex: 1,
-        minWidth: 140,
+        minWidth: 150,
         transition: 'all 0.25s ease',
-        border: '1px solid var(--glass-border)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(20,20,32,0.6)',
+        backdropFilter: 'blur(16px)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--glass-border)'; }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
     >
-      <div style={{ fontSize: '1.5rem', marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>{icon}</div>
-      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.2 }}>{value}</div>
-      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{label}</div>
+      <div style={{ fontSize: '1.6rem', marginBottom: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>{icon}</div>
+      <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '6px', fontWeight: 600 }}>{label}</div>
     </div>
   );
 }

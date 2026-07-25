@@ -22,6 +22,14 @@ export const markAllAsRead = async (userId: string) => {
   return NotificationsRepository.markAllAsRead(userId);
 };
 
+export const deleteNotification = async (notificationId: string, userId: string) => {
+  return NotificationsRepository.deleteNotification(notificationId, userId);
+};
+
+export const deleteReadNotifications = async (userId: string) => {
+  return NotificationsRepository.deleteReadNotifications(userId);
+};
+
 export const notifyFollow = async (followerUsername: string, followedUserId: string, followerId: string) => {
   return NotificationsRepository.createNotification({
     userId: followedUserId,

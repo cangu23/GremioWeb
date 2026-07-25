@@ -43,3 +43,21 @@ export const markAllAsRead = async (req: Request, res: Response, next: NextFunct
     next(err);
   }
 };
+
+export const deleteNotification = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await NotificationsService.deleteNotification(String(req.params.id), req.user!.id);
+    res.json({ message: 'Notificación eliminada' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteRead = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await NotificationsService.deleteReadNotifications(req.user!.id);
+    res.json({ message: 'Notificaciones leídas eliminadas' });
+  } catch (err) {
+    next(err);
+  }
+};

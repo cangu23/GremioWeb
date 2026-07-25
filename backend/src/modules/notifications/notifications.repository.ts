@@ -43,3 +43,13 @@ export const markAllAsRead = (userId: string) =>
     where: { userId, read: false },
     data: { read: true },
   });
+
+export const deleteNotification = (id: string, userId: string) =>
+  prisma.notification.deleteMany({
+    where: { id, userId },
+  });
+
+export const deleteReadNotifications = (userId: string) =>
+  prisma.notification.deleteMany({
+    where: { userId, read: true },
+  });

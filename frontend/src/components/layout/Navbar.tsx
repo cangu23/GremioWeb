@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
@@ -313,6 +314,218 @@ function SearchModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// Notifications & Direct Messages Popovers
+// ==========================================================================
+function NotificationsDropdown({ unreadCount }: { unreadCount: number }) {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [notifs, setNotifs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleToggle = async () => {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen && user) {
+      setLoading(true);
+      try {
+        const data = await apiFetch('/notifications?limit=5', {});
+        setNotifs(data || []);
+      } catch {} finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={handleToggle}
+        style={{
+          padding: '7px', borderRadius: '8px', border: 'none',
+          background: open ? 'rgba(255,255,255,0.06)' : 'transparent',
+          color: 'var(--text-muted)', cursor: 'pointer', display: 'inline-flex',
+          transition: 'all 0.15s', position: 'relative',
+        }}
+        title="Notificaciones"
+      >
+        {Icons.bell}
+        {unreadCount > 0 && (
+          <span style={{
+            position: 'absolute', top: '3px', right: '3px',
+            width: '8px', height: '8px', borderRadius: '50%',
+            background: 'var(--primary)', boxShadow: '0 0 6px var(--primary-glow)',
+          }} />
+        )}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', right: 0, marginTop: '8px',
+          width: '320px', zIndex: 1000,
+          background: 'rgba(20,20,32,0.97)', backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.6)', padding: '12px',
+          animation: 'slideDown 0.15s ease',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>Notificaciones</span>
+            <Link href="/notifications" onClick={() => setOpen(false)} style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+              Ver todas →
+            </Link>
+          </div>
+
+          {loading ? (
+            <div style={{ padding: '16px 0', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Cargando...</div>
+          ) : notifs.length === 0 ? (
+            <div style={{ padding: '16px 0', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Sin notificaciones recientes</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {notifs.map(n => (
+                <div
+                  key={n.id}
+                  onClick={() => { setOpen(false); router.push('/notifications'); }}
+                  style={{
+                    padding: '8px 10px', borderRadius: '10px', cursor: 'pointer',
+                    background: n.read ? 'transparent' : 'rgba(139,92,246,0.1)',
+                    border: '1px solid rgba(255,255,255,0.03)',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(139,92,246,0.1)')}
+                >
+                  <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#fff', marginBottom: '2px' }}>{n.title}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.message}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MessagesDropdown({ dmUnreadCount }: { dmUnreadCount: number }) {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [convs, setConvs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleToggle = async () => {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen && user) {
+      setLoading(true);
+      try {
+        const data = await apiFetch('/dm/conversations', {});
+        setConvs((data || []).slice(0, 5));
+      } catch {} finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={handleToggle}
+        style={{
+          padding: '7px', borderRadius: '8px', border: 'none',
+          background: open ? 'rgba(255,255,255,0.06)' : 'transparent',
+          color: 'var(--text-muted)', cursor: 'pointer', display: 'inline-flex',
+          transition: 'all 0.15s', position: 'relative',
+        }}
+        title="Mensajes Directos"
+      >
+        {Icons.message}
+        {dmUnreadCount > 0 && (
+          <span style={{
+            position: 'absolute', top: '2px', right: '2px',
+            minWidth: '16px', height: '16px', borderRadius: '8px',
+            background: 'var(--secondary)', color: '#fff', fontSize: '0.6rem',
+            fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '0 4px', boxShadow: '0 0 6px rgba(255,0,127,0.5)',
+          }}>
+            {dmUnreadCount > 99 ? '99+' : dmUnreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', right: 0, marginTop: '8px',
+          width: '320px', zIndex: 1000,
+          background: 'rgba(20,20,32,0.97)', backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.6)', padding: '12px',
+          animation: 'slideDown 0.15s ease',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>Bandeja de Entrada</span>
+            <Link href="/chat" onClick={() => setOpen(false)} style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+              Ver chat completo →
+            </Link>
+          </div>
+
+          {loading ? (
+            <div style={{ padding: '16px 0', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Cargando chats...</div>
+          ) : convs.length === 0 ? (
+            <div style={{ padding: '16px 0', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>No tienes conversaciones recientes</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {convs.map(c => {
+                const other = c.senderId === user?.id ? c.receiver : c.sender;
+                const name = other.displayName || other.vtuberProfile?.displayName || other.username;
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => { setOpen(false); router.push(`/chat?user=${other.id}`); }}
+                    style={{
+                      padding: '8px 10px', borderRadius: '10px', cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)',
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+                  >
+                    <UserAvatar src={other.avatarUrl || other.vtuberProfile?.avatarUrl} alt={name} size={34} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#fff' }}>{name}</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.content}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -734,42 +947,8 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
           {Icons.search}
         </button>
 
-        <Link href="/chat" style={{ ...iconBtn, textDecoration: 'none' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-          title="Mensajes"
-        >
-          {Icons.message}
-          {dmUnreadCount > 0 && (
-            <span style={{
-              position: 'absolute', top: '2px', right: '2px',
-              minWidth: '16px', height: '16px', borderRadius: '8px',
-              background: 'var(--secondary)',
-              color: '#fff', fontSize: '0.6rem', fontWeight: 700,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: '0 4px',
-              boxShadow: '0 0 6px rgba(255,0,127,0.5)',
-            }}>
-              {dmUnreadCount > 99 ? '99+' : dmUnreadCount}
-            </span>
-          )}
-        </Link>
-
-        <Link href="/notifications" style={{ ...iconBtn, textDecoration: 'none' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-          title="Notificaciones"
-        >
-          {Icons.bell}
-          {unreadCount > 0 && (
-            <span style={{
-              position: 'absolute', top: '3px', right: '3px',
-              width: '8px', height: '8px', borderRadius: '50%',
-              background: 'var(--primary)',
-              boxShadow: '0 0 6px var(--primary-glow)',
-            }} />
-          )}
-        </Link>
+        <MessagesDropdown dmUnreadCount={dmUnreadCount} />
+        <NotificationsDropdown unreadCount={unreadCount} />
 
         {/* Hoshizora Maid — Café link */}
         <Link href="/hoshizora-maid" style={{ ...iconBtn, textDecoration: 'none' }}

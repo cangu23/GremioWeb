@@ -118,6 +118,59 @@ function ContentTypeIcon({ type, size = 16 }: { type: string | null; size?: numb
   }
 }
 
+function StreamRewardTimer({ vtuberName }: { vtuberName: string }) {
+  const { showToast } = useToast();
+  const [secondsLeft, setSecondsLeft] = useState(300);
+  const [claimedCount, setClaimedCount] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          apiFetch('/gamification/stream-xp', {
+            method: 'POST',
+            body: JSON.stringify({ minutes: 5 }),
+          })
+            .then((res: any) => {
+              if (res?.xpAwarded) {
+                showToast(`🍿 ¡+${res.xpAwarded} XP / Stardust ganados por ver a ${vtuberName}!`, 'success');
+                setClaimedCount(c => c + 1);
+              }
+            })
+            .catch(() => {});
+          return 300;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [vtuberName, showToast]);
+
+  const mins = Math.floor(secondsLeft / 60);
+  const secs = secondsLeft % 60;
+  const formattedTime = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+  return (
+    <div style={{
+      marginLeft: 'auto',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '4px 10px',
+      borderRadius: '12px',
+      background: 'rgba(245,158,11,0.15)',
+      border: '1px solid rgba(245,158,11,0.3)',
+      color: '#f59e0b',
+      fontSize: '0.78rem',
+      fontWeight: 700,
+    }}>
+      <span>🍿 Ganando Stardust en {formattedTime}</span>
+      {claimedCount > 0 && <span style={{ color: '#00e676' }}>({claimedCount}x ⭐)</span>}
+    </div>
+  );
+}
+
 /* ─────────── Section Title ─────────── */
 
 function SectionTitle({ icon, children, count }: { icon: React.ReactNode; children: React.ReactNode; count?: string | number }) {
@@ -136,6 +189,85 @@ function SectionTitle({ icon, children, count }: { icon: React.ReactNode; childr
         </span>
       )}
     </h3>
+  );
+}
+
+function VTuberWeeklyScheduleGrid({ vtuber, isLive }: { vtuber: VTuberProfileData | null; isLive: boolean }) {
+  const days = [
+    { code: 'MON', label: 'Lun', topic: 'Gaming 🎮' },
+    { code: 'TUE', label: 'Mar', topic: 'Collab 💜' },
+    { code: 'WED', label: 'Mié', topic: 'Chatting 💬' },
+    { code: 'THU', label: 'Jue', topic: 'Edición 🎬' },
+    { code: 'FRI', label: 'Vie', topic: 'Karaoke 🎤' },
+    { code: 'SAT', label: 'Sáb', topic: 'Special ✨' },
+    { code: 'SUN', label: 'Dom', topic: 'Descanso 💤' },
+  ];
+
+  const streamUrl = vtuber?.twitchUrl || vtuber?.youtubeUrl || '#';
+
+  return (
+    <div className="glass" style={{ padding: '20px 24px', borderRadius: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+          <Calendar size={16} color="var(--primary)" /> Horario Semanal de Stream
+        </h3>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Zona Horaria Local</span>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))',
+        gap: '8px',
+      }}>
+        {days.map((day, idx) => {
+          const todayIdx = new Date().getDay();
+          const isToday = todayIdx === (idx === 6 ? 0 : idx + 1);
+          return (
+            <div
+              key={day.code}
+              style={{
+                padding: '12px 8px',
+                borderRadius: '12px',
+                background: isToday ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.03)',
+                border: isToday ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.06)',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+              }}
+            >
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isToday ? 'var(--primary)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
+                {day.label}
+              </div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#fff', minHeight: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {day.topic}
+              </div>
+              {streamUrl !== '#' ? (
+                <a
+                  href={streamUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '4px 6px',
+                    borderRadius: '6px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    background: isToday && isLive ? '#e91e63' : 'rgba(255,255,255,0.08)',
+                    color: '#fff',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {isToday && isLive ? '🔴 En Vivo' : 'Ver Stream'}
+                </a>
+              ) : (
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Día Libre</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -773,6 +905,7 @@ function VtuberPublicProfile() {
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
                     — {displayName} está transmitiendo
                   </span>
+                  <StreamRewardTimer vtuberName={displayName} />
                   <a
                     href={vtuber.twitchUrl.startsWith('http') ? vtuber.twitchUrl : `https://twitch.tv/${channel}`}
                     target="_blank"
@@ -1024,8 +1157,10 @@ function VtuberPublicProfile() {
             )}
           </div>
 
-          {/* ═══ RIGHT COLUMN — POSTS FEED ═══ */}
+          {/* ═══ RIGHT COLUMN — SCHEDULE & POSTS FEED ═══ */}
           <div>
+            <VTuberWeeklyScheduleGrid vtuber={vtuber} isLive={isLive} />
+
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               marginBottom: '16px',
