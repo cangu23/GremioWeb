@@ -645,6 +645,7 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
         <UserAvatar
           src={avatarUrl}
           alt={displayName}
+          user={user}
           size={32}
         />
       </button>

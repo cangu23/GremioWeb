@@ -205,6 +205,7 @@ export default function CreatePost({
               src={avatarUrl}
               alt={displayName}
               userId={user?.id}
+              user={user}
               size={36}
             />
             <div style={{ flex: 1, minWidth: 0 }}>

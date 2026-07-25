@@ -216,7 +216,16 @@ function ProfileContent() {
   // Equipped shop items
   const equippedBadge = equippedItems.find((p: any) => p.item?.type === 'BADGE');
   const equippedTitle = equippedItems.find((p: any) => p.item?.type === 'TITLE');
-  const equippedFrame = equippedItems.find((p: any) => p.item?.type === 'FRAME');
+  const equippedFrame = equippedItems.find((p: any) =>
+    p.equipped && p.item && (
+      p.item.type === 'FRAME' ||
+      p.item.type === 'AVATAR_FRAME' ||
+      p.item.type === 'DECORATION' ||
+      p.item.type === 'HOVER' ||
+      p.item.type === 'EFFECT' ||
+      p.item.type === 'COLOR'
+    )
+  );
   const equippedBanner = equippedItems.find((p: any) => p.item?.type === 'BANNER');
   const equippedColor = equippedItems.find((p: any) => p.item?.type === 'COLOR');
 
@@ -225,6 +234,9 @@ function ProfileContent() {
   const frameData = equippedFrame ? parseItemData(equippedFrame.item.data) : null;
   const bannerData = equippedBanner ? parseItemData(equippedBanner.item.data) : null;
   const colorData = equippedColor ? parseItemData(equippedColor.item.data) : null;
+
+  const activeFrameUrl = equippedFrame?.item?.imageUrl || frameData?.frameUrl || frameData?.imageUrl || frameData?.url;
+  const activeEquippedFrame = frameData?.gradient || frameData?.style || frameData?.borderColor || frameData?.color || (typeof equippedFrame?.item?.data === 'string' ? equippedFrame.item.data : null);
 
   const bannerUrl = bannerData?.bannerUrl || vtuber?.bannerUrl;
   const themeColor = colorData?.color || vtuber?.themeColor || profile.bannerColor || 'var(--primary)';
@@ -355,19 +367,36 @@ function ProfileContent() {
             width: 'clamp(100px, 15vw, 140px)',
             height: 'clamp(100px, 15vw, 140px)',
             margin: '0 auto 16px',
+            overflow: 'visible',
           }}>
-            {/* FRAME Effect (if equipped) */}
-            {frameData && (
+            {/* FRAME Effect / Image Overlay (if equipped) */}
+            {activeFrameUrl ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-18%', left: '-18%',
+                  width: '136%', height: '136%',
+                  pointerEvents: 'none',
+                  zIndex: 4,
+                  backgroundImage: `url(${activeFrameUrl})`,
+                  backgroundPosition: 'center',
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
+                }}
+              />
+            ) : activeEquippedFrame ? (
               <div style={{
                 position: 'absolute',
                 inset: '-6px',
                 borderRadius: '50%',
-                background: frameData.gradient || frameData.borderColor || '#ffd700',
-                boxShadow: `0 0 24px ${frameData.glow || 'rgba(255,215,0,0.5)'}`,
+                background: activeEquippedFrame.includes('gradient') || activeEquippedFrame.includes('linear') || activeEquippedFrame.includes('conic')
+                  ? activeEquippedFrame
+                  : 'linear-gradient(135deg, #ff007f, #7928ca, #00dfd8)',
+                boxShadow: '0 0 24px rgba(138,43,226,0.6)',
                 zIndex: 0,
-                animation: frameData.gradient ? 'spin 8s linear infinite' : 'none',
+                animation: 'spin 8s linear infinite',
               }} />
-            )}
+            ) : null}
 
             <div style={{
               position: 'relative',

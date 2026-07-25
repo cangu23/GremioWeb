@@ -36,7 +36,7 @@ function GuildCard({ guild, viewMode }: { guild: GuildItem; viewMode: 'grid' | '
             border: '1px solid var(--glass-border)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             cursor: 'pointer',
-            overflow: 'hidden',
+            overflow: 'visible',
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
@@ -57,6 +57,8 @@ function GuildCard({ guild, viewMode }: { guild: GuildItem; viewMode: 'grid' | '
           <div style={{
             height: '95px',
             position: 'relative',
+            borderRadius: '20px 20px 0 0',
+            overflow: 'hidden',
             background: guild.coverUrl
               ? `url(${guild.coverUrl}) center/cover`
               : 'linear-gradient(135deg, #2a1548, #4c1d95, #1e1b4b)',

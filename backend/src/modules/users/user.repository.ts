@@ -144,6 +144,10 @@ export const getUserProfileById = async (id: string) => {
     where: { id },
     include: {
       vtuberProfile: true,
+      purchases: {
+        where: { equipped: true },
+        include: { item: true },
+      },
     },
   });
 
@@ -237,7 +241,13 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
 
     const result = await tx.user.findUnique({
       where: { id: userId },
-      include: { vtuberProfile: true },
+      include: {
+        vtuberProfile: true,
+        purchases: {
+          where: { equipped: true },
+          include: { item: true },
+        },
+      },
     });
 
     if (result?.vtuberProfile?.id && result.vtuberProfile.twitchUrl) {

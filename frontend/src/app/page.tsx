@@ -283,6 +283,7 @@ function HomeContent() {
             <UserAvatar
               src={avatarUrl}
               alt={displayName}
+              user={user}
               size={56}
               style={{ margin: '0 auto' }}
             />

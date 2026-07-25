@@ -14,8 +14,74 @@ interface UserAvatarProps {
   isLive?: boolean;
   frameUrl?: string | null;
   equippedFrame?: string | null;
+  purchases?: any[] | null;
+  user?: any | null;
   className?: string;
   style?: React.CSSProperties;
+}
+
+export function extractAvatarDecoration(
+  userOrPurchases?: any,
+  directFrameUrl?: string | null,
+  directEquippedFrame?: string | null
+): { frameUrl?: string | null; equippedFrame?: string | null } {
+  if (directFrameUrl) return { frameUrl: directFrameUrl };
+  if (directEquippedFrame) return { equippedFrame: directEquippedFrame };
+
+  if (!userOrPurchases) return {};
+
+  const purchases = Array.isArray(userOrPurchases)
+    ? userOrPurchases
+    : (userOrPurchases?.purchases || userOrPurchases?.user?.purchases);
+
+  if (Array.isArray(purchases)) {
+    const equippedPurchase = purchases.find((p: any) =>
+      p.equipped && p.item && (
+        p.item.type === 'AVATAR_FRAME' ||
+        p.item.type === 'FRAME' ||
+        p.item.type === 'DECORATION' ||
+        p.item.type === 'HOVER' ||
+        p.item.type === 'EFFECT' ||
+        p.item.type === 'COLOR' ||
+        p.item.type === 'BADGE'
+      )
+    );
+
+    if (equippedPurchase?.item) {
+      const item = equippedPurchase.item;
+      // 1. Direct imageUrl property on item
+      if (item.imageUrl) return { frameUrl: item.imageUrl };
+
+      // 2. Parsed JSON or string in item.data
+      if (item.data) {
+        try {
+          const parsed = typeof item.data === 'string' ? JSON.parse(item.data) : item.data;
+          if (parsed?.frameUrl || parsed?.imageUrl || parsed?.url) {
+            return { frameUrl: parsed.frameUrl || parsed.imageUrl || parsed.url };
+          }
+          if (parsed?.gradient || parsed?.style || parsed?.color) {
+            return { equippedFrame: parsed.gradient || parsed.style || parsed.color };
+          }
+        } catch {
+          if (typeof item.data === 'string' && (item.data.includes('http') || item.data.includes('/uploads/'))) {
+            return { frameUrl: item.data };
+          }
+          return { equippedFrame: item.data };
+        }
+      }
+      return { equippedFrame: 'linear-gradient(135deg, #ff007f, #7928ca, #00dfd8)' };
+    }
+  }
+
+  // Fallback to direct user fields
+  if (userOrPurchases?.equippedFrameUrl || userOrPurchases?.frameUrl) {
+    return { frameUrl: userOrPurchases.equippedFrameUrl || userOrPurchases.frameUrl };
+  }
+  if (userOrPurchases?.equippedFrame) {
+    return { equippedFrame: userOrPurchases.equippedFrame };
+  }
+
+  return {};
 }
 
 function timeAgo(dateStr: string): string {
@@ -30,8 +96,11 @@ function timeAgo(dateStr: string): string {
 
 export default function UserAvatar({
   src, alt, size = 40, note, noteUpdatedAt, userId,
-  isVerified, isLive, frameUrl, equippedFrame, className, style,
+  isVerified, isLive, frameUrl, equippedFrame, purchases, user, className, style,
 }: UserAvatarProps) {
+  const resolvedDecoration = extractAvatarDecoration(purchases || user, frameUrl, equippedFrame);
+  const activeFrameUrl = resolvedDecoration.frameUrl;
+  const activeEquippedFrame = resolvedDecoration.equippedFrame;
   const [showNote, setShowNote] = useState(false);
   const [profileCardUserId, setProfileCardUserId] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
@@ -112,7 +181,7 @@ export default function UserAvatar({
       )}
 
       {/* Equipped Avatar Frame / Decoration Overlay */}
-      {frameUrl ? (
+      {activeFrameUrl ? (
         <div
           style={{
             position: 'absolute',
@@ -120,13 +189,13 @@ export default function UserAvatar({
             width: '136%', height: '136%',
             pointerEvents: 'none',
             zIndex: 4,
-            backgroundImage: `url(${frameUrl})`,
+            backgroundImage: `url(${activeFrameUrl})`,
             backgroundPosition: 'center',
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
           }}
         />
-      ) : equippedFrame ? (
+      ) : activeEquippedFrame ? (
         <div
           style={{
             position: 'absolute',
@@ -135,8 +204,8 @@ export default function UserAvatar({
             borderRadius: '50%',
             pointerEvents: 'none',
             zIndex: 3,
-            background: equippedFrame.includes('gradient') || equippedFrame.includes('linear') || equippedFrame.includes('conic')
-              ? equippedFrame
+            background: activeEquippedFrame.includes('gradient') || activeEquippedFrame.includes('linear') || activeEquippedFrame.includes('conic')
+              ? activeEquippedFrame
               : 'linear-gradient(135deg, #ff007f, #7928ca, #00dfd8)',
             animation: 'spin 4s linear infinite',
             boxShadow: '0 0 10px rgba(121,40,202,0.5)',
