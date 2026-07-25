@@ -221,7 +221,8 @@ export default function ShopPage() {
       ]);
       setItems(itemsData || []);
       setInventory(invData || []);
-      setStardust(stardustData?.stardust || 0);
+      const currentStardust = stardustData?.stardust ?? stardustData?.data?.stardust ?? 0;
+      setStardust(currentStardust);
     } catch { /* silent */ }
     finally { setLoading(false); }
   };

@@ -12,6 +12,8 @@ import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import Link from 'next/link';
 
+import ImageCropperModal from '@/components/ui/ImageCropperModal';
+
 function UserSettings() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -26,20 +28,39 @@ function UserSettings() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const { uploadAndWait } = useSocketMedia();
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Cropper states
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState<string | null>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const tempUrl = URL.createObjectURL(file);
+    setCropperSrc(tempUrl);
+    setCropperOpen(true);
+    if (e.target) e.target.value = '';
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropperOpen(false);
     setUploadingAvatar(true);
     try {
-      const url = await uploadAndWait(file, '/uploads/avatar');
+      const croppedFile = new File([croppedBlob], `avatar_${Date.now()}.webp`, { type: 'image/webp' });
+      const url = await uploadAndWait(croppedFile, '/uploads/avatar');
       setAvatarUrl(url);
-      showToast('Imagen subida correctamente', 'success');
+      showToast('Foto de perfil recortada y actualizada', 'success');
     } catch (err: unknown) {
-      showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir imagen'}`, 'error');
+      showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir la imagen recortada'}`, 'error');
     } finally {
       setUploadingAvatar(false);
-      if (e.target) e.target.value = '';
     }
+  };
+
+  const handleCropExisting = () => {
+    if (!avatarUrl) return;
+    setCropperSrc(avatarUrl);
+    setCropperOpen(true);
   };
 
   useEffect(() => {
@@ -179,6 +200,22 @@ function UserSettings() {
                 >
                   {uploadingAvatar ? '...' : 'Subir'}
                 </button>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={handleCropExisting}
+                    style={{
+                      padding: '10px 14px', borderRadius: '8px',
+                      border: '1px solid rgba(139,92,246,0.3)',
+                      background: 'rgba(139,92,246,0.12)', color: 'var(--primary)',
+                      cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap',
+                      fontWeight: 600, transition: 'all 0.2s',
+                    }}
+                    title="Recortar y editar foto actual"
+                  >
+                    ✂️ Recortar
+                  </button>
+                )}
                 <input
                   ref={avatarInputRef}
                   type="file"
@@ -365,6 +402,16 @@ function UserSettings() {
           Solicitar ser VTuber
         </Link>
       </div>
+
+      {/* Image Cropper Modal */}
+      <ImageCropperModal
+        isOpen={cropperOpen}
+        imageSrc={cropperSrc}
+        cropType="avatar"
+        title="Editar Foto de Perfil"
+        onCropComplete={handleCropComplete}
+        onClose={() => setCropperOpen(false)}
+      />
     </div>
   );
 }

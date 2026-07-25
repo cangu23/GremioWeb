@@ -39,8 +39,13 @@ console.log(`${BOOT} Attaching Socket.IO...`);
 createSocketServer(server);
 console.log(`${BOOT} Socket.IO attached`);
 
+import { seedAchievements } from './modules/gamification/gamification.service';
+
 // Start automatic live stream detection
 startStreamMonitor();
+
+// Seed achievements in DB
+seedAchievements().catch(err => console.error(`${BOOT} Error seeding achievements:`, err));
 
 console.log(`${BOOT} Attempting to listen on port ${env.PORT}...`);
 server.listen(env.PORT, () => {

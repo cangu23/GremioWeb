@@ -13,6 +13,12 @@ export const getStardust = async (req: any, res: Response) => {
   res.json({ success: true, data: { ...balance, history } });
 };
 
+export const getStardustBalance = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const balance = await StardustService.getStardustBalance(userId);
+  res.json({ success: true, data: balance, ...balance });
+};
+
 export const getMissions = async (req: any, res: Response) => {
   const userId = req.user!.id;
   const missions = await MissionsService.getUserMissions(userId);

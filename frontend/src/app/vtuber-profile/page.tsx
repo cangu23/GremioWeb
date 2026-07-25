@@ -14,6 +14,8 @@ import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers } from '@gre
 import Link from 'next/link';
 import Image from 'next/image';
 
+import ImageCropperModal from '@/components/ui/ImageCropperModal';
+
 function VtuberProfileEditor() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -45,25 +47,38 @@ function VtuberProfileEditor() {
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const { uploadAndWait } = useSocketMedia();
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+  // Cropper states
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState<string | null>(null);
+  const [cropperType, setCropperType] = useState<'avatar' | 'banner'>('avatar');
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const tempUrl = URL.createObjectURL(file);
+    setCropperSrc(tempUrl);
+    setCropperType(type);
+    setCropperOpen(true);
+    if (e.target) e.target.value = '';
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropperOpen(false);
+    const type = cropperType;
     const setUploading = type === 'avatar' ? setUploadingAvatar : setUploadingBanner;
     const setUrl = type === 'avatar' ? setAvatarUrl : setBannerUrl;
 
     setUploading(true);
     try {
-      // Non-blocking upload: sends to backend, gets processing ID, waits for media:ready event
-      const url = await uploadAndWait(file, `/uploads/${type}`);
+      const croppedFile = new File([croppedBlob], `${type}_${Date.now()}.webp`, { type: 'image/webp' });
+      const url = await uploadAndWait(croppedFile, `/uploads/${type}`);
       setUrl(url);
-      showToast('Imagen subida correctamente', 'success');
+      showToast(`${type === 'avatar' ? 'Foto de perfil' : 'Banner'} recortado y actualizado`, 'success');
     } catch (err: unknown) {
-      showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir imagen'}`, 'error');
+      showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir la imagen recortada'}`, 'error');
     } finally {
       setUploading(false);
-      // Reset input
-      if (e.target) e.target.value = '';
     }
   };
 
@@ -473,6 +488,22 @@ function VtuberProfileEditor() {
                 >
                   {uploadingAvatar ? '...' : 'Subir'}
                 </button>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => { setCropperSrc(avatarUrl); setCropperType('avatar'); setCropperOpen(true); }}
+                    style={{
+                      padding: '10px 14px', borderRadius: '8px',
+                      border: '1px solid rgba(139,92,246,0.3)',
+                      background: 'rgba(139,92,246,0.12)', color: 'var(--primary)',
+                      cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap',
+                      fontWeight: 600, transition: 'all 0.2s',
+                    }}
+                    title="Recortar y editar foto actual"
+                  >
+                    ✂️ Recortar
+                  </button>
+                )}
                 <input
                   ref={avatarInputRef}
                   type="file"
@@ -511,6 +542,22 @@ function VtuberProfileEditor() {
                 >
                   {uploadingBanner ? '...' : 'Subir'}
                 </button>
+                {bannerUrl && (
+                  <button
+                    type="button"
+                    onClick={() => { setCropperSrc(bannerUrl); setCropperType('banner'); setCropperOpen(true); }}
+                    style={{
+                      padding: '10px 14px', borderRadius: '8px',
+                      border: '1px solid rgba(139,92,246,0.3)',
+                      background: 'rgba(139,92,246,0.12)', color: 'var(--primary)',
+                      cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap',
+                      fontWeight: 600, transition: 'all 0.2s',
+                    }}
+                    title="Recortar y editar banner actual"
+                  >
+                    ✂️ Recortar
+                  </button>
+                )}
                 <input
                   ref={bannerInputRef}
                   type="file"
@@ -986,6 +1033,15 @@ function VtuberProfileEditor() {
           </div>
         </div>
       )}
+      {/* Image Cropper Modal */}
+      <ImageCropperModal
+        isOpen={cropperOpen}
+        imageSrc={cropperSrc}
+        cropType={cropperType}
+        title={cropperType === 'avatar' ? 'Editar Foto de Perfil' : 'Editar Banner de VTuber'}
+        onCropComplete={handleCropComplete}
+        onClose={() => setCropperOpen(false)}
+      />
     </>
   );
 }
