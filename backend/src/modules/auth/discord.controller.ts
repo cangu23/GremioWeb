@@ -47,7 +47,8 @@ export const handleDiscordCallback = async (req: Request, res: Response, next: N
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
     res.redirect(`${env.FRONTEND_URL}/dashboard`);

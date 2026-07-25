@@ -4,16 +4,19 @@ import * as AuthService from './auth.service';
 // 30 days in milliseconds
 const REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
+  path: '/',
+  maxAge: REFRESH_COOKIE_MAX_AGE,
+};
+
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { refreshToken, ...authResponse } = await AuthService.login(req.body);
     
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: REFRESH_COOKIE_MAX_AGE // 30 days
-    });
+    res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
 
     res.status(200).json(authResponse);
   } catch (error) {
@@ -33,12 +36,7 @@ export const register = async (
       password: req.body.password,
     });
     
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: REFRESH_COOKIE_MAX_AGE // 30 days
-    });
+    res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
 
     res.status(201).json(authResponse);
   } catch (error) {
@@ -52,7 +50,12 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
     if (refreshToken) {
       await AuthService.logout({ refreshToken });
     }
-    res.clearCookie('refreshToken');
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
+      path: '/',
+    });
     res.status(204).send();
   } catch (error) {
     next(error);
@@ -73,12 +76,7 @@ export const refresh = async (
 
     const tokens = await AuthService.refreshAccessToken({ refreshToken });
     
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: REFRESH_COOKIE_MAX_AGE
-    });
+    res.cookie('refreshToken', tokens.refreshToken, REFRESH_COOKIE_OPTIONS);
 
     res.status(200).json({ accessToken: tokens.accessToken });
   } catch (error) {

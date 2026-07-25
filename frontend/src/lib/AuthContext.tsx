@@ -128,25 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('pageshow', handlePageShow);
 
-    // ── 3. Tab switch — user returns after being away  ─────────────────
-    // Silently re-validate the session so that if the access/refresh
-    // token expired while the user was on another tab, we recover
-    // transparently instead of waiting for the next 401.
-    //
-    // Note: refreshAuth() has an isRefreshing guard, so if BFCache
-    // restore fires both pageshow and visibilitychange simultaneously,
-    // only the first call proceeds. The second is a no-op.
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        refreshAuth();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
       window.removeEventListener('auth:unauthorized', handleUnauthorized);
       window.removeEventListener('pageshow', handlePageShow);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [refreshAuth]);
 
