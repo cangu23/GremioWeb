@@ -963,8 +963,8 @@ function GuildDetailContent() {
                               src={msg.imageUrl}
                               alt="Imagen del chat"
                               style={{
-                                width: '100%', height: 'auto', maxHeight: '300px',
-                                objectFit: 'cover', display: 'block',
+                                width: '100%', height: 'auto', maxHeight: '450px',
+                                objectFit: 'contain', display: 'block', background: 'rgba(0,0,0,0.3)',
                               }}
                               loading="lazy"
                             />

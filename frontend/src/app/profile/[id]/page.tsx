@@ -1015,8 +1015,8 @@ function ProfileContent() {
 
                     {/* Media */}
                     {post.mediaUrl && (
-                      <div style={{ borderRadius: '10px', overflow: 'hidden', marginBottom: '10px' }}>
-                        <Image src={post.mediaUrl} alt="" width={0} height={0} sizes="100vw" unoptimized style={{ width: '100%', maxHeight: '300px', objectFit: 'cover' }} />
+                      <div style={{ borderRadius: '10px', overflow: 'hidden', marginBottom: '10px', background: 'rgba(0,0,0,0.3)' }}>
+                        <Image src={post.mediaUrl} alt="" width={0} height={0} sizes="100vw" unoptimized style={{ width: '100%', maxHeight: '550px', objectFit: 'contain', display: 'block' }} />
                       </div>
                     )}
 
