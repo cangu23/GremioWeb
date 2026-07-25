@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import Link from 'next/link';
@@ -46,7 +47,12 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
   const [loading, setLoading] = useState(true);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'missions' | 'history'>('overview');
+  const [mounted, setMounted] = useState(false);
   const { showToast } = useToast();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchStardustData = useCallback(async () => {
     setLoading(true);
@@ -98,38 +104,44 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const multiplier = data?.multiplier || 1;
   const balance = data?.stardust || 0;
   const pendingMissions = missions.filter(m => m.isCompleted && !m.isClaimed);
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
         backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        backdropFilter: 'blur(10px)',
-        zIndex: 99999,
+        backdropFilter: 'blur(12px)',
+        zIndex: 999999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
         animation: 'fadeIn 0.2s ease-out',
+        overflow: 'hidden',
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%',
-          maxWidth: '620px',
-          maxHeight: '90vh',
-          background: '#16162a',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          width: '94vw',
+          maxWidth: '640px',
+          maxHeight: '88vh',
+          background: 'linear-gradient(145deg, #181730, #100f24)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '24px',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+          boxShadow: '0 24px 70px rgba(0,0,0,0.8), 0 0 30px rgba(245,158,11,0.15)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -465,7 +477,8 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

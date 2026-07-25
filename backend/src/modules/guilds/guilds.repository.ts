@@ -8,7 +8,7 @@ const guildIncludes = {
       vtuberProfile: { select: { displayName: true, avatarUrl: true } },
     },
   },
-  _count: { select: { members: true } },
+  _count: { select: { members: true, channels: true } },
 };
 
 export const createGuild = (data: {

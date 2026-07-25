@@ -130,12 +130,13 @@ export const notifyNewVtuberRequest = async (requesterUsername: string, requeste
   await Promise.all(notifications);
 };
 
-export const notifyDM = async (senderUsername: string, senderId: string, receiverId: string) => {
+export const notifyDM = async (senderName: string, senderId: string, receiverId: string) => {
+  const cleanName = senderName && senderName !== 'undefined' ? senderName : 'Un usuario';
   return NotificationsRepository.createNotification({
     userId: receiverId,
     type: NOTIFICATION_TYPES.DM,
-    title: 'Nuevo mensaje',
-    message: `@${senderUsername} te ha enviado un mensaje`,
+    title: 'Nuevo mensaje directo',
+    message: `${cleanName} te ha enviado un mensaje`,
     referenceId: senderId,
   });
 };

@@ -313,15 +313,32 @@ function MessengerContent() {
           socket.emit(DM_EVENTS.READ, { messageIds: unreadIds });
         }
 
-        if (!activeUserInfo && data && data.length > 0) {
+        if (data && data.length > 0) {
           const lastMsg = data[data.length - 1];
           const other = lastMsg.senderId === currentUser.id ? lastMsg.receiver : lastMsg.sender;
-          if (other.id === activeUserId) setActiveUserInfo(other);
+          if (other && other.id === activeUserId) setActiveUserInfo(other);
+        }
+
+        // Always ensure activeUserInfo is loaded
+        if (activeUserId && (!activeUserInfo || activeUserInfo.id !== activeUserId)) {
+          apiFetch(`/users/${activeUserId}`)
+            .then((u: any) => {
+              if (u?.id) {
+                setActiveUserInfo({
+                  id: u.id,
+                  username: u.username,
+                  displayName: u.displayName,
+                  avatarUrl: u.avatarUrl,
+                  vtuberProfile: u.vtuberProfile,
+                });
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {})
       .finally(() => setMessagesLoading(false));
-  }, [currentUser, activeUserId, socket]);
+  }, [currentUser, activeUserId, socket, activeUserInfo]);
 
   /* ─── Scroll to bottom on new messages without scrolling window ─── */
   useEffect(() => {
@@ -1037,6 +1054,12 @@ function MessengerContent() {
                           boxShadow: isMine ? '0 4px 16px rgba(138,43,226,0.25)' : 'none',
                           position: 'relative',
                         }}>
+                          {!isMine && showAvatar && activeUserInfo && (
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '4px', opacity: 0.9 }}>
+                              {getUsername(activeUserInfo)} <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 400 }}>@{activeUserInfo.username}</span>
+                            </div>
+                          )}
+
                           {isImage ? (
                             <img
                               src={msg.content}

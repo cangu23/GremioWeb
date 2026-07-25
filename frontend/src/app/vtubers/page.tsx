@@ -473,43 +473,47 @@ function VtubersContent() {
         padding: '0 0 32px',
         borderBottom: '1px solid rgba(255,255,255,0.04)',
       }}>
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '6px', background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            ✦ Directorio de VTubers
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: 500 }}>
-            Explora, descubre y conecta con los creadores más brillantes del Gremio Estelar
-          </p>
-        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
+          <div>
+            <h1 style={{ fontSize: '2.4rem', fontWeight: 800, margin: 0, background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              ✦ Directorio de VTubers
+            </h1>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: '4px 0 0 0' }}>
+              Explora, descubre y conecta con los creadores más brillantes del Gremio Estelar
+            </p>
+          </div>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <StatCard icon={<Sparkles size={28} color="var(--primary)" />} value={totalVtubers} label="VTubers" />
-          <StatCard icon={<span style={{ width: 16, height: 16, borderRadius: '50%', background: '#e91e63', display: 'inline-block' }} />} value={liveCount} label="En vivo ahora" />
-          <StatCard icon={<Star size={28} color="#ffd700" fill="#ffd700" />} value={featuredVtubers.length} label="Destacados" />
-          {!loggedIn && (
-            <Link href="/register" style={{ textDecoration: 'none' }}>
-              <div
-                className="glass"
-                style={{
-                  padding: '20px 28px',
-                  borderRadius: '16px',
-                  textAlign: 'center',
-                  flex: 1,
-                  minWidth: 180,
-                  background: 'linear-gradient(135deg, rgba(138,43,226,0.15), rgba(0,212,255,0.1))',
-                  border: '1px solid rgba(138,43,226,0.2)',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(138,43,226,0.2)'; }}
-              >
-                <div style={{ fontSize: '1.5rem', marginBottom: '4px', display: 'flex', justifyContent: 'center' }}><Rocket size={28} color="var(--primary)" /></div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--primary)' }}>¡Únete al gremio!</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Crea tu perfil VTuber</div>
-              </div>
-            </Link>
-          )}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '6px 14px', borderRadius: '20px',
+              background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)',
+              color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 700,
+            }}>
+              <Sparkles size={14} color="var(--primary)" />
+              <span>{totalVtubers} VTubers</span>
+            </div>
+
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '6px 14px', borderRadius: '20px',
+              background: 'rgba(233,30,99,0.12)', border: '1px solid rgba(233,30,99,0.25)',
+              color: '#e91e63', fontSize: '0.85rem', fontWeight: 700,
+            }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e91e63', animation: 'vtuber-pulse-dot 1.5s ease infinite' }} />
+              <span>{liveCount} En Vivo</span>
+            </div>
+
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '6px 14px', borderRadius: '20px',
+              background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)',
+              color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700,
+            }}>
+              <Star size={14} color="#f59e0b" fill="#f59e0b" />
+              <span>{featuredVtubers.length} Destacados</span>
+            </div>
+          </div>
         </div>
       </div>
 

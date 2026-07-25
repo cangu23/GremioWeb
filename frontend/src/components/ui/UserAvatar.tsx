@@ -12,6 +12,8 @@ interface UserAvatarProps {
   userId?: string;
   isVerified?: boolean;
   isLive?: boolean;
+  frameUrl?: string | null;
+  equippedFrame?: string | null;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -28,7 +30,7 @@ function timeAgo(dateStr: string): string {
 
 export default function UserAvatar({
   src, alt, size = 40, note, noteUpdatedAt, userId,
-  isVerified, isLive, className, style,
+  isVerified, isLive, frameUrl, equippedFrame, className, style,
 }: UserAvatarProps) {
   const [showNote, setShowNote] = useState(false);
   const [profileCardUserId, setProfileCardUserId] = useState<string | null>(null);
@@ -108,6 +110,39 @@ export default function UserAvatar({
           }}
         />
       )}
+
+      {/* Equipped Avatar Frame / Decoration Overlay */}
+      {frameUrl ? (
+        <div
+          style={{
+            position: 'absolute',
+            top: '-18%', left: '-18%',
+            width: '136%', height: '136%',
+            pointerEvents: 'none',
+            zIndex: 4,
+            backgroundImage: `url(${frameUrl})`,
+            backgroundPosition: 'center',
+            backgroundSize: 'contain',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+      ) : equippedFrame ? (
+        <div
+          style={{
+            position: 'absolute',
+            top: '-3px', left: '-3px',
+            width: size + 6, height: size + 6,
+            borderRadius: '50%',
+            pointerEvents: 'none',
+            zIndex: 3,
+            background: equippedFrame.includes('gradient') || equippedFrame.includes('linear') || equippedFrame.includes('conic')
+              ? equippedFrame
+              : 'linear-gradient(135deg, #ff007f, #7928ca, #00dfd8)',
+            animation: 'spin 4s linear infinite',
+            boxShadow: '0 0 10px rgba(121,40,202,0.5)',
+          }}
+        />
+      ) : null}
 
       {/* Avatar image */}
       <div

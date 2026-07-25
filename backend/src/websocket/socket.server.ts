@@ -150,7 +150,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
         socket.to(`user:${data.receiverId}`).emit('dm:message', payload);
 
         // Send notification to receiver (fire & forget)
-        NotificationsService.notifyDM(username, userId, data.receiverId).catch(() => {});
+        const senderName = message.sender.vtuberProfile?.displayName || message.sender.username || username || 'Un usuario';
+        NotificationsService.notifyDM(senderName, userId, data.receiverId).catch(() => {});
       } catch (err) {
         console.error('[Socket] Error sending DM:', err);
         socket.emit('dm:error', { message: 'Error al enviar mensaje' });

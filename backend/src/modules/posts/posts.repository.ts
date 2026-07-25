@@ -15,6 +15,10 @@ const postIncludes = {
           isApproved: true,
         },
       },
+      purchases: {
+        where: { equipped: true },
+        include: { item: true },
+      },
     },
   },
   _count: { select: { comments: true, likes: true } },
@@ -187,6 +191,10 @@ export const findCommentsByPost = (postId: string) => {
               isApproved: true,
             },
           },
+          purchases: {
+            where: { equipped: true },
+            include: { item: true },
+          },
         },
       },
       _count: { select: { likes: true } },
@@ -211,6 +219,10 @@ export const findCommentById = (id: string) => {
               isVerified: true,
               isApproved: true,
             },
+          },
+          purchases: {
+            where: { equipped: true },
+            include: { item: true },
           },
         },
       },

@@ -288,18 +288,40 @@ function VtuberProfileEditor() {
       </div>
 
       {/* ===== VISTA PREVIA ===== */}
-      {showPreview && (
+      {showPreview ? (
         <div style={{ marginBottom: '32px' }}>
           <div style={{
             padding: '12px 16px', borderRadius: '12px', marginBottom: '20px',
             background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)',
             color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 600,
-            display: 'flex', alignItems: 'center', gap: '8px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px',
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-            </svg>
-            Así te ve la comunidad — Vista previa en vivo
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              Así te ve la comunidad — Vista previa en vivo
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => { setShowPreview(false); setActiveTab('editor'); }}
+                className="btn btn--outline"
+                style={{ padding: '6px 14px', fontSize: '0.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)' }}
+              >
+                ✏️ Volver al Editor
+              </button>
+              {user?.id && (
+                <Link
+                  href={`/profile/${user.id}`}
+                  className="btn btn--primary"
+                  style={{ padding: '6px 14px', fontSize: '0.8rem', borderRadius: '8px' }}
+                >
+                  👁️ Ir a mi Perfil Público
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Banner preview - matches public profile exactly */}
@@ -409,11 +431,37 @@ function VtuberProfileEditor() {
               </div>
             )}
           </div>
-        </div>
-      )}
 
-      {/* ===== EDITOR FORM ===== */}
-      <form onSubmit={handleSave}>
+          {/* Bottom Action Bar in Preview */}
+          <div style={{
+            marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap',
+          }}>
+            <button
+              type="button"
+              onClick={() => { setShowPreview(false); setActiveTab('editor'); }}
+              className="btn btn--primary"
+              style={{
+                padding: '12px 24px', fontSize: '0.92rem', borderRadius: '12px',
+                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                boxShadow: '0 4px 20px rgba(138,43,226,0.3)',
+              }}
+            >
+              ✏️ Volver al Editor para modificar
+            </button>
+            {user?.id && (
+              <Link
+                href={`/profile/${user.id}`}
+                className="btn btn--outline"
+                style={{ padding: '12px 24px', fontSize: '0.92rem', borderRadius: '12px' }}
+              >
+                🔗 Ver Perfil Público Real
+              </Link>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* ===== EDITOR FORM ===== */
+        <form onSubmit={handleSave}>
         {/* ===== AVATAR & BANNER ===== */}
         <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>
           <h3 style={{
@@ -576,8 +624,42 @@ function VtuberProfileEditor() {
             fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            Información Basica
+            Información Básica y Estado
           </h3>
+
+          {/* Live Status Switch */}
+          <div style={{
+            padding: '14px 18px', borderRadius: '12px',
+            background: isLive ? 'rgba(233,30,99,0.12)' : 'rgba(255,255,255,0.03)',
+            border: isLive ? '1px solid rgba(233,30,99,0.35)' : '1px solid rgba(255,255,255,0.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '20px', transition: 'all 0.3s ease',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: isLive ? '#e91e63' : '#666', boxShadow: isLive ? '0 0 10px #e91e63' : 'none' }} />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.92rem', color: isLive ? '#e91e63' : 'var(--text-muted)' }}>
+                  {isLive ? '🔴 Transmitiendo En Vivo Ahora' : '⚫ Fuera de Línea'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Muestra la señal de en vivo en tu perfil y directorio
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsLive(!isLive)}
+              style={{
+                padding: '8px 18px', borderRadius: '20px',
+                border: 'none', cursor: 'pointer',
+                background: isLive ? '#e91e63' : 'rgba(255,255,255,0.1)',
+                color: '#fff', fontSize: '0.82rem', fontWeight: 700,
+                transition: 'all 0.2s',
+              }}
+            >
+              {isLive ? 'Cambiar a Fuera de Línea' : 'Cambiar a EN VIVO 🔴'}
+            </button>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -598,7 +680,25 @@ function VtuberProfileEditor() {
               <label className="form-label">Oshi Mark</label>
               <div style={{ position: 'relative' }}>
                 <input className="input" value={oshiMark} onChange={e => setOshiMark(e.target.value)}
-                  placeholder="Oshi mark" maxLength={20} />
+                  placeholder="Oshi mark (ej: 🌸)" maxLength={20} />
+              </div>
+              {/* Quick Oshi Emoji Picker */}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                {['🌸', '👑', '🐉', '🦊', '🐱', '🌌', '💎', '🍓', '⚡', '🌙', '🎀', '🎮', '🎤', '💫', '🔮'].map(emoji => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setOshiMark(emoji)}
+                    style={{
+                      border: 'none', background: oshiMark === emoji ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.05)',
+                      borderRadius: '6px', cursor: 'pointer', padding: '4px 6px', fontSize: '0.85rem',
+                      transition: 'all 0.15s',
+                    }}
+                    title={`Usar ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
               </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -806,7 +906,36 @@ function VtuberProfileEditor() {
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Horario de Streams</label>
               <input className="input" value={streamSchedule} onChange={e => setStreamSchedule(e.target.value)}
-                placeholder="Ej: Lun-Mie 20:00 UTC" />
+                placeholder="Ej: Lun-Vie 20:00 UTC" />
+              {/* Quick schedule preset buttons */}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                {[
+                  'Lun-Vie 20:00 UTC',
+                  'Mar-Sáb 18:00 UTC',
+                  'Fines de semana 21:00 UTC',
+                  'Todos los días 19:00 UTC',
+                  'Horario Variable 💬',
+                ].map(preset => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setStreamSchedule(preset)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: streamSchedule === preset ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)',
+                      color: streamSchedule === preset ? 'var(--primary)' : 'var(--text-muted)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label">Idiomas</label>
@@ -892,6 +1021,7 @@ function VtuberProfileEditor() {
           Los cambios se guardarán en tu perfil y serán visibles inmediatamente para la comunidad.
         </p>
       </form>
+      )}
 
     </div>
     ) : (

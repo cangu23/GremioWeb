@@ -37,6 +37,39 @@ function timeAgo(date: string): string {
   return new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
+function extractEquippedFrame(user: any): { frameUrl?: string | null; equippedFrame?: string | null } {
+  if (!user) return {};
+  if (user.equippedFrameUrl || user.frameUrl) return { frameUrl: user.equippedFrameUrl || user.frameUrl };
+  if (user.equippedFrame) return { equippedFrame: user.equippedFrame };
+
+  const purchases = user.purchases;
+  if (Array.isArray(purchases)) {
+    const frameItem = purchases.find((p: any) =>
+      p.equipped && p.item && (
+        p.item.type === 'AVATAR_FRAME' ||
+        p.item.type === 'FRAME' ||
+        p.item.type === 'HOVER' ||
+        p.item.type === 'EFFECT'
+      )
+    )?.item;
+
+    if (frameItem) {
+      if (frameItem.imageUrl) return { frameUrl: frameItem.imageUrl };
+      if (frameItem.data) {
+        try {
+          const parsed = typeof frameItem.data === 'string' ? JSON.parse(frameItem.data) : frameItem.data;
+          if (parsed?.frameUrl || parsed?.imageUrl) return { frameUrl: parsed.frameUrl || parsed.imageUrl };
+          if (parsed?.gradient || parsed?.style || parsed?.color) return { equippedFrame: parsed.gradient || parsed.style || parsed.color };
+        } catch {
+          return { equippedFrame: frameItem.data };
+        }
+      }
+      return { equippedFrame: 'linear-gradient(135deg, #ff007f, #7928ca, #00dfd8)' };
+    }
+  }
+  return {};
+}
+
 // ==========================================================================
 // PostCard Component
 // ==========================================================================
@@ -400,13 +433,20 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
       {/* ===== POST HEADER ===== */}
       <div style={{ padding: '16px 16px 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <UserAvatar
-            src={post.user.avatarUrl || post.user.vtuberProfile?.avatarUrl}
-            alt={post.user.displayName || post.user.vtuberProfile?.displayName || post.user.username}
-            userId={post.user.id}
-            isVerified={post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved}
-            size={40}
-          />
+          {(() => {
+            const { frameUrl, equippedFrame } = extractEquippedFrame(post.user);
+            return (
+              <UserAvatar
+                src={post.user.avatarUrl || post.user.vtuberProfile?.avatarUrl}
+                alt={post.user.displayName || post.user.vtuberProfile?.displayName || post.user.username}
+                userId={post.user.id}
+                isVerified={post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved}
+                frameUrl={frameUrl}
+                equippedFrame={equippedFrame}
+                size={40}
+              />
+            );
+          })()}
           <div style={{ minWidth: 0, flex: 1 }}>
             <Link href={`/profile/${post.user.id}`} style={{
               color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
@@ -710,13 +750,20 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                     position: 'relative',
                   }}
                 >
-                  <UserAvatar
-                    src={comment.user?.avatarUrl || comment.user?.vtuberProfile?.avatarUrl}
-                    alt={comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username || '?'}
-                    userId={comment.userId}
-                    isVerified={comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved}
-                    size={34}
-                  />
+                  {(() => {
+                    const { frameUrl, equippedFrame } = extractEquippedFrame(comment.user);
+                    return (
+                      <UserAvatar
+                        src={comment.user?.avatarUrl || comment.user?.vtuberProfile?.avatarUrl}
+                        alt={comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username || '?'}
+                        userId={comment.userId}
+                        isVerified={comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved}
+                        frameUrl={frameUrl}
+                        equippedFrame={equippedFrame}
+                        size={34}
+                      />
+                    );
+                  })()}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* Comment Header */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
