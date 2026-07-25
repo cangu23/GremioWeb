@@ -12,6 +12,9 @@ router.use(authenticate);
 
 router.get('/stardust', EcosystemController.getStardust);
 router.get('/stardust/balance', EcosystemController.getStardustBalance);
+router.post('/stardust/transfer', EcosystemController.transferStardust);
+router.post('/stardust/gift-plan', EcosystemController.giftPlan);
+
 router.get('/missions', EcosystemController.getMissions);
 router.post('/missions/:id/claim', EcosystemController.claimMission);
 

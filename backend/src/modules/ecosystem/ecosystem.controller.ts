@@ -19,6 +19,20 @@ export const getStardustBalance = async (req: any, res: Response) => {
   res.json({ success: true, data: balance, ...balance });
 };
 
+export const transferStardust = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const { targetUser, amount, message } = req.body;
+  const result = await StardustService.transferStardust(userId, targetUser, Number(amount), message);
+  res.json({ ...result, data: result });
+};
+
+export const giftPlan = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const { targetUser, plan } = req.body;
+  const result = await StardustService.giftPlatformPlanWithStardust(userId, targetUser, plan);
+  res.json({ ...result, data: result });
+};
+
 export const getMissions = async (req: any, res: Response) => {
   const userId = req.user!.id;
   const missions = await MissionsService.getUserMissions(userId);

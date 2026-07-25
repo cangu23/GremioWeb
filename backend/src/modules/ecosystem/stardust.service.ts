@@ -1,5 +1,6 @@
 import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
+import { activatePlatformPlan } from '../subscriptions/platform-subscriptions.service';
 
 // Multipliers by plan/role
 export const PLAN_STARDUST_MULTIPLIERS: Record<string, number> = {
@@ -7,6 +8,12 @@ export const PLAN_STARDUST_MULTIPLIERS: Record<string, number> = {
   ASTRO: 1.2,
   NOVA: 1.5,
   STELLAR: 2.0,
+};
+
+export const GIFT_PLAN_STARDUST_COSTS: Record<string, number> = {
+  ASTRO: 15000,
+  NOVA: 35000,
+  STELLAR: 80000,
 };
 
 export const getStardustMultiplier = (userPlan: string, userRole: string): number => {
@@ -94,6 +101,7 @@ export const getStardustBalance = async (userId: string) => {
   return {
     stardust: user.stardust,
     plan: user.plan,
+    role: user.role,
     multiplier: getStardustMultiplier(user.plan || 'FREE', user.role || 'USER'),
   };
 };
@@ -104,4 +112,123 @@ export const getStardustHistory = async (userId: string, limit = 20) => {
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
+};
+
+export const transferStardust = async (
+  senderId: string,
+  targetUser: string,
+  amount: number,
+  message?: string
+) => {
+  if (!targetUser || !targetUser.trim()) {
+    throw new AppError('Debes ingresar el nombre de usuario o correo del destinatario', 400);
+  }
+  if (!amount || amount <= 0) {
+    throw new AppError('La cantidad de Polvo Estelar a enviar debe ser mayor a 0', 400);
+  }
+
+  const sender = await prisma.user.findUnique({
+    where: { id: senderId },
+    select: { id: true, username: true, stardust: true },
+  });
+  if (!sender) throw new AppError('Usuario remitente no encontrado', 404);
+
+  const cleanTarget = targetUser.trim().replace(/^@/, '');
+  const recipient = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { username: { equals: cleanTarget, mode: 'insensitive' } },
+        { email: { equals: cleanTarget, mode: 'insensitive' } },
+      ],
+    },
+    select: { id: true, username: true, email: true },
+  });
+
+  if (!recipient) {
+    throw new AppError(`No se encontró ningún usuario con el nombre o correo "${targetUser}"`, 404);
+  }
+
+  if (recipient.id === sender.id) {
+    throw new AppError('No puedes transferirte Polvo Estelar a ti mismo', 400);
+  }
+
+  const transferReasonSender = `Transferencia enviada a @${recipient.username}${message ? `: "${message}"` : ''}`;
+  const spendResult = await spendStardust(sender.id, amount, transferReasonSender);
+
+  const transferReasonRecipient = `Regalo recibido de @${sender.username}${message ? `: "${message}"` : ''}`;
+  await addStardust(recipient.id, amount, transferReasonRecipient);
+
+  return {
+    success: true,
+    message: `¡Has transferido ⭐ ${amount} Polvo Estelar a @${recipient.username} con éxito!`,
+    newBalance: spendResult.newBalance,
+    recipient: recipient.username,
+  };
+};
+
+export const giftPlatformPlanWithStardust = async (
+  senderId: string,
+  targetUser: string,
+  plan: 'ASTRO' | 'NOVA' | 'STELLAR'
+) => {
+  if (!GIFT_PLAN_STARDUST_COSTS[plan]) {
+    throw new AppError('Plan no válido para regalar', 400);
+  }
+
+  const cost = GIFT_PLAN_STARDUST_COSTS[plan];
+
+  const sender = await prisma.user.findUnique({
+    where: { id: senderId },
+    select: { id: true, username: true, plan: true, role: true, stardust: true },
+  });
+  if (!sender) throw new AppError('Usuario remitente no encontrado', 404);
+
+  const isEligible =
+    sender.plan === 'ASTRO' ||
+    sender.plan === 'NOVA' ||
+    sender.plan === 'STELLAR' ||
+    sender.role === 'VTUBER' ||
+    sender.role === 'MAID' ||
+    sender.role === 'ADMIN';
+
+  if (!isEligible) {
+    throw new AppError(
+      'La función de regalar suscripciones Premium por Polvo Estelar es exclusiva para suscriptores con plan activo Astro ($2.99) o Nova Pro ($5.99) en adelante.',
+      403
+    );
+  }
+
+  const cleanTarget = targetUser.trim().replace(/^@/, '');
+  const recipient = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { username: { equals: cleanTarget, mode: 'insensitive' } },
+        { email: { equals: cleanTarget, mode: 'insensitive' } },
+      ],
+    },
+    select: { id: true, username: true, email: true },
+  });
+
+  if (!recipient) {
+    throw new AppError(`No se encontró ningún usuario con el nombre o correo "${targetUser}"`, 404);
+  }
+
+  if (recipient.id === sender.id) {
+    throw new AppError('No puedes regalarte una suscripción a ti mismo con este método', 400);
+  }
+
+  const spendReason = `Regalo de Suscripción Plan ${plan} (10 días) a @${recipient.username}`;
+  const spendResult = await spendStardust(sender.id, cost, spendReason);
+
+  // Activate plan for recipient for 10 days
+  const activation = await activatePlatformPlan(recipient.id, plan, 10);
+
+  return {
+    success: true,
+    message: `¡Felicidades! Le has regalado 10 días del Plan ${plan} a @${recipient.username} por ⭐ ${cost.toLocaleString()} Polvo Estelar.`,
+    newBalance: spendResult.newBalance,
+    recipient: recipient.username,
+    plan,
+    activation,
+  };
 };

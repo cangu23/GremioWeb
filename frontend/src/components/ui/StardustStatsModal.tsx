@@ -46,8 +46,20 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [claimingId, setClaimingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'missions' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'missions' | 'history' | 'transfer'>('overview');
   const [mounted, setMounted] = useState(false);
+
+  // Transfer state
+  const [transferTarget, setTransferTarget] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferMessage, setTransferMessage] = useState('');
+  const [transferSubmitting, setTransferSubmitting] = useState(false);
+
+  // Gift Plan state
+  const [giftTarget, setGiftTarget] = useState('');
+  const [selectedGiftPlan, setSelectedGiftPlan] = useState<'ASTRO' | 'NOVA' | 'STELLAR'>('ASTRO');
+  const [giftSubmitting, setGiftSubmitting] = useState(false);
+
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -79,7 +91,6 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
     }
   }, [isOpen, fetchStardustData]);
 
-  // ESC key listener
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,11 +115,80 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
     }
   };
 
+  const handleTransferStardust = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transferTarget.trim() || !transferAmount) return;
+    const amount = Number(transferAmount);
+    if (amount <= 0) {
+      showToast('La cantidad debe ser mayor a 0', 'error');
+      return;
+    }
+
+    setTransferSubmitting(true);
+    try {
+      const res = await apiFetch('/ecosystem/stardust/transfer', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetUser: transferTarget.trim(),
+          amount,
+          message: transferMessage.trim(),
+        }),
+      });
+
+      showToast(res.message || '¡Polvo Estelar transferido con éxito!', 'success');
+      setTransferTarget('');
+      setTransferAmount('');
+      setTransferMessage('');
+      fetchStardustData();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error en la transferencia', 'error');
+    } finally {
+      setTransferSubmitting(false);
+    }
+  };
+
+  const handleGiftPlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!giftTarget.trim()) {
+      showToast('Ingresa el nombre de usuario a quien regalarás el plan', 'error');
+      return;
+    }
+
+    setGiftSubmitting(true);
+    try {
+      const res = await apiFetch('/ecosystem/stardust/gift-plan', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetUser: giftTarget.trim(),
+          plan: selectedGiftPlan,
+        }),
+      });
+
+      showToast(res.message || '¡Suscripción Premium regalada con éxito!', 'success');
+      setGiftTarget('');
+      fetchStardustData();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al regalar el plan', 'error');
+    } finally {
+      setGiftSubmitting(false);
+    }
+  };
+
   if (!isOpen || !mounted) return null;
 
   const multiplier = data?.multiplier || 1;
   const balance = data?.stardust || 0;
-  const pendingMissions = missions.filter(m => m.isCompleted && !m.isClaimed);
+  const userPlan = data?.plan || 'FREE';
+  const userRole = data?.role || 'USER';
+  const isEligibleToGift =
+    userPlan === 'ASTRO' ||
+    userPlan === 'NOVA' ||
+    userPlan === 'STELLAR' ||
+    userRole === 'VTUBER' ||
+    userRole === 'MAID' ||
+    userRole === 'ADMIN';
+
+  const pendingMissions = missions.filter((m) => m.isCompleted && !m.isClaimed);
 
   return createPortal(
     <div
@@ -133,10 +213,10 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
       }}
     >
       <div
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         style={{
           width: '94vw',
-          maxWidth: '640px',
+          maxWidth: '680px',
           maxHeight: '88vh',
           background: 'linear-gradient(145deg, #181730, #100f24)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -171,7 +251,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                 Estadísticas de Stardust
               </h2>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Tus puntos estelares y progreso de misiones
+                Tus puntos estelares, misiones y regalos
               </span>
             </div>
           </div>
@@ -201,6 +281,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           padding: '0 24px',
           background: 'rgba(0,0,0,0.2)',
+          overflowX: 'auto',
         }}>
           <button
             onClick={() => setActiveTab('overview')}
@@ -213,7 +294,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
               fontSize: '0.86rem',
               cursor: 'pointer',
               borderBottom: activeTab === 'overview' ? '2px solid #f59e0b' : '2px solid transparent',
-              transition: 'all 0.2s',
+              whiteSpace: 'nowrap',
             }}
           >
             Resumen
@@ -229,8 +310,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
               fontSize: '0.86rem',
               cursor: 'pointer',
               borderBottom: activeTab === 'missions' ? '2px solid #f59e0b' : '2px solid transparent',
-              transition: 'all 0.2s',
-              position: 'relative',
+              whiteSpace: 'nowrap',
             }}
           >
             Misiones
@@ -249,6 +329,22 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
             )}
           </button>
           <button
+            onClick={() => setActiveTab('transfer')}
+            style={{
+              padding: '12px 16px',
+              border: 'none',
+              background: 'none',
+              color: activeTab === 'transfer' ? '#f59e0b' : 'var(--text-muted)',
+              fontWeight: activeTab === 'transfer' ? 700 : 500,
+              fontSize: '0.86rem',
+              cursor: 'pointer',
+              borderBottom: activeTab === 'transfer' ? '2px solid #f59e0b' : '2px solid transparent',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🎁 Transferir & Regalar
+          </button>
+          <button
             onClick={() => setActiveTab('history')}
             style={{
               padding: '12px 16px',
@@ -259,7 +355,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
               fontSize: '0.86rem',
               cursor: 'pointer',
               borderBottom: activeTab === 'history' ? '2px solid #f59e0b' : '2px solid transparent',
-              transition: 'all 0.2s',
+              whiteSpace: 'nowrap',
             }}
           >
             Historial
@@ -277,7 +373,6 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
               {/* === OVERVIEW TAB === */}
               {activeTab === 'overview' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {/* Balance Hero Card */}
                   <div className="glass" style={{
                     padding: '24px',
                     borderRadius: '18px',
@@ -318,28 +413,21 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                     </div>
                   </div>
 
-                  {/* QUICK SHORTCUTS GRID */}
                   <div>
                     <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}>
                       Accesos Rápidos Estelares
                     </h4>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                      <button onClick={() => setActiveTab('transfer')} className="glass" style={shortcutCardStyle}>
+                        <span style={{ fontSize: '1.4rem' }}>🎁</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>Regalar</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Enviar Puntos/Plan</span>
+                      </button>
+
                       <Link href="/shop" onClick={onClose} className="glass" style={shortcutCardStyle}>
                         <span style={{ fontSize: '1.4rem' }}>🛍️</span>
                         <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>Tienda</span>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Gastar Stardust</span>
-                      </Link>
-
-                      <Link href="/daily-rewards" onClick={onClose} className="glass" style={shortcutCardStyle}>
-                        <span style={{ fontSize: '1.4rem' }}>🎁</span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>Diarias</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Ganar XP / Star</span>
-                      </Link>
-
-                      <Link href="/pass" onClick={onClose} className="glass" style={shortcutCardStyle}>
-                        <span style={{ fontSize: '1.4rem' }}>🚀</span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>Pase Estelar</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Recompensas</span>
                       </Link>
 
                       <Link href="/roulette" onClick={onClose} className="glass" style={shortcutCardStyle}>
@@ -360,7 +448,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                       No hay misiones activas por ahora.
                     </p>
                   ) : (
-                    missions.map(m => {
+                    missions.map((m) => {
                       const percent = Math.min(100, Math.round((m.currentCount / m.targetCount) * 100));
                       return (
                         <div
@@ -395,7 +483,6 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                             </div>
                           </div>
 
-                          {/* Progress bar & Claim button */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '10px' }}>
                             <div style={{ flex: 1, height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', overflow: 'hidden' }}>
                               <div style={{
@@ -432,6 +519,192 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                 </div>
               )}
 
+              {/* === TRANSFER & GIFT TAB === */}
+              {activeTab === 'transfer' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {/* Section A: Transfer Stardust */}
+                  <div className="glass" style={{ padding: '20px', borderRadius: '16px' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>🪙</span> Transferir Polvo Estelar (Puntos)
+                    </h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '14px' }}>
+                      Envía Stardust directamente a otro usuario con una nota personalizada.
+                    </p>
+
+                    <form onSubmit={handleTransferStardust} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Usuario Destinatario
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="ej: @goku o correo"
+                            value={transferTarget}
+                            onChange={(e) => setTransferTarget(e.target.value)}
+                            className="input"
+                            style={{ width: '100%', fontSize: '0.88rem' }}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Cantidad (Max ⭐ {balance.toLocaleString()})
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="ej: 100"
+                            min="1"
+                            max={balance}
+                            value={transferAmount}
+                            onChange={(e) => setTransferAmount(e.target.value)}
+                            className="input"
+                            style={{ width: '100%', fontSize: '0.88rem' }}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          Mensaje Opcional
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="¡Gracias por tu ayuda en el gremio!"
+                          value={transferMessage}
+                          onChange={(e) => setTransferMessage(e.target.value)}
+                          className="input"
+                          style={{ width: '100%', fontSize: '0.88rem' }}
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={transferSubmitting || !transferTarget.trim() || !transferAmount}
+                        className="btn btn--primary"
+                        style={{ alignSelf: 'flex-start', padding: '10px 20px', fontSize: '0.88rem', fontWeight: 700 }}
+                      >
+                        {transferSubmitting ? 'Enviando...' : '🚀 Transferir Stardust'}
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Section B: Gift Premium Plan */}
+                  <div className="glass" style={{
+                    padding: '20px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(56,189,248,0.06))',
+                    borderColor: 'rgba(139,92,246,0.3)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>🎁</span> Regalar Suscripción Premium
+                      </h3>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        padding: '3px 8px',
+                        borderRadius: '10px',
+                        background: isEligibleToGift ? 'rgba(0,230,118,0.2)' : 'rgba(239,68,68,0.2)',
+                        color: isEligibleToGift ? '#00e676' : '#ef4444',
+                        fontWeight: 700,
+                      }}>
+                        {isEligibleToGift ? '✓ Función Desbloqueada' : '🔒 Requiere Plan $2.99 / $5.99'}
+                      </span>
+                    </div>
+
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '14px' }}>
+                      Exclusivo para suscriptores Astro o Nova Pro: Regala 10 días de suscripción Premium a un amigo usando tu acumulado de Stardust.
+                    </p>
+
+                    <form onSubmit={handleGiftPlan} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {/* Plan Cards Selector */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                        <div
+                          onClick={() => setSelectedGiftPlan('ASTRO')}
+                          style={{
+                            padding: '12px 10px',
+                            borderRadius: '12px',
+                            background: selectedGiftPlan === 'ASTRO' ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.03)',
+                            border: selectedGiftPlan === 'ASTRO' ? '2px solid #38BDF8' : '1px solid rgba(255,255,255,0.08)',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38BDF8' }}>Astro ($2.99)</div>
+                          <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#FFF', marginTop: '4px' }}>15,000 🪙</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Stardust</div>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedGiftPlan('NOVA')}
+                          style={{
+                            padding: '12px 10px',
+                            borderRadius: '12px',
+                            background: selectedGiftPlan === 'NOVA' ? 'rgba(192,132,252,0.2)' : 'rgba(255,255,255,0.03)',
+                            border: selectedGiftPlan === 'NOVA' ? '2px solid #C084FC' : '1px solid rgba(255,255,255,0.08)',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#C084FC' }}>Nova Pro ($5.99)</div>
+                          <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#FFF', marginTop: '4px' }}>35,000 🪙</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Stardust</div>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedGiftPlan('STELLAR')}
+                          style={{
+                            padding: '12px 10px',
+                            borderRadius: '12px',
+                            background: selectedGiftPlan === 'STELLAR' ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.03)',
+                            border: selectedGiftPlan === 'STELLAR' ? '2px solid #FBBF24' : '1px solid rgba(255,255,255,0.08)',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FBBF24' }}>Stellar ($12.99)</div>
+                          <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#FFF', marginTop: '4px' }}>80,000 🪙</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Stardust</div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          Usuario Destinatario del Regalo
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="ej: @amigo o correo"
+                          value={giftTarget}
+                          onChange={(e) => setGiftTarget(e.target.value)}
+                          className="input"
+                          style={{ width: '100%', fontSize: '0.88rem' }}
+                          required
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={giftSubmitting || !isEligibleToGift || !giftTarget.trim()}
+                        className="btn"
+                        style={{
+                          alignSelf: 'flex-start',
+                          padding: '10px 24px',
+                          fontSize: '0.88rem',
+                          fontWeight: 800,
+                          background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+                          color: '#FFF',
+                          opacity: !isEligibleToGift ? 0.5 : 1,
+                        }}
+                      >
+                        {giftSubmitting ? 'Procesando Regalo...' : `🎁 Regalar Plan ${selectedGiftPlan}`}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+
               {/* === HISTORY TAB === */}
               {activeTab === 'history' && (
                 <div>
@@ -441,7 +714,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                     </p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {data.history.map(t => (
+                      {data.history.map((t) => (
                         <div
                           key={t.id}
                           style={{

@@ -115,13 +115,17 @@ export const getMyPlatformPlan = async (userId: string) => {
   };
 };
 
-export const activatePlatformPlan = async (userId: string, plan: 'ASTRO' | 'NOVA' | 'STELLAR') => {
+export const activatePlatformPlan = async (
+  userId: string,
+  plan: 'ASTRO' | 'NOVA' | 'STELLAR',
+  durationDays = 30
+) => {
   if (!PLATFORM_PLANS[plan]) {
     throw new AppError('Plan no válido', 400);
   }
 
   const periodEnd = new Date();
-  periodEnd.setMonth(periodEnd.getMonth() + 1);
+  periodEnd.setDate(periodEnd.getDate() + durationDays);
 
   const [sub] = await prisma.$transaction([
     prisma.platformSubscription.upsert({
@@ -146,7 +150,7 @@ export const activatePlatformPlan = async (userId: string, plan: 'ASTRO' | 'NOVA
   ]);
 
   return {
-    message: `¡Bienvenido al plan ${plan}! Tus beneficios y multiplicadores ya están activos.`,
+    message: `¡Bienvenido al plan ${plan}! Tus beneficios y multiplicadores ya están activos por ${durationDays} días.`,
     subscription: sub,
     planInfo: PLATFORM_PLANS[plan],
   };

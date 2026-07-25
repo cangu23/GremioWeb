@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import Link from 'next/link';
+import StardustStatsModal from '@/components/ui/StardustStatsModal';
 
 interface Transaction {
   id: string;
@@ -46,6 +47,7 @@ function StardustContent() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const fetchStardustData = useCallback(async () => {
     setLoading(true);
@@ -99,15 +101,25 @@ function StardustContent() {
   const multiplier = data?.multiplier || 1;
 
   return (
-    <div className="container" style={{ paddingTop: '20px', paddingBottom: '60px', maxWidth: '900px', margin: '0 auto' }}>
+    <div className="container" style={{ paddingTop: '20px', paddingBottom: '60px', maxWidth: '950px', margin: '0 auto' }}>
       {/* HEADER */}
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '2.4rem', fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          ⭐ Estadísticas de Stardust
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-          Administra tu moneda estelar, revisa tus ganancias y completa misiones activas.
-        </p>
+      <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: '2.4rem', fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            ⭐ Estadísticas de Stardust
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+            Administra tu moneda estelar, transfiere puntos y regala suscripciones Premium.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setModalOpen(true)}
+          className="btn btn--primary"
+          style={{ padding: '12px 24px', fontSize: '0.95rem', fontWeight: 800, borderRadius: '14px' }}
+        >
+          🎁 Regalar y Transferir Stardust
+        </button>
       </div>
 
       {/* BALANCE HERO CARD */}
@@ -155,6 +167,14 @@ function StardustContent() {
 
       {/* QUICK ACTIONS GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '16px', marginBottom: '40px' }}>
+        <button onClick={() => setModalOpen(true)} className="glass" style={{ ...actionCardStyle, cursor: 'pointer', textAlign: 'left', border: 'none', background: 'rgba(139,92,246,0.15)' }}>
+          <span style={{ fontSize: '2rem' }}>🎁</span>
+          <div>
+            <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Transferir / Regalar</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Envía puntos o regalá Premium</div>
+          </div>
+        </button>
+
         <Link href="/shop" className="glass" style={actionCardStyle}>
           <span style={{ fontSize: '2rem' }}>🛍️</span>
           <div>
@@ -168,14 +188,6 @@ function StardustContent() {
           <div>
             <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Recompensas Diarias</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Reclama tu racha de login</div>
-          </div>
-        </Link>
-
-        <Link href="/pass" className="glass" style={actionCardStyle}>
-          <span style={{ fontSize: '2rem' }}>🚀</span>
-          <div>
-            <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Pase Estelar</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Sube niveles y gana premios</div>
           </div>
         </Link>
 
@@ -200,7 +212,7 @@ function StardustContent() {
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay misiones disponibles.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {missions.map(m => {
+              {missions.map((m) => {
                 const percent = Math.min(100, Math.round((m.currentCount / m.targetCount) * 100));
                 return (
                   <div
@@ -252,7 +264,7 @@ function StardustContent() {
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay movimientos registrados.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {data.history.map(t => (
+              {data.history.map((t) => (
                 <div
                   key={t.id}
                   style={{
@@ -276,6 +288,8 @@ function StardustContent() {
           )}
         </div>
       </div>
+
+      <StardustStatsModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }
