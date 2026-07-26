@@ -65,6 +65,18 @@ const PRIZE_META: Record<string, { rarity: string; icon: string; badgeBg: string
   nothing: { rarity: 'Desafortunado', icon: '💨', badgeBg: 'rgba(107, 114, 128, 0.2)', pct: '1%' },
 };
 
+// Helper to format wheel prize labels into 1 or 2 clean lines
+function getWheelLabelLines(label: string): string[] {
+  if (label.length <= 10) return [label];
+  if (label.includes(' ')) {
+    const words = label.split(' ');
+    if (words.length === 2) return words;
+    const mid = Math.ceil(words.length / 2);
+    return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+  }
+  return [label];
+}
+
 // Canvas confetti component for celebratory win modal
 function ConfettiCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -518,7 +530,6 @@ function RouletteContent() {
 
                 const radStart = (startAngle * Math.PI) / 180;
                 const radEnd = (endAngle * Math.PI) / 180;
-                const radMid = (midAngle * Math.PI) / 180;
 
                 const x1 = cx + radius * Math.cos(radStart);
                 const y1 = cy + radius * Math.sin(radStart);
@@ -527,11 +538,15 @@ function RouletteContent() {
 
                 const pathData = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
 
-                const textRadius = radius * 0.65;
-                const tx = cx + textRadius * Math.cos(radMid);
-                const ty = cy + textRadius * Math.sin(radMid);
+                const normMid = ((midAngle % 360) + 360) % 360;
+                const isFlipped = normMid > 90 && normMid < 270;
+
+                const rot = isFlipped ? midAngle + 180 : midAngle;
+                const iconX = cx + (isFlipped ? -radius * 0.72 : radius * 0.72);
+                const textX = cx + (isFlipped ? -radius * 0.44 : radius * 0.44);
 
                 const meta = PRIZE_META[prize.id] || { icon: '🎁' };
+                const labelLines = getWheelLabelLines(prize.label);
 
                 return (
                   <g key={prize.id}>
@@ -542,33 +557,54 @@ function RouletteContent() {
                       strokeWidth="1.5"
                     />
 
-                    <g transform={`rotate(${midAngle + 90}, ${tx}, ${ty})`}>
+                    <g transform={`rotate(${rot}, ${cx}, ${cy})`}>
                       <text
-                        x={tx}
-                        y={ty - 10}
+                        x={iconX}
+                        y={cy}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize="18"
-                        style={{ userSelect: 'none' }}
+                        fontSize="19"
+                        style={{ userSelect: 'none', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}
                       >
                         {meta.icon}
                       </text>
-                      <text
-                        x={tx}
-                        y={ty + 12}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fill="#FFFFFF"
-                        fontSize="11"
-                        fontWeight="700"
-                        style={{
-                          userSelect: 'none',
-                          fontFamily: 'system-ui, sans-serif',
-                          textShadow: '0 1px 4px rgba(0,0,0,0.8)',
-                        }}
-                      >
-                        {prize.label}
-                      </text>
+
+                      {labelLines.length === 1 ? (
+                        <text
+                          x={textX}
+                          y={cy}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fill="#FFFFFF"
+                          fontSize="11.5"
+                          fontWeight="800"
+                          style={{
+                            userSelect: 'none',
+                            fontFamily: 'system-ui, sans-serif',
+                            textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                          }}
+                        >
+                          {labelLines[0]}
+                        </text>
+                      ) : (
+                        <text
+                          x={textX}
+                          y={cy - 5}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fill="#FFFFFF"
+                          fontSize="9.5"
+                          fontWeight="700"
+                          style={{
+                            userSelect: 'none',
+                            fontFamily: 'system-ui, sans-serif',
+                            textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                          }}
+                        >
+                          <tspan x={textX} dy="0">{labelLines[0]}</tspan>
+                          <tspan x={textX} dy="11">{labelLines[1]}</tspan>
+                        </text>
+                      )}
                     </g>
                   </g>
                 );
