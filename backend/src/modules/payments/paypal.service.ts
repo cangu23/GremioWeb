@@ -90,6 +90,14 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
 
   // Modo Demo / Desarrollo sin credenciales PayPal
   if (!accessToken) {
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.PAYPAL_STRICT === 'true';
+    if (isProduction) {
+      throw new AppError(
+        'La pasarela de pago PayPal no está configurada en producción. Configura PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET en las variables de entorno del backend.',
+        503
+      );
+    }
+
     console.log(`[PayPal Demo] Simulando orden PayPal de $${amount} USD (${clientTxId})`);
     return {
       mode: 'DEMO',
@@ -179,6 +187,10 @@ export const capturePayPalOrder = async (orderId: string, clientTxId: string, db
   let paymentApproved = false;
 
   if (!accessToken || orderId.startsWith('SIMULATED_')) {
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.PAYPAL_STRICT === 'true';
+    if (isProduction) {
+      throw new AppError('Pagos simulados no están permitidos en entorno de producción sin credenciales reales de PayPal.', 403);
+    }
     paymentApproved = true;
   } else {
     try {

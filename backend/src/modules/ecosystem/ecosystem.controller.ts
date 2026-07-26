@@ -57,6 +57,9 @@ export const getAllPlans = async (_req: any, res: Response) => {
 };
 
 export const activatePlan = async (req: any, res: Response) => {
+  if (req.user?.role !== 'ADMIN') {
+    throw new AppError('No tienes permiso para activar planes directamente sin realizar un pago válido.', 403);
+  }
   const userId = req.user!.id;
   const { plan } = req.body;
   const result = await PlatformService.activatePlatformPlan(userId, plan);
