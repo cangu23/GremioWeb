@@ -709,3 +709,151 @@ model UserPurchase {
   @@index([userId])
   @@index([itemId])
 }
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     String   @default("INFO")
+  message   String
+  context   String?
+  createdAt DateTime @default(now())
+}
+
+model Sticker {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  imageUrl    String
+  category    String   @default("general")
+  type        String   @default("sticker")
+  addedById   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  addedBy     User     @relation("stickerAuthor", fields: [addedById], references: [id])
+
+  @@index([category])
+  @@index([type])
+}
+
+model StardustTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Mission {
+  id             String                @id @default(cuid())
+  title          String
+  description    String
+  type           String                @default("DAILY")
+  goal           Int                   @default(1)
+  action         String
+  xpReward       Int                   @default(50)
+  stardustReward Int                   @default(20)
+  active         Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+
+  userProgress   UserMissionProgress[]
+}
+
+model UserMissionProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  missionId   String
+  progress    Int       @default(0)
+  completed   Boolean   @default(false)
+  claimedAt   DateTime?
+  resetAt     DateTime
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission     Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionId, resetAt])
+  @@index([userId])
+}
+
+model PlatformSubscription {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  plan             String    @default("ASTRO")
+  status           String    @default("ACTIVE")
+  currentPeriodEnd DateTime
+  cancelledAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Title {
+  id               String      @id @default(cuid())
+  name             String      @unique
+  description      String?
+  color            String?
+  icon             String?
+  requirementType  String      @default("ACHIEVEMENT")
+  requirementValue String?
+
+  userTitles       UserTitle[]
+}
+
+model UserTitle {
+  id       String   @id @default(cuid())
+  userId   String
+  titleId  String
+  earnedAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title    Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, titleId])
+}
+
+model Season {
+  id          String           @id @default(cuid())
+  name        String
+  theme       String?
+  number      Int              @default(1)
+  startsAt    DateTime
+  endsAt      DateTime
+  active      Boolean          @default(true)
+
+  passLevels  PassLevel[]
+  userPasses  UserSeasonPass[]
+}
+
+model PassLevel {
+  id            String   @id @default(cuid())
+  seasonId      String
+  level         Int
+  freeReward    String?
+  premiumReward String?
+
+  season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, level])
+}
+
+model UserSeasonPass {
+  id            String    @id @default(cuid())
+  userId        String
+  seasonId      String
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  isPremium     Boolean   @default(false)
+  claimedLevels String?
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  season        Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seasonId])
+  @@index([userId])
+}
+
+

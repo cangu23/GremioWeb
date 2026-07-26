@@ -214,25 +214,25 @@ export const capturePayPalOrder = async (orderId: string, clientTxId: string, db
     const bonusMap: Record<string, number> = { ASTRO: 500, NOVA: 1500, STELLAR: 5000 };
     const bonusStardust = bonusMap[planKey] || 500;
 
-    await prisma.userStardust.upsert({
-      where: { userId },
-      create: { userId, amount: bonusStardust },
-      update: { amount: { increment: bonusStardust } },
+    await prisma.user.update({
+      where: { id: userId },
+      data: { stardust: { increment: bonusStardust } },
     });
 
     await prisma.stardustTransaction.create({
       data: {
         userId,
         amount: bonusStardust,
-        type: 'EARNED',
         reason: `Bono por activar Plan ${planKey} vía PayPal ($${amount} USD)`,
       },
     });
 
-    await prisma.systemLog.update({
-      where: { id: txLog.id },
-      data: { message: `PAYPAL_COMPLETED:${clientTxId}` },
-    });
+    if (txLog) {
+      await prisma.systemLog.update({
+        where: { id: txLog.id },
+        data: { message: `PAYPAL_COMPLETED:${clientTxId}` },
+      });
+    }
 
     return {
       status: 'SUCCESS',
@@ -253,25 +253,25 @@ export const capturePayPalOrder = async (orderId: string, clientTxId: string, db
     });
 
     const stardustReward = Math.round(amount * 10);
-    await prisma.userStardust.upsert({
-      where: { userId },
-      create: { userId, amount: stardustReward },
-      update: { amount: { increment: stardustReward } },
+    await prisma.user.update({
+      where: { id: userId },
+      data: { stardust: { increment: stardustReward } },
     });
 
     await prisma.stardustTransaction.create({
       data: {
         userId,
         amount: stardustReward,
-        type: 'EARNED',
         reason: `Recompensa por Donación vía PayPal ($${amount} USD)`,
       },
     });
 
-    await prisma.systemLog.update({
-      where: { id: txLog.id },
-      data: { message: `PAYPAL_COMPLETED:${clientTxId}` },
-    });
+    if (txLog) {
+      await prisma.systemLog.update({
+        where: { id: txLog.id },
+        data: { message: `PAYPAL_COMPLETED:${clientTxId}` },
+      });
+    }
 
     return {
       status: 'SUCCESS',

@@ -293,23 +293,29 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
         {/* ===== TABS NAV ===== */}
         <div style={{
           display: 'flex',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          padding: '0 24px',
-          background: 'rgba(0,0,0,0.2)',
+          gap: '6px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          padding: '0 20px',
+          background: 'rgba(0, 0, 0, 0.25)',
           overflowX: 'auto',
         }}>
           <button
             onClick={() => setActiveTab('overview')}
             style={{
-              padding: '12px 16px',
+              padding: '12px 14px',
               border: 'none',
               background: 'none',
               color: activeTab === 'overview' ? '#f59e0b' : 'var(--text-muted)',
-              fontWeight: activeTab === 'overview' ? 700 : 500,
+              fontWeight: activeTab === 'overview' ? 800 : 500,
               fontSize: '0.86rem',
               cursor: 'pointer',
               borderBottom: activeTab === 'overview' ? '2px solid #f59e0b' : '2px solid transparent',
+              marginBottom: '-1px',
               whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
             }}
           >
             Resumen
@@ -317,21 +323,26 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
           <button
             onClick={() => setActiveTab('missions')}
             style={{
-              padding: '12px 16px',
+              padding: '12px 14px',
               border: 'none',
               background: 'none',
               color: activeTab === 'missions' ? '#f59e0b' : 'var(--text-muted)',
-              fontWeight: activeTab === 'missions' ? 700 : 500,
+              fontWeight: activeTab === 'missions' ? 800 : 500,
               fontSize: '0.86rem',
               cursor: 'pointer',
               borderBottom: activeTab === 'missions' ? '2px solid #f59e0b' : '2px solid transparent',
+              marginBottom: '-1px',
               whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
             }}
           >
             Misiones
             {pendingMissions.length > 0 && (
               <span style={{
-                marginLeft: '6px',
+                marginLeft: '4px',
                 padding: '2px 6px',
                 borderRadius: '10px',
                 background: '#f59e0b',
@@ -346,15 +357,20 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
           <button
             onClick={() => setActiveTab('transfer')}
             style={{
-              padding: '12px 16px',
+              padding: '12px 14px',
               border: 'none',
               background: 'none',
               color: activeTab === 'transfer' ? '#f59e0b' : 'var(--text-muted)',
-              fontWeight: activeTab === 'transfer' ? 700 : 500,
+              fontWeight: activeTab === 'transfer' ? 800 : 500,
               fontSize: '0.86rem',
               cursor: 'pointer',
               borderBottom: activeTab === 'transfer' ? '2px solid #f59e0b' : '2px solid transparent',
+              marginBottom: '-1px',
               whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
             }}
           >
             🎁 Transferir & Regalar
@@ -362,15 +378,20 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
           <button
             onClick={() => setActiveTab('history')}
             style={{
-              padding: '12px 16px',
+              padding: '12px 14px',
               border: 'none',
               background: 'none',
               color: activeTab === 'history' ? '#f59e0b' : 'var(--text-muted)',
-              fontWeight: activeTab === 'history' ? 700 : 500,
+              fontWeight: activeTab === 'history' ? 800 : 500,
               fontSize: '0.86rem',
               cursor: 'pointer',
               borderBottom: activeTab === 'history' ? '2px solid #f59e0b' : '2px solid transparent',
+              marginBottom: '-1px',
               whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
             }}
           >
             Historial

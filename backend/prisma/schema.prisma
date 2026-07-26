@@ -894,3 +894,11 @@ model UserSeasonPass {
   @@unique([userId, seasonId])
   @@index([userId])
 }
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     String   @default("INFO")
+  message   String
+  context   String?
+  createdAt DateTime @default(now())
+}

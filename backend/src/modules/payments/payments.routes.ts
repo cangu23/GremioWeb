@@ -21,10 +21,6 @@ router.get('/donations/me', authenticate, PaymentsController.getDonations);
 router.get('/donations/sent', authenticate, PaymentsController.getDonationsSent);
 router.get('/donations/stats', authenticate, PaymentsController.getDonationStats);
 
-// Protected - PayPhone Ecuador Gateway
-router.post('/payphone/prepare', authenticate, PaymentsController.preparePayPhone);
-router.post('/payphone/confirm', authenticate, PaymentsController.confirmPayPhone);
-
 // Protected - PayPal Gateway
 router.post('/paypal/create-order', authenticate, PaymentsController.preparePayPal);
 router.post('/paypal/capture-order', authenticate, PaymentsController.confirmPayPal);
