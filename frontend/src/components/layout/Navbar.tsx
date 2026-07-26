@@ -11,6 +11,7 @@ import { useToast } from '@/lib/ToastContext';
 import ClientOnly from '@/lib/ClientOnly';
 import UserAvatar from '@/components/ui/UserAvatar';
 import StardustStatsModal from '@/components/ui/StardustStatsModal';
+import StardustCardButton from '@/components/ui/StardustCardButton';
 import styles from './Navbar.module.css';
 import { Users, Calendar, Shield, FileText, MessageCircle, ShoppingBag, Award, BarChart, Bell, Backpack, Sparkles, Settings, LogOut, Key, Plus, Grid, TrendingUp, User, HelpCircle } from '@/components/ui/Icons';
 
@@ -827,16 +828,12 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
             <span>Buscar</span>
           </button>
 
-          <button
-            onClick={() => { setShowStardustModal(true); closeMenu?.(); }}
-            style={{
-              ...mobileLink, border: 'none', background: 'transparent', width: '100%', cursor: 'pointer',
-              color: '#f59e0b', fontWeight: 700,
-            }}
-          >
-            <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}>⭐</span>
-            <span>Estadísticas de Stardust</span>
-          </button>
+          <div style={{ marginBottom: '6px' }}>
+            <StardustCardButton
+              isMobile
+              onClick={() => { setShowStardustModal(true); closeMenu?.(); }}
+            />
+          </div>
 
           {[
             { icon: <FileText size={18} />, label: 'Feed', href: '/feed' },
@@ -916,29 +913,9 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
         {showSearch && <SearchModal onClose={() => setShowSearch(false)} />}
         <StardustStatsModal isOpen={showStardustModal} onClose={() => setShowStardustModal(false)} />
 
-        <button
+        <StardustCardButton
           onClick={() => setShowStardustModal(true)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 10px',
-            borderRadius: '16px',
-            border: '1px solid rgba(245,158,11,0.3)',
-            background: 'rgba(245,158,11,0.12)',
-            color: '#f59e0b',
-            fontWeight: 700,
-            fontSize: '0.78rem',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.22)'; e.currentTarget.style.transform = 'scale(1.04)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)'; e.currentTarget.style.transform = 'none'; }}
-          title="Ver estadísticas y misiones de Stardust"
-        >
-          <span>⭐</span>
-          <span>Stardust</span>
-        </button>
+        />
 
         <button onClick={() => setShowSearch(true)} style={iconBtn}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text)'; }}

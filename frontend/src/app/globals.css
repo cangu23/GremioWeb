@@ -795,3 +795,55 @@ body {
 .custom-scroll-container {
   overscroll-behavior: contain;
 }
+
+/* ==========================================================================
+   STARDUST ANIMATIONS SYSTEM
+   ========================================================================== */
+
+@keyframes stardustShimmer {
+  0% {
+    transform: translateX(-100%) rotate(15deg);
+  }
+  20%, 100% {
+    transform: translateX(200%) rotate(15deg);
+  }
+}
+
+@keyframes stardustPulse {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes stardustFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(6deg);
+  }
+  100% {
+    transform: translateY(1px) rotate(-4deg);
+  }
+}
+
+@keyframes stardustGlowBorder {
+  0% {
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+  }
+  50% {
+    border-color: rgba(245, 158, 11, 0.7);
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.35);
+  }
+  100% {
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+  }
+}
+

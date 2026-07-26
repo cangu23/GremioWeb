@@ -3,7 +3,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/lib/ToastContext';
+import UserAvatar from '@/components/ui/UserAvatar';
 import Link from 'next/link';
 
 interface Transaction {
@@ -60,6 +62,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
   const [selectedGiftPlan, setSelectedGiftPlan] = useState<'ASTRO' | 'NOVA' | 'STELLAR'>('ASTRO');
   const [giftSubmitting, setGiftSubmitting] = useState(false);
 
+  const { user } = useAuth();
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -76,6 +79,9 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
 
       if (stardustRes?.data) {
         setData(stardustRes.data);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('stardust-updated'));
+        }
       }
       if (missionsRes?.data) {
         setMissions(missionsRes.data);
@@ -237,21 +243,30 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
           justifyContent: 'space-between',
           background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(139,92,246,0.05))',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '1.4rem', boxShadow: '0 4px 16px rgba(245,158,11,0.3)',
-            }}>
-              ⭐
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            {user ? (
+              <UserAvatar
+                src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
+                alt={user.displayName || user.username}
+                size={44}
+                user={user}
+              />
+            ) : (
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.4rem', boxShadow: '0 4px 16px rgba(245,158,11,0.3)',
+              }}>
+                ⭐
+              </div>
+            )}
             <div>
               <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#fff' }}>
                 Estadísticas de Stardust
               </h2>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Tus puntos estelares, misiones y regalos
+                {user ? `@${user.username} • Puntos estelares, misiones y regalos` : 'Tus puntos estelares, misiones y regalos'}
               </span>
             </div>
           </div>
@@ -375,40 +390,67 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div className="glass" style={{
                     padding: '24px',
-                    borderRadius: '18px',
-                    background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(139,92,246,0.06))',
-                    borderColor: 'rgba(245,158,11,0.25)',
+                    borderRadius: '20px',
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.18), rgba(139,92,246,0.1))',
+                    border: '1px solid rgba(245,158,11,0.35)',
+                    boxShadow: '0 12px 35px rgba(245,158,11,0.15)',
+                    position: 'relative',
+                    overflow: 'hidden',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
-                    gap: '16px',
+                    gap: '20px',
                   }}>
-                    <div>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-                        Saldo Actual
-                      </span>
-                      <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        ⭐ {balance.toLocaleString()}
-                        <span style={{ fontSize: '0.9rem', color: '#f59e0b', fontWeight: 600 }}>Stardust</span>
+                    {/* Ambient shimmer background line */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0, left: '-100%',
+                        width: '100%', height: '100%',
+                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                        animation: 'stardustShimmer 4s infinite',
+                        pointerEvents: 'none',
+                      }}
+                    />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
+                      {user && (
+                        <UserAvatar
+                          src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
+                          alt={user.displayName || user.username}
+                          size={54}
+                          user={user}
+                        />
+                      )}
+                      <div>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                          {user ? `${user.displayName || user.username} • Saldo Actual` : 'Saldo de Stardust Actual'}
+                        </span>
+                        <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block' }}>⭐</span>
+                          {balance.toLocaleString()}
+                          <span style={{ fontSize: '1rem', color: '#f59e0b', fontWeight: 700 }}>Stardust</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
+                    <div style={{ textAlign: 'right', zIndex: 1 }}>
                       <span style={{
-                        padding: '4px 10px',
+                        padding: '5px 12px',
                         borderRadius: '12px',
-                        background: multiplier > 1 ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.08)',
-                        border: `1px solid ${multiplier > 1 ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.12)'}`,
+                        background: multiplier > 1 ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.08)',
+                        border: `1px solid ${multiplier > 1 ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'}`,
                         color: multiplier > 1 ? '#f59e0b' : 'var(--text-muted)',
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        fontWeight: 800,
                         display: 'inline-block',
+                        boxShadow: multiplier > 1 ? '0 0 12px rgba(245,158,11,0.3)' : 'none',
                       }}>
-                        Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVE' : ''}
+                        Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
                       </span>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>
-                        {multiplier > 1 ? `Plan ${data?.plan} otorga +${Math.round((multiplier - 1) * 100)}% extra` : 'Obtén Premium para aumentar tus ganancias'}
+                      <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '6px', margin: 0 }}>
+                        {multiplier > 1 ? `Tu plan ${data?.plan} otorga +${Math.round((multiplier - 1) * 100)}% extra` : 'Obtén Premium para aumentar tus ganancias'}
                       </p>
                     </div>
                   </div>

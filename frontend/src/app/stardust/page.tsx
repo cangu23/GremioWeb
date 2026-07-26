@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import Link from 'next/link';
+import UserAvatar from '@/components/ui/UserAvatar';
 import StardustStatsModal from '@/components/ui/StardustStatsModal';
 
 interface Transaction {
@@ -129,9 +130,11 @@ function StardustContent() {
           padding: '32px',
           borderRadius: '24px',
           marginBottom: '32px',
-          background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(139,92,246,0.08))',
-          border: '1px solid rgba(245,158,11,0.3)',
-          boxShadow: '0 12px 40px rgba(245,158,11,0.1)',
+          background: 'linear-gradient(135deg, rgba(245,158,11,0.18), rgba(139,92,246,0.1))',
+          border: '1px solid rgba(245,158,11,0.35)',
+          boxShadow: '0 16px 45px rgba(245,158,11,0.15)',
+          position: 'relative',
+          overflow: 'hidden',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -139,23 +142,49 @@ function StardustContent() {
           gap: '20px',
         }}
       >
-        <div>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
-            Saldo de Stardust Actual
-          </span>
-          <div style={{ fontSize: '3rem', fontWeight: 900, color: '#fff', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            ⭐ {balance.toLocaleString()}
-            <span style={{ fontSize: '1.1rem', color: '#f59e0b', fontWeight: 600 }}>Stardust</span>
+        {/* Shimmer sweep effect overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: '-100%',
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)',
+            animation: 'stardustShimmer 4s infinite',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', zIndex: 1 }}>
+          {user && (
+            <UserAvatar
+              src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
+              alt={user.displayName || user.username}
+              size={64}
+              user={user}
+            />
+          )}
+          <div>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+              {user ? `${user.displayName || user.username} • Saldo Actual` : 'Saldo de Stardust Actual'}
+            </span>
+            <div style={{ fontSize: '3rem', fontWeight: 900, color: '#fff', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block' }}>⭐</span>
+              {balance.toLocaleString()}
+              <span style={{ fontSize: '1.1rem', color: '#f59e0b', fontWeight: 700 }}>Stardust</span>
+            </div>
           </div>
         </div>
 
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlign: 'right', zIndex: 1 }}>
           <div style={{
             padding: '6px 14px', borderRadius: '14px',
-            background: multiplier > 1 ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.08)',
-            border: `1px solid ${multiplier > 1 ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.12)'}`,
+            background: multiplier > 1 ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.08)',
+            border: `1px solid ${multiplier > 1 ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'}`,
             color: multiplier > 1 ? '#f59e0b' : 'var(--text-muted)',
             fontSize: '0.9rem', fontWeight: 800, display: 'inline-block',
+            boxShadow: multiplier > 1 ? '0 0 14px rgba(245,158,11,0.3)' : 'none',
           }}>
             Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
           </div>
