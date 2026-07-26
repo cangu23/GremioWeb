@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
+import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
 
@@ -11,6 +12,7 @@ function PayPalCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showToast } = useToast();
+  const { user, isLoading: authLoading } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -18,6 +20,8 @@ function PayPalCallbackContent() {
   const [resultData, setResultData] = useState<any>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
     const confirmTx = async () => {
       const token = searchParams?.get('token'); // PayPal Order ID
       const orderId = searchParams?.get('orderId') || token;
@@ -56,7 +60,7 @@ function PayPalCallbackContent() {
     };
 
     confirmTx();
-  }, [searchParams, showToast]);
+  }, [searchParams, showToast, authLoading]);
 
   return (
     <div
