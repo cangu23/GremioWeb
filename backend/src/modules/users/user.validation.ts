@@ -24,6 +24,7 @@ export const updateUserSchema = z.object({
     twitterUrl: z.string().url().optional().or(z.literal('')),
     discordUrl: z.string().url().optional().or(z.literal('')),
     websiteUrl: z.string().url().optional().or(z.literal('')),
+    kofiUrl: z.string().optional().or(z.literal('')),
     streamSchedule: z.string().max(200).optional(),
     languages: z.array(z.string()).optional(),
     contentType: z.string().max(100).optional(),

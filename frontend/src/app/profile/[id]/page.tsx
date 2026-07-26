@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
+import { useToast } from '@/lib/ToastContext';
 import ClientOnly from '@/lib/ClientOnly';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -13,6 +14,7 @@ import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Tw
 import FriendButton from '@/components/social/FriendButton';
 import NoteModal from '@/components/ui/NoteModal';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import KofiWidget from '@/components/ui/KofiWidget';
 
 interface SocialUser {
   id: string;
@@ -92,6 +94,7 @@ function ProfileContent() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? '';
   const { user: currentUser } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [error, setError] = useState('');
@@ -179,15 +182,24 @@ function ProfileContent() {
     if (!currentUser) { router.push('/login'); return; }
     setDonateLoading(true);
     try {
-      await apiFetch('/payments/donate', {
+      showToast('Abriendo pasarela segura de PayPal...', 'info');
+      const res = await apiFetch('/payments/paypal/create-order', {
         method: 'POST',
-        body: JSON.stringify({ recipientId: String(id), amount: donateAmount, message: donateMessage || undefined }),
+        body: JSON.stringify({
+          recipientId: String(id),
+          amount: donateAmount,
+          message: donateMessage || undefined,
+          type: 'DONATION',
+        }),
       });
-      setDonateSuccess(`¡Donaste $${donateAmount} USD a ${profile?.username}! `);
-      setShowDonate(false);
-      setTimeout(() => setDonateSuccess(''), 5000);
+
+      if (res?.approveUrl) {
+        window.location.href = res.approveUrl;
+      } else {
+        showToast('No se pudo abrir el checkout de PayPal.', 'error');
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error');
+      setError(err instanceof Error ? err.message : 'Error al procesar la donación con PayPal');
     } finally { setDonateLoading(false); }
   };
 
@@ -1268,18 +1280,25 @@ function ProfileContent() {
             </div>
 
             {/* Buttons */}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '24px' }}>
+              <button onClick={handleDonate} className="btn" style={{
+                width: '100%', padding: '12px', background: 'linear-gradient(135deg, #0070ba, #1546a0)',
+                color: '#fff', fontWeight: 800, borderRadius: '12px', border: 'none',
+              }} disabled={donateLoading}>
+                {donateLoading ? 'Procesando PayPal...' : `🅿️ Donar $${donateAmount} con PayPal`}
+              </button>
+
+              <div style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0' }}>o también</div>
+
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <KofiWidget kofiId={(profile?.vtuberProfile as any)?.kofiUrl || profile?.vtuberProfile?.websiteUrl || profile?.username} label={`Ko-fi de ${displayName} ☕`} />
+              </div>
+
               <button onClick={() => setShowDonate(false)} className="btn" style={{
-                flex: 1, background: 'rgba(255,255,255,0.05)',
-                border: '1px solid var(--glass-border)', color: 'var(--text)',
+                width: '100%', marginTop: '6px', padding: '8px', background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)', fontSize: '0.82rem',
               }}>
                 Cancelar
-              </button>
-              <button onClick={handleDonate} className="btn" style={{
-                flex: 1, background: 'linear-gradient(135deg, #ffd700, #ffaa00)',
-                color: '#000', fontWeight: 800,
-              }} disabled={donateLoading}>
-                {donateLoading ? 'Procesando...' : `Donar $${donateAmount}`}
               </button>
             </div>
           </div>

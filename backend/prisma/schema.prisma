@@ -154,6 +154,7 @@ model VTuberProfile {
   twitterUrl  String?                    // Enlace a X/Twitter
   discordUrl  String?                    // Enlace a Discord
   websiteUrl  String?                    // Sitio web personal
+  kofiUrl     String?                    // Enlace personal de Ko-fi (ej: https://ko-fi.com/mi_nombre)
   streamSchedule String?                // Horario de streams (texto libre, ej: "Lun-Mie 20:00 UTC")
   languages   String?                    // JSON array de idiomas
   contentType String?                    // Tipo de contenido (gaming, música, arte, etc.)

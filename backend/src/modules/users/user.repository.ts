@@ -171,7 +171,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
     const vtuberSpecificFields = [
       'bannerUrl', 'description', 'lore',
       'twitchUrl', 'youtubeUrl', 'kickUrl', 'tiktokUrl', 'twitterUrl',
-      'discordUrl', 'websiteUrl', 'streamSchedule', 'contentType',
+      'discordUrl', 'websiteUrl', 'kofiUrl', 'streamSchedule', 'contentType',
       'live2dModel', 'model3d', 'fanName', 'oshiMark', 'themeColor', 'isLive',
     ];
     const vtuberProfileFields = ['displayName', 'avatarUrl', ...vtuberSpecificFields];

@@ -98,11 +98,27 @@ export const getMyPlatformPlan = async (userId: string) => {
 
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
-  const activeSub = await prisma.platformSubscription.findUnique({
+  let activeSub = await prisma.platformSubscription.findUnique({
     where: { userId },
   });
 
-  // VTUBER, MAID, MODERATOR, ADMIN automatically enjoy STELLAR status
+  // Verificar expiración del periodo mensual (30 días)
+  if (activeSub && activeSub.currentPeriodEnd < new Date() && activeSub.status === 'ACTIVE') {
+    activeSub = await prisma.platformSubscription.update({
+      where: { userId },
+      data: { status: 'EXPIRED' },
+    });
+
+    if (user.role !== 'VTUBER' && user.role !== 'MAID' && user.role !== 'ADMIN') {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { plan: 'FREE' },
+      });
+      user.plan = 'FREE';
+    }
+  }
+
+  // VTUBER, MAID, MODERATOR, ADMIN disfrutan automáticamente de jerarquía STELLAR
   const effectivePlan = (user.role === 'VTUBER' || user.role === 'MAID' || user.role === 'ADMIN')
     ? 'STELLAR'
     : (user.plan || 'FREE');

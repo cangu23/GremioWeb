@@ -80,3 +80,58 @@ export const seedTiers = async (_req: Request, res: Response, next: NextFunction
     res.json({ message: 'Planes seedeados correctamente' });
   } catch (err) { next(err); }
 };
+
+// PayPhone Ecuador Integration
+import * as PayPhoneService from './payphone.service';
+
+export const preparePayPhone = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { amount, type, planKey, recipientId, message, anonymous } = req.body;
+    const result = await PayPhoneService.preparePayment({
+      userId: req.user!.id,
+      amount: Number(amount),
+      type,
+      planKey,
+      recipientId,
+      message,
+      anonymous,
+    });
+    res.json({ success: true, ...result });
+  } catch (err) { next(err); }
+};
+
+export const confirmPayPhone = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id, clientTxId, txId } = req.body;
+    const result = await PayPhoneService.confirmPayment(String(id || 'SIMULATED'), String(clientTxId || ''), String(txId || ''));
+    res.json({ success: true, ...result });
+  } catch (err) { next(err); }
+};
+
+// PayPal Gateway Integration
+import * as PayPalService from './paypal.service';
+
+export const preparePayPal = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { amount, type, planKey, recipientId, message, anonymous } = req.body;
+    const result = await PayPalService.createPayPalOrder({
+      userId: req.user!.id,
+      amount: Number(amount),
+      type,
+      planKey,
+      recipientId,
+      message,
+      anonymous,
+    });
+    res.json({ success: true, ...result });
+  } catch (err) { next(err); }
+};
+
+export const confirmPayPal = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { orderId, clientTxId, txId } = req.body;
+    const result = await PayPalService.capturePayPalOrder(String(orderId || 'SIMULATED'), String(clientTxId || ''), String(txId || ''));
+    res.json({ success: true, ...result });
+  } catch (err) { next(err); }
+};
+

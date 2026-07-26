@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/lib/ToastContext';
 import FriendButton from '@/components/social/FriendButton';
+import KofiWidget from '@/components/ui/KofiWidget';
 import { Star, Users, Heart, MessageCircle, Image as IconImage, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, Sparkles, Telescope, Info, ZoomIn, Gamepad, Palette, Mic, Headphones, MessageSquare } from '@/components/ui/Icons';
 
 /* ─────────── Types ─────────── */
@@ -353,13 +354,23 @@ function VtuberPublicProfile() {
     if (!currentUser) { router.push('/login'); return; }
     setDonateLoading(true);
     try {
-      await apiFetch('/payments/donate', {
+      showToast('Abriendo pasarela segura de PayPal...', 'info');
+      const res = await apiFetch('/payments/paypal/create-order', {
         method: 'POST',
-        body: JSON.stringify({ recipientId: String(id), amount: donateAmount, message: donateMessage || undefined }),
-      });              setDonateSuccess(`¡Donaste $${donateAmount} USD!`);
-      setShowDonate(false);
-      setTimeout(() => setDonateSuccess(''), 5000);
-    } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error al donar', 'error'); }
+        body: JSON.stringify({
+          recipientId: String(id),
+          amount: donateAmount,
+          message: donateMessage || undefined,
+          type: 'DONATION',
+        }),
+      });
+
+      if (res?.approveUrl) {
+        window.location.href = res.approveUrl;
+      } else {
+        showToast('No se pudo abrir el checkout de PayPal.', 'error');
+      }
+    } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error al donar con PayPal', 'error'); }
     finally { setDonateLoading(false); }
   };
 
@@ -1459,18 +1470,25 @@ function VtuberPublicProfile() {
                 style={{ minHeight: '80px', resize: 'vertical' }} />
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '24px' }}>
+              <button onClick={handleDonate} className="btn" style={{
+                width: '100%', padding: '12px', background: 'linear-gradient(135deg, #0070ba, #1546a0)',
+                color: '#fff', fontWeight: 800, borderRadius: '12px', border: 'none',
+              }} disabled={donateLoading}>
+                {donateLoading ? 'Procesando PayPal...' : `🅿️ Donar $${donateAmount} con PayPal`}
+              </button>
+
+              <div style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0' }}>o también</div>
+
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <KofiWidget kofiId={(profile?.vtuberProfile as any)?.kofiUrl || profile?.vtuberProfile?.websiteUrl || profile?.username} label={`Ko-fi de ${displayName} ☕`} />
+              </div>
+
               <button onClick={() => setShowDonate(false)} className="btn" style={{
-                flex: 1, background: 'rgba(255,255,255,0.05)',
-                border: '1px solid var(--glass-border)', color: 'var(--text)',
+                width: '100%', marginTop: '6px', padding: '8px', background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)', fontSize: '0.82rem',
               }}>
                 Cancelar
-              </button>
-              <button onClick={handleDonate} className="btn" style={{
-                flex: 1, background: 'linear-gradient(135deg, #ffd700, #ffaa00)',
-                color: '#000', fontWeight: 800,
-              }} disabled={donateLoading}>
-                {donateLoading ? 'Procesando...' : (<><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.5-1.5 2.5-3.5 2.5-5.5A4.5 4.5 0 0 0 17 4c-1.4 0-2.7.6-3.7 1.6L12 7l-1.3-1.4C9.7 4.6 8.4 4 7 4a4.5 4.5 0 0 0-4.5 4.5c0 2 1 4 2.5 5.5L12 20l7-6z"/></svg> Donar ${donateAmount}</>)}
               </button>
             </div>
           </div>

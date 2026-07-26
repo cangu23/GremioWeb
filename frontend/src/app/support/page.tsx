@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
+import KofiWidget from '@/components/ui/KofiWidget';
 
 interface Tier {
   id: string;
@@ -198,13 +199,17 @@ function SupportContent() {
         })}
       </div>
 
-      {/* Donations info */}
-      <div className="glass" style={{ padding: '24px' }}>
-        <h3 style={{ margin: '0 0 12px 0' }}>Donaciones</h3>
-        <p style={{ color: 'var(--muted)', margin: 0 }}>
-          También puedes apoyar directamente a los VTubers que te gustan con donaciones.
-          Ve a su perfil público y haz clic en {'"Donar"'}.
-        </p>
+      {/* Donations & Ko-fi info */}
+      <div className="glass" style={{ padding: '28px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: '#fff' }}>Apoyar mediante Ko-fi ☕</h3>
+            <p style={{ color: 'var(--muted)', margin: 0, fontSize: '0.9rem' }}>
+              ¿Prefieres invitar un café rápido al proyecto o a un creador? Puedes hacer una donación directa por Ko-fi.
+            </p>
+          </div>
+          <KofiWidget kofiId="B0B5WM9E1" label="Invitar un café en Ko-fi ☕" />
+        </div>
       </div>
     </>
   );

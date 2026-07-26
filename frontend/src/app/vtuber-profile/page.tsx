@@ -90,6 +90,7 @@ function VtuberProfileEditor() {
   const [twitterUrl, setTwitterUrl] = useState('');
   const [discordUrl, setDiscordUrl] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
+  const [kofiUrl, setKofiUrl] = useState('');
 
   // Theme color
   const THEME_COLORS = [
@@ -134,6 +135,7 @@ function VtuberProfileEditor() {
       setTwitterUrl(p.twitterUrl || '');
       setDiscordUrl(p.discordUrl || '');
       setWebsiteUrl(p.websiteUrl || '');
+      setKofiUrl((p as any).kofiUrl || '');
       setIsLive(!!p.isLive);
       try {
         const langs = p.languages ? JSON.parse(p.languages) : [];
@@ -173,6 +175,7 @@ function VtuberProfileEditor() {
           twitterUrl: twitterUrl || undefined,
           discordUrl: discordUrl || undefined,
           websiteUrl: websiteUrl || undefined,
+          kofiUrl: kofiUrl || undefined,
           isLive,
           languages: languages.length > 0 ? languages : undefined,
           hashtags: hashtags.length > 0 ? hashtags : undefined,
@@ -831,6 +834,11 @@ function VtuberProfileEditor() {
               <label className="form-label" style={{ color: 'var(--primary)' }}>Sitio Web</label>
               <input className="input" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)}
                 placeholder="https://tusitio.com" style={{ borderColor: 'rgba(138,43,226,0.2)' }} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ color: '#29abe2' }}>☕ Ko-fi Personal</label>
+              <input className="input" value={kofiUrl} onChange={e => setKofiUrl(e.target.value)}
+                placeholder="https://ko-fi.com/tu_usuario" style={{ borderColor: 'rgba(41,171,226,0.3)' }} />
             </div>
           </div>
         </div>

@@ -53,17 +53,30 @@ export default function PremiumPage() {
         await apiFetch('/ecosystem/plan/cancel', { method: 'POST' });
         setCurrentPlan('FREE');
         showToast('Has vuelto al plan Explorer gratuito', 'info');
+        setTimeout(() => window.location.reload(), 1000);
       } else {
-        const res = await apiFetch('/ecosystem/plan/activate', {
+        const priceMap: Record<string, number> = { ASTRO: 2.99, NOVA: 5.99, STELLAR: 12.99 };
+        const price = plans[planKey]?.price || priceMap[planKey] || 5.99;
+
+        showToast(`Abriendo pasarela segura de PayPal para Plan ${planKey}...`, 'info');
+
+        const res = await apiFetch('/payments/paypal/create-order', {
           method: 'POST',
-          body: JSON.stringify({ plan: planKey }),
+          body: JSON.stringify({
+            amount: price,
+            type: 'PLAN_SUSCRIPTION',
+            planKey,
+          }),
         });
-        setCurrentPlan(planKey);
-        showToast(res.data?.message || `¡Plan ${planKey} activado con éxito!`, 'success');
+
+        if (res?.approveUrl) {
+          window.location.href = res.approveUrl;
+        } else {
+          showToast('No se pudo generar la pasarela de PayPal.', 'error');
+        }
       }
-      setTimeout(() => window.location.reload(), 1000);
     } catch (err: any) {
-      showToast(err?.message || 'Error al actualizar el plan', 'error');
+      showToast(err?.message || 'Error al conectar con PayPal', 'error');
     } finally {
       setLoadingPlan(false);
     }
