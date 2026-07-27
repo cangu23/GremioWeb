@@ -208,16 +208,16 @@ function CardContent({
 }) {
   const { user: currentUser } = useAuth();
   const isOwnProfile = currentUser?.id === profile.id;
-  const vtuber = profile.vtuberProfile;
+  const isVtubers = profile.role === 'VTUBER';
+  const vtuber = isVtubers ? profile.vtuberProfile : null;
   const displayName = profile.displayName || vtuber?.displayName || profile.username;
-  const avatarUrl = vtuber?.avatarUrl || profile.avatarUrl;
+  const avatarUrl = profile.avatarUrl || vtuber?.avatarUrl;
   const bannerUrl = vtuber?.bannerUrl;
   const themeColor = vtuber?.themeColor || 'var(--primary)';
-  const isVtubers = profile.role === 'VTUBER' || vtuber?.isApproved;
   const hasCustomBanner = !!bannerUrl;
-  const isVerified = vtuber?.isVerified;
-  const isFeatured = vtuber?.isFeatured;
-  const isLive = vtuber?.isLive;
+  const isVerified = isVtubers && (vtuber?.isVerified || vtuber?.isApproved);
+  const isFeatured = isVtubers && vtuber?.isFeatured;
+  const isLive = isVtubers && vtuber?.isLive;
 
   // Social links present
   const socialLinks = [
