@@ -167,7 +167,10 @@ function PayPalCallbackContent() {
                   color: 'var(--text-muted)',
                 }}
               >
-                <div>Plan Activado: <strong style={{ color: '#fff' }}>{resultData.planKey}</strong></div>
+                <div>Plan: <strong style={{ color: '#fff' }}>{resultData.planKey}</strong></div>
+                {resultData.recipientUsername && (
+                  <div>Beneficiario: <strong style={{ color: '#c084fc' }}>@{resultData.recipientUsername}</strong></div>
+                )}
                 <div>Monto: <strong style={{ color: '#38bdf8' }}>${resultData.amount} USD</strong></div>
               </div>
             )}

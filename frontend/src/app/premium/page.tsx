@@ -6,6 +6,8 @@ import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
+import GiftPlanModal from '@/components/ui/GiftPlanModal';
+import { Gift } from 'lucide-react';
 
 interface PlanInfo {
   name: string;
@@ -24,6 +26,7 @@ export default function PremiumPage() {
   const [plans, setPlans] = useState<Record<string, PlanInfo>>({});
   const [currentPlan, setCurrentPlan] = useState<string>('FREE');
   const [loadingPlan, setLoadingPlan] = useState(false);
+  const [showGiftModal, setShowGiftModal] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -152,11 +155,33 @@ export default function PremiumPage() {
             fontSize: '1.1rem',
             color: 'var(--text-muted, #a1a1aa)',
             maxWidth: '640px',
-            margin: '0 auto',
+            margin: '0 auto 24px',
             lineHeight: 1.6,
           }}>
             Nuestra filosofía: <strong style={{ color: '#fff' }}>El usuario gratuito disfruta todo el contenido</strong>. Los planes Premium multiplican tu Stardust, potencian tus niveles y desbloquean prestigio visual épico.
           </p>
+
+          <button
+            onClick={() => setShowGiftModal(true)}
+            className="btn"
+            style={{
+              padding: '12px 28px',
+              fontSize: '0.95rem',
+              fontWeight: 800,
+              borderRadius: '999px',
+              background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(192, 132, 252, 0.3))',
+              border: '1.5px solid #c084fc',
+              color: '#fff',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 0 20px rgba(147, 51, 234, 0.3)',
+              transition: 'all 0.25s ease',
+            }}
+          >
+            <Gift size={18} /> Regalar Plan Premium a un Amigo
+          </button>
         </div>
 
         {/* PLAN CARDS GRID */}
@@ -326,6 +351,11 @@ export default function PremiumPage() {
           </div>
         </div>
       </div>
+
+      <GiftPlanModal
+        isOpen={showGiftModal}
+        onClose={() => setShowGiftModal(false)}
+      />
     </ClientOnly>
   );
 }

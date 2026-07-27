@@ -55,7 +55,7 @@ const getPayPalAccessToken = async () => {
 interface CreatePayPalOrderParams {
   userId: string;
   amount: number;
-  type: 'PLAN_SUSCRIPTION' | 'DONATION';
+  type: 'PLAN_SUSCRIPTION' | 'GIFT_PLAN' | 'DONATION';
   planKey?: string;
   recipientId?: string;
   message?: string;
@@ -125,7 +125,9 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
     };
   }
 
-  const description = type === 'PLAN_SUSCRIPTION'
+  const description = type === 'GIFT_PLAN' || (type === 'PLAN_SUSCRIPTION' && recipientId && recipientId !== userId)
+    ? `Regalo de Membresía Plan ${planKey} en Gremio Estelar`
+    : type === 'PLAN_SUSCRIPTION'
     ? `Membresía Plan ${planKey} en Gremio Estelar`
     : `Donación a VTuber en Gremio Estelar`;
 
@@ -239,31 +241,83 @@ export const capturePayPalOrder = async (orderId: string, clientTxId: string, db
   }
 
   // PROCESAR COMPRA SEGÚN EL TIPO
-  if (type === 'PLAN_SUSCRIPTION' && planKey) {
-    // Activar suscripción mensual por 30 días en la base de datos
-    await activatePlatformPlan(userId, planKey as any, 30);
+  if ((type === 'PLAN_SUSCRIPTION' || type === 'GIFT_PLAN') && planKey) {
+    const isGift = Boolean(recipientId && recipientId !== userId);
+    const targetUserId = isGift ? recipientId! : userId;
+
+    // Activar suscripción mensual por 30 días para el usuario correspondiente
+    await activatePlatformPlan(targetUserId, planKey as any, 30);
 
     const bonusMap: Record<string, number> = { ASTRO: 500, NOVA: 1500, STELLAR: 5000 };
     const bonusStardust = bonusMap[planKey] || 500;
 
+    // Acreditar bono de Stardust al beneficiario del plan
     await prisma.user.update({
-      where: { id: userId },
+      where: { id: targetUserId },
       data: { stardust: { increment: bonusStardust } },
     });
 
     await prisma.stardustTransaction.create({
       data: {
-        userId,
+        userId: targetUserId,
         amount: bonusStardust,
-        reason: `Bono por activar Plan ${planKey} vía PayPal ($${amount} USD)`,
+        reason: isGift
+          ? `Bono por regalo de Plan ${planKey} vía PayPal ($${amount} USD)`
+          : `Bono por activar Plan ${planKey} vía PayPal ($${amount} USD)`,
       },
     });
+
+    // Obtener nombres para los logs/notificaciones de regalo
+    let targetUsername = 'Usuario';
+    let donorUsername = 'Alguien';
+
+    if (isGift) {
+      const targetUser = await UserRepository.findById(targetUserId);
+      if (targetUser) targetUsername = targetUser.username || targetUser.displayName || 'Usuario';
+
+      if (!anonymous) {
+        const donorUser = await UserRepository.findById(userId);
+        if (donorUser) donorUsername = donorUser.displayName || donorUser.username || 'Alguien';
+      } else {
+        donorUsername = 'Un usuario anónimo';
+      }
+
+      // Notificar en la base de datos al receptor del regalo
+      try {
+        await prisma.systemLog.create({
+          data: {
+            level: 'INFO',
+            message: `GIFT_RECEIVED:${targetUserId}`,
+            context: JSON.stringify({
+              donorId: anonymous ? null : userId,
+              donorName: donorUsername,
+              planKey,
+              message: message || '',
+              createdAt: new Date().toISOString(),
+            }),
+          },
+        });
+      } catch (logErr) {
+        console.warn('[PayPal Gift Log Error]', logErr);
+      }
+    }
 
     if (txLog) {
       await prisma.systemLog.update({
         where: { id: txLog.id },
         data: { message: `PAYPAL_COMPLETED:${clientTxId}` },
       });
+    }
+
+    if (isGift) {
+      return {
+        status: 'SUCCESS',
+        type: 'GIFT_PLAN',
+        planKey,
+        amount,
+        recipientUsername: targetUsername,
+        message: `¡Fantástico! Le has regalado la membresía Plan ${planKey} a @${targetUsername} con éxito.`,
+      };
     }
 
     return {

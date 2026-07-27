@@ -11,8 +11,10 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink } from '@/components/ui/Icons';
+import { Gift } from 'lucide-react';
 import FriendButton from '@/components/social/FriendButton';
 import NoteModal from '@/components/ui/NoteModal';
+import GiftPlanModal from '@/components/ui/GiftPlanModal';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import KofiWidget from '@/components/ui/KofiWidget';
 
@@ -104,6 +106,7 @@ function ProfileContent() {
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
   const [showDonate, setShowDonate] = useState(false);
+  const [showGiftModal, setShowGiftModal] = useState(false);
   const [donateAmount, setDonateAmount] = useState(5);
   const [donateMessage, setDonateMessage] = useState('');
   const [donateLoading, setDonateLoading] = useState(false);
@@ -741,6 +744,30 @@ function ProfileContent() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}>
                 <Heart size={18} /> Donar
+              </button>
+              <button
+                onClick={() => setShowGiftModal(true)}
+                className="btn"
+                style={{
+                  padding: '14px 28px', fontSize: '1rem', fontWeight: 700,
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(192, 132, 252, 0.2))',
+                  border: '2px solid rgba(192, 132, 252, 0.5)',
+                  color: '#c084fc',
+                  transition: 'all 0.3s ease',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(147, 51, 234, 0.35), rgba(192, 132, 252, 0.35))';
+                  e.currentTarget.style.borderColor = '#c084fc';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(192, 132, 252, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(192, 132, 252, 0.2))';
+                  e.currentTarget.style.borderColor = 'rgba(192, 132, 252, 0.5)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}>
+                <Gift size={18} /> Regalar Plan
               </button>
               <Link
                 href={`/chat?user=${profile.id}`}
@@ -1424,6 +1451,13 @@ function ProfileContent() {
           </div>
         </div>
       )}
+      {/* MODAL REGALAR PLAN */}
+      <GiftPlanModal
+        isOpen={showGiftModal}
+        onClose={() => setShowGiftModal(false)}
+        recipientId={profile?.id}
+        recipientName={displayName}
+      />
     </>
   );
 }
