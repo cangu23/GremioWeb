@@ -49,6 +49,16 @@ export const useConsumable = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const refundItem = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const itemId = req.params.itemId as string;
+    const result = await ShopService.refundItem(req.user!.id, itemId);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getEquippedBadge = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const badge = await ShopService.getEquippedBadge(req.user!.id);

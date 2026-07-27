@@ -1,6 +1,6 @@
 import AppError from '../../errors/AppError';
 import * as ShopRepository from './shop.repository';
-import { spendStardust } from '../ecosystem/stardust.service';
+import { spendStardust, addStardust } from '../ecosystem/stardust.service';
 import prisma from '../../database/prisma';
 
 // ─── List shop items ───
@@ -135,6 +135,37 @@ export const useConsumable = async (userId: string, itemId: string) => {
   }
 
   return { remaining: newRemaining, type };
+};
+
+// ─── Refund an item (returns 100% Stardust and removes purchase) ───
+
+export const refundItem = async (userId: string, itemId: string) => {
+  const purchase = await ShopRepository.findUserPurchase(userId, itemId);
+  if (!purchase) throw new AppError('No posees este ítem en tu inventario', 404);
+
+  const item = purchase.item;
+  let refundPrice = item.price;
+  if (item.data) {
+    try {
+      const parsed = JSON.parse(item.data);
+      if (parsed.discountPercent && parsed.discountPercent > 0) {
+        refundPrice = Math.max(1, Math.round(item.price * (1 - parsed.discountPercent / 100)));
+      }
+    } catch {}
+  }
+
+  // Delete purchase record & unequip
+  await ShopRepository.deletePurchase(purchase.id);
+
+  // Add Stardust back to user balance
+  const result = await addStardust(userId, refundPrice, `Reembolso de ítem: ${item.name}`);
+
+  return {
+    success: true,
+    refundedStardust: refundPrice,
+    newBalance: result.newBalance,
+    itemName: item.name,
+  };
 };
 
 // ─── Get equipped badge ───

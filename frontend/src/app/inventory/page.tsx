@@ -252,10 +252,26 @@ export default function InventoryPage() {
     }
   };
 
+  const refundItem = async (itemId: string, name: string) => {
+    if (!confirm(`¿Deseas reembolsar "${name}" y recuperar tu Polvo Estelar?`)) return;
+    setActionId(itemId);
+    try {
+      const res = await apiFetch(`/shop/refund/${itemId}`, { method: 'POST' });
+      setInventory((prev) => prev.filter((p) => p.itemId !== itemId));
+      showToast(`¡Has reembolsado ${name}! +⭐ ${res.refundedStardust} devueltos`, 'success');
+      window.dispatchEvent(new Event('stardust-updated'));
+      window.dispatchEvent(new Event('user-refetched'));
+    } catch (e: any) {
+      showToast(e.message || 'Error al reembolsar', 'error');
+    } finally {
+      setActionId(null);
+    }
+  };
+
   const filteredInventory = inventory.filter((p) => {
     if (filter === 'all') return true;
     if (filter === 'equipped') return p.equipped;
-    if (filter === 'consumables') return p.item.type === 'NAME_CHANGE' || p.item.type === 'PIN_POST';
+    if (filter === 'consumables') return ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'].includes(p.item.type);
     return p.item.type === filter;
   });
 
@@ -279,18 +295,34 @@ export default function InventoryPage() {
             Administra y equipa los ítems que has comprado en la tienda
           </p>
 
-          <Link
-            href="/shop"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              padding: '10px 22px', borderRadius: '14px',
-              background: 'linear-gradient(135deg, var(--primary), #8b5cf6)',
-              color: 'white', fontWeight: 700, fontSize: '0.88rem',
-              textDecoration: 'none', boxShadow: '0 4px 16px rgba(139,92,246,0.3)',
-            }}
-          >
-            🛒 Ir a la Tienda
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <Link
+              href="/shop"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '10px 22px', borderRadius: '14px',
+                background: 'linear-gradient(135deg, var(--primary), #8b5cf6)',
+                color: 'white', fontWeight: 700, fontSize: '0.88rem',
+                textDecoration: 'none', boxShadow: '0 4px 16px rgba(139,92,246,0.3)',
+              }}
+            >
+              🛒 Ir a la Tienda
+            </Link>
+
+            <Link
+              href="/achievements"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '10px 22px', borderRadius: '14px',
+                background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15))',
+                border: '1px solid rgba(255,215,0,0.35)',
+                color: '#ffd700', fontWeight: 700, fontSize: '0.88rem',
+                textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,215,0,0.15)',
+              }}
+            >
+              🏆 Mis Logros
+            </Link>
+          </div>
         </div>
 
         {/* Filters */}
@@ -342,7 +374,7 @@ export default function InventoryPage() {
             {filteredInventory.map((purchase) => {
               const { item, equipped, remaining } = purchase;
               const itemData = parseItemData(item.data);
-              const isConsumable = item.type === 'NAME_CHANGE' || item.type === 'PIN_POST';
+              const isConsumable = ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'].includes(item.type);
               const isBusy = actionId === item.id;
 
               return (
@@ -396,7 +428,7 @@ export default function InventoryPage() {
 
                   {/* Actions */}
                   <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+                    display: 'flex', alignItems: 'center', gap: '8px',
                     paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)',
                   }}>
                     {!isConsumable ? (
@@ -404,7 +436,7 @@ export default function InventoryPage() {
                         onClick={() => equipItem(item.id)}
                         disabled={isBusy}
                         style={{
-                          width: '100%', padding: '9px 0', borderRadius: '10px',
+                          flex: 1, padding: '9px 0', borderRadius: '10px',
                           border: equipped ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.15)',
                           background: equipped ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.06)',
                           color: equipped ? 'var(--primary)' : '#fff',
@@ -412,23 +444,39 @@ export default function InventoryPage() {
                           transition: 'all 0.2s', opacity: isBusy ? 0.6 : 1,
                         }}
                       >
-                        {isBusy ? 'Cargando...' : equipped ? '✓ Desequipar' : 'Equipar'}
+                        {isBusy ? '...' : equipped ? '✓ Desequipar' : 'Equipar'}
                       </button>
                     ) : (
                       <button
                         onClick={() => consumeItem(item.id, item.type)}
                         disabled={isBusy}
                         style={{
-                          width: '100%', padding: '9px 0', borderRadius: '10px', border: 'none',
+                          flex: 1, padding: '9px 0', borderRadius: '10px', border: 'none',
                           background: 'linear-gradient(135deg, var(--primary), #8b5cf6)',
                           color: 'white', cursor: 'pointer',
                           fontWeight: 700, fontSize: '0.85rem',
                           opacity: isBusy ? 0.6 : 1,
                         }}
                       >
-                        {isBusy ? 'Procesando...' : 'Usar ítem'}
+                        {isBusy ? '...' : 'Usar ítem'}
                       </button>
                     )}
+
+                    <button
+                      onClick={() => refundItem(item.id, item.name)}
+                      disabled={isBusy}
+                      title="Reembolsar ítem y recuperar Stardust"
+                      style={{
+                        padding: '9px 12px', borderRadius: '10px',
+                        border: '1px solid rgba(239,68,68,0.35)',
+                        background: 'rgba(239,68,68,0.12)',
+                        color: '#f87171',
+                        cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem',
+                        transition: 'all 0.2s', opacity: isBusy ? 0.6 : 1,
+                      }}
+                    >
+                      ↩️ Reembolsar
+                    </button>
                   </div>
                 </div>
               );

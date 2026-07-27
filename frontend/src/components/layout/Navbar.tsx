@@ -724,6 +724,20 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
             <span>Dashboard</span>
           </Link>
 
+          <Link href="/achievements"
+            onClick={() => setOpen(false)}
+            style={menuItemStyle}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ color: '#ffd700', display: 'inline-flex' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+              </svg>
+            </span>
+            <span style={{ color: '#ffd700', fontWeight: 600 }}>Logros y Trofeos 🏆</span>
+          </Link>
+
           <Link href="/pass"
             onClick={() => setOpen(false)}
             style={menuItemStyle}

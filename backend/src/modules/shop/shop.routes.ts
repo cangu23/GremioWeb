@@ -13,6 +13,7 @@ router.get('/items', optionalAuth, ShopController.listItems);
 // Protected
 router.get('/inventory', authenticate, ShopController.getInventory);
 router.post('/buy/:itemId', authenticate, ShopController.buyItem);
+router.post('/refund/:itemId', authenticate, ShopController.refundItem);
 router.post('/equip/:itemId', authenticate, ShopController.equipItem);
 router.post('/use/:itemId', authenticate, ShopController.useConsumable);
 

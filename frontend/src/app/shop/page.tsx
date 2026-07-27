@@ -294,6 +294,23 @@ export default function ShopPage() {
     }
   };
 
+  const refundItem = async (itemId: string, name: string) => {
+    if (!confirm(`¿Deseas reembolsar "${name}" y recuperar tu Polvo Estelar?`)) return;
+    setPurchasing(itemId);
+    try {
+      const res = await apiFetch(`/shop/refund/${itemId}`, { method: 'POST' });
+      setStardust(res.newBalance);
+      setInventory((prev) => prev.filter((p) => p.itemId !== itemId));
+      showToast(`¡Has reembolsado ${name}! +⭐ ${res.refundedStardust} devueltos`, 'success');
+      window.dispatchEvent(new Event('stardust-updated'));
+      window.dispatchEvent(new Event('user-refetched'));
+    } catch (e: any) {
+      showToast(e.message || 'Error al reembolsar', 'error');
+    } finally {
+      setPurchasing(null);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -356,6 +373,22 @@ export default function ShopPage() {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
             >
               🎒 Ver Inventario ({inventory.length})
+            </Link>
+
+            {/* Achievements Link */}
+            <Link
+              href="/achievements"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '12px 22px', borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15))',
+                border: '1px solid rgba(255,215,0,0.35)',
+                color: '#ffd700', fontWeight: 700, fontSize: '0.9rem',
+                textDecoration: 'none', transition: 'all 0.2s',
+                boxShadow: '0 4px 14px rgba(255,215,0,0.15)',
+              }}
+            >
+              🏆 Mis Logros
             </Link>
           </div>
         </div>
@@ -448,10 +481,9 @@ export default function ShopPage() {
                   {equipped && (
                     <div style={{
                       position: 'absolute', top: '12px', right: '12px',
-                      padding: '3px 9px', borderRadius: '10px',
+                      padding: '3px 9px', borderRadius: '8px',
                       background: 'var(--primary)', color: 'white',
-                      fontSize: '0.65rem', fontWeight: 800,
-                      letterSpacing: '0.04em', zIndex: 2,
+                      fontSize: '0.65rem', fontWeight: 800, zIndex: 2,
                     }}>
                       EQUIPADO
                     </div>
@@ -463,12 +495,13 @@ export default function ShopPage() {
                   {/* Details */}
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '0.85rem' }}>{TYPE_ICONS[item.type] || '🎁'}</span>
                       <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: '#fff' }}>
                         {item.name}
                       </h3>
                     </div>
 
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.4 }}>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.45 }}>
                       {item.description}
                     </p>
 
@@ -479,7 +512,6 @@ export default function ShopPage() {
                       fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600,
                     }}>
                       {TYPE_LABELS[item.type] || item.type}
-                      {isConsumable && itemData.uses && ` · ${itemData.uses} usos`}
                     </span>
                   </div>
 
@@ -506,35 +538,52 @@ export default function ShopPage() {
                     </div>
 
                     {owned ? (
-                      !isConsumable ? (
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {!isConsumable ? (
+                          <button
+                            onClick={() => equipItem(item.id)}
+                            disabled={isBusy}
+                            style={{
+                              padding: '8px 12px', borderRadius: '10px',
+                              border: equipped ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.15)',
+                              background: equipped ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.06)',
+                              color: equipped ? 'var(--primary)' : '#fff',
+                              cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem',
+                              transition: 'all 0.2s', opacity: isBusy ? 0.6 : 1,
+                            }}
+                          >
+                            {equipping === item.id ? '...' : equipped ? '✓ Equipado' : 'Equipar'}
+                          </button>
+                        ) : (
+                          <Link
+                            href="/inventory"
+                            style={{
+                              padding: '8px 12px', borderRadius: '10px',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              background: 'rgba(255,255,255,0.06)',
+                              color: '#fff', textDecoration: 'none',
+                              fontWeight: 700, fontSize: '0.8rem',
+                            }}
+                          >
+                            Usar
+                          </Link>
+                        )}
                         <button
-                          onClick={() => equipItem(item.id)}
+                          onClick={() => refundItem(item.id, item.name)}
                           disabled={isBusy}
+                          title="Reembolsar ítem y recuperar Stardust"
                           style={{
-                            padding: '8px 16px', borderRadius: '10px',
-                            border: equipped ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.15)',
-                            background: equipped ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.06)',
-                            color: equipped ? 'var(--primary)' : '#fff',
-                            cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem',
+                            padding: '8px 10px', borderRadius: '10px',
+                            border: '1px solid rgba(239,68,68,0.35)',
+                            background: 'rgba(239,68,68,0.12)',
+                            color: '#f87171',
+                            cursor: 'pointer', fontWeight: 700, fontSize: '0.78rem',
                             transition: 'all 0.2s', opacity: isBusy ? 0.6 : 1,
                           }}
                         >
-                          {equipping === item.id ? '...' : equipped ? '✓ Equipado' : 'Equipar'}
+                          ↩️ Reembolsar
                         </button>
-                      ) : (
-                        <Link
-                          href="/inventory"
-                          style={{
-                            padding: '8px 16px', borderRadius: '10px',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            background: 'rgba(255,255,255,0.06)',
-                            color: '#fff', textDecoration: 'none',
-                            fontWeight: 700, fontSize: '0.8rem',
-                          }}
-                        >
-                          Usar
-                        </Link>
-                      )
+                      </div>
                     ) : (
                       <button
                         onClick={() => buyItem(item.id, effectivePrice, item.name)}

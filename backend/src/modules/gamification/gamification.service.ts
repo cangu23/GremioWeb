@@ -102,7 +102,10 @@ export async function checkAndAwardUserAchievements(userId: string) {
   const newAchievements: Array<{ id: string; name: string; description: string; xpReward: number; category: string }> = [];
 
   let runningTotal = user.xp;
-  let runningLevel = user.level;
+  let runningLevel = Math.max(user.level || 1, getLevelFromXp(user.xp));
+  if (runningLevel > (user.level || 1)) {
+    await GamificationRepository.setUserLevel(userId, runningLevel).catch(() => {});
+  }
 
   // Cached DB counts to prevent duplicate queries inside loop
   let postCount: number | null = null;
@@ -110,7 +113,7 @@ export async function checkAndAwardUserAchievements(userId: string) {
   let dailyCount: number | null = null;
   let eventCount: number | null = null;
   let guildCount: number | null = null;
-  let friendCount: number | null = null;
+  let followCount: number | null = null;
 
   for (const achievement of achievements) {
     if (userAchievementIds.has(achievement.id)) continue;
@@ -153,22 +156,30 @@ export async function checkAndAwardUserAchievements(userId: string) {
     }
     // 7. Events
     else if (name.includes('evento')) {
-      if (eventCount === null) eventCount = await prisma.event.count({ where: { creatorId: userId } });
+      if (eventCount === null) {
+        const created = await prisma.event.count({ where: { creatorId: userId } });
+        const attended = await prisma.eventAttendee.count({ where: { userId } });
+        eventCount = created + attended;
+      }
       unlocked = eventCount >= 1;
     }
     // 8. Guilds
     else if (name.includes('gremio')) {
-      if (guildCount === null) guildCount = await prisma.guild.count({ where: { creatorId: userId } });
+      if (guildCount === null) {
+        const created = await prisma.guild.count({ where: { creatorId: userId } });
+        const member = await prisma.guildMember.count({ where: { userId } });
+        guildCount = created + member;
+      }
       unlocked = guildCount >= 1;
     }
     // 9. Social
-    else if (name.includes('social') || name.includes('seguidor')) {
-      if (friendCount === null) {
-        friendCount = await prisma.friend.count({
-          where: { OR: [{ senderId: userId }, { receiverId: userId }], status: 'ACCEPTED' },
+    else if (name.includes('social') || name.includes('sociable') || name.includes('seguidor')) {
+      if (followCount === null) {
+        followCount = await prisma.follow.count({
+          where: { OR: [{ followerId: userId }, { followingId: userId }] },
         });
       }
-      unlocked = (friendCount || 0) >= 1;
+      unlocked = (followCount || 0) >= 1;
     }
 
     if (unlocked) {
