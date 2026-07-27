@@ -224,8 +224,7 @@ function ProfileContent() {
   };
 
   const isOwnProfile = currentUser?.id === profile.id;
-  const isVtuber = profile.role === 'VTUBER';
-  const vtuber = isVtuber ? profile.vtuberProfile : null;
+  const vtuber = profile.vtuberProfile;
   const avatarUrl = profile.avatarUrl || vtuber?.avatarUrl;
   const displayName = profile.displayName || vtuber?.displayName || profile.username;
   const bio = vtuber?.description || profile.bio;
@@ -255,7 +254,8 @@ function ProfileContent() {
   const activeFrameUrl = equippedFrame?.item?.imageUrl || frameData?.frameUrl || frameData?.imageUrl || frameData?.url;
   const activeEquippedFrame = frameData?.gradient || frameData?.style || frameData?.borderColor || frameData?.color || (typeof equippedFrame?.item?.data === 'string' ? equippedFrame.item.data : null);
 
-  const bannerUrl = bannerData?.bannerUrl || vtuber?.bannerUrl;
+  const rawBannerUrl = bannerData?.bannerUrl || vtuber?.bannerUrl;
+  const bannerUrl = rawBannerUrl ? rawBannerUrl.replace(/"/g, '\\"') : null;
   const themeColor = colorData?.color || vtuber?.themeColor || profile.bannerColor || 'var(--primary)';
 
   // Parse languages
@@ -283,7 +283,7 @@ function ProfileContent() {
           width: '100%',
           height: 'clamp(200px, 30vw, 360px)',
           background: bannerUrl
-            ? `url(${bannerUrl}) center/cover`
+            ? `url("${bannerUrl}") center/cover`
             : profile.bannerColor
               ? profile.bannerColor
               : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',

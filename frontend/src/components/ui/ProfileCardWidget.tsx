@@ -208,16 +208,17 @@ function CardContent({
 }) {
   const { user: currentUser } = useAuth();
   const isOwnProfile = currentUser?.id === profile.id;
-  const isVtubers = profile.role === 'VTUBER';
-  const vtuber = isVtubers ? profile.vtuberProfile : null;
+  const isVtubers = profile.role === 'VTUBER' || (profile.vtuberProfile?.isApproved ?? false);
+  const vtuber = profile.vtuberProfile;
   const displayName = profile.displayName || vtuber?.displayName || profile.username;
   const avatarUrl = profile.avatarUrl || vtuber?.avatarUrl;
-  const bannerUrl = vtuber?.bannerUrl;
+  const rawBannerUrl = vtuber?.bannerUrl;
+  const bannerUrl = rawBannerUrl ? rawBannerUrl.replace(/"/g, '\\"') : null;
   const themeColor = vtuber?.themeColor || 'var(--primary)';
   const hasCustomBanner = !!bannerUrl;
-  const isVerified = isVtubers && (vtuber?.isVerified || vtuber?.isApproved);
-  const isFeatured = isVtubers && vtuber?.isFeatured;
-  const isLive = isVtubers && vtuber?.isLive;
+  const isVerified = vtuber?.isVerified || vtuber?.isApproved;
+  const isFeatured = vtuber?.isFeatured;
+  const isLive = vtuber?.isLive;
 
   // Social links present
   const socialLinks = [
@@ -254,7 +255,7 @@ function CardContent({
           position: 'relative',
           height: hasCustomBanner ? '140px' : '100px',
           background: hasCustomBanner
-            ? `url(${bannerUrl}) center/cover`
+            ? `url("${bannerUrl}") center/cover`
             : `linear-gradient(135deg, ${themeColor}, rgba(0,0,0,0.3) 70%)`,
           overflow: 'hidden',
         }}>

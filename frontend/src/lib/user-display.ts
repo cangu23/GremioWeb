@@ -8,17 +8,17 @@ export function getUserDisplayName(user: {
   role?: string;
   vtuberProfile?: { displayName?: string | null } | null;
 }): string {
-  return user.displayName || (user.role === 'VTUBER' ? user.vtuberProfile?.displayName : null) || user.username;
+  return user.displayName || user.vtuberProfile?.displayName || user.username;
 }
 
 /**
  * Resolve the best available avatar URL for a user.
- * Priority: user.avatarUrl → vtuberProfile.avatarUrl (if VTuber) → ''
+ * Priority: user.avatarUrl → vtuberProfile.avatarUrl → ''
  */
 export function getUserAvatarUrl(user: {
   avatarUrl?: string | null;
   role?: string;
   vtuberProfile?: { avatarUrl?: string | null } | null;
 }): string {
-  return user.avatarUrl || (user.role === 'VTUBER' ? user.vtuberProfile?.avatarUrl : null) || '';
+  return user.avatarUrl || user.vtuberProfile?.avatarUrl || '';
 }

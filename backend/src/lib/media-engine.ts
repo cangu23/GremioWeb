@@ -78,28 +78,60 @@ async function fallbackToSharp(
   options: { folder: string; maxWidth: number; quality: number }
 ): Promise<OptimizeResult> {
   const { folder, maxWidth, quality } = options;
+  const isGif = buffer.length > 3 && buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46; // GIF8
 
   const maxDimension = folder.includes('logo') ? 512
     : folder.includes('banner') ? 1920
     : maxWidth;
 
-  const compressed = await sharp(buffer)
-    .resize({
-      width: maxDimension,
-      height: maxDimension,
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .webp({ quality })
-    .toBuffer();
+  let compressed: Buffer;
+  let format = 'webp';
+
+  if (isGif) {
+    try {
+      compressed = await sharp(buffer, { animated: true })
+        .resize({
+          width: maxDimension,
+          height: maxDimension,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .gif()
+        .toBuffer();
+      format = 'gif';
+    } catch {
+      compressed = await sharp(buffer)
+        .resize({
+          width: maxDimension,
+          height: maxDimension,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({ quality })
+        .toBuffer();
+    }
+  } else {
+    compressed = await sharp(buffer)
+      .resize({
+        width: maxDimension,
+        height: maxDimension,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .webp({ quality })
+      .toBuffer();
+  }
 
   console.log(
-    `📦 [Sharp Fallback] ${folder}: ${(buffer.length / 1024).toFixed(1)}KB → ${(compressed.length / 1024).toFixed(1)}KB`
+    `📦 [Sharp Fallback] ${folder}: ${(buffer.length / 1024).toFixed(1)}KB → ${(compressed.length / 1024).toFixed(1)}KB ${isGif ? '(animated GIF)' : '(webp)'}`
   );
 
   const url = await new Promise<string>((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: `gremio-estelar/${folder}`, resource_type: 'image' },
+      {
+        folder: `gremio-estelar/${folder}`,
+        resource_type: isGif ? 'auto' : 'image',
+      },
       (error: UploadApiErrorResponse | undefined, result?: UploadApiResponse) => {
         if (error) return reject(error);
         if (!result) return reject(new Error('Cloudinary upload returned no result'));
@@ -112,10 +144,10 @@ async function fallbackToSharp(
   return {
     status: 'ok',
     url,
-    format: 'webp',
+    format,
     size_bytes: compressed.length,
     original_size_bytes: buffer.length,
-    animated: false,
+    animated: isGif,
   };
 }
 
