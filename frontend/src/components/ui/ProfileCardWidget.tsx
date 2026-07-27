@@ -210,12 +210,41 @@ function CardContent({
   const isOwnProfile = currentUser?.id === profile.id;
   const isVtubers = profile.role === 'VTUBER' || (profile.vtuberProfile?.isApproved ?? false);
   const vtuber = profile.vtuberProfile;
+  const parseItemData = (data: string | null) => {
+    try { return data ? JSON.parse(data) : {}; } catch { return {}; }
+  };
+
+  const equippedItems = profile.purchases || [];
+  const equippedBadge = equippedItems.find((p: any) => p.item?.type === 'BADGE');
+  const equippedTitle = equippedItems.find((p: any) => p.item?.type === 'TITLE');
+  const equippedFrame = equippedItems.find((p: any) =>
+    p.equipped && p.item && (
+      p.item.type === 'FRAME' ||
+      p.item.type === 'AVATAR_FRAME' ||
+      p.item.type === 'DECORATION' ||
+      p.item.type === 'HOVER' ||
+      p.item.type === 'EFFECT' ||
+      p.item.type === 'COLOR'
+    )
+  );
+  const equippedBanner = equippedItems.find((p: any) => p.item?.type === 'BANNER');
+  const equippedColor = equippedItems.find((p: any) => p.item?.type === 'COLOR');
+
+  const badgeData = equippedBadge ? parseItemData(equippedBadge.item.data) : null;
+  const titleData = equippedTitle ? parseItemData(equippedTitle.item.data) : null;
+  const frameData = equippedFrame ? parseItemData(equippedFrame.item.data) : null;
+  const bannerData = equippedBanner ? parseItemData(equippedBanner.item.data) : null;
+  const colorData = equippedColor ? parseItemData(equippedColor.item.data) : null;
+
   const displayName = profile.displayName || vtuber?.displayName || profile.username;
   const avatarUrl = profile.avatarUrl || vtuber?.avatarUrl;
-  const rawBannerUrl = vtuber?.bannerUrl;
+  const activeFrameUrl = equippedFrame?.item?.imageUrl || frameData?.frameUrl || frameData?.imageUrl || frameData?.url;
+  const activeEquippedFrame = frameData?.gradient || frameData?.borderColor || frameData?.color || frameData?.style || (typeof equippedFrame?.item?.data === 'string' ? equippedFrame.item.data : null);
+
+  const rawBannerUrl = bannerData?.bannerUrl || vtuber?.bannerUrl;
   const bannerUrl = rawBannerUrl ? rawBannerUrl.replace(/"/g, '\\"') : null;
-  const themeColor = vtuber?.themeColor || 'var(--primary)';
-  const hasCustomBanner = !!bannerUrl;
+  const themeColor = colorData?.color || colorData?.gradient || vtuber?.themeColor || (profile as any).bannerColor || 'var(--primary)';
+  const hasCustomBanner = !!bannerUrl || !!(profile as any).bannerColor;
   const isVerified = vtuber?.isVerified || vtuber?.isApproved;
   const isFeatured = vtuber?.isFeatured;
   const isLive = vtuber?.isLive;
@@ -254,9 +283,11 @@ function CardContent({
         <div style={{
           position: 'relative',
           height: hasCustomBanner ? '140px' : '100px',
-          background: hasCustomBanner
+          background: bannerUrl
             ? `url("${bannerUrl}") center/cover`
-            : `linear-gradient(135deg, ${themeColor}, rgba(0,0,0,0.3) 70%)`,
+            : (profile as any).bannerColor
+              ? (profile as any).bannerColor
+              : `linear-gradient(135deg, ${themeColor}, rgba(0,0,0,0.4) 70%)`,
           overflow: 'hidden',
         }}>
           {/* Decorative gradient overlay */}
@@ -344,6 +375,9 @@ function CardContent({
             src={avatarUrl}
             alt={displayName}
             user={profile}
+            purchases={profile.purchases}
+            frameUrl={activeFrameUrl}
+            equippedFrame={activeEquippedFrame}
             size={80}
             isVerified={isVerified}
             isLive={isLive}
@@ -392,6 +426,23 @@ function CardContent({
           @{profile.username}
         </p>
 
+        {/* Equipped Title Tag */}
+        {(equippedTitle || titleData?.title || titleData?.label) && (
+          <div style={{
+            margin: '2px auto 8px',
+            display: 'inline-block',
+            padding: '3px 12px',
+            borderRadius: '12px',
+            background: `${themeColor !== 'var(--primary)' ? themeColor : '#8b5cf6'}20`,
+            border: `1px solid ${themeColor !== 'var(--primary)' ? themeColor : '#8b5cf6'}40`,
+            color: themeColor !== 'var(--primary)' ? themeColor : '#a78bfa',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+          }}>
+            {titleData?.title || titleData?.label || equippedTitle?.item?.name}
+          </div>
+        )}
+
         {/* Oshi mark / fan name */}
         {(vtuber?.oshiMark || vtuber?.fanName) && (
           <p style={{
@@ -418,8 +469,6 @@ function CardContent({
           </p>
         )}
 
-
-
         {/* ── Stats row ── */}
         <div style={{
           display: 'flex', justifyContent: 'center', gap: '0',
@@ -441,9 +490,8 @@ function CardContent({
             }}>
               <div style={{
                 fontSize: '1rem', fontWeight: 800,
-                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                color: themeColor !== 'var(--primary)' ? themeColor : 'var(--accent, #a78bfa)',
+                textShadow: themeColor !== 'var(--primary)' ? `0 0 10px ${themeColor}66` : 'none',
               }}>
                 {stat.value}
               </div>

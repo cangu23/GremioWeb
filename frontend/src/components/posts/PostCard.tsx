@@ -49,8 +49,10 @@ function extractEquippedFrame(user: any): { frameUrl?: string | null; equippedFr
       p.equipped && p.item && (
         p.item.type === 'AVATAR_FRAME' ||
         p.item.type === 'FRAME' ||
+        p.item.type === 'DECORATION' ||
         p.item.type === 'HOVER' ||
-        p.item.type === 'EFFECT'
+        p.item.type === 'EFFECT' ||
+        p.item.type === 'COLOR'
       )
     )?.item;
 
@@ -60,7 +62,9 @@ function extractEquippedFrame(user: any): { frameUrl?: string | null; equippedFr
         try {
           const parsed = typeof frameItem.data === 'string' ? JSON.parse(frameItem.data) : frameItem.data;
           if (parsed?.frameUrl || parsed?.imageUrl) return { frameUrl: parsed.frameUrl || parsed.imageUrl };
-          if (parsed?.gradient || parsed?.style || parsed?.color) return { equippedFrame: parsed.gradient || parsed.style || parsed.color };
+          if (parsed?.gradient || parsed?.borderColor || parsed?.color || parsed?.style) {
+            return { equippedFrame: parsed.gradient || parsed.borderColor || parsed.color || parsed.style };
+          }
         } catch {
           return { equippedFrame: frameItem.data };
         }
