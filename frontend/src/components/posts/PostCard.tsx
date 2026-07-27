@@ -439,10 +439,10 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             const { frameUrl, equippedFrame } = extractEquippedFrame(post.user);
             return (
               <UserAvatar
-                src={post.user.avatarUrl || post.user.vtuberProfile?.avatarUrl}
-                alt={post.user.displayName || post.user.vtuberProfile?.displayName || post.user.username}
+                src={post.user.avatarUrl || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.avatarUrl : null)}
+                alt={post.user.displayName || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.displayName : null) || post.user.username}
                 userId={post.user.id}
-                isVerified={post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved}
+                isVerified={post.user.role === 'VTUBER' && (post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved)}
                 frameUrl={frameUrl}
                 equippedFrame={equippedFrame}
                 size={40}
@@ -454,8 +454,8 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
               display: 'inline-flex', alignItems: 'center', gap: '4px',
             }}>
-              {post.user.displayName || post.user.vtuberProfile?.displayName || post.user.username}
-              {(post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved || post.user.role === 'VTUBER') && (
+              {post.user.displayName || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.displayName : null) || post.user.username}
+              {(post.user.role === 'VTUBER' && (post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved)) && (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
                   <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
                   <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -779,10 +779,10 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                     const { frameUrl, equippedFrame } = extractEquippedFrame(comment.user);
                     return (
                       <UserAvatar
-                        src={comment.user?.avatarUrl || comment.user?.vtuberProfile?.avatarUrl}
-                        alt={comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username || '?'}
+                        src={comment.user?.avatarUrl || (comment.user?.role === 'VTUBER' ? comment.user?.vtuberProfile?.avatarUrl : null)}
+                        alt={comment.user?.displayName || (comment.user?.role === 'VTUBER' ? comment.user?.vtuberProfile?.displayName : null) || comment.user?.username || '?'}
                         userId={comment.userId}
-                        isVerified={comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved}
+                        isVerified={comment.user?.role === 'VTUBER' && (comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved)}
                         frameUrl={frameUrl}
                         equippedFrame={equippedFrame}
                         size={34}
@@ -793,8 +793,8 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                     {/* Comment Header */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
                       <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.84rem', color: 'var(--text)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        {comment.user?.displayName || comment.user?.vtuberProfile?.displayName || comment.user?.username}
-                        {(comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved || comment.user?.role === 'VTUBER') && (
+                        {comment.user?.displayName || (comment.user?.role === 'VTUBER' ? comment.user?.vtuberProfile?.displayName : null) || comment.user?.username}
+                        {(comment.user?.role === 'VTUBER' && (comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved)) && (
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
                             <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
                             <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />

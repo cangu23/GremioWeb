@@ -224,9 +224,10 @@ function ProfileContent() {
   };
 
   const isOwnProfile = currentUser?.id === profile.id;
-  const vtuber = profile.vtuberProfile;
-  const avatarUrl = vtuber?.avatarUrl || profile.avatarUrl;
-  const displayName = vtuber?.displayName || profile.displayName || profile.username;
+  const isVtuber = profile.role === 'VTUBER';
+  const vtuber = isVtuber ? profile.vtuberProfile : null;
+  const avatarUrl = profile.avatarUrl || vtuber?.avatarUrl;
+  const displayName = profile.displayName || vtuber?.displayName || profile.username;
   const bio = vtuber?.description || profile.bio;
 
   // Equipped shop items
