@@ -25,7 +25,17 @@ export const getStardustMultiplier = (userPlan: string, userRole: string): numbe
 };
 
 export const addStardust = async (userId: string, baseAmount: number, reason: string) => {
-  if (baseAmount <= 0) return 0;
+  if (baseAmount <= 0) {
+    const u = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { stardust: true },
+    });
+    return {
+      stardustEarned: 0,
+      newBalance: u?.stardust || 0,
+      multiplier: 1.0,
+    };
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
