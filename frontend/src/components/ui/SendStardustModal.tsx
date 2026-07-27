@@ -579,8 +579,8 @@ export default function SendStardustModal({
                         setSelectedAmount(item.amount);
                       }}
                       style={{
-                        padding: '10px 6px',
-                        borderRadius: '14px',
+                        padding: '6px 4px',
+                        borderRadius: '12px',
                         border: isSelected ? `2px solid ${item.color}` : '1px solid rgba(255, 255, 255, 0.08)',
                         background: isSelected ? `${item.color}22` : 'rgba(255, 255, 255, 0.03)',
                         color: '#fff',
@@ -589,16 +589,16 @@ export default function SendStardustModal({
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '2px',
+                        gap: '1px',
                         transition: 'all 0.15s ease',
-                        boxShadow: isSelected ? `0 0 12px ${item.color}33` : 'none',
+                        boxShadow: isSelected ? `0 0 10px ${item.color}33` : 'none',
                       }}
                     >
-                      <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: isSelected ? item.color : '#fff' }}>
+                      <span style={{ fontSize: '1rem' }}>{item.icon}</span>
+                      <span style={{ fontWeight: 800, fontSize: '0.78rem', color: isSelected ? item.color : '#fff' }}>
                         ⭐ {item.amount.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: '0.65rem', color: '#9ca3af' }}>{item.label}</span>
+                      <span style={{ fontSize: '0.62rem', color: '#9ca3af', lineHeight: 1 }}>{item.label}</span>
                     </button>
                   );
                 })}
