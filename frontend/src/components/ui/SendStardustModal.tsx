@@ -225,8 +225,8 @@ export default function SendStardustModal({
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(8px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(10px)',
         animation: 'fadeIn 0.2s ease-out',
       }}
       onClick={(e) => {
@@ -237,15 +237,17 @@ export default function SendStardustModal({
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '520px',
+          maxWidth: '500px',
           maxHeight: '90vh',
-          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
           borderRadius: '24px',
-          background: 'linear-gradient(135deg, rgba(22, 20, 38, 0.95) 0%, rgba(13, 11, 24, 0.98) 100%)',
-          border: '1px solid rgba(245, 158, 11, 0.25)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(245, 158, 11, 0.15)',
+          background: 'linear-gradient(135deg, rgba(22, 20, 38, 0.98) 0%, rgba(13, 11, 24, 0.99) 100%)',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(245, 158, 11, 0.2)',
           color: '#fff',
-          padding: '24px',
+          padding: '20px 22px',
+          overflowY: 'auto',
         }}
       >
         {/* Close Button */}
@@ -253,48 +255,49 @@ export default function SendStardustModal({
           onClick={onClose}
           style={{
             position: 'absolute',
-            top: '18px',
-            right: '18px',
+            top: '16px',
+            right: '16px',
             background: 'rgba(255, 255, 255, 0.08)',
             border: 'none',
             borderRadius: '50%',
-            width: '36px',
-            height: '36px',
+            width: '32px',
+            height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#a1a1aa',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
+            zIndex: 10,
           }}
           onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
           onMouseLeave={(e) => (e.currentTarget.style.color = '#a1a1aa')}
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
         {/* Modal Header */}
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '14px', flexShrink: 0 }}>
           <div
             style={{
-              width: '56px',
-              height: '56px',
-              margin: '0 auto 12px auto',
-              borderRadius: '20px',
-              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.4))',
-              border: '1px solid rgba(251, 191, 36, 0.4)',
+              width: '44px',
+              height: '44px',
+              margin: '0 auto 8px auto',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.45))',
+              border: '1px solid rgba(251, 191, 36, 0.5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(245, 158, 11, 0.3)',
+              boxShadow: '0 0 16px rgba(245, 158, 11, 0.35)',
             }}
           >
-            <Sparkles size={28} color="#fbbf24" />
+            <Sparkles size={22} color="#fbbf24" />
           </div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: '#fff', letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#fff', letterSpacing: '-0.02em' }}>
             Regalar Polvo Estelar
           </h2>
-          <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginTop: '4px', margin: 0 }}>
+          <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '2px', margin: 0 }}>
             Envía puntos y apoya a tus creadores o amigos favoritos
           </p>
         </div>
