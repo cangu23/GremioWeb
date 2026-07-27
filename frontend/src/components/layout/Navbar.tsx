@@ -528,7 +528,7 @@ function MessagesDropdown({ dmUnreadCount }: { dmUnreadCount: number }) {
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
                   >
-                    <UserAvatar src={other.avatarUrl || other.vtuberProfile?.avatarUrl} alt={name} size={34} />
+                    <UserAvatar src={other.avatarUrl || other.vtuberProfile?.avatarUrl} alt={name} size={34} user={other} userId={other.id} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#fff' }}>{name}</div>
                       <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.content}</div>
@@ -886,16 +886,13 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
           )}
 
           <Link href={`/profile/${user.id}`} onClick={closeMenu} style={mobileLink}>
-            <div style={{
-              width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
-              background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
-                ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
-                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', fontSize: '0.6rem', fontWeight: 'bold',
-            }}>
-              {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && (user.displayName || user.vtuberProfile?.displayName || user.username).charAt(0).toUpperCase()}
-            </div>
+            <UserAvatar
+              src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
+              alt={user.username}
+              size={20}
+              user={user}
+              userId={user.id}
+            />
             <span>Mi Perfil</span>
           </Link>
 

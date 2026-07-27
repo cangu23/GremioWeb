@@ -165,6 +165,10 @@ export const createComment = (data: {
               isApproved: true,
             },
           },
+          purchases: {
+            where: { equipped: true },
+            include: { item: true },
+          },
         },
       },
       _count: { select: { likes: true } },

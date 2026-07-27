@@ -39,6 +39,8 @@ export const getFollowers = (userId: string) => {
         select: {
           id: true,
           username: true,
+          avatarUrl: true,
+          role: true,
           note: true,
           noteUpdatedAt: true,
           noteExpiresAt: true,
@@ -48,6 +50,10 @@ export const getFollowers = (userId: string) => {
               avatarUrl: true,
               isVerified: true,
             },
+          },
+          purchases: {
+            where: { equipped: true },
+            include: { item: true },
           },
         },
       },
@@ -64,6 +70,8 @@ export const getFollowing = (userId: string) => {
         select: {
           id: true,
           username: true,
+          avatarUrl: true,
+          role: true,
           note: true,
           noteUpdatedAt: true,
           noteExpiresAt: true,
@@ -73,6 +81,10 @@ export const getFollowing = (userId: string) => {
               avatarUrl: true,
               isVerified: true,
             },
+          },
+          purchases: {
+            where: { equipped: true },
+            include: { item: true },
           },
         },
       },

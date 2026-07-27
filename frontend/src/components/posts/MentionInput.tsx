@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
-import Link from 'next/link';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 // ==========================================================================
 // Types
@@ -266,25 +266,13 @@ export default function MentionInput({
                 textAlign: 'left',
               }}
             >
-              {/* Avatar mini */}
-              <div style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '50%',
-                flexShrink: 0,
-                background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
-                  ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
-                  : 'linear-gradient(135deg, var(--secondary), var(--primary))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                overflow: 'hidden',
-              }}>
-                {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && (user.displayName || user.vtuberProfile?.displayName || user.username).charAt(0).toUpperCase()}
-              </div>
+              <UserAvatar
+                src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
+                alt={user.username}
+                size={26}
+                user={user}
+                userId={user.id}
+              />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <span style={{ fontWeight: 600 }}>
                   {user.displayName || user.vtuberProfile?.displayName || user.username}

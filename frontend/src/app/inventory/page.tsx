@@ -35,6 +35,12 @@ const TYPE_ICONS: Record<string, string> = {
   HOVER: '✨',
   NAME_CHANGE: '✏️',
   PIN_POST: '📌',
+  BOOSTER_2X: '⚡',
+  ROULETTE_TOKEN: '🎰',
+  STREAK_SAVER: '🛡️',
+  GUILD_XP_CRYSTAL: '🏰',
+  GLOBAL_MEGAPHONE: '📢',
+  SUPER_BOOST_POST: '🚀',
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -46,6 +52,12 @@ const TYPE_LABELS: Record<string, string> = {
   HOVER: 'Efecto Hover',
   NAME_CHANGE: 'Cambio de Nombre',
   PIN_POST: 'Post Destacado',
+  BOOSTER_2X: 'Multiplicador 2x',
+  ROULETTE_TOKEN: 'Ficha Ruleta',
+  STREAK_SAVER: 'Escudo Racha',
+  GUILD_XP_CRYSTAL: 'Cristal EXP Gremio',
+  GLOBAL_MEGAPHONE: 'Megáfono Estelar',
+  SUPER_BOOST_POST: 'Super Boost Post',
 };
 
 function parseItemData(data: string | null): any {
@@ -201,6 +213,8 @@ export default function InventoryPage() {
       const res = await apiFetch(`/shop/equip/${itemId}`, { method: 'POST' });
       await refreshInventory();
       showToast(res.equipped ? 'Ítem equipado ✨' : 'Ítem desequipado', 'success');
+      window.dispatchEvent(new Event('stardust-updated'));
+      window.dispatchEvent(new Event('user-refetched'));
     } catch (e: any) {
       showToast(e.message || 'Error al equipar', 'error');
     } finally {

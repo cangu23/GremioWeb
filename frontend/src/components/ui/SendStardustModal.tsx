@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
 import { X, Search, Sparkles, Send, Gift, Check, ArrowRight, UserCheck, AlertCircle, RefreshCw } from '@/components/ui/Icons';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 export interface RecipientUser {
   id?: string;
@@ -397,26 +398,13 @@ export default function SendStardustModal({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        overflow: 'hidden',
-                        background: '#334155',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 700,
-                        color: '#fbbf24',
-                      }}
-                    >
-                      {selectedRecipient.avatarUrl ? (
-                        <img src={selectedRecipient.avatarUrl} alt={selectedRecipient.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        selectedRecipient.username[0]?.toUpperCase()
-                      )}
-                    </div>
+                    <UserAvatar
+                      src={selectedRecipient.avatarUrl}
+                      alt={selectedRecipient.username}
+                      size={36}
+                      user={selectedRecipient}
+                      userId={selectedRecipient.id}
+                    />
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>
                         {selectedRecipient.displayName || selectedRecipient.username}
@@ -511,25 +499,13 @@ export default function SendStardustModal({
                             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div
-                                style={{
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '50%',
-                                  overflow: 'hidden',
-                                  background: 'linear-gradient(135deg, #475569, #1e293b)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontWeight: 700,
-                                  fontSize: '0.85rem',
-                                  color: '#fbbf24',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : u.username[0]?.toUpperCase()}
-                              </div>
+                              <UserAvatar
+                                 src={u.avatarUrl}
+                                 alt={u.username}
+                                 size={32}
+                                 user={u}
+                                 userId={u.id}
+                               />
                               <div>
                                 <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>{displayName}</div>
                                 <div style={{ fontSize: '0.75rem', color: '#fbbf24', fontWeight: 600 }}>@{u.username}</div>

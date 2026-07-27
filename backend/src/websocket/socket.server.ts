@@ -113,14 +113,26 @@ export const createSocketServer = (httpServer: HttpServer) => {
               select: {
                 id: true,
                 username: true,
+                avatarUrl: true,
+                role: true,
                 vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+                purchases: {
+                  where: { equipped: true },
+                  include: { item: true },
+                },
               },
             },
             receiver: {
               select: {
                 id: true,
                 username: true,
+                avatarUrl: true,
+                role: true,
                 vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+                purchases: {
+                  where: { equipped: true },
+                  include: { item: true },
+                },
               },
             },
           },
@@ -133,16 +145,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
           createdAt: message.createdAt.toISOString(),
           senderId: message.senderId,
           receiverId: message.receiverId,
-          sender: {
-            id: message.sender.id,
-            username: message.sender.username,
-            vtuberProfile: message.sender.vtuberProfile,
-          },
-          receiver: {
-            id: message.receiver.id,
-            username: message.receiver.username,
-            vtuberProfile: message.receiver.vtuberProfile,
-          },
+          sender: message.sender,
+          receiver: message.receiver,
         };
 
         // Send to both users (sender gets confirmation, receiver gets new message)
@@ -255,7 +259,13 @@ export const createSocketServer = (httpServer: HttpServer) => {
               select: {
                 id: true,
                 username: true,
+                avatarUrl: true,
+                role: true,
                 vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
+                purchases: {
+                  where: { equipped: true },
+                  include: { item: true },
+                },
               },
             },
           },
@@ -269,13 +279,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
           content: message.content,
           imageUrl: message.imageUrl,
           createdAt: message.createdAt.toISOString(),
-          user: {
-            id: message.user.id,
-            username: message.user.username,
-            displayName: message.user.vtuberProfile?.displayName ?? null,
-            avatarUrl: message.user.vtuberProfile?.avatarUrl ?? null,
-            isVerified: message.user.vtuberProfile?.isVerified ?? false,
-          },
+          user: message.user,
         });
       } catch (err) {
         console.error('[Socket] Error sending guild message:', err);

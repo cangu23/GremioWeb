@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import ProfileCardWidget from './ProfileCardWidget';
+import { useAuth } from '@/lib/AuthContext';
 
 interface UserAvatarProps {
   src?: string | null;
@@ -95,7 +96,18 @@ export default function UserAvatar({
   src, alt, size = 40, note, noteUpdatedAt, userId,
   isVerified, isLive, frameUrl, equippedFrame, purchases, user, className, style,
 }: UserAvatarProps) {
-  const resolvedDecoration = extractAvatarDecoration(purchases || user, frameUrl, equippedFrame);
+  const { user: currentUser } = useAuth();
+
+  const isSelf = currentUser && (
+    (userId && currentUser.id === userId) ||
+    (user?.id && currentUser.id === user.id) ||
+    (user?.username && currentUser.username?.toLowerCase() === user.username.toLowerCase()) ||
+    (alt && (currentUser.username?.toLowerCase() === alt.toLowerCase().replace(/^@/, '') || currentUser.displayName?.toLowerCase() === alt.toLowerCase()))
+  );
+
+  const currAny = currentUser as any;
+  const effectiveUserData = (isSelf && (currAny?.purchases || currAny?.equippedFrame || currAny?.equippedFrameUrl)) ? currAny : (purchases || user);
+  const resolvedDecoration = extractAvatarDecoration(effectiveUserData, frameUrl, equippedFrame);
   const activeFrameUrl = resolvedDecoration.frameUrl;
   const activeEquippedFrame = resolvedDecoration.equippedFrame;
   const [showNote, setShowNote] = useState(false);

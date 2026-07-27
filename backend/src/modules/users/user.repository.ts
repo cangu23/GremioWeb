@@ -52,6 +52,10 @@ export const searchByUsernameForMention = async (query: string) => {
       avatarUrl: true,
       role: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+      purchases: {
+        where: { equipped: true },
+        include: { item: true },
+      },
     },
     take: 15,
     orderBy: { username: 'asc' },
@@ -89,6 +93,10 @@ export const searchByUsername = async (query: string) => {
       role: true,
       plan: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+      purchases: {
+        where: { equipped: true },
+        include: { item: true },
+      },
     },
     take: 20,
     orderBy: [

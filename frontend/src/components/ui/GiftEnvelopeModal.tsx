@@ -29,6 +29,7 @@ export default function GiftEnvelopeModal({
 }: GiftEnvelopeModalProps) {
   const [isOpenState, setIsOpenState] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
+  const [fetchedAvatar, setFetchedAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && giftData) {
@@ -39,8 +40,32 @@ export default function GiftEnvelopeModal({
         setIsOpenState(false);
       }
       setIsOpening(false);
+
+      // Auto-fetch sender profile picture if not provided directly
+      setFetchedAvatar(null);
+      if (!giftData.senderAvatar && giftData.senderName) {
+        const cleanName = giftData.senderName.replace(/^@/, '').trim();
+        if (cleanName && cleanName !== 'Amigo Estelar') {
+          apiFetch(`/users/search?q=${encodeURIComponent(cleanName)}`)
+            .then((data) => {
+              const list = Array.isArray(data) ? data : data?.data || [];
+              const match = list.find(
+                (u: any) =>
+                  u.username.toLowerCase() === cleanName.toLowerCase() ||
+                  (u.displayName && u.displayName.toLowerCase() === cleanName.toLowerCase())
+              );
+              if (match) {
+                const foundAvatar = match.avatarUrl || match.vtuberProfile?.avatarUrl;
+                if (foundAvatar) setFetchedAvatar(foundAvatar);
+              }
+            })
+            .catch(() => {});
+        }
+      }
     }
   }, [isOpen, giftData]);
+
+  const displayAvatar = giftData?.senderAvatar || fetchedAvatar;
 
   if (!isOpen || !giftData) return null;
 
@@ -271,8 +296,8 @@ export default function GiftEnvelopeModal({
                     border: '2px solid #fff',
                   }}
                 >
-                  {giftData.senderAvatar ? (
-                    <img src={giftData.senderAvatar} alt={giftData.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {displayAvatar ? (
+                    <img src={displayAvatar} alt={giftData.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     giftData.senderName[0]?.toUpperCase()
                   )}
@@ -368,8 +393,8 @@ export default function GiftEnvelopeModal({
                   marginBottom: '8px',
                 }}
               >
-                {giftData.senderAvatar ? (
-                  <img src={giftData.senderAvatar} alt={giftData.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {displayAvatar ? (
+                  <img src={displayAvatar} alt={giftData.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   giftData.senderName[0]?.toUpperCase()
                 )}

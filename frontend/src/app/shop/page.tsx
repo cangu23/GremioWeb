@@ -34,6 +34,12 @@ const TYPE_ICONS: Record<string, string> = {
   HOVER: '✨',
   NAME_CHANGE: '✏️',
   PIN_POST: '📌',
+  BOOSTER_2X: '⚡',
+  ROULETTE_TOKEN: '🎰',
+  STREAK_SAVER: '🛡️',
+  GUILD_XP_CRYSTAL: '🏰',
+  GLOBAL_MEGAPHONE: '📢',
+  SUPER_BOOST_POST: '🚀',
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -45,6 +51,12 @@ const TYPE_LABELS: Record<string, string> = {
   HOVER: 'Efecto Hover',
   NAME_CHANGE: 'Cambio de Nombre',
   PIN_POST: 'Post Destacado',
+  BOOSTER_2X: 'Multiplicador 2x',
+  ROULETTE_TOKEN: 'Ficha Ruleta',
+  STREAK_SAVER: 'Escudo Racha',
+  GUILD_XP_CRYSTAL: 'Cristal EXP Gremio',
+  GLOBAL_MEGAPHONE: 'Megáfono Estelar',
+  SUPER_BOOST_POST: 'Super Boost Post',
 };
 
 const CATEGORIES = [
@@ -238,7 +250,7 @@ export default function ShopPage() {
 
   const filteredItems = items.filter((item) => {
     if (category === 'all') return true;
-    if (category === 'consumable') return item.type === 'NAME_CHANGE' || item.type === 'PIN_POST';
+    if (category === 'consumable') return ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'].includes(item.type);
     return item.type === category;
   });
 
@@ -257,6 +269,8 @@ export default function ShopPage() {
       setStardust(res.balance);
       setInventory((prev) => [...prev, res.purchase]);
       showToast(`¡${name} comprado con éxito! ⭐`, 'success');
+      window.dispatchEvent(new Event('stardust-updated'));
+      window.dispatchEvent(new Event('user-refetched'));
     } catch (e: any) {
       showToast(e.message || 'Error al comprar', 'error');
     } finally {
@@ -271,6 +285,8 @@ export default function ShopPage() {
       const invData = await apiFetch('/shop/inventory', {});
       setInventory(invData || []);
       showToast(res.equipped ? 'Ítem equipado en tu perfil ✨' : 'Ítem desequipado', 'success');
+      window.dispatchEvent(new Event('stardust-updated'));
+      window.dispatchEvent(new Event('user-refetched'));
     } catch (e: any) {
       showToast(e.message || 'Error al equipar', 'error');
     } finally {
@@ -383,8 +399,11 @@ export default function ShopPage() {
               const owned = ownedIds.has(item.id);
               const equipped = equippedIds.has(item.id);
               const itemData = parseItemData(item.data);
-              const isConsumable = item.type === 'NAME_CHANGE' || item.type === 'PIN_POST';
-              const canAfford = stardust >= item.price;
+              const CONSUMABLE_TYPES = ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'];
+              const isConsumable = CONSUMABLE_TYPES.includes(item.type);
+              const discountPercent = itemData.discountPercent || 0;
+              const effectivePrice = discountPercent > 0 ? Math.max(1, Math.round(item.price * (1 - discountPercent / 100))) : item.price;
+              const canAfford = stardust >= effectivePrice;
               const isBusy = purchasing === item.id || equipping === item.id;
 
               return (
@@ -398,15 +417,33 @@ export default function ShopPage() {
                       ? '1.5px solid var(--primary)'
                       : owned
                       ? '1px solid rgba(139,92,246,0.3)'
+                      : discountPercent > 0
+                      ? '1.5px solid rgba(239,68,68,0.5)'
                       : '1px solid rgba(255,255,255,0.08)',
                     display: 'flex', flexDirection: 'column', gap: '14px',
                     transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
                     position: 'relative', overflow: 'hidden',
                     boxShadow: equipped
                       ? '0 8px 30px rgba(139,92,246,0.25)'
+                      : discountPercent > 0
+                      ? '0 8px 25px rgba(239,68,68,0.2)'
                       : '0 4px 20px rgba(0,0,0,0.3)',
                   }}
                 >
+                  {/* Discount Badge */}
+                  {discountPercent > 0 && !owned && (
+                    <div style={{
+                      position: 'absolute', top: '12px', left: '12px',
+                      padding: '3px 9px', borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #ef4444, #f97316)', color: 'white',
+                      fontSize: '0.68rem', fontWeight: 900,
+                      letterSpacing: '0.04em', zIndex: 2,
+                      boxShadow: '0 0 10px rgba(239,68,68,0.5)',
+                    }}>
+                      🏷️ {discountPercent}% DESCUENTO
+                    </div>
+                  )}
+
                   {/* Equipped status top badge */}
                   {equipped && (
                     <div style={{
@@ -414,7 +451,7 @@ export default function ShopPage() {
                       padding: '3px 9px', borderRadius: '10px',
                       background: 'var(--primary)', color: 'white',
                       fontSize: '0.65rem', fontWeight: 800,
-                      letterSpacing: '0.04em',
+                      letterSpacing: '0.04em', zIndex: 2,
                     }}>
                       EQUIPADO
                     </div>
@@ -452,13 +489,20 @@ export default function ShopPage() {
                     gap: '10px', paddingTop: '12px',
                     borderTop: '1px solid rgba(255,255,255,0.06)',
                   }}>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '5px',
-                      fontWeight: 800, fontSize: '1.05rem',
-                      color: owned ? 'var(--text-muted)' : canAfford ? '#ffd700' : '#ef4444',
-                    }}>
-                      <span>⭐</span>
-                      <span>{item.price}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {discountPercent > 0 && !owned && (
+                        <span style={{ fontSize: '0.72rem', color: '#9ca3af', textDecoration: 'line-through', fontWeight: 600 }}>
+                          ⭐ {item.price.toLocaleString()}
+                        </span>
+                      )}
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        fontWeight: 800, fontSize: '1.05rem',
+                        color: owned ? 'var(--text-muted)' : canAfford ? '#ffd700' : '#ef4444',
+                      }}>
+                        <span>⭐</span>
+                        <span>{effectivePrice.toLocaleString()}</span>
+                      </div>
                     </div>
 
                     {owned ? (
@@ -493,7 +537,7 @@ export default function ShopPage() {
                       )
                     ) : (
                       <button
-                        onClick={() => buyItem(item.id, item.price, item.name)}
+                        onClick={() => buyItem(item.id, effectivePrice, item.name)}
                         disabled={isBusy || !canAfford}
                         style={{
                           padding: '8px 18px', borderRadius: '10px', border: 'none',

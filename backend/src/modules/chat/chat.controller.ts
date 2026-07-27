@@ -15,7 +15,13 @@ export const getHistory = async (req: Request, res: Response, next: NextFunction
           select: {
             id: true,
             username: true,
-            vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+            role: true,
+            avatarUrl: true,
+            vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
+            purchases: {
+              where: { equipped: true },
+              include: { item: true },
+            },
           },
         },
       },

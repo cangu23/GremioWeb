@@ -11,6 +11,7 @@ import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
 import StickerPicker from '@/components/ui/StickerPicker';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import UserAvatar from '@/components/ui/UserAvatar';
 import { renderFormattedContent, useStickersCache } from '@/lib/content-renderer';
 import type { Socket } from 'socket.io-client';
 
@@ -800,18 +801,14 @@ function MessengerContent() {
                     }}
                   >
                     {/* Avatar with online dot */}
-                    <div style={{ position: 'relative', width: '42px', height: '42px', flexShrink: 0 }}>
-                      <div style={{
-                        width: '100%', height: '100%', borderRadius: '50%',
-                        background: (other.avatarUrl || other.vtuberProfile?.avatarUrl)
-                          ? `url(${other.avatarUrl || other.vtuberProfile?.avatarUrl}) center/cover`
-                          : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#fff', fontSize: '0.8rem', fontWeight: 700,
-                        overflow: 'hidden',
-                      }}>
-                        {!(other.avatarUrl || other.vtuberProfile?.avatarUrl) && getInitial(other)}
-                      </div>
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <UserAvatar
+                        src={other.avatarUrl || other.vtuberProfile?.avatarUrl}
+                        alt={getUsername(other)}
+                        size={40}
+                        user={other}
+                        userId={other.id}
+                      />
                       <div style={{
                         position: 'absolute', bottom: '-2px', right: '-2px',
                         width: '12px', height: '12px', borderRadius: '50%',
@@ -819,7 +816,7 @@ function MessengerContent() {
                         background: onlineUsers.has(other.id) ? '#22c55e' : '#555',
                         boxShadow: onlineUsers.has(other.id) ? '0 0 6px #22c55e' : 'none',
                         transition: 'background 0.3s ease',
-                        zIndex: 2,
+                        zIndex: 10,
                       }} />
                     </div>
 
@@ -1031,16 +1028,13 @@ function MessengerContent() {
                         }}
                       >
                         {showAvatar && (
-                          <div style={{
-                            width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                            background: activeUserInfo.vtuberProfile?.avatarUrl
-                              ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
-                              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontSize: '0.6rem', fontWeight: 700,
-                          }}>
-                            {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
-                          </div>
+                          <UserAvatar
+                            src={activeUserInfo.avatarUrl || activeUserInfo.vtuberProfile?.avatarUrl}
+                            alt={getUsername(activeUserInfo)}
+                            size={28}
+                            user={activeUserInfo}
+                            userId={activeUserInfo.id}
+                          />
                         )}
                         {!showAvatar && !isMine && <div style={{ width: '28px', flexShrink: 0 }} />}
                         
