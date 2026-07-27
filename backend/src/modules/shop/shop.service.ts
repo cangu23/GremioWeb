@@ -6,6 +6,7 @@ import prisma from '../../database/prisma';
 // ─── List shop items ───
 
 export const listItems = async () => {
+  await seedDefaultItems().catch(() => {});
   return ShopRepository.findActiveItems();
 };
 
