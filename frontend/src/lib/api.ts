@@ -12,7 +12,7 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => currentAccessToken;
 
-async function performRefresh(): Promise<string | null> {
+export async function performRefresh(): Promise<string | null> {
   if (refreshPromise) {
     return refreshPromise;
   }
@@ -60,6 +60,12 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     headers.set('Content-Type', 'application/json');
   }
   
+  // If no access token is set yet, but a refresh check is currently running (e.g. on page reload F5),
+  // wait for the refresh promise before making authenticated calls.
+  if (!currentAccessToken && refreshPromise && endpoint !== '/auth/refresh' && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
+    await refreshPromise;
+  }
+
   if (currentAccessToken) {
     headers.set('Authorization', `Bearer ${currentAccessToken}`);
   }
@@ -71,7 +77,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   });
 
   // The refresh token is stored only in an HttpOnly cookie by the backend.
-  if (response.status === 401 && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
+  if (response.status === 401 && endpoint !== '/auth/refresh' && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
     const newAccessToken = await performRefresh();
 
     if (newAccessToken) {

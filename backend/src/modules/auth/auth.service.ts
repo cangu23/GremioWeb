@@ -118,6 +118,21 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
 
   // 4. Validate the token exists and is not expired
   if (!dbToken) {
+    // Grace period for concurrent requests or rapid page reloads:
+    // Check if the user has an active refresh token generated in the last 15 seconds.
+    const latestToken = await prisma.refreshToken.findFirst({
+      where: {
+        userId: payload.userId,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (latestToken && (Date.now() - new Date(latestToken.createdAt).getTime() < 15000)) {
+      const { accessToken, refreshToken: newRefreshToken } = generateTokens(payload.userId);
+      return { accessToken, refreshToken: newRefreshToken };
+    }
+
     throw new AppError('Refresh token not found. It may have been revoked.', 401);
   }
   if (new Date() > dbToken.expiresAt) {

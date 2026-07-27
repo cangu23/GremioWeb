@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { apiFetch, setAccessToken } from './api';
+import { apiFetch, setAccessToken, performRefresh } from './api';
 import { UserProfile, LoginPayload, RegisterPayload } from '@gremio-estelar/shared';
 import { useToast } from './ToastContext';
 
@@ -16,16 +16,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// ─── sessionStorage cache ────────────────────────────────────────────
-// This lets us survive component re-mounts (e.g. during Next.js
-// client-side navigation or BFCache restore) without flashing the
-// landing page while the background auth check runs.
+// ─── User cache (sessionStorage + localStorage) ─────────────────────
 const SESSION_CACHE_KEY = 'gremio_user_v2';
 
 function getCachedUser(): UserProfile | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(SESSION_CACHE_KEY);
+    const raw = localStorage.getItem(SESSION_CACHE_KEY) || sessionStorage.getItem(SESSION_CACHE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -36,11 +33,13 @@ function setCachedUser(user: UserProfile | null) {
   if (typeof window === 'undefined') return;
   try {
     if (user) {
+      localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(user));
       sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(user));
     } else {
+      localStorage.removeItem(SESSION_CACHE_KEY);
       sessionStorage.removeItem(SESSION_CACHE_KEY);
     }
-  } catch { /* sessionStorage may be full or blocked */ }
+  } catch { /* storage full or blocked */ }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -53,15 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Backend auth refresh ──────────────────────────────────────────
   const refreshAuth = useCallback(async (): Promise<boolean> => {
-    // Prevent concurrent refresh calls. The refresh token is rotated on
-    // every call, so two concurrent calls will cause one to fail, which
-    // would incorrectly log the user out.
     if (isRefreshing.current) return true;
     isRefreshing.current = true;
     try {
-      const session = await apiFetch('/auth/refresh', { method: 'POST' });
-      if (session?.accessToken) {
-        setAccessToken(session.accessToken);
+      const token = await performRefresh();
+      if (token) {
         const profile = await apiFetch('/users/me');
         setUser(profile);
         setCachedUser(profile);
