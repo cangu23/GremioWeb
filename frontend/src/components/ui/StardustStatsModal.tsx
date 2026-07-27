@@ -43,6 +43,26 @@ interface StardustStatsModalProps {
   onClose: () => void;
 }
 
+function getTransactionMeta(reason: string) {
+  const r = reason.toLowerCase();
+  if (r.includes('ruleta') || r.includes('giro')) {
+    return { icon: '🎰', bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)', color: '#c084fc', label: 'Ruleta' };
+  }
+  if (r.includes('transferencia') || r.includes('regalo') || r.includes('propina') || r.includes('café') || r.includes('enviada')) {
+    return { icon: '🎁', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)', color: '#fbbf24', label: 'Regalo' };
+  }
+  if (r.includes('paypal') || r.includes('plan') || r.includes('bono')) {
+    return { icon: '💳', bg: 'rgba(56, 189, 248, 0.15)', border: 'rgba(56, 189, 248, 0.3)', color: '#38bdf8', label: 'Suscripción' };
+  }
+  if (r.includes('misión') || r.includes('mission')) {
+    return { icon: '🎯', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.3)', color: '#34d399', label: 'Misión' };
+  }
+  if (r.includes('tienda') || r.includes('compra')) {
+    return { icon: '🛍️', bg: 'rgba(244, 63, 94, 0.15)', border: 'rgba(244, 63, 94, 0.3)', color: '#fb7185', label: 'Tienda' };
+  }
+  return { icon: '⭐', bg: 'rgba(251, 191, 36, 0.15)', border: 'rgba(251, 191, 36, 0.3)', color: '#fbbf24', label: 'Stardust' };
+}
+
 export default function StardustStatsModal({ isOpen, onClose }: StardustStatsModalProps) {
   const [data, setData] = useState<StardustData | null>(null);
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -846,35 +866,107 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                       No tienes transacciones de Stardust aún.
                     </p>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {data.history.map((t) => (
-                        <div
-                          key={t.id}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: '10px',
-                            background: 'rgba(255,255,255,0.02)',
-                            border: '1px solid rgba(255,255,255,0.04)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                          }}
-                        >
-                          <div>
-                            <div style={{ fontSize: '0.84rem', color: '#fff', fontWeight: 500 }}>{t.reason}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              {new Date(t.createdAt).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {data.history.map((t) => {
+                        const isEarned = t.type === 'EARNED' || (t.amount > 0 && t.type !== 'SPENT');
+                        const absAmount = Math.abs(t.amount);
+                        const meta = getTransactionMeta(t.reason);
+                        const dateStr = new Date(t.createdAt).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+                        return (
+                          <div
+                            key={t.id}
+                            style={{
+                              padding: '12px 16px',
+                              borderRadius: '16px',
+                              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%)',
+                              backdropFilter: 'blur(16px)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '14px',
+                              transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
+                              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div
+                                style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  borderRadius: '12px',
+                                  background: meta.bg,
+                                  border: `1px solid ${meta.border}`,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '1.15rem',
+                                  flexShrink: 0,
+                                  boxShadow: `0 4px 12px ${meta.bg}`,
+                                }}
+                              >
+                                {meta.icon}
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '0.88rem', color: '#fff', fontWeight: 700, lineHeight: 1.3 }}>
+                                  {t.reason}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                                  <span
+                                    style={{
+                                      fontSize: '0.66rem',
+                                      fontWeight: 700,
+                                      padding: '2px 7px',
+                                      borderRadius: '6px',
+                                      background: meta.bg,
+                                      color: meta.color,
+                                      border: `1px solid ${meta.border}`,
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.04em',
+                                    }}
+                                  >
+                                    {meta.label}
+                                  </span>
+                                  <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>
+                                    🕒 {dateStr}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                fontSize: '0.88rem',
+                                fontWeight: 800,
+                                padding: '6px 12px',
+                                borderRadius: '12px',
+                                background: isEarned ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                                border: `1px solid ${isEarned ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                                color: isEarned ? '#34d399' : '#f87171',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                boxShadow: `0 2px 10px ${isEarned ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}`,
+                                flexShrink: 0,
+                              }}
+                            >
+                              <span>{isEarned ? '+' : '-'}</span>
+                              <span>{absAmount.toLocaleString()}</span>
+                              <span style={{ fontSize: '0.8rem' }}>⭐</span>
                             </div>
                           </div>
-                          <div style={{
-                            fontSize: '0.88rem',
-                            fontWeight: 700,
-                            color: t.type === 'EARNED' ? '#00e676' : '#ff4d6a',
-                          }}>
-                            {t.type === 'EARNED' ? `+${t.amount} ⭐` : `-${t.amount} ⭐`}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

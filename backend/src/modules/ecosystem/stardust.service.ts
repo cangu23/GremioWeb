@@ -108,11 +108,17 @@ export const getStardustBalance = async (userId: string) => {
 };
 
 export const getStardustHistory = async (userId: string, limit = 20) => {
-  return prisma.stardustTransaction.findMany({
+  const transactions = await prisma.stardustTransaction.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
+
+  return transactions.map((t) => ({
+    ...t,
+    type: t.amount >= 0 ? ('EARNED' as const) : ('SPENT' as const),
+    amount: Math.abs(t.amount),
+  }));
 };
 
 export const transferStardust = async (
