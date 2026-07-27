@@ -59,35 +59,22 @@ export const searchByUsernameForMention = async (query: string) => {
 };
 
 export const searchByUsername = async (query: string) => {
-  // Build the VTuber filter (must be VTUBER role or approved)
-  // Build search filter (match username or displayName, case-insensitive)
-  const vtuberFilter: Prisma.UserWhereInput = {
-    OR: [
-      { role: 'VTUBER' },
-      { vtuberProfile: { isApproved: true } },
-    ],
-  };
-
-  // SQLite LIKE is case-insensitive by default, so `mode` is optional.
-  // Explicit cast avoids TS error when Prisma is generated from SQLite schema.
   const insensitiveContains = (value: string) => ({
     contains: value,
     mode: 'insensitive' as any,
   });
 
+  const cleanQuery = query.trim().replace(/^@/, '');
+
   let where: Prisma.UserWhereInput;
-  if (!query) {
-    where = vtuberFilter;
+  if (!cleanQuery) {
+    where = {};
   } else {
     where = {
-      AND: [
-        vtuberFilter,
-        {
-          OR: [
-            { username: insensitiveContains(query) },
-            { vtuberProfile: { displayName: insensitiveContains(query) } },
-          ],
-        },
+      OR: [
+        { username: insensitiveContains(cleanQuery) },
+        { displayName: insensitiveContains(cleanQuery) },
+        { vtuberProfile: { displayName: insensitiveContains(cleanQuery) } },
       ],
     };
   }
@@ -100,11 +87,14 @@ export const searchByUsername = async (query: string) => {
       displayName: true,
       avatarUrl: true,
       role: true,
-      note: true,
+      plan: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
     },
-    take: 50,
-    orderBy: { username: 'asc' },
+    take: 20,
+    orderBy: [
+      { role: 'desc' },
+      { username: 'asc' },
+    ],
   });
 };
 

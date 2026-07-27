@@ -100,31 +100,34 @@ export default function SendStardustModal({
     }
   }, [isOpen, fetchBalance]);
 
-  // Handle user live search
+  // Handle user live search and suggestions
+  const fetchUsers = async (query: string) => {
+    setSearching(true);
+    try {
+      const cleanVal = query.replace(/^@/, '').trim();
+      const data = await apiFetch(`/users/search?q=${encodeURIComponent(cleanVal)}`);
+      const usersList: RecipientUser[] = Array.isArray(data) ? data : data?.data || [];
+      setSearchResults(usersList.filter((u) => u.username.toLowerCase() !== user?.username?.toLowerCase()));
+      setShowDropdown(true);
+    } catch (err) {
+      console.error('Search error:', err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSearchFocus = () => {
+    fetchUsers(searchQuery);
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setSearchQuery(val);
-    if (!val.trim()) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      return;
-    }
 
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    searchTimeoutRef.current = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const cleanVal = val.replace(/^@/, '').trim();
-        const data = await apiFetch(`/users/search?q=${encodeURIComponent(cleanVal)}`);
-        const usersList: RecipientUser[] = Array.isArray(data) ? data : data?.data || [];
-        setSearchResults(usersList.filter((u) => u.username.toLowerCase() !== user?.username?.toLowerCase()));
-        setShowDropdown(true);
-      } catch (err) {
-        console.error('Search error:', err);
-      } finally {
-        setSearching(false);
-      }
-    }, 250);
+    searchTimeoutRef.current = setTimeout(() => {
+      fetchUsers(val);
+    }, 200);
   };
 
   const selectUser = (u: RecipientUser) => {
@@ -446,18 +449,16 @@ export default function SendStardustModal({
                     <Search size={18} style={{ position: 'absolute', left: '12px', color: '#6b7280' }} />
                     <input
                       type="text"
-                      placeholder="Buscar por @usuario o correo..."
+                      placeholder="Buscar por @usuario o nombre de perfil..."
                       value={searchQuery}
                       onChange={handleSearchChange}
-                      onFocus={() => {
-                        if (searchResults.length > 0) setShowDropdown(true);
-                      }}
+                      onFocus={handleSearchFocus}
                       style={{
                         width: '100%',
                         padding: '12px 12px 12px 38px',
                         borderRadius: '14px',
                         background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
                         color: '#fff',
                         fontSize: '0.9rem',
                         outline: 'none',
@@ -475,54 +476,94 @@ export default function SendStardustModal({
                         left: 0,
                         right: 0,
                         marginTop: '6px',
-                        maxHeight: '200px',
+                        maxHeight: '240px',
                         overflowY: 'auto',
-                        borderRadius: '14px',
-                        background: '#181628',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-                        zIndex: 20,
+                        borderRadius: '16px',
+                        background: '#18162c',
+                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                        boxShadow: '0 12px 36px rgba(0, 0, 0, 0.75), 0 0 20px rgba(245, 158, 11, 0.15)',
+                        zIndex: 100,
                       }}
                     >
-                      {searchResults.map((u) => (
-                        <div
-                          key={u.id || u.username}
-                          onClick={() => selectUser(u)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            padding: '10px 14px',
-                            cursor: 'pointer',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                            transition: 'background 0.15s ease',
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)')}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                        >
+                      <div style={{ padding: '8px 12px', fontSize: '0.72rem', color: '#fbbf24', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                        👥 Sugerencias de Usuarios
+                      </div>
+                      {searchResults.map((u) => {
+                        const isVtuber = u.role === 'VTUBER';
+                        const isMaid = u.role === 'MAID';
+                        const isAdmin = u.role === 'ADMIN';
+                        const displayName = u.displayName || u.username;
+
+                        return (
                           <div
+                            key={u.id || u.username}
+                            onClick={() => selectUser(u)}
                             style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '50%',
-                              overflow: 'hidden',
-                              background: '#334155',
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 700,
-                              fontSize: '0.8rem',
-                              color: '#fbbf24',
+                              justifyContent: 'space-between',
+                              padding: '10px 14px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                              transition: 'background 0.15s ease',
                             }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.18)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                           >
-                            {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : u.username[0]?.toUpperCase()}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div
+                                style={{
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '50%',
+                                  overflow: 'hidden',
+                                  background: 'linear-gradient(135deg, #475569, #1e293b)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 700,
+                                  fontSize: '0.85rem',
+                                  color: '#fbbf24',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : u.username[0]?.toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>{displayName}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#fbbf24', fontWeight: 600 }}>@{u.username}</div>
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                padding: '3px 8px',
+                                borderRadius: '12px',
+                                background: isVtuber
+                                  ? 'rgba(168,85,247,0.2)'
+                                  : isMaid
+                                  ? 'rgba(212,160,48,0.2)'
+                                  : isAdmin
+                                  ? 'rgba(239,68,68,0.2)'
+                                  : 'rgba(255,255,255,0.06)',
+                                color: isVtuber ? '#c084fc' : isMaid ? '#d4a030' : isAdmin ? '#f87171' : '#9ca3af',
+                                border: isVtuber
+                                  ? '1px solid rgba(168,85,247,0.4)'
+                                  : isMaid
+                                  ? '1px solid rgba(212,160,48,0.4)'
+                                  : isAdmin
+                                  ? '1px solid rgba(239,68,68,0.4)'
+                                  : '1px solid rgba(255,255,255,0.1)',
+                              }}
+                            >
+                              {isVtuber ? '👑 VTuber' : isMaid ? '🧹 Maid' : isAdmin ? '🛡️ Admin' : '👤 Usuario'}
+                            </div>
                           </div>
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#fff' }}>{u.displayName || u.username}</div>
-                            <div style={{ fontSize: '0.72rem', color: '#9ca3af' }}>@{u.username}</div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
