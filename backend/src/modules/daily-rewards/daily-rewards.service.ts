@@ -22,27 +22,51 @@ export const getStatus = async (userId: string) => {
     orderBy: { claimedAt: 'desc' },
   });
 
-  const now = Date.now();
-  const canClaim = !lastClaim || (now - lastClaim.claimedAt.getTime() >= 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-  // Calculate streak day
-  let currentDay = 1;
+  let canClaim = true;
   let claimedToday = false;
+  let currentDay = 1;
+  let streakSaved = false;
 
   if (lastClaim) {
-    const hoursSinceClaim = (now - lastClaim.claimedAt.getTime()) / (1000 * 60 * 60);
-    if (!canClaim) {
-      // Already claimed within the 24h window
-      currentDay = lastClaim.day;
+    const lastClaimDateStr = new Date(lastClaim.claimedAt).toISOString().split('T')[0];
+
+    if (lastClaimDateStr === todayStr) {
+      // Already claimed today
       claimedToday = true;
-    } else if (hoursSinceClaim < 48) {
-      // Can claim today, continue streak
+      canClaim = false;
+      currentDay = lastClaim.day;
+    } else if (lastClaimDateStr === yesterdayStr) {
+      // Claimed yesterday -> continue streak today!
       currentDay = lastClaim.day >= 7 ? 1 : lastClaim.day + 1;
     } else {
-      // Streak broken, reset to Day 1
-      currentDay = 1;
+      // User missed one or more days. Check if user has an unused STREAK_SAVER consumable item
+      const streakSaver = await prisma.userPurchase.findFirst({
+        where: {
+          userId,
+          item: { type: 'STREAK_SAVER' },
+        },
+      });
+
+      if (streakSaver) {
+        // Streak protected by Escudo de Racha!
+        streakSaved = true;
+        currentDay = lastClaim.day >= 7 ? 1 : lastClaim.day + 1;
+      } else {
+        // Streak broken, reset to Day 1
+        currentDay = 1;
+      }
     }
   }
+
+  // Next reward is available at midnight UTC (start of next calendar day)
+  const tomorrow = new Date(now);
+  tomorrow.setUTCHours(24, 0, 0, 0);
 
   // Get all claims (history)
   const history = await prisma.dailyReward.findMany({
@@ -58,8 +82,9 @@ export const getStatus = async (userId: string) => {
     canClaim,
     claimedToday,
     currentDay,
+    streakSaved,
     lastClaimedDay: lastClaim ? lastClaim.day : null,
-    nextRewardAt: lastClaim ? new Date(lastClaim.claimedAt.getTime() + 24 * 60 * 60 * 1000).toISOString() : null,
+    nextRewardAt: tomorrow.toISOString(),
     rewards: DAILY_REWARDS,
     history: history.map(h => ({
       day: h.day,
@@ -75,6 +100,31 @@ export const claim = async (userId: string) => {
   const status = await getStatus(userId);
   if (!status.canClaim) {
     throw new AppError('Ya reclamaste tu recompensa hoy. Vuelve en 24h.', 429);
+  }
+
+  // If streak was protected by a STREAK_SAVER, consume 1 item from inventory now
+  let usedStreakSaver = false;
+  if (status.streakSaved) {
+    const streakSaver = await prisma.userPurchase.findFirst({
+      where: {
+        userId,
+        item: { type: 'STREAK_SAVER' },
+      },
+    });
+
+    if (streakSaver) {
+      if (streakSaver.remaining !== null && streakSaver.remaining !== undefined && streakSaver.remaining > 1) {
+        await prisma.userPurchase.update({
+          where: { id: streakSaver.id },
+          data: { remaining: streakSaver.remaining - 1 },
+        });
+      } else {
+        await prisma.userPurchase.delete({
+          where: { id: streakSaver.id },
+        });
+      }
+      usedStreakSaver = true;
+    }
   }
 
   const reward = DAILY_REWARDS.find(r => r.day === status.currentDay) || DAILY_REWARDS[0];
@@ -99,6 +149,7 @@ export const claim = async (userId: string) => {
     xpAwarded: reward.xp,
     bonus: reward.bonus || false,
     label: reward.label,
-    message: `+${reward.xp} XP — ${reward.bonus ? '¡BONUS!' : `Día ${reward.day}`}`,
+    usedStreakSaver,
+    message: `+${reward.xp} XP — ${reward.bonus ? '¡BONUS!' : `Día ${reward.day}`}${usedStreakSaver ? ' 🛡️ (¡Escudo de Racha usado!)' : ''}`,
   };
 };

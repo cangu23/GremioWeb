@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Prisma mock (vi.hoisted ensures init BEFORE vi.mock runs) ──
 const mockPrisma = vi.hoisted(() => ({
   dailyReward: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), count: vi.fn() },
+  userPurchase: { findFirst: vi.fn(), delete: vi.fn(), update: vi.fn() },
   user: { update: vi.fn() },
   $connect: vi.fn(),
   $disconnect: vi.fn(),
