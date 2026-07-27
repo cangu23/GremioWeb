@@ -57,8 +57,8 @@ export function extractAvatarDecoration(
           if (parsed?.frameUrl || parsed?.imageUrl || parsed?.url) {
             return { frameUrl: parsed.frameUrl || parsed.imageUrl || parsed.url };
           }
-          if (parsed?.gradient || parsed?.style || parsed?.borderColor) {
-            return { equippedFrame: parsed.gradient || parsed.style || parsed.borderColor };
+          if (parsed?.gradient || parsed?.borderColor || parsed?.color || parsed?.style) {
+            return { equippedFrame: parsed.gradient || parsed.borderColor || parsed.color || parsed.style };
           }
         } catch {
           if (typeof item.data === 'string' && (item.data.includes('http') || item.data.includes('/uploads/'))) {
@@ -213,11 +213,9 @@ export default function UserAvatar({
             borderRadius: '50%',
             pointerEvents: 'none',
             zIndex: 0,
-            background: activeEquippedFrame.includes('gradient') || activeEquippedFrame.includes('linear') || activeEquippedFrame.includes('conic')
-              ? activeEquippedFrame
-              : 'linear-gradient(135deg, #ff007f, #7928ca, #00dfd8)',
-            animation: 'spin 4s linear infinite',
-            boxShadow: '0 0 10px rgba(121,40,202,0.5)',
+            background: activeEquippedFrame,
+            animation: (activeEquippedFrame.includes('gradient') || activeEquippedFrame.includes('conic')) ? 'spin 4s linear infinite' : 'none',
+            boxShadow: `0 0 12px ${activeEquippedFrame.startsWith('#') || activeEquippedFrame.startsWith('rgb') ? activeEquippedFrame : 'rgba(139,92,246,0.6)'}`,
           }}
         />
       ) : null}

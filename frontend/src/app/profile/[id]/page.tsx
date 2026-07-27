@@ -406,12 +406,10 @@ function ProfileContent() {
                 position: 'absolute',
                 inset: '-6px',
                 borderRadius: '50%',
-                background: activeEquippedFrame.includes('gradient') || activeEquippedFrame.includes('linear') || activeEquippedFrame.includes('conic')
-                  ? activeEquippedFrame
-                  : 'linear-gradient(135deg, #ff007f, #7928ca, #00dfd8)',
-                boxShadow: '0 0 24px rgba(138,43,226,0.6)',
+                background: activeEquippedFrame,
+                boxShadow: `0 0 20px ${activeEquippedFrame.startsWith('#') || activeEquippedFrame.startsWith('rgb') ? activeEquippedFrame : 'rgba(138,43,226,0.6)'}`,
                 zIndex: 0,
-                animation: 'spin 8s linear infinite',
+                animation: (activeEquippedFrame.includes('gradient') || activeEquippedFrame.includes('conic')) ? 'spin 8s linear infinite' : 'none',
               }} />
             ) : null}
 
