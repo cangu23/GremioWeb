@@ -15,31 +15,41 @@ const getPayPalBaseUrl = () => {
  * Obtiene el access_token OAuth2 de PayPal
  */
 const getPayPalAccessToken = async () => {
-  const clientId = process.env.PAYPAL_CLIENT_ID;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+  const clientId = process.env.PAYPAL_CLIENT_ID?.trim();
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET?.trim();
+  const paypalMode = (process.env.PAYPAL_MODE || 'sandbox').trim().toLowerCase();
 
   if (!clientId || !clientSecret) {
     return null; // Modo simulación si no hay credenciales en .env
   }
 
-  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-  const response = await fetch(`${getPayPalBaseUrl()}/v1/oauth2/token`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
-  });
+  const baseUrl = paypalMode === 'live' ? PAYPAL_LIVE_BASE : PAYPAL_SANDBOX_BASE;
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.error('[PayPal Token Error]', errorData);
-    throw new AppError('Error al autenticar con PayPal API', 500);
+  try {
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error(`[PayPal Token Error ${response.status}] Endpoint: ${baseUrl}`, data);
+      const detail = data?.error_description || data?.message || data?.error || `HTTP ${response.status}`;
+      throw new AppError(`Error de autenticación con PayPal: ${detail} (${paypalMode.toUpperCase()})`, 400);
+    }
+
+    return data.access_token;
+  } catch (err: any) {
+    if (err instanceof AppError) throw err;
+    console.error('[PayPal Token Fetch Error]', err);
+    throw new AppError(`Error de comunicación con PayPal API: ${err?.message || 'Fallo de red'}`, 500);
   }
-
-  const data = await response.json();
-  return data.access_token;
 };
 
 interface CreatePayPalOrderParams {
@@ -65,33 +75,41 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   const clientTxId = `PAYPAL_${type}_${userId.slice(0, 8)}_${Date.now()}`;
 
-  // Registrar intención de pago en la BD
-  const pendingTx = await prisma.systemLog.create({
-    data: {
-      level: 'INFO',
-      message: `PAYPAL_PENDING:${clientTxId}`,
-      context: JSON.stringify({
-        userId,
-        amount,
-        type,
-        planKey,
-        recipientId,
-        message,
-        anonymous,
-        createdAt: new Date().toISOString(),
-      }),
-    },
-  });
+  let pendingTxId = '';
+  try {
+    // Registrar intención de pago en la BD
+    const pendingTx = await prisma.systemLog.create({
+      data: {
+        level: 'INFO',
+        message: `PAYPAL_PENDING:${clientTxId}`,
+        context: JSON.stringify({
+          userId,
+          amount,
+          type,
+          planKey,
+          recipientId,
+          message,
+          anonymous,
+          createdAt: new Date().toISOString(),
+        }),
+      },
+    });
+    pendingTxId = pendingTx.id;
+  } catch (dbErr) {
+    console.warn('[PayPal Warning] No se pudo guardar el log de intención de pago:', dbErr);
+  }
 
-  const returnUrl = `${frontendUrl}/payments/paypal/callback?txId=${pendingTx.id}&clientTxId=${clientTxId}`;
-  const cancelUrl = `${frontendUrl}/payments/paypal/callback?txId=${pendingTx.id}&status=canceled`;
+  const returnUrl = `${frontendUrl}/payments/paypal/callback?txId=${pendingTxId}&clientTxId=${clientTxId}`;
+  const cancelUrl = `${frontendUrl}/payments/paypal/callback?txId=${pendingTxId}&status=canceled`;
 
   const accessToken = await getPayPalAccessToken();
 
   // Modo Demo / Desarrollo sin credenciales PayPal
   if (!accessToken) {
     const isProduction = process.env.NODE_ENV === 'production' || process.env.PAYPAL_STRICT === 'true';
-    if (isProduction) {
+    const allowDemo = process.env.PAYPAL_ALLOW_DEMO === 'true';
+
+    if (isProduction && !allowDemo) {
       throw new AppError(
         'La pasarela de pago PayPal no está configurada en producción. Configura PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET en las variables de entorno del backend.',
         503
@@ -188,7 +206,9 @@ export const capturePayPalOrder = async (orderId: string, clientTxId: string, db
 
   if (!accessToken || orderId.startsWith('SIMULATED_')) {
     const isProduction = process.env.NODE_ENV === 'production' || process.env.PAYPAL_STRICT === 'true';
-    if (isProduction) {
+    const allowDemo = process.env.PAYPAL_ALLOW_DEMO === 'true';
+
+    if (isProduction && !allowDemo) {
       throw new AppError('Pagos simulados no están permitidos en entorno de producción sin credenciales reales de PayPal.', 403);
     }
     paymentApproved = true;
