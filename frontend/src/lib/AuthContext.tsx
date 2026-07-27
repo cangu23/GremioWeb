@@ -102,6 +102,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
 
+    const handleRefetchUser = async () => {
+      try {
+        const res = await apiFetch('/auth/me');
+        const fresh = res?.user || res?.data?.user || res?.data;
+        if (fresh && fresh.id) {
+          setUser(fresh);
+          setCachedUser(fresh);
+        }
+      } catch {}
+    };
+    window.addEventListener('stardust-updated', handleRefetchUser);
+    window.addEventListener('user-refetched', handleRefetchUser);
+
     // ── 2. BFCache — browser back/forward cache  ───────────────────────
     // When the user navigates away and comes back via the browser's
     // back/forward cache, React components are NOT re-mounted so the

@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Gift, Heart, Star, Check } from '@/components/ui/Icons';
+import { apiFetch } from '@/lib/api';
 
 export interface GiftData {
+  id?: string;
   title?: string;
   senderName: string;
   senderAvatar?: string | null;
@@ -11,6 +13,7 @@ export interface GiftData {
   message?: string;
   giftType?: 'STARDUST' | 'PREMIUM' | 'GENERIC';
   planName?: string;
+  isAlreadyRead?: boolean;
 }
 
 interface GiftEnvelopeModalProps {
@@ -28,11 +31,16 @@ export default function GiftEnvelopeModal({
   const [isOpening, setIsOpening] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setIsOpenState(false);
+    if (isOpen && giftData) {
+      const isClaimedInStorage = giftData.id && typeof window !== 'undefined' && localStorage.getItem(`gift_claimed_${giftData.id}`) === 'true';
+      if (giftData.isAlreadyRead || isClaimedInStorage) {
+        setIsOpenState(true);
+      } else {
+        setIsOpenState(false);
+      }
       setIsOpening(false);
     }
-  }, [isOpen]);
+  }, [isOpen, giftData]);
 
   if (!isOpen || !giftData) return null;
 
@@ -65,7 +73,26 @@ export default function GiftEnvelopeModal({
     }, 600);
   };
 
-  const isPremium = giftData.giftType === 'PREMIUM' || (giftData.title && giftData.title.toLowerCase().includes('membresía'));
+  const isPremium = giftData?.giftType === 'PREMIUM' || (giftData?.title ? giftData.title.toLowerCase().includes('membresía') : false);
+  const isClaimed = (giftData?.id && typeof window !== 'undefined' && localStorage.getItem(`gift_claimed_${giftData.id}`) === 'true') || giftData?.isAlreadyRead;
+
+  const handleClaim = async () => {
+    if (giftData?.id && !isClaimed) {
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`gift_claimed_${giftData.id}`, 'true');
+        }
+        await apiFetch(`/notifications/${giftData.id}/read`, { method: 'PATCH' }).catch(() => {});
+        window.dispatchEvent(new Event('notifications-read'));
+        window.dispatchEvent(new Event('stardust-updated'));
+        window.dispatchEvent(new Event('user-refetched'));
+      } catch {}
+    } else {
+      window.dispatchEvent(new Event('stardust-updated'));
+      window.dispatchEvent(new Event('user-refetched'));
+    }
+    onClose();
+  };
 
   return (
     <div
@@ -322,21 +349,42 @@ export default function GiftEnvelopeModal({
               {isPremium ? <Gift size={36} color="#fff" /> : <Star size={36} color="#fff" fill="#fff" />}
             </div>
 
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', margin: '0 0 4px 0' }}>
-              {isPremium ? '🎁 ¡Membresía Premium Regalada!' : '⭐ ¡Polvo Estelar Recibido!'}
-            </h2>
+            {/* Header Avatar / Sender */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  background: '#334155',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.4rem',
+                  fontWeight: 800,
+                  color: '#fbbf24',
+                  border: '2px solid rgba(255,255,255,0.2)',
+                  marginBottom: '8px',
+                }}
+              >
+                {giftData.senderAvatar ? (
+                  <img src={giftData.senderAvatar} alt={giftData.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  giftData.senderName[0]?.toUpperCase()
+                )}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Regalo de</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>@{giftData.senderName}</div>
+            </div>
 
-            <p style={{ fontSize: '0.88rem', color: '#9ca3af', margin: '0 0 20px 0' }}>
-              Enviado con cariño por <strong style={{ color: '#fff' }}>@{giftData.senderName}</strong>
-            </p>
-
-            {/* Gift Main Highlight Box */}
+            {/* Gift Item Highlight Box */}
             <div
               style={{
-                padding: '20px',
-                borderRadius: '18px',
+                padding: '16px',
+                borderRadius: '16px',
                 background: isPremium ? 'rgba(168,85,247,0.12)' : 'rgba(245,158,11,0.12)',
-                border: isPremium ? '1px solid rgba(168,85,247,0.35)' : '1px solid rgba(245,158,11,0.35)',
+                border: isPremium ? '1px solid rgba(168,85,247,0.3)' : '1px solid rgba(245,158,11,0.3)',
                 marginBottom: '20px',
               }}
             >
@@ -352,29 +400,9 @@ export default function GiftEnvelopeModal({
               </div>
             </div>
 
-            {/* Personalized Message Card */}
-            {giftData.message && (
-              <div
-                style={{
-                  position: 'relative',
-                  padding: '14px 18px',
-                  borderRadius: '14px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px dashed rgba(255, 255, 255, 0.15)',
-                  fontSize: '0.9rem',
-                  fontStyle: 'italic',
-                  color: '#e5e7eb',
-                  marginBottom: '24px',
-                  lineHeight: 1.5,
-                }}
-              >
-                "{giftData.message}"
-              </div>
-            )}
-
             {/* Action Claim Button */}
             <button
-              onClick={onClose}
+              onClick={handleClaim}
               style={{
                 width: '100%',
                 padding: '14px',
@@ -395,7 +423,7 @@ export default function GiftEnvelopeModal({
                 transition: 'all 0.2s ease',
               }}
             >
-              <Check size={20} /> ¡Aceptar y Disfrutar Regalo! 🎉
+              <Check size={20} /> {isClaimed ? '✓ Regalo Reclamado (Cerrar)' : '¡Aceptar y Disfrutar Regalo! 🎉'}
             </button>
           </div>
         )}

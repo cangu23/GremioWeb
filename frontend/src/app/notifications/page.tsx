@@ -310,6 +310,8 @@ function NotificationsContent() {
                 const amountMatch = n.message.match(/⭐\s*([\d,.]+)/);
 
                 setGiftEnvelopeData({
+                  id: n.id,
+                  isAlreadyRead: n.read,
                   title: n.title,
                   senderName,
                   amount: amountMatch ? amountMatch[1] : undefined,

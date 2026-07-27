@@ -144,6 +144,7 @@ export const transferStardust = async (
   const recipient = await prisma.user.findFirst({
     where: {
       OR: [
+        { id: cleanTarget },
         { username: { equals: cleanTarget, mode: 'insensitive' } },
         { email: { equals: cleanTarget, mode: 'insensitive' } },
       ],
@@ -218,6 +219,7 @@ export const giftPlatformPlanWithStardust = async (
   const recipient = await prisma.user.findFirst({
     where: {
       OR: [
+        { id: cleanTarget },
         { username: { equals: cleanTarget, mode: 'insensitive' } },
         { email: { equals: cleanTarget, mode: 'insensitive' } },
       ],

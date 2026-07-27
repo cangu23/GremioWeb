@@ -1062,6 +1062,8 @@ export default function Navbar() {
         const msgMatch = notif.message?.match(/:\s*"([^"]+)"/);
         const amountMatch = notif.message?.match(/⭐\s*([\d,.]+)/);
         setGlobalGiftData({
+          id: notif.id,
+          isAlreadyRead: notif.read,
           title: notif.title,
           senderName,
           amount: amountMatch ? amountMatch[1] : undefined,
