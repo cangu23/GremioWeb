@@ -73,7 +73,7 @@ export const seedDefaultMissions = async () => {
 
 const getTodayResetDate = (): Date => {
   const date = new Date();
-  date.setHours(23, 59, 59, 999);
+  date.setHours(23, 59, 59, 0);
   return date;
 };
 

@@ -46,10 +46,18 @@ export const unfollow = async (followerId: string, followingId: string) => {
   };
 };
 
+import { trackMissionProgress } from '../ecosystem/missions.service';
+
 export const getSocialProfile = async (userId: string, currentUserId?: string) => {
   const userProfile = await UserRepository.getUserProfileById(userId);
   if (!userProfile) {
     throw new AppError('Usuario no encontrado.', 404);
+  }
+
+  if (currentUserId && currentUserId !== userId) {
+    if (userProfile.role === 'VTUBER' || userProfile.vtuberProfile) {
+      trackMissionProgress(currentUserId, 'VTUBER_VISIT').catch(() => {});
+    }
   }
 
   const [followersCount, followingCount] = await Promise.all([

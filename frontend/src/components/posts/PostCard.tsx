@@ -580,59 +580,77 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
 
         {/* ===== MEDIA ===== */}
         {post.mediaUrl && (
-          <div
-            style={{
-              borderRadius: '12px',
-              overflow: 'hidden',
-              marginBottom: '10px',
-              cursor: 'zoom-in',
-              position: 'relative',
-              background: 'rgba(0, 0, 0, 0.3)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-            onClick={() => setLightboxImage(post.mediaUrl!)}
-            onMouseOver={e => {
-              const overlay = e.currentTarget.querySelector('.media-overlay') as HTMLElement | null;
-              if (overlay) overlay.style.opacity = '1';
-            }}
-            onMouseOut={e => {
-              const overlay = e.currentTarget.querySelector('.media-overlay') as HTMLElement | null;
-              if (overlay) overlay.style.opacity = '0';
-            }}
-          >
-            <img
-              src={post.mediaUrl}
-              alt=""
-              style={{
-                width: '100%',
-                maxHeight: '650px',
-                objectFit: 'contain',
-                display: 'block',
-              }}
-            />
-            <div className="media-overlay" style={{
-              position: 'absolute', inset: 0, borderRadius: '12px',
-              background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 40%)',
-              opacity: 0, transition: 'opacity 0.25s ease',
-              display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
-              padding: '12px', pointerEvents: 'none',
-            }}>
-              <span style={{
-                background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)',
-                color: '#fff', fontSize: '0.75rem', padding: '4px 10px', borderRadius: '20px',
-                display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(255,255,255,0.2)',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
-                </svg>
-                Ver completa / Zoom
-              </span>
+          (post.mediaUrl.includes('/stickers/') || post.mediaUrl.includes('sticker')) ? (
+            <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'flex-start' }}>
+              <img
+                src={post.mediaUrl}
+                alt="Sticker"
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  objectFit: 'contain',
+                  display: 'block',
+                  cursor: 'pointer',
+                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))',
+                }}
+                onClick={() => setLightboxImage(post.mediaUrl!)}
+              />
             </div>
-          </div>
+          ) : (
+            <div
+              style={{
+                borderRadius: '12px',
+                overflow: 'hidden',
+                marginBottom: '10px',
+                cursor: 'zoom-in',
+                position: 'relative',
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+              onClick={() => setLightboxImage(post.mediaUrl!)}
+              onMouseOver={e => {
+                const overlay = e.currentTarget.querySelector('.media-overlay') as HTMLElement | null;
+                if (overlay) overlay.style.opacity = '1';
+              }}
+              onMouseOut={e => {
+                const overlay = e.currentTarget.querySelector('.media-overlay') as HTMLElement | null;
+                if (overlay) overlay.style.opacity = '0';
+              }}
+            >
+              <img
+                src={post.mediaUrl}
+                alt=""
+                style={{
+                  width: '100%',
+                  maxHeight: '650px',
+                  objectFit: 'contain',
+                  display: 'block',
+                }}
+              />
+              <div className="media-overlay" style={{
+                position: 'absolute', inset: 0, borderRadius: '12px',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 40%)',
+                opacity: 0, transition: 'opacity 0.25s ease',
+                display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
+                padding: '12px', pointerEvents: 'none',
+              }}>
+                <span style={{
+                  background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)',
+                  color: '#fff', fontSize: '0.75rem', padding: '4px 10px', borderRadius: '20px',
+                  display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(255,255,255,0.2)',
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+                  </svg>
+                  Ver completa / Zoom
+                </span>
+              </div>
+            </div>
+          )
         )}
 
         {/* ===== HASHTAGS ===== */}

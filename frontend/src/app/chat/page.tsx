@@ -192,7 +192,8 @@ function MessengerContent() {
     const typingClearRef = { current: null as ReturnType<typeof setTimeout> | null };
 
     sock.on(DM_EVENTS.MESSAGE, (msg: DmMessageData) => {
-      const isForActiveChat = activeUserId && (msg.senderId === activeUserId || msg.senderId === currentUser.id);
+      const otherId = msg.senderId === currentUser.id ? msg.receiverId : msg.senderId;
+      const isForActiveChat = activeUserId === otherId;
 
       if (isForActiveChat) {
         setMessages(prev => {
@@ -205,12 +206,10 @@ function MessengerContent() {
       }
 
       if (msg.receiverId === currentUser.id && !isForActiveChat) {
-        const senderId = msg.senderId;
-        setUnreadMap(prev => ({ ...prev, [senderId]: (prev[senderId] || 0) + 1 }));
+        setUnreadMap(prev => ({ ...prev, [otherId]: (prev[otherId] || 0) + 1 }));
       }
 
       setConversations(prev => {
-        const otherId = msg.senderId === currentUser.id ? msg.receiverId : msg.senderId;
         const filtered = prev.filter(c => {
           const cOtherId = c.senderId === currentUser.id ? c.receiverId : c.senderId;
           return cOtherId !== otherId;
@@ -321,7 +320,7 @@ function MessengerContent() {
         }
 
         // Always ensure activeUserInfo is loaded
-        if (activeUserId && (!activeUserInfo || activeUserInfo.id !== activeUserId)) {
+        if (activeUserId) {
           apiFetch(`/users/${activeUserId}`)
             .then((u: any) => {
               if (u?.id) {
@@ -339,7 +338,7 @@ function MessengerContent() {
       })
       .catch(() => {})
       .finally(() => setMessagesLoading(false));
-  }, [currentUser, activeUserId, socket, activeUserInfo]);
+  }, [currentUser, activeUserId, socket]);
 
   /* ─── Scroll to bottom on new messages without scrolling window ─── */
   useEffect(() => {

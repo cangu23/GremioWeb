@@ -334,9 +334,6 @@ export default function CreatePost({
                         <StickerPicker
                           onSelect={(sticker) => {
                             setContent(prev => (prev ? `${prev} :${sticker.name}: ` : `:${sticker.name}: `));
-                            if (sticker.type === 'sticker') {
-                              setSelectedSticker({ imageUrl: sticker.imageUrl, name: sticker.name });
-                            }
                             setShowStickerPicker(false);
                           }}
                           onClose={() => setShowStickerPicker(false)}
@@ -528,9 +525,6 @@ export default function CreatePost({
                       <StickerPicker
                         onSelect={(sticker) => {
                           setContent(prev => (prev ? `${prev} :${sticker.name}: ` : `:${sticker.name}: `));
-                          if (sticker.type === 'sticker') {
-                            setSelectedSticker({ imageUrl: sticker.imageUrl, name: sticker.name });
-                          }
                           setShowStickerPicker(false);
                         }}
                         onClose={() => setShowStickerPicker(false)}

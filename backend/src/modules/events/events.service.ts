@@ -33,6 +33,8 @@ export const getAll = async (status?: string) => {
   return EventsRepository.findAllEvents(status);
 };
 
+import { trackMissionProgress } from '../ecosystem/missions.service';
+
 export const getById = async (id: string, currentUserId?: string) => {
   const event = await EventsRepository.findEventById(id);
   if (!event) {
@@ -43,6 +45,7 @@ export const getById = async (id: string, currentUserId?: string) => {
   if (currentUserId) {
     const attendee = await EventsRepository.findAttendee(id, currentUserId);
     isAttending = !!attendee;
+    trackMissionProgress(currentUserId, 'EVENT_JOIN').catch(() => {});
   }
 
   return { ...event, isAttending };
@@ -101,6 +104,7 @@ export const attend = async (eventId: string, userId: string) => {
   }
 
   await EventsRepository.createAttendee(eventId, userId);
+  trackMissionProgress(userId, 'EVENT_JOIN').catch(() => {});
 
   // Send notification to event creator
   if (event.creatorId !== userId) {
