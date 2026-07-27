@@ -212,6 +212,3 @@ export const seedDefaultItems = async () => {
 
   return defaults.length;
 };
-
-  return defaults.length;
-};
