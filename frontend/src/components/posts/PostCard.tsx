@@ -11,6 +11,7 @@ import MentionInput, { renderContentWithMentions } from './MentionInput';
 import StickerPicker from '@/components/ui/StickerPicker';
 import { useStickersCache } from '@/lib/content-renderer';
 import MediaLightbox from './MediaLightbox';
+import SendStardustModal from '@/components/ui/SendStardustModal';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -92,6 +93,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
   const [loadingComments, setLoadingComments] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showSendStardustModal, setShowSendStardustModal] = useState(false);
   const [reportTarget, setReportTarget] = useState<'post' | 'comment'>('post');
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{
@@ -726,6 +728,29 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             </svg>
             Comentar
           </button>
+
+          {/* GIFT STARDUST BUTTON */}
+          {currentUserId && post.user && post.user.id !== currentUserId && (
+            <button
+              type="button"
+              onClick={() => setShowSendStardustModal(true)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', flex: 1,
+                background: 'rgba(245,158,11,0.08)',
+                border: '1px solid rgba(245,158,11,0.25)',
+                cursor: 'pointer', color: '#fbbf24',
+                fontSize: '0.82rem', padding: '7px 10px', borderRadius: '10px',
+                transition: 'all 0.2s ease', fontWeight: 600,
+              }}
+              onMouseOver={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.18)')}
+              onMouseOut={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.08)')}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span>Regalar</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1012,6 +1037,24 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           onClose={() => setLightboxImage(null)}
         />
       )}
+      {/* Send Stardust Modal */}
+      {showSendStardustModal && (
+        <SendStardustModal
+          isOpen={showSendStardustModal}
+          onClose={() => setShowSendStardustModal(false)}
+          recipient={
+            post.user
+              ? {
+                  id: post.user.id,
+                  username: post.user.username,
+                  displayName: post.user.displayName || post.user.username,
+                  avatarUrl: post.user.avatarUrl,
+                }
+              : null
+          }
+        />
+      )}
+
       {/* Inline Keyframe Animations */}
       <style>{`
         @keyframes postHeartPop {

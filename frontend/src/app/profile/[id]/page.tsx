@@ -10,11 +10,11 @@ import ClientOnly from '@/lib/ClientOnly';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink } from '@/components/ui/Icons';
-import { Gift } from 'lucide-react';
+import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink, Gift } from '@/components/ui/Icons';
 import FriendButton from '@/components/social/FriendButton';
 import NoteModal from '@/components/ui/NoteModal';
 import GiftPlanModal from '@/components/ui/GiftPlanModal';
+import SendStardustModal from '@/components/ui/SendStardustModal';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import KofiWidget from '@/components/ui/KofiWidget';
 
@@ -107,6 +107,7 @@ function ProfileContent() {
   const [showFollowing, setShowFollowing] = useState(false);
   const [showDonate, setShowDonate] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
+  const [showSendStardustModal, setShowSendStardustModal] = useState(false);
   const [donateAmount, setDonateAmount] = useState(5);
   const [donateMessage, setDonateMessage] = useState('');
   const [donateLoading, setDonateLoading] = useState(false);
@@ -768,6 +769,31 @@ function ProfileContent() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}>
                 <Gift size={18} /> Regalar Plan
+              </button>
+              <button
+                onClick={() => setShowSendStardustModal(true)}
+                className="btn"
+                style={{
+                  padding: '14px 28px', fontSize: '1rem', fontWeight: 700,
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2))',
+                  border: '2px solid rgba(251, 191, 36, 0.5)',
+                  color: '#fbbf24',
+                  transition: 'all 0.3s ease',
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  boxShadow: '0 0 15px rgba(245, 158, 11, 0.15)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(217, 119, 6, 0.35))';
+                  e.currentTarget.style.borderColor = '#fbbf24';
+                  e.currentTarget.style.boxShadow = '0 0 25px rgba(245, 158, 11, 0.35)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2))';
+                  e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+                  e.currentTarget.style.boxShadow = '0 0 15px rgba(245, 158, 11, 0.15)';
+                }}>
+                <Star size={18} color="#fbbf24" fill="#fbbf24" /> Regalar Stardust
               </button>
               <Link
                 href={`/chat?user=${profile.id}`}
@@ -1457,6 +1483,22 @@ function ProfileContent() {
         onClose={() => setShowGiftModal(false)}
         recipientId={profile?.id}
         recipientName={displayName}
+      />
+
+      {/* MODAL REGALAR STARDUST */}
+      <SendStardustModal
+        isOpen={showSendStardustModal}
+        onClose={() => setShowSendStardustModal(false)}
+        recipient={
+          profile
+            ? {
+                id: profile.id,
+                username: profile.username,
+                displayName: displayName,
+                avatarUrl: avatarUrl,
+              }
+            : null
+        }
       />
     </>
   );

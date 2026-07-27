@@ -7,7 +7,7 @@ import { useToast } from '@/lib/ToastContext';
 import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
 import GiftPlanModal from '@/components/ui/GiftPlanModal';
-import { Gift } from 'lucide-react';
+import { Gift } from '@/components/ui/Icons';
 
 interface PlanInfo {
   name: string;

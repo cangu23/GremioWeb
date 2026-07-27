@@ -12,6 +12,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import UserAvatar from '@/components/ui/UserAvatar';
 import StardustStatsModal from '@/components/ui/StardustStatsModal';
 import StardustCardButton from '@/components/ui/StardustCardButton';
+import GiftEnvelopeModal, { GiftData } from '@/components/ui/GiftEnvelopeModal';
 import styles from './Navbar.module.css';
 import { Users, Calendar, Shield, FileText, MessageCircle, ShoppingBag, Award, BarChart, Bell, Backpack, Sparkles, Settings, LogOut, Key, Plus, Grid, TrendingUp, User, HelpCircle } from '@/components/ui/Icons';
 
@@ -137,10 +138,14 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
     let sock: any;
     try {
       sock = connectSocket();
-      sock.on(NOTIFICATION_EVENTS.NEW, (notif: { title?: string; message?: string }) => {
+      sock.on(NOTIFICATION_EVENTS.NEW, (notif: any) => {
         setUnreadCount(prev => prev + 1);
         const toastMsg = notif?.title || 'Nueva notificación';
         showToast(toastMsg, 'success');
+        const isGift = notif?.type === 'STARDUST_RECEIVED' || notif?.type === 'GIFT_PLAN_RECEIVED' || notif?.title?.includes('Regalo') || notif?.title?.includes('Polvo Estelar');
+        if (isGift) {
+          window.dispatchEvent(new CustomEvent('open-gift-envelope', { detail: notif }));
+        }
       });
     } catch (err) {
       console.warn('[Socket] Could not connect for notifications:', err);
@@ -399,7 +404,15 @@ function NotificationsDropdown({ unreadCount }: { unreadCount: number }) {
               {notifs.map(n => (
                 <div
                   key={n.id}
-                  onClick={() => { setOpen(false); router.push('/notifications'); }}
+                  onClick={() => {
+                    setOpen(false);
+                    const isGift = n.type === 'STARDUST_RECEIVED' || n.type === 'GIFT_PLAN_RECEIVED' || n.title?.includes('Regalo') || n.title?.includes('Polvo Estelar');
+                    if (isGift) {
+                      window.dispatchEvent(new CustomEvent('open-gift-envelope', { detail: n }));
+                    } else {
+                      router.push('/notifications');
+                    }
+                  }}
                   style={{
                     padding: '8px 10px', borderRadius: '10px', cursor: 'pointer',
                     background: n.read ? 'transparent' : 'rgba(139,92,246,0.1)',
@@ -1031,48 +1044,82 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { unreadCount, dmUnreadCount, equippedBadge } = useNavbarState(user, isLoading);
 
+  const [globalGiftData, setGlobalGiftData] = useState<GiftData | null>(null);
+  const [showGlobalEnvelope, setShowGlobalEnvelope] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const handleGiftEvent = (e: any) => {
+      if (e.detail) {
+        const notif = e.detail;
+        const senderMatch = notif.message?.match(/@([a-zA-Z0-9_.-]+)/);
+        const senderName = senderMatch ? senderMatch[1] : 'Amigo Estelar';
+        const msgMatch = notif.message?.match(/:\s*"([^"]+)"/);
+        const amountMatch = notif.message?.match(/⭐\s*([\d,.]+)/);
+        setGlobalGiftData({
+          title: notif.title,
+          senderName,
+          amount: amountMatch ? amountMatch[1] : undefined,
+          message: msgMatch ? msgMatch[1] : undefined,
+          giftType: notif.type === 'GIFT_PLAN_RECEIVED' ? 'PREMIUM' : 'STARDUST',
+        });
+        setShowGlobalEnvelope(true);
+      }
+    };
+    window.addEventListener('open-gift-envelope' as any, handleGiftEvent);
+    return () => window.removeEventListener('open-gift-envelope' as any, handleGiftEvent);
+  }, []);
+
   return (
-    <nav
-      className={styles.navbar}
-      style={{
-        background: scrolled ? 'rgba(13, 13, 13, 0.92)' : 'rgba(13, 13, 13, 0.6)',
-        backdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
-        borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
-        transition: 'background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease',
-      }}
-    >
-      <div className={styles.navContainer}>
-        <Link href="/" className={styles.logo} onClick={() => setMenuOpen(false)}>
-          <Image src="/logo.png" alt="Gremio Estelar" width={0} height={0} sizes="100vw" style={{ height: '28px', width: 'auto' }} />
-        </Link>
+    <>
+      <nav
+        className={styles.navbar}
+        style={{
+          background: scrolled ? 'rgba(13, 13, 13, 0.92)' : 'rgba(13, 13, 13, 0.6)',
+          backdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
+          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
+          transition: 'background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease',
+        }}
+      >
+        <div className={styles.navContainer}>
+          <Link href="/" className={styles.logo} onClick={() => setMenuOpen(false)}>
+            <Image src="/logo.png" alt="Gremio Estelar" width={0} height={0} sizes="100vw" style={{ height: '28px', width: 'auto' }} />
+          </Link>
 
-        <div className={styles.desktopNav}>
-          <ClientOnly fallback={null}>
-            <AuthNav unreadCount={unreadCount} dmUnreadCount={dmUnreadCount} equippedBadge={equippedBadge} />
-          </ClientOnly>
+          <div className={styles.desktopNav}>
+            <ClientOnly fallback={null}>
+              <AuthNav unreadCount={unreadCount} dmUnreadCount={dmUnreadCount} equippedBadge={equippedBadge} />
+            </ClientOnly>
+          </div>
+
+          <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menú">
+            <span style={{ transform: menuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' }} />
+            <span style={{ opacity: menuOpen ? 0 : 1 }} />
+            <span style={{ transform: menuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' }} />
+          </button>
         </div>
 
-        <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menú">
-          <span style={{ transform: menuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' }} />
-          <span style={{ opacity: menuOpen ? 0 : 1 }} />
-          <span style={{ transform: menuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' }} />
-        </button>
-      </div>
+        {/* Mobile: AuthNav renders the mobile menu content directly */}
+        {menuOpen && (
+          <div className={styles.mobileMenu}>
+            <ClientOnly fallback={null}>
+              <AuthNav isMobile closeMenu={() => setMenuOpen(false)} unreadCount={unreadCount} dmUnreadCount={dmUnreadCount} equippedBadge={equippedBadge} />
+            </ClientOnly>
+          </div>
+        )}
+      </nav>
 
-      {/* Mobile: AuthNav renders the mobile menu content directly */}
-      {menuOpen && (
-        <div className={styles.mobileMenu}>
-          <ClientOnly fallback={null}>
-            <AuthNav isMobile closeMenu={() => setMenuOpen(false)} unreadCount={unreadCount} dmUnreadCount={dmUnreadCount} equippedBadge={equippedBadge} />
-          </ClientOnly>
-        </div>
-      )}
-    </nav>
+      {/* Global Interactive Gift Envelope Modal */}
+      <GiftEnvelopeModal
+        isOpen={showGlobalEnvelope}
+        onClose={() => setShowGlobalEnvelope(false)}
+        giftData={globalGiftData}
+      />
+    </>
   );
 }

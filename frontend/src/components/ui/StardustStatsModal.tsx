@@ -586,13 +586,51 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
               {activeTab === 'transfer' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   {/* Section A: Transfer Stardust */}
-                  <div className="glass" style={{ padding: '20px', borderRadius: '16px' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>🪙</span> Transferir Polvo Estelar (Puntos)
+                  <div className="glass" style={{ padding: '20px', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: '#fbbf24' }}>
+                      <span>🪙</span> Regalar & Transferir Polvo Estelar (Puntos)
                     </h3>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '14px' }}>
-                      Envía Stardust directamente a otro usuario con una nota personalizada.
+                      Envía Stardust directamente a otro usuario con animación y notificación en tiempo real.
                     </p>
+
+                    {/* Preset Amount Chips */}
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                        Montos Rápidos
+                      </label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {[
+                          { amount: 50, icon: '🍬', label: 'Caramelito' },
+                          { amount: 100, icon: '☕', label: 'Café' },
+                          { amount: 250, icon: '🍰', label: 'Pastel' },
+                          { amount: 500, icon: '✨', label: 'Varita' },
+                          { amount: 1000, icon: '💎', label: 'Gemas' },
+                          { amount: 5000, icon: '👑', label: 'Corona' },
+                        ].map((p) => (
+                          <button
+                            key={p.amount}
+                            type="button"
+                            onClick={() => setTransferAmount(String(p.amount))}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: '10px',
+                              border: transferAmount === String(p.amount) ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: transferAmount === String(p.amount) ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                              color: transferAmount === String(p.amount) ? '#fbbf24' : '#fff',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <span>{p.icon}</span> ⭐ {p.amount}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
                     <form onSubmit={handleTransferStardust} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -602,7 +640,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                           </label>
                           <input
                             type="text"
-                            placeholder="ej: @goku o correo"
+                            placeholder="ej: @usuario o correo"
                             value={transferTarget}
                             onChange={(e) => setTransferTarget(e.target.value)}
                             className="input"
@@ -628,10 +666,31 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         </div>
                       </div>
 
+                      {/* Quick Messages */}
                       <div>
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
                           Mensaje Opcional
                         </label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+                          {['¡Excelente contenido! 👏', '¡Un regalito estelar! 🎁', '¡Para un café! ☕', '¡Sigue así, crack! 🚀'].map((msg) => (
+                            <button
+                              key={msg}
+                              type="button"
+                              onClick={() => setTransferMessage(msg)}
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: '12px',
+                                border: transferMessage === msg ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.08)',
+                                background: transferMessage === msg ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                                color: transferMessage === msg ? '#fbbf24' : '#9ca3af',
+                                fontSize: '0.7rem',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {msg}
+                            </button>
+                          ))}
+                        </div>
                         <input
                           type="text"
                           placeholder="¡Gracias por tu ayuda en el gremio!"
@@ -645,10 +704,21 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                       <button
                         type="submit"
                         disabled={transferSubmitting || !transferTarget.trim() || !transferAmount}
-                        className="btn btn--primary"
-                        style={{ alignSelf: 'flex-start', padding: '10px 20px', fontSize: '0.88rem', fontWeight: 700 }}
+                        className="btn"
+                        style={{
+                          alignSelf: 'flex-start',
+                          padding: '10px 24px',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                          color: '#000',
+                          border: 'none',
+                          borderRadius: '12px',
+                          boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)',
+                          cursor: 'pointer',
+                        }}
                       >
-                        {transferSubmitting ? 'Enviando...' : '🚀 Transferir Stardust'}
+                        {transferSubmitting ? 'Enviando...' : '🚀 Regalar Stardust'}
                       </button>
                     </form>
                   </div>

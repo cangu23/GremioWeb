@@ -1,6 +1,7 @@
 import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
 import { activatePlatformPlan } from '../subscriptions/platform-subscriptions.service';
+import { createNotification } from '../notifications/notifications.repository';
 
 // Multipliers by plan/role
 export const PLAN_STARDUST_MULTIPLIERS: Record<string, number> = {
@@ -158,9 +159,18 @@ export const transferStardust = async (
   const transferReasonRecipient = `Regalo recibido de @${sender.username}${message ? `: "${message}"` : ''}`;
   await addStardust(recipient.id, amount, transferReasonRecipient);
 
+  // Send real-time notification to recipient
+  await createNotification({
+    userId: recipient.id,
+    type: 'STARDUST_RECEIVED',
+    title: '⭐ ¡Has recibido Polvo Estelar!',
+    message: `@${sender.username} te ha regalado ⭐ ${amount.toLocaleString()} Polvo Estelar${message ? `: "${message}"` : ''}`,
+    referenceId: sender.id,
+  }).catch(() => {});
+
   return {
     success: true,
-    message: `¡Has transferido ⭐ ${amount} Polvo Estelar a @${recipient.username} con éxito!`,
+    message: `¡Has transferido ⭐ ${amount.toLocaleString()} Polvo Estelar a @${recipient.username} con éxito!`,
     newBalance: spendResult.newBalance,
     recipient: recipient.username,
   };
@@ -222,6 +232,15 @@ export const giftPlatformPlanWithStardust = async (
 
   // Activate plan for recipient for 10 days
   const activation = await activatePlatformPlan(recipient.id, plan, 10);
+
+  // Send real-time notification to recipient
+  await createNotification({
+    userId: recipient.id,
+    type: 'GIFT_PLAN_RECEIVED',
+    title: '🎁 ¡Te regalaron una Membresía Premium!',
+    message: `@${sender.username} te regaló 10 días del Plan ${plan}!`,
+    referenceId: sender.id,
+  }).catch(() => {});
 
   return {
     success: true,

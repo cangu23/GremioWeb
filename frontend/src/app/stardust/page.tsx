@@ -10,6 +10,7 @@ import { useToast } from '@/lib/ToastContext';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import StardustStatsModal from '@/components/ui/StardustStatsModal';
+import SendStardustModal from '@/components/ui/SendStardustModal';
 
 interface Transaction {
   id: string;
@@ -49,6 +50,7 @@ function StardustContent() {
   const [loading, setLoading] = useState(true);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
 
   const fetchStardustData = useCallback(async () => {
     setLoading(true);
@@ -196,11 +198,11 @@ function StardustContent() {
 
       {/* QUICK ACTIONS GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '16px', marginBottom: '40px' }}>
-        <button onClick={() => setModalOpen(true)} className="glass" style={{ ...actionCardStyle, cursor: 'pointer', textAlign: 'left', border: 'none', background: 'rgba(139,92,246,0.15)' }}>
+        <button onClick={() => setShowSendModal(true)} className="glass" style={{ ...actionCardStyle, cursor: 'pointer', textAlign: 'left', border: 'none', background: 'rgba(245,158,11,0.15)' }}>
           <span style={{ fontSize: '2rem' }}>🎁</span>
           <div>
-            <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Transferir / Regalar</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Envía puntos o regalá Premium</div>
+            <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Regalar / Transferir</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Envía Polvo Estelar o regalos</div>
           </div>
         </button>
 
@@ -319,6 +321,7 @@ function StardustContent() {
       </div>
 
       <StardustStatsModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <SendStardustModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} onSuccess={() => fetchStardustData()} />
     </div>
   );
 }

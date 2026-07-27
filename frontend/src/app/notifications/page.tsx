@@ -10,6 +10,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import { ShimmerBlock } from '@/components/ui/Skeleton';
 import { connectSocket, NOTIFICATION_EVENTS } from '@/lib/socket-client';
 import { useToast } from '@/lib/ToastContext';
+import GiftEnvelopeModal, { GiftData } from '@/components/ui/GiftEnvelopeModal';
 
 interface Notification {
   id: string;
@@ -36,6 +37,8 @@ function NotificationsContent() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
+  const [showGiftEnvelope, setShowGiftEnvelope] = useState(false);
+  const [giftEnvelopeData, setGiftEnvelopeData] = useState<GiftData | null>(null);
 
   const fetchNotifications = useCallback(async (pageNum: number, append = false) => {
     try {
@@ -296,8 +299,26 @@ function NotificationsContent() {
             const link = getNotificationLink(n);
             const { icon, color } = getTypeIcon(n.type);
 
+            const isGift = n.type === 'STARDUST_RECEIVED' || n.type === 'GIFT_PLAN_RECEIVED' || n.title.includes('Regalo') || n.title.includes('Polvo Estelar');
+
             const handleClick = () => {
               if (!n.read) handleMarkAsRead(n.id);
+              if (isGift) {
+                const senderMatch = n.message.match(/@([a-zA-Z0-9_.-]+)/);
+                const senderName = senderMatch ? senderMatch[1] : 'Amigo Estelar';
+                const msgMatch = n.message.match(/:\s*"([^"]+)"/);
+                const amountMatch = n.message.match(/⭐\s*([\d,.]+)/);
+
+                setGiftEnvelopeData({
+                  title: n.title,
+                  senderName,
+                  amount: amountMatch ? amountMatch[1] : undefined,
+                  message: msgMatch ? msgMatch[1] : undefined,
+                  giftType: n.type === 'GIFT_PLAN_RECEIVED' ? 'PREMIUM' : 'STARDUST',
+                });
+                setShowGiftEnvelope(true);
+                return;
+              }
               if (link) router.push(link);
             };
 
@@ -407,6 +428,13 @@ function NotificationsContent() {
           )}
         </div>
       )}
+
+      {/* Interactive Gift Envelope Modal */}
+      <GiftEnvelopeModal
+        isOpen={showGiftEnvelope}
+        onClose={() => setShowGiftEnvelope(false)}
+        giftData={giftEnvelopeData}
+      />
     </>
   );
 }
