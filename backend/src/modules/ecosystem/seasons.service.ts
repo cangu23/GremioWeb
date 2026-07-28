@@ -2,6 +2,7 @@ import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
 import { addStardust } from './stardust.service';
 import { awardCustomXp } from '../gamification/gamification.service';
+import { PASS_TIERS, getTierForLevel, getTierProgress } from '@gremio-estelar/shared';
 
 export const getOrCreateActiveSeason = async () => {
   let season = await prisma.season.findFirst({
@@ -119,6 +120,18 @@ export const getUserSeasonPass = async (userId: string) => {
       ...userPass,
       claimedLevels: claimed,
     },
+    tiers: PASS_TIERS.map(tier => ({
+      ...tier,
+      levels: passLevels
+        .filter(l => l.level >= tier.minLevel && l.level <= tier.maxLevel)
+        .map(l => ({
+          level: l.level,
+          freeReward: l.freeReward ? JSON.parse(l.freeReward) : null,
+          premiumReward: l.premiumReward ? JSON.parse(l.premiumReward) : null,
+          isClaimed: claimed.includes(l.level),
+          isUnlocked: userPass!.level >= l.level,
+        })),
+    })),
     levels: passLevels.map(l => ({
       level: l.level,
       freeReward: l.freeReward ? JSON.parse(l.freeReward) : null,
@@ -126,6 +139,8 @@ export const getUserSeasonPass = async (userId: string) => {
       isClaimed: claimed.includes(l.level),
       isUnlocked: userPass!.level >= l.level,
     })),
+    currentTier: getTierForLevel(userPass!.level),
+    tierProgress: getTierProgress(userPass!.level),
   };
 };
 

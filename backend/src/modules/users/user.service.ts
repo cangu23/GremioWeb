@@ -1,15 +1,32 @@
 import AppError from '../../errors/AppError';
 import * as UserRepository from './user.repository';
 import { UpdateUserPayload, PublicUser, UserProfile } from '@gremio-estelar/shared';
+import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 
-export const getMe = async (userId: string): Promise<UserProfile> => {
-  const userProfile = await UserRepository.getUserProfileById(userId);
+export const getMe = async (userId: string): Promise<UserProfile & { dailyRewardClaimed?: any }> => {
+  let userProfile = await UserRepository.getUserProfileById(userId);
   if (!userProfile) {
     throw new AppError('User not found', 404);
   }
+
+  // Automatic daily reward streak claim on login / first load of the day
+  let dailyRewardClaimed: any = null;
+  try {
+    const status = await DailyRewardsService.getStatus(userId);
+    if (status.canClaim) {
+      dailyRewardClaimed = await DailyRewardsService.claim(userId);
+      const refreshed = await UserRepository.getUserProfileById(userId);
+      if (refreshed) userProfile = refreshed;
+    }
+  } catch {
+    // Non-blocking
+  }
   
   const { password, ...safeProfile } = userProfile;
-  return safeProfile as UserProfile;
+  return {
+    ...safeProfile,
+    ...(dailyRewardClaimed ? { dailyRewardClaimed } : {}),
+  } as UserProfile;
 };
 
 export const updateMe = async (userId: string, payload: UpdateUserPayload): Promise<UserProfile> => {

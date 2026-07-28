@@ -43,6 +43,7 @@ function setCachedUser(user: UserProfile | null) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { showToast } = useToast();
   // Restore cached user optimistically so we never flash a blank / landing
   // state when the component remounts after a client-side navigation.
   const [user, setUser] = useState<UserProfile | null>(() => getCachedUser());
@@ -58,6 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = await performRefresh();
       if (token) {
         const profile = await apiFetch('/users/me');
+        if (profile?.dailyRewardClaimed?.message) {
+          showToast(`🔥 ${profile.dailyRewardClaimed.message}`, 'success');
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('stardust-updated'));
+          }
+        }
         setUser(profile);
         setCachedUser(profile);
         return true;
@@ -68,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       isRefreshing.current = false;
     }
-  }, []);
+  }, [showToast]);
 
   // ─── Initial check + global event listeners ────────────────────────
   useEffect(() => {
@@ -165,8 +172,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(res.accessToken);
     setUserAndCache(res.user);
   };
-
-  const { showToast } = useToast();
 
   const register = async (data: RegisterPayload) => {
     const res = await apiFetch('/auth/register', {
