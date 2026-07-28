@@ -24,6 +24,7 @@ interface PassLevelItem {
 
 interface TierWithLevels extends PassTier {
   levels: PassLevelItem[];
+  isRevealed: boolean;
 }
 
 interface PassData {
@@ -90,6 +91,84 @@ function CheckCircle({ size = 16 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
     </svg>
+  );
+}
+
+function EyeOff({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+// ─── Mystery Tier Placeholder (progressive reveal) ──────────
+
+function MysteryTier({ tier, userLevel, onToggle }: {
+  tier: TierWithLevels;
+  userLevel: number;
+  onToggle: () => void;
+}) {
+  const levelsUntilReveal = tier.revealLevel - userLevel;
+  return (
+    <div style={{
+      borderRadius: '20px',
+      border: '1px dashed rgba(255,255,255,0.1)',
+      background: 'rgba(0,0,0,0.3)',
+      overflow: 'hidden',
+      opacity: 0.7,
+      transition: 'all 0.3s ease',
+    }}>
+      <div
+        onClick={onToggle}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          padding: '18px 24px',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
+        {/* Mystery icon */}
+        <div style={{
+          width: '48px', height: '48px', borderRadius: '14px',
+          background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1.5rem', flexShrink: 0,
+          border: '1px solid rgba(255,255,255,0.08)',
+        }}>
+          ❓
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontWeight: 700, fontSize: '1rem', color: '#555', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              ???
+            </span>
+          </div>
+          <div style={{ fontSize: '0.78rem', color: '#555', marginTop: '2px' }}>
+            {levelsUntilReveal > 0
+              ? `Se revela al alcanzar el nivel ${tier.revealLevel} (te faltan ${levelsUntilReveal} niveles)`
+              : '¡Sigue subiendo para revelar este rango!'}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            padding: '4px 10px', borderRadius: '8px',
+            background: 'rgba(255,255,255,0.03)',
+            display: 'flex', alignItems: 'center', gap: '4px',
+            fontSize: '0.7rem', color: '#666', fontWeight: 600,
+          }}>
+            <EyeOff size={12} />
+            <span>Oculto</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -519,7 +598,7 @@ export default function StellarPassPage() {
                 🏆 Progresión de Rangos
               </h3>
               <span style={{ fontSize: '0.78rem', color: '#a1a1aa' }}>
-                Nivel {data.userPass.level} / 10
+                Nivel {data.userPass.level} / 50
               </span>
             </div>
 
@@ -534,6 +613,7 @@ export default function StellarPassPage() {
               {data.tiers.map((tier, idx) => {
                 const isTierUnlocked = data.userPass.level >= tier.minLevel;
                 const isTierActive = data.userPass.level >= tier.minLevel && data.userPass.level <= tier.maxLevel;
+                const isHidden = !tier.isRevealed;
                 return (
                   <div key={tier.id} style={{
                     display: 'flex',
@@ -547,7 +627,7 @@ export default function StellarPassPage() {
                         flex: 1,
                         height: '3px',
                         borderRadius: '2px',
-                        background: isTierUnlocked ? tier.color + '66' : 'rgba(255,255,255,0.06)',
+                        background: isTierUnlocked ? tier.color + '66' : isHidden ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.06)',
                         marginRight: '4px',
                       }} />
                     )}
@@ -564,35 +644,39 @@ export default function StellarPassPage() {
                         ? `${tier.color}18`
                         : isTierUnlocked
                         ? 'rgba(255,255,255,0.03)'
+                        : isHidden
+                        ? 'rgba(0,0,0,0.2)'
                         : 'transparent',
                       border: isTierActive
                         ? `1.5px solid ${tier.color}77`
+                        : isHidden
+                        ? '1px dashed rgba(255,255,255,0.06)'
                         : '1px solid rgba(255,255,255,0.04)',
-                      cursor: 'pointer',
+                      cursor: isHidden ? 'default' : 'pointer',
                       transition: 'all 0.2s',
                     }}
-                      onClick={() => toggleTier(tier.id)}
-                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
+                      onClick={() => { if (!isHidden) toggleTier(tier.id); }}
+                      onMouseEnter={e => { if (!isHidden) e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                      onMouseLeave={e => { if (!isHidden) e.currentTarget.style.transform = 'translateY(0)'; }}
                     >
                       <span style={{
                         fontSize: '1.4rem',
-                        filter: isTierUnlocked ? 'none' : 'grayscale(1) opacity(0.3)',
+                        filter: tier.isRevealed ? 'none' : 'grayscale(1) opacity(0.3)',
                         transition: 'filter 0.3s',
                       }}>
-                        {tier.icon}
+                        {tier.isRevealed ? tier.icon : '❓'}
                       </span>
                       <span style={{
                         fontSize: '0.68rem', fontWeight: 700,
-                        color: isTierActive ? tier.color : isTierUnlocked ? '#aaa' : '#555',
+                        color: isTierActive ? tier.color : isTierUnlocked ? '#aaa' : '#444',
                         textTransform: 'uppercase',
                       }}>
-                        {tier.name}
+                        {tier.isRevealed ? tier.name : '???'}
                       </span>
                       <span style={{
                         fontSize: '0.6rem', color: '#666',
                       }}>
-                        Lv.{tier.minLevel}-{tier.maxLevel}
+                        {tier.isRevealed ? `Lv.${tier.minLevel}-${tier.maxLevel}` : '🔒'}
                       </span>
                     </div>
                   </div>
@@ -647,7 +731,7 @@ export default function StellarPassPage() {
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '0.78rem', color: '#a1a1aa' }}>Recompensas Reclamadas</span>
             <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fbbf24' }}>
-              {data?.userPass.claimedLevels.length || 0} / {data?.levels.length || 10}
+              {data?.userPass.claimedLevels.length || 0} / 50
             </div>
           </div>
         </div>
@@ -721,16 +805,25 @@ export default function StellarPassPage() {
         ) : data ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {data.tiers.map((tier) => (
-              <TierCard
-                key={tier.id}
-                tier={tier}
-                userLevel={data.userPass.level}
-                isPremium={data.userPass.isPremium}
-                isExpanded={!!expandedTiers[tier.id]}
-                onToggle={() => toggleTier(tier.id)}
-                claimingLevel={claimingLevel}
-                onClaim={handleClaim}
-              />
+              tier.isRevealed ? (
+                <TierCard
+                  key={tier.id}
+                  tier={tier}
+                  userLevel={data.userPass.level}
+                  isPremium={data.userPass.isPremium}
+                  isExpanded={!!expandedTiers[tier.id]}
+                  onToggle={() => toggleTier(tier.id)}
+                  claimingLevel={claimingLevel}
+                  onClaim={handleClaim}
+                />
+              ) : (
+                <MysteryTier
+                  key={tier.id}
+                  tier={tier}
+                  userLevel={data.userPass.level}
+                  onToggle={() => toggleTier(tier.id)}
+                />
+              )
             ))}
           </div>
         ) : (

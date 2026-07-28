@@ -1,20 +1,60 @@
-// XP thresholds for each level
+// Total XP needed to reach level n: 50 * n * (n-1)
+// This gives a quadratic curve: easy early, progressively harder
+// Level 15 ~= 10,500 XP (close to old 12,000)
+// Level 30 ~= 43,500 XP
+// Level 50 ~= 122,500 XP
+
 export const LEVEL_XP_THRESHOLDS: number[] = [
-  0,      // Level 1
-  100,    // Level 2
-  250,    // Level 3
-  500,    // Level 4
-  800,    // Level 5
-  1200,   // Level 6
-  1700,   // Level 7
-  2300,   // Level 8
-  3000,   // Level 9
-  4000,   // Level 10
-  5200,   // Level 11
-  6600,   // Level 12
-  8200,   // Level 13
-  10000,  // Level 14
-  12000,  // Level 15
+  0,        // Level 1
+  100,      // Level 2
+  300,      // Level 3
+  600,      // Level 4
+  1000,     // Level 5
+  1500,     // Level 6
+  2100,     // Level 7
+  2800,     // Level 8
+  3600,     // Level 9
+  4500,     // Level 10 — Bronce
+  5500,     // Level 11
+  6600,     // Level 12
+  7800,     // Level 13
+  9100,     // Level 14
+  10500,    // Level 15
+  12000,    // Level 16
+  13600,    // Level 17
+  15300,    // Level 18
+  17100,    // Level 19
+  19000,    // Level 20 — Plata
+  21000,    // Level 21
+  23100,    // Level 22
+  25300,    // Level 23
+  27600,    // Level 24
+  30000,    // Level 25
+  32500,    // Level 26
+  35100,    // Level 27
+  37800,    // Level 28
+  40600,    // Level 29
+  43500,    // Level 30 — Oro
+  46500,    // Level 31
+  49600,    // Level 32
+  52800,    // Level 33
+  56100,    // Level 34
+  59500,    // Level 35
+  63000,    // Level 36
+  66600,    // Level 37
+  70300,    // Level 38
+  74100,    // Level 39
+  78000,    // Level 40 — Platino
+  82000,    // Level 41
+  86100,    // Level 42
+  90300,    // Level 43
+  94600,    // Level 44
+  99000,    // Level 45
+  103500,   // Level 46
+  108100,   // Level 47
+  112800,   // Level 48
+  117600,   // Level 49
+  122500,   // Level 50 — Diamante
 ];
 
 export const MAX_LEVEL = LEVEL_XP_THRESHOLDS.length;
@@ -59,6 +99,11 @@ export const XP_REWARDS = {
 // Pass Tier system (Duolingo-style divisions)
 // ──────────────────────────────
 
+// ──────────────────────────────
+// Pass Tier system — 5 ranks x 10 levels each = 50 levels total
+// Progressive reveal: next tier shows up 5 levels before reaching it
+// ──────────────────────────────
+
 export interface PassTier {
   id: string;
   name: string;
@@ -68,6 +113,8 @@ export interface PassTier {
   glowColor: string;
   minLevel: number;
   maxLevel: number;
+  /** Level at which this tier is revealed (visible) in the UI */
+  revealLevel: number;
 }
 
 export const PASS_TIERS: PassTier[] = [
@@ -79,7 +126,8 @@ export const PASS_TIERS: PassTier[] = [
     gradient: 'linear-gradient(135deg, #CD7F32, #A0652A)',
     glowColor: 'rgba(205, 127, 50, 0.4)',
     minLevel: 1,
-    maxLevel: 2,
+    maxLevel: 10,
+    revealLevel: 1,
   },
   {
     id: 'silver',
@@ -88,8 +136,9 @@ export const PASS_TIERS: PassTier[] = [
     color: '#C0C0C0',
     gradient: 'linear-gradient(135deg, #E8E8E8, #A0A0A0)',
     glowColor: 'rgba(192, 192, 192, 0.4)',
-    minLevel: 3,
-    maxLevel: 4,
+    minLevel: 11,
+    maxLevel: 20,
+    revealLevel: 6,
   },
   {
     id: 'gold',
@@ -98,8 +147,9 @@ export const PASS_TIERS: PassTier[] = [
     color: '#FFD700',
     gradient: 'linear-gradient(135deg, #FFD700, #FF8C00)',
     glowColor: 'rgba(255, 215, 0, 0.4)',
-    minLevel: 5,
-    maxLevel: 6,
+    minLevel: 21,
+    maxLevel: 30,
+    revealLevel: 16,
   },
   {
     id: 'platinum',
@@ -108,8 +158,9 @@ export const PASS_TIERS: PassTier[] = [
     color: '#00E5FF',
     gradient: 'linear-gradient(135deg, #00E5FF, #0099CC)',
     glowColor: 'rgba(0, 229, 255, 0.4)',
-    minLevel: 7,
-    maxLevel: 8,
+    minLevel: 31,
+    maxLevel: 40,
+    revealLevel: 26,
   },
   {
     id: 'diamond',
@@ -118,8 +169,9 @@ export const PASS_TIERS: PassTier[] = [
     color: '#B026FF',
     gradient: 'linear-gradient(135deg, #B026FF, #6B21A8)',
     glowColor: 'rgba(176, 38, 255, 0.4)',
-    minLevel: 9,
-    maxLevel: 10,
+    minLevel: 41,
+    maxLevel: 50,
+    revealLevel: 36,
   },
 ];
 
@@ -128,6 +180,11 @@ export function getTierForLevel(level: number): PassTier {
     if (level >= PASS_TIERS[i].minLevel) return PASS_TIERS[i];
   }
   return PASS_TIERS[0];
+}
+
+/** Whether a tier is revealed (visible) to the user based on their level */
+export function isTierRevealed(tier: PassTier, userLevel: number): boolean {
+  return userLevel >= tier.revealLevel;
 }
 
 export function getTierProgress(level: number): { currentTier: PassTier; nextTier: PassTier | null; progress: number } {

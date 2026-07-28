@@ -2,7 +2,7 @@ import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
 import { addStardust } from './stardust.service';
 import { awardCustomXp } from '../gamification/gamification.service';
-import { PASS_TIERS, getTierForLevel, getTierProgress } from '@gremio-estelar/shared';
+import { PASS_TIERS, getTierForLevel, getTierProgress, isTierRevealed } from '@gremio-estelar/shared';
 
 export const getOrCreateActiveSeason = async () => {
   let season = await prisma.season.findFirst({
@@ -31,32 +31,66 @@ export const getOrCreateActiveSeason = async () => {
   return season;
 };
 
+/** Generate rewards for a given pass level programmatically */
+function generateRewardForLevel(level: number): {
+  free: { type: string; amount: number; label: string };
+  premium: { type: string; amount: number; label: string };
+} {
+  const tierIndex = Math.floor((level - 1) / 10); // 0=Bronce, 1=Plata, 2=Oro, 3=Platino, 4=Diamante
+  const posInTier = ((level - 1) % 10) + 1; // 1-10 within tier
+  const multiplier = Math.pow(1.6, tierIndex); // Each tier rewards 60% more
+
+  const tierNames = ['Bronce', 'Plata', 'Oro', 'Platino', 'Diamante'];
+
+  // Tier completion rewards (every 10th level)
+  if (posInTier === 10) {
+    const titles = ['Viajero', 'Explorador', 'Maestro', 'Leyenda', 'Supremo'];
+    const premiumTitles = ['Coleccionista', 'Estratega', 'Virtuoso', 'Inmortal', 'Dios Estelar'];
+    const stardustAmount = Math.round(800 * multiplier);
+    return {
+      free: { type: 'title', amount: 1, label: `Título: ${tierNames[tierIndex]} ${titles[tierIndex]}` },
+      premium: {
+        type: 'title',
+        amount: 1,
+        label: `Título: ${premiumTitles[tierIndex]} Estelar`,
+      },
+    };
+  }
+
+  // Regular levels: alternate between stardust and XP
+  const isStardustLevel = posInTier % 2 === 1;
+  const baseAmount = Math.round(40 * multiplier * (1 + posInTier * 0.25));
+
+  if (isStardustLevel) {
+    const stardustAmount = baseAmount;
+    const premiumAmount = Math.round(baseAmount * 3);
+    return {
+      free: { type: 'stardust', amount: stardustAmount, label: `${stardustAmount} Stardust ⭐` },
+      premium: { type: 'stardust', amount: premiumAmount, label: `${premiumAmount} Stardust ⭐` },
+    };
+  } else {
+    const xpAmount = baseAmount;
+    const premiumStardust = Math.round(baseAmount * 2);
+    return {
+      free: { type: 'xp', amount: xpAmount, label: `${xpAmount} XP` },
+      premium: { type: 'stardust', amount: premiumStardust, label: `${premiumStardust} Stardust ⭐` },
+    };
+  }
+}
+
 export const seedPassLevels = async (seasonId: string) => {
-  const rewards = [
-    { level: 1, free: { type: 'stardust', amount: 50, label: '50 Stardust ⭐' }, premium: { type: 'stardust', amount: 150, label: '150 Stardust ⭐' } },
-    { level: 2, free: { type: 'xp', amount: 100, label: '100 XP' }, premium: { type: 'xp', amount: 300, label: '300 XP' } },
-    { level: 3, free: { type: 'stardust', amount: 75, label: '75 Stardust ⭐' }, premium: { type: 'title', amount: 1, label: 'Título: ⭐ Viajero Estelar' } },
-    { level: 4, free: { type: 'xp', amount: 150, label: '150 XP' }, premium: { type: 'stardust', amount: 250, label: '250 Stardust ⭐' } },
-    { level: 5, free: { type: 'stardust', amount: 100, label: '100 Stardust ⭐' }, premium: { type: 'title', amount: 1, label: 'Título: ✨ Astro Pro' } },
-    { level: 6, free: { type: 'xp', amount: 200, label: '200 XP' }, premium: { type: 'stardust', amount: 350, label: '350 Stardust ⭐' } },
-    { level: 7, free: { type: 'stardust', amount: 120, label: '120 Stardust ⭐' }, premium: { type: 'xp', amount: 500, label: '500 XP' } },
-    { level: 8, free: { type: 'xp', amount: 250, label: '250 XP' }, premium: { type: 'stardust', amount: 400, label: '400 Stardust ⭐' } },
-    { level: 9, free: { type: 'stardust', amount: 150, label: '150 Stardust ⭐' }, premium: { type: 'xp', amount: 600, label: '600 XP' } },
-    { level: 10, free: { type: 'title', amount: 1, label: 'Título: 🌸 Guardián Estelar' }, premium: { type: 'title', amount: 1, label: 'Título: 🌟 Leyenda Neón' } },
-  ];
-
-  for (const r of rewards) {
+  for (let level = 1; level <= 50; level++) {
     const existing = await prisma.passLevel.findUnique({
-      where: { seasonId_level: { seasonId, level: r.level } },
+      where: { seasonId_level: { seasonId, level } },
     });
-
     if (!existing) {
+      const reward = generateRewardForLevel(level);
       await prisma.passLevel.create({
         data: {
           seasonId,
-          level: r.level,
-          freeReward: JSON.stringify(r.free),
-          premiumReward: JSON.stringify(r.premium),
+          level,
+          freeReward: JSON.stringify(reward.free),
+          premiumReward: JSON.stringify(reward.premium),
         },
       });
     }
@@ -122,6 +156,7 @@ export const getUserSeasonPass = async (userId: string) => {
     },
     tiers: PASS_TIERS.map(tier => ({
       ...tier,
+      isRevealed: isTierRevealed(tier, userPass!.level),
       levels: passLevels
         .filter(l => l.level >= tier.minLevel && l.level <= tier.maxLevel)
         .map(l => ({
