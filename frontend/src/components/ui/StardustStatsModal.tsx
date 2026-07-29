@@ -43,6 +43,14 @@ interface StardustStatsModalProps {
   onClose: () => void;
 }
 
+function SparkleSvg({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" />
+    </svg>
+  );
+}
+
 function getTransactionMeta(reason: string) {
   const r = reason.toLowerCase();
   if (r.includes('ruleta') || r.includes('giro')) {
@@ -429,19 +437,20 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
               {/* === OVERVIEW TAB === */}
               {activeTab === 'overview' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* GOLD CARD */}
                   <div className="glass" style={{
-                    padding: '24px',
-                    borderRadius: '20px',
-                    background: 'linear-gradient(135deg, rgba(245,158,11,0.18), rgba(139,92,246,0.1))',
-                    border: '1px solid rgba(245,158,11,0.35)',
-                    boxShadow: '0 12px 35px rgba(245,158,11,0.15)',
+                    padding: '24px 28px',
+                    borderRadius: '22px',
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.22), rgba(180,83,9,0.15), rgba(15,23,42,0.9))',
+                    border: '1px solid rgba(245, 158, 11, 0.45)',
+                    boxShadow: '0 16px 40px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                     position: 'relative',
                     overflow: 'hidden',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    flexWrap: 'wrap',
                     gap: '20px',
+                    flexWrap: 'nowrap',
                   }}>
                     {/* Ambient shimmer background line */}
                     <div
@@ -449,74 +458,217 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         position: 'absolute',
                         top: 0, left: '-100%',
                         width: '100%', height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
                         animation: 'stardustShimmer 4s infinite',
                         pointerEvents: 'none',
                       }}
                     />
 
+                    {/* Left side: Avatar + Username + Big Stardust Balance */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
                       {user && (
                         <UserAvatar
                           src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
                           alt={user.displayName || user.username}
-                          size={54}
+                          size={56}
                           user={user}
                         />
                       )}
                       <div>
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
-                          {user ? `${user.displayName || user.username} • Saldo Actual` : 'Saldo de Stardust Actual'}
+                        <span style={{ fontSize: '0.78rem', color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>
+                          {user ? `${user.displayName || user.username} • SALDO ACTUAL` : 'SALDO DE STARDUST ACTUAL'}
                         </span>
-                        <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block' }}>⭐</span>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '10px', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                          <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block', filter: 'drop-shadow(0 0 12px #fbbf24)' }}>⭐</span>
                           {balance.toLocaleString()}
-                          <span style={{ fontSize: '1rem', color: '#f59e0b', fontWeight: 700 }}>Stardust</span>
+                          <span style={{ fontSize: '1rem', color: '#fbbf24', fontWeight: 800 }}>Stardust</span>
                         </div>
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right', zIndex: 1 }}>
-                      <span style={{
-                        padding: '5px 12px',
+                    {/* Right side: Multiplier Badge (Side Position) */}
+                    <div style={{ textAlign: 'right', flexShrink: 0, zIndex: 1 }}>
+                      <div style={{
+                        padding: '6px 14px',
                         borderRadius: '12px',
-                        background: multiplier > 1 ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.08)',
-                        border: `1px solid ${multiplier > 1 ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'}`,
-                        color: multiplier > 1 ? '#f59e0b' : 'var(--text-muted)',
-                        fontSize: '0.82rem',
-                        fontWeight: 800,
-                        display: 'inline-block',
-                        boxShadow: multiplier > 1 ? '0 0 12px rgba(245,158,11,0.3)' : 'none',
+                        background: multiplier > 1 ? 'linear-gradient(135deg, rgba(245,158,11,0.35), rgba(217,119,6,0.45))' : 'rgba(255,255,255,0.08)',
+                        border: `1px solid ${multiplier > 1 ? '#fbbf24' : 'rgba(255,255,255,0.15)'}`,
+                        color: multiplier > 1 ? '#fbbf24' : 'var(--text-muted)',
+                        fontSize: '0.85rem',
+                        fontWeight: 900,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: multiplier > 1 ? '0 0 16px rgba(245,158,11,0.4)' : 'none',
                       }}>
                         Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
-                      </span>
-                      <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '6px', margin: 0 }}>
-                        {multiplier > 1 ? `Tu plan ${data?.plan} otorga +${Math.round((multiplier - 1) * 100)}% extra` : 'Obtén Premium para aumentar tus ganancias'}
+                      </div>
+                      <p style={{ fontSize: '0.74rem', color: '#d1d5db', marginTop: '6px', margin: 0, fontWeight: 600 }}>
+                        {multiplier > 1 ? `Tu plan ${data?.plan} otorga +${Math.round((multiplier - 1) * 100)}% extra` : 'Obtén Premium para +100% extra'}
                       </p>
                     </div>
                   </div>
 
+                  {/* ACCESOS RÁPIDOS ESTELARES */}
                   <div>
-                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}>
-                      Accesos Rápidos Estelares
+                    <h4 style={{ fontSize: '0.92rem', fontWeight: 800, marginBottom: '14px', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <SparkleSvg size={15} color="#fbbf24" /> Accesos Rápidos Estelares
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-                      <button onClick={() => setActiveTab('transfer')} className="glass" style={shortcutCardStyle}>
-                        <span style={{ fontSize: '1.4rem' }}>🎁</span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>Regalar</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Enviar Puntos/Plan</span>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                      {/* 1. Regalar */}
+                      <button
+                        onClick={() => setActiveTab('transfer')}
+                        style={{
+                          padding: '16px 14px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(245, 158, 11, 0.05))',
+                          border: '1px solid rgba(236, 72, 153, 0.25)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                          cursor: 'pointer', gap: '8px',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-3px)';
+                          e.currentTarget.style.borderColor = '#ec4899';
+                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(236, 72, 153, 0.25)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.25)';
+                          e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+                        }}
+                      >
+                        <div style={{
+                          width: '42px', height: '42px', borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '1.3rem', boxShadow: '0 4px 12px rgba(236, 72, 153, 0.4)',
+                        }}>
+                          🎁
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>Regalar</div>
+                          <div style={{ fontSize: '0.72rem', color: '#a1a1aa', marginTop: '2px' }}>Enviar Puntos / Plan</div>
+                        </div>
                       </button>
 
-                      <Link href="/shop" onClick={onClose} className="glass" style={shortcutCardStyle}>
-                        <span style={{ fontSize: '1.4rem' }}>🛍️</span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>Tienda</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Gastar Stardust</span>
+                      {/* 2. Tienda */}
+                      <Link
+                        href="/shop"
+                        onClick={onClose}
+                        style={{
+                          padding: '16px 14px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(139, 92, 246, 0.05))',
+                          border: '1px solid rgba(56, 189, 248, 0.25)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                          textDecoration: 'none', gap: '8px',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-3px)';
+                          e.currentTarget.style.borderColor = '#38bdf8';
+                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(56, 189, 248, 0.25)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.25)';
+                          e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+                        }}
+                      >
+                        <div style={{
+                          width: '42px', height: '42px', borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #38bdf8, #0284c7)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '1.3rem', boxShadow: '0 4px 12px rgba(56, 189, 248, 0.4)',
+                        }}>
+                          🛍️
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>Tienda</div>
+                          <div style={{ fontSize: '0.72rem', color: '#a1a1aa', marginTop: '2px' }}>Gastar Stardust</div>
+                        </div>
                       </Link>
 
-                      <Link href="/roulette" onClick={onClose} className="glass" style={shortcutCardStyle}>
-                        <span style={{ fontSize: '1.4rem' }}>🎰</span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>Ruleta</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Girar y Ganar</span>
+                      {/* 3. Ruleta */}
+                      <Link
+                        href="/roulette"
+                        onClick={onClose}
+                        style={{
+                          padding: '16px 14px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(236, 72, 153, 0.05))',
+                          border: '1px solid rgba(168, 85, 247, 0.25)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                          textDecoration: 'none', gap: '8px',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-3px)';
+                          e.currentTarget.style.borderColor = '#a855f7';
+                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(168, 85, 247, 0.25)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.25)';
+                          e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+                        }}
+                      >
+                        <div style={{
+                          width: '42px', height: '42px', borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #a855f7, #7e22ce)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '1.3rem', boxShadow: '0 4px 12px rgba(168, 85, 247, 0.4)',
+                        }}>
+                          🎰
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>Ruleta</div>
+                          <div style={{ fontSize: '0.72rem', color: '#a1a1aa', marginTop: '2px' }}>Girar y Ganar</div>
+                        </div>
+                      </Link>
+
+                      {/* 4. Pase Estelar */}
+                      <Link
+                        href="/pass"
+                        onClick={onClose}
+                        style={{
+                          padding: '16px 14px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(245, 158, 11, 0.05))',
+                          border: '1px solid rgba(251, 191, 36, 0.25)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                          textDecoration: 'none', gap: '8px',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'translateY(-3px)';
+                          e.currentTarget.style.borderColor = '#fbbf24';
+                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(251, 191, 36, 0.25)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.25)';
+                          e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+                        }}
+                      >
+                        <div style={{
+                          width: '42px', height: '42px', borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #fbbf24, #d97706)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '1.3rem', boxShadow: '0 4px 12px rgba(251, 191, 36, 0.4)',
+                        }}>
+                          🌟
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>Pase Estelar</div>
+                          <div style={{ fontSize: '0.72rem', color: '#a1a1aa', marginTop: '2px' }}>Hoja de Ruta & XP</div>
+                        </div>
                       </Link>
                     </div>
                   </div>
