@@ -78,6 +78,12 @@ async function awardXpBase(userId: string, xpAmount: number) {
   // Check achievements after XP award
   const newAchievements = await checkAndAwardUserAchievements(userId);
 
+  const updatedUser = await GamificationRepository.getUserGamificationProfile(userId);
+  if (updatedUser) {
+    runningTotal = updatedUser.xp;
+    runningLevel = updatedUser.level;
+  }
+
   return {
     xpAwarded: xpAmount,
     totalXp: runningTotal,
@@ -135,9 +141,15 @@ export async function checkAndAwardUserAchievements(userId: string) {
       if (commentCount === null) commentCount = await prisma.comment.count({ where: { userId } });
       unlocked = commentCount >= 1;
     }
-    // 4. Daily rewards
+    // 4. Daily rewards & login
     else if (name.includes('racha') || name.includes('diaria')) {
-      if (dailyCount === null) dailyCount = await prisma.dailyReward.count({ where: { userId } });
+      if (dailyCount === null) {
+        const dRewardCount = await prisma.dailyReward.count({ where: { userId } });
+        const missionLoginCount = await prisma.userMissionProgress.count({
+          where: { userId, completed: true },
+        });
+        dailyCount = dRewardCount + missionLoginCount;
+      }
       unlocked = dailyCount >= 1;
     }
     // 5. Level based
@@ -154,8 +166,13 @@ export async function checkAndAwardUserAchievements(userId: string) {
     } else if (name.includes('1000 xp') || name.includes('1000xp')) {
       unlocked = runningTotal >= 1000;
     }
-    // 7. Events
-    else if (name.includes('evento')) {
+    // 7. Events (Creator vs Attendee)
+    else if (name.includes('creador de eventos') || name.includes('crear evento')) {
+      if (eventCount === null) {
+        eventCount = await prisma.event.count({ where: { creatorId: userId } });
+      }
+      unlocked = eventCount >= 1;
+    } else if (name.includes('evento')) {
       if (eventCount === null) {
         const created = await prisma.event.count({ where: { creatorId: userId } });
         const attended = await prisma.eventAttendee.count({ where: { userId } });
@@ -163,8 +180,13 @@ export async function checkAndAwardUserAchievements(userId: string) {
       }
       unlocked = eventCount >= 1;
     }
-    // 8. Guilds
-    else if (name.includes('gremio')) {
+    // 8. Guilds (Founder vs Member)
+    else if (name.includes('fundador de gremio') || name.includes('fundador')) {
+      if (guildCount === null) {
+        guildCount = await prisma.guild.count({ where: { creatorId: userId } });
+      }
+      unlocked = guildCount >= 1;
+    } else if (name.includes('gremio')) {
       if (guildCount === null) {
         const created = await prisma.guild.count({ where: { creatorId: userId } });
         const member = await prisma.guildMember.count({ where: { userId } });
@@ -172,12 +194,16 @@ export async function checkAndAwardUserAchievements(userId: string) {
       }
       unlocked = guildCount >= 1;
     }
-    // 9. Social
+    // 9. Social (Friends & Followers)
     else if (name.includes('social') || name.includes('sociable') || name.includes('seguidor')) {
       if (followCount === null) {
-        followCount = await prisma.follow.count({
+        const follows = await prisma.follow.count({
           where: { OR: [{ followerId: userId }, { followingId: userId }] },
         });
+        const friends = await prisma.friend.count({
+          where: { OR: [{ senderId: userId }, { receiverId: userId }] },
+        });
+        followCount = follows + friends;
       }
       unlocked = (followCount || 0) >= 1;
     }

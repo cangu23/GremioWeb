@@ -3,6 +3,8 @@ import * as EventsRepository from './events.repository';
 import * as UserRepository from '../users/user.repository';
 import * as NotificationsService from '../notifications/notifications.service';
 import { CreateEventPayload, UpdateEventPayload } from '@gremio-estelar/shared';
+import { awardXpForAction } from '../gamification/gamification.service';
+import { trackMissionProgress } from '../ecosystem/missions.service';
 
 export const create = async (payload: CreateEventPayload, creatorId: string, creatorRole: string) => {
   // Solo VTubers, Maids, Moderadores y Admins pueden crear eventos en la plataforma
@@ -26,14 +28,14 @@ export const create = async (payload: CreateEventPayload, creatorId: string, cre
     creatorId,
   });
 
+  await awardXpForAction(creatorId, 'CREATE_EVENT').catch(() => {});
+
   return { ...event, isAttending: false };
 };
 
 export const getAll = async (status?: string) => {
   return EventsRepository.findAllEvents(status);
 };
-
-import { trackMissionProgress } from '../ecosystem/missions.service';
 
 export const getById = async (id: string, currentUserId?: string) => {
   const event = await EventsRepository.findEventById(id);
@@ -45,7 +47,6 @@ export const getById = async (id: string, currentUserId?: string) => {
   if (currentUserId) {
     const attendee = await EventsRepository.findAttendee(id, currentUserId);
     isAttending = !!attendee;
-    trackMissionProgress(currentUserId, 'EVENT_JOIN').catch(() => {});
   }
 
   return { ...event, isAttending };
@@ -104,6 +105,7 @@ export const attend = async (eventId: string, userId: string) => {
   }
 
   await EventsRepository.createAttendee(eventId, userId);
+  await awardXpForAction(userId, 'ATTEND_EVENT').catch(() => {});
   trackMissionProgress(userId, 'EVENT_JOIN').catch(() => {});
 
   // Send notification to event creator

@@ -257,3 +257,192 @@ export const claimPassLevel = async (userId: string, levelNumber: number) => {
     claimedLevel: levelNumber,
   };
 };
+
+export const claimAllPassLevels = async (userId: string) => {
+  const { userPass, levels } = await getUserSeasonPass(userId);
+  const unclaimedUnlockedLevels = levels.filter(l => l.isUnlocked && !l.isClaimed);
+
+  if (unclaimedUnlockedLevels.length === 0) {
+    throw new AppError('No tienes recompensas del pase pendientes por reclamar', 400);
+  }
+
+  const claimedSet = new Set(userPass.claimedLevels);
+  let totalStardust = 0;
+  let totalXp = 0;
+  const titlesGranted: string[] = [];
+
+  for (const targetLevel of unclaimedUnlockedLevels) {
+    claimedSet.add(targetLevel.level);
+
+    if (targetLevel.freeReward) {
+      if (targetLevel.freeReward.type === 'stardust') {
+        totalStardust += targetLevel.freeReward.amount;
+      } else if (targetLevel.freeReward.type === 'xp') {
+        totalXp += targetLevel.freeReward.amount;
+      } else if (targetLevel.freeReward.type === 'title') {
+        await grantTitleToUser(userId, targetLevel.freeReward.label).catch(() => {});
+        titlesGranted.push(targetLevel.freeReward.label);
+      }
+    }
+
+    if (userPass.isPremium && targetLevel.premiumReward) {
+      if (targetLevel.premiumReward.type === 'stardust') {
+        totalStardust += targetLevel.premiumReward.amount;
+      } else if (targetLevel.premiumReward.type === 'xp') {
+        totalXp += targetLevel.premiumReward.amount;
+      } else if (targetLevel.premiumReward.type === 'title') {
+        await grantTitleToUser(userId, targetLevel.premiumReward.label).catch(() => {});
+        titlesGranted.push(targetLevel.premiumReward.label);
+      }
+    }
+  }
+
+  await prisma.userSeasonPass.update({
+    where: { id: userPass.id },
+    data: { claimedLevels: JSON.stringify(Array.from(claimedSet)) },
+  });
+
+  if (totalStardust > 0) {
+    await addStardust(userId, totalStardust, `Recompensa Pase Estelar (Reclamar Todo - ${unclaimedUnlockedLevels.length} niveles)`);
+  }
+  if (totalXp > 0) {
+    await awardCustomXp(userId, totalXp).catch(() => {});
+  }
+
+  return {
+    message: `¡Has reclamado ${unclaimedUnlockedLevels.length} nivel(es)! +${totalStardust} ⭐ Stardust, +${totalXp} XP`,
+    claimedCount: unclaimedUnlockedLevels.length,
+    claimedLevels: unclaimedUnlockedLevels.map(l => l.level),
+    totalStardust,
+    totalXp,
+    titlesGranted,
+  };
+};
+
+export const buyPremiumWithStardust = async (userId: string) => {
+  const { userPass } = await getUserSeasonPass(userId);
+  if (userPass.isPremium) {
+    throw new AppError('Ya tienes el Pase Premium activo en esta temporada', 400);
+  }
+
+  const COST = 2500;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { stardust: true } });
+  if (!user || user.stardust < COST) {
+    throw new AppError(`Necesitas al menos ${COST} Stardust ⭐ para desbloquear el Pase Premium`, 400);
+  }
+
+  // Deduct Stardust
+  await prisma.user.update({
+    where: { id: userId },
+    data: { stardust: { decrement: COST } },
+  });
+
+  await prisma.stardustTransaction.create({
+    data: {
+      userId,
+      amount: -COST,
+      reason: 'Activación de Pase Estelar Premium VIP',
+    },
+  });
+
+  // Activate Premium
+  await prisma.userSeasonPass.update({
+    where: { id: userPass.id },
+    data: { isPremium: true },
+  });
+
+  return {
+    message: '¡Felicidades! Has activado el Pase Estelar Premium VIP ⭐ con Stardust',
+    isPremium: true,
+  };
+};
+
+export const skipPassLevelWithStardust = async (userId: string) => {
+  const { userPass } = await getUserSeasonPass(userId);
+  if (userPass.level >= 50) {
+    throw new AppError('Ya has alcanzado el nivel máximo (50) del Pase Estelar', 400);
+  }
+
+  const COST = 150;
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { stardust: true } });
+  if (!user || user.stardust < COST) {
+    throw new AppError(`Necesitas al menos ${COST} Stardust ⭐ para saltar de nivel`, 400);
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      stardust: { decrement: COST },
+      level: { increment: 1 },
+    },
+  });
+
+  await prisma.stardustTransaction.create({
+    data: {
+      userId,
+      amount: -COST,
+      reason: `Salto de Nivel en Pase Estelar a Nivel ${userPass.level + 1}`,
+    },
+  });
+
+  await prisma.userSeasonPass.update({
+    where: { id: userPass.id },
+    data: { level: userPass.level + 1 },
+  });
+
+  return {
+    message: `¡Has avanzado al Nivel ${userPass.level + 1} del Pase Estelar!`,
+    newLevel: userPass.level + 1,
+  };
+};
+
+export const grantFrameToUser = async (userId: string, frameId: string) => {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { profileFrame: frameId },
+  });
+};
+
+export const openMysteryChest = async (userId: string) => {
+  const rand = Math.random();
+  let rewardType = 'stardust';
+  let stardustAmount = 300;
+  let xpAmount = 0;
+  let frameGranted: string | null = null;
+  let label = '';
+
+  if (rand < 0.65) {
+    // Standard Stardust
+    stardustAmount = Math.floor(Math.random() * 400) + 300; // 300-700
+    label = `¡${stardustAmount} ⭐ Stardust Estelar!`;
+  } else if (rand < 0.90) {
+    // High Stardust + XP
+    stardustAmount = Math.floor(Math.random() * 500) + 800; // 800-1300
+    xpAmount = 350;
+    label = `¡GRAN BOTÍN! +${stardustAmount} ⭐ Stardust y +${xpAmount} XP!`;
+  } else {
+    // Legendary reward + Frame
+    stardustAmount = 1500;
+    xpAmount = 600;
+    const frames = ['frame-fuego', 'frame-galaxia', 'frame-esmeralda', 'frame-oro'];
+    frameGranted = frames[Math.floor(Math.random() * frames.length)];
+    await grantFrameToUser(userId, frameGranted).catch(() => {});
+    label = `¡¡BOTÍN LEGENDARIO!! +${stardustAmount} ⭐ Stardust, +${xpAmount} XP y Marco de Avatar "${frameGranted}"!`;
+  }
+
+  if (stardustAmount > 0) {
+    await addStardust(userId, stardustAmount, 'Cofre Estelar Misterioso');
+  }
+  if (xpAmount > 0) {
+    await awardCustomXp(userId, xpAmount).catch(() => {});
+  }
+
+  return {
+    message: label,
+    stardustAmount,
+    xpAmount,
+    frameGranted,
+  };
+};
+
+

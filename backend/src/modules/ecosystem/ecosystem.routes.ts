@@ -16,6 +16,7 @@ router.post('/stardust/transfer', EcosystemController.transferStardust);
 router.post('/stardust/gift-plan', EcosystemController.giftPlan);
 
 router.get('/missions', EcosystemController.getMissions);
+router.post('/missions/claim-all', EcosystemController.claimAllMissions);
 router.post('/missions/:id/claim', EcosystemController.claimMission);
 
 router.get('/plan', EcosystemController.getPlatformPlan);
@@ -26,6 +27,14 @@ router.get('/titles', EcosystemController.getUserTitles);
 router.post('/titles/equip', EcosystemController.equipTitle);
 
 router.get('/pass', EcosystemController.getSeasonPass);
+router.post('/pass/claim-all', EcosystemController.claimAllPassLevels);
 router.post('/pass/claim', EcosystemController.claimPassLevel);
+router.post('/pass/buy-premium', EcosystemController.buyPremiumWithStardust);
+router.post('/pass/skip-level', EcosystemController.skipPassLevelWithStardust);
+
+router.post('/chest/open', EcosystemController.openMysteryChest);
+
+router.get('/streak', EcosystemController.getDailyStreak);
+router.get('/community-challenge', EcosystemController.getCommunityChallenge);
 
 export default router;

@@ -79,6 +79,7 @@ const getTodayResetDate = (): Date => {
 
 export const getUserMissions = async (userId: string) => {
   await seedDefaultMissions();
+  await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
   const resetAt = getTodayResetDate();
 
   const missions = await prisma.mission.findMany({
@@ -203,3 +204,130 @@ export const claimMissionReward = async (userId: string, missionId: string) => {
     stardustAwarded: earned,
   };
 };
+
+export const claimAllMissions = async (userId: string) => {
+  const userMissions = await getUserMissions(userId);
+  const claimable = userMissions.filter(m => m.completed && !m.claimedAt);
+
+  if (claimable.length === 0) {
+    throw new AppError('No tienes misiones completadas pendientes por reclamar', 400);
+  }
+
+  const resetAt = getTodayResetDate();
+  let totalXp = 0;
+  let totalStardust = 0;
+
+  for (const m of claimable) {
+    const progress = await prisma.userMissionProgress.findUnique({
+      where: {
+        userId_missionId_resetAt: {
+          userId,
+          missionId: m.id,
+          resetAt,
+        },
+      },
+    });
+
+    if (progress && progress.completed && !progress.claimedAt) {
+      await prisma.userMissionProgress.update({
+        where: { id: progress.id },
+        data: { claimedAt: new Date() },
+      });
+      totalXp += m.xpReward;
+      totalStardust += m.stardustReward;
+    }
+  }
+
+  if (totalXp > 0) {
+    await awardCustomXp(userId, totalXp).catch(() => {});
+  }
+  if (totalStardust > 0) {
+    await addStardust(userId, totalStardust, `Recompensa por Misiones (Reclamar Todo - ${claimable.length} misiones)`);
+  }
+
+  return {
+    message: `¡Has reclamado ${claimable.length} misión(es)! +${totalXp} XP y +${totalStardust} ⭐ Stardust`,
+    claimedCount: claimable.length,
+    totalXp,
+    totalStardust,
+  };
+};
+
+export const STREAK_REWARDS = [
+  { day: 1, stardust: 15, xp: 0, label: '15 Stardust ⭐' },
+  { day: 2, stardust: 25, xp: 50, label: '25 Stardust + 50 XP' },
+  { day: 3, stardust: 40, xp: 0, label: '40 Stardust ⭐' },
+  { day: 4, stardust: 60, xp: 0, label: '60 Stardust ⭐' },
+  { day: 5, stardust: 75, xp: 150, label: '75 Stardust + 150 XP' },
+  { day: 6, stardust: 100, xp: 0, label: '100 Stardust ⭐' },
+  { day: 7, stardust: 300, xp: 300, isChest: true, label: '¡Cofre Misterioso + 300 Stardust!' },
+];
+
+export const getDailyStreak = async (userId: string) => {
+  await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Check login check-in progress
+  const loginMission = await prisma.mission.findFirst({ where: { action: 'DAILY_LOGIN' } });
+  let currentStreak = 1;
+  let hasCheckedInToday = false;
+
+  if (loginMission) {
+    const todayProgress = await prisma.userMissionProgress.findFirst({
+      where: {
+        userId,
+        missionId: loginMission.id,
+        resetAt: { gte: today },
+      },
+    });
+
+    if (todayProgress) {
+      hasCheckedInToday = !!todayProgress.claimedAt || todayProgress.completed;
+    }
+
+    // Count recent check-ins in the last 7 days
+    const recentCheckins = await prisma.userMissionProgress.count({
+      where: {
+        userId,
+        missionId: loginMission.id,
+        completed: true,
+        resetAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      },
+    });
+    currentStreak = Math.min(7, Math.max(1, recentCheckins));
+  }
+
+  return {
+    currentStreak,
+    hasCheckedInToday,
+    days: STREAK_REWARDS.map(r => ({
+      ...r,
+      isCompleted: r.day <= currentStreak && hasCheckedInToday,
+      isCurrent: r.day === currentStreak,
+    })),
+  };
+};
+
+export const getCommunityChallenge = async () => {
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const postsCount = await prisma.post.count({ where: { createdAt: { gte: weekAgo } } });
+  const commentsCount = await prisma.comment.count({ where: { createdAt: { gte: weekAgo } } });
+  
+  const totalContrib = postsCount + commentsCount;
+  const GOAL = 250;
+  const progressPct = Math.min(100, Math.round((totalContrib / GOAL) * 100));
+
+  return {
+    title: '🌐 Desafío Semanal de la Comunidad',
+    description: 'Entre todos los miembros del Gremio, alcancen 250 publicaciones y comentarios esta semana.',
+    goal: GOAL,
+    currentProgress: totalContrib,
+    progressPct,
+    completed: totalContrib >= GOAL,
+    rewardStardust: 300,
+    rewardXp: 200,
+  };
+};
+
+

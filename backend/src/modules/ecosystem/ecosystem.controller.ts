@@ -46,6 +46,12 @@ export const claimMission = async (req: any, res: Response) => {
   res.json({ success: true, data: result });
 };
 
+export const claimAllMissions = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const result = await MissionsService.claimAllMissions(userId);
+  res.json({ success: true, data: result });
+};
+
 export const getPlatformPlan = async (req: any, res: Response) => {
   const userId = req.user!.id;
   const planDetails = await PlatformService.getMyPlatformPlan(userId);
@@ -114,3 +120,39 @@ export const claimPassLevel = async (req: any, res: Response) => {
   const result = await SeasonsService.claimPassLevel(userId, Number(level));
   res.json({ success: true, data: result });
 };
+
+export const claimAllPassLevels = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const result = await SeasonsService.claimAllPassLevels(userId);
+  res.json({ success: true, data: result });
+};
+
+export const buyPremiumWithStardust = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const result = await SeasonsService.buyPremiumWithStardust(userId);
+  res.json({ success: true, data: result });
+};
+
+export const skipPassLevelWithStardust = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const result = await SeasonsService.skipPassLevelWithStardust(userId);
+  res.json({ success: true, data: result });
+};
+
+export const openMysteryChest = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const result = await SeasonsService.openMysteryChest(userId);
+  res.json({ success: true, data: result });
+};
+
+export const getDailyStreak = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const result = await MissionsService.getDailyStreak(userId);
+  res.json({ success: true, data: result });
+};
+
+export const getCommunityChallenge = async (_req: any, res: Response) => {
+  const result = await MissionsService.getCommunityChallenge();
+  res.json({ success: true, data: result });
+};
+

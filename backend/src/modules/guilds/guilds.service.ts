@@ -3,6 +3,8 @@ import * as GuildsRepository from './guilds.repository';
 import * as UserRepository from '../users/user.repository';
 import * as NotificationsService from '../notifications/notifications.service';
 import { CreateGuildPayload } from '@gremio-estelar/shared';
+import { awardXpForAction } from '../gamification/gamification.service';
+import { trackMissionProgress } from '../ecosystem/missions.service';
 
 export const create = async (payload: CreateGuildPayload, creatorId: string, creatorRole: string) => {
   // Solo VTubers, Maids, Moderadores y Admins pueden crear gremios
@@ -29,6 +31,8 @@ export const create = async (payload: CreateGuildPayload, creatorId: string, cre
 
   // Auto-add creator as LEADER
   await GuildsRepository.addMember(guild.id, creatorId, 'LEADER');
+  await awardXpForAction(creatorId, 'CREATE_GUILD').catch(() => {});
+  await trackMissionProgress(creatorId, 'EVENT_JOIN').catch(() => {});
 
   return { ...guild, isMember: true, myRole: 'LEADER' };
 };
@@ -111,6 +115,8 @@ export const join = async (guildId: string, userId: string) => {
   }
 
   await GuildsRepository.addMember(guildId, userId);
+  await awardXpForAction(userId, 'JOIN_GUILD').catch(() => {});
+  await trackMissionProgress(userId, 'EVENT_JOIN').catch(() => {});
 
   // Send notification to guild leader
   const member = await UserRepository.findById(userId);
