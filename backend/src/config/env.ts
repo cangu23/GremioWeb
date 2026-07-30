@@ -15,6 +15,7 @@ interface EnvConfig {
   PORT: number;
   FRONTEND_URL: string;
   BACKEND_URL: string;
+  ALLOWED_ORIGINS: string[];
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_EXPIRES_IN: string;
@@ -29,9 +30,39 @@ interface EnvConfig {
   TWITCH_CLIENT_SECRET: string;
 }
 
+/**
+ * Build allowed CORS origins from environment.
+ * - In production: reads ALLOWED_ORIGINS env var (comma-separated) + FRONTEND_URL
+ * - In development: includes localhost defaults
+ */
+function buildAllowedOrigins(): string[] {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const origins = new Set<string>();
+
+  // Always include the frontend URL
+  origins.add(frontendUrl);
+
+  // Parse comma-separated ALLOWED_ORIGINS if set
+  if (process.env.ALLOWED_ORIGINS) {
+    process.env.ALLOWED_ORIGINS.split(',').forEach(o => {
+      const trimmed = o.trim();
+      if (trimmed) origins.add(trimmed);
+    });
+  }
+
+  // In development, add localhost defaults
+  if (process.env.NODE_ENV !== 'production') {
+    origins.add('http://localhost:3000');
+    origins.add('http://localhost:4000');
+  }
+
+  return Array.from(origins);
+}
+
 const env: EnvConfig = {
   PORT: parseInt(process.env.PORT || '4000', 10),
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
+  ALLOWED_ORIGINS: buildAllowedOrigins(),
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET || '',
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || '',
   JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m',

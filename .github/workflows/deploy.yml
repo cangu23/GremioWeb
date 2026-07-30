@@ -7,8 +7,37 @@ on:
   workflow_dispatch:
 
 jobs:
+  quality-check:
+    name: Pre-deployment Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate --workspace=backend
+
+      - name: Type check (TypeScript)
+        run: |
+          npx tsc --noEmit --project shared/tsconfig.json
+          npx tsc --noEmit --project backend/tsconfig.json
+
+      - name: Run unit tests
+        run: npm test --workspace=backend
+
   deploy:
     name: Deploy to Server via SSH
+    needs: quality-check
     runs-on: ubuntu-latest
 
     steps:

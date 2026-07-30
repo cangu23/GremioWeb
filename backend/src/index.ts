@@ -27,100 +27,52 @@ import rouletteRoutes from './modules/roulette/roulette.routes';
 import warningsRoutes from './modules/warnings/warnings.routes';
 import ecosystemRoutes from './modules/ecosystem/ecosystem.routes';
 import * as StickersController from './modules/admin/stickers.controller';
+import { createLogger } from './utils/logger';
 
-const BOOT = '[BOOT]';
+const log = createLogger('ROUTES');
 const router = Router();
 
-console.log(`${BOOT} Registering API routes...`);
+// ─── Module Routes ────────────────────────────────────────────────
 
-// Module routes
 router.use('/health', healthRoutes);
-console.log(`${BOOT}   [OK] /api/health`);
-
 router.use('/auth', authRoutes);
-console.log(`${BOOT}   [OK] /api/auth (login, register, google, discord, refresh, logout)`);
-
 router.use('/admin', adminRoutes);
-console.log(`${BOOT}   [OK] /api/admin (auth admin routes)`);
-
 router.use('/admin', adminModuleRoutes);
-console.log(`${BOOT}   [OK] /api/admin (module admin routes)`);
+router.use('/users', userRoutes);
+router.use('/user', userRoutes); // Alias for frontend compatibility
+router.use('/social', socialRoutes);
+router.use('/friends', friendRoutes);
+router.use('/events', eventRoutes);
+router.use('/guilds', guildRoutes);
+router.use('/gamification', gamificationRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/chat', chatRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/posts', postRoutes);
+router.use('/dm', dmRoutes);
+router.use('/vtubers', vtuberRoutes);
+router.use('/uploads', uploadRoutes);
+router.use('/stats', statsRoutes);
+router.use('/activity', activityRoutes);
+router.use('/shop', shopRoutes);
+router.use('/daily-rewards', dailyRewardsRoutes);
+router.use('/roulette', rouletteRoutes);
+router.use('/warnings', warningsRoutes);
+router.use('/ecosystem', ecosystemRoutes);
+
+// ─── Standalone Routes ────────────────────────────────────────────
 
 // VTuber request (authenticated users)
 router.post('/vtubers/request', authenticate, RequestsController.submitRequest);
-console.log(`${BOOT}   [OK] POST /api/vtubers/request`);
-
-router.use('/users', userRoutes);
-router.use('/user', userRoutes); // Alias sin 's' para compatibilidad con frontend
-console.log(`${BOOT}   [OK] /api/users`);
-console.log(`${BOOT}   [OK] /api/user (alias)`);
-
-router.use('/social', socialRoutes);
-console.log(`${BOOT}   [OK] /api/social`);
-
-router.use('/friends', friendRoutes);
-console.log(`${BOOT}   [OK] /api/friends`);
-
-router.use('/events', eventRoutes);
-console.log(`${BOOT}   [OK] /api/events`);
-
-router.use('/guilds', guildRoutes);
-console.log(`${BOOT}   [OK] /api/guilds`);
-
-router.use('/gamification', gamificationRoutes);
-console.log(`${BOOT}   [OK] /api/gamification`);
-
-router.use('/notifications', notificationRoutes);
-console.log(`${BOOT}   [OK] /api/notifications`);
-
-router.use('/chat', chatRoutes);
-console.log(`${BOOT}   [OK] /api/chat`);
-
-router.use('/payments', paymentRoutes);
-console.log(`${BOOT}   [OK] /api/payments`);
-
-router.use('/posts', postRoutes);
-console.log(`${BOOT}   [OK] /api/posts`);
-
-router.use('/dm', dmRoutes);
-console.log(`${BOOT}   [OK] /api/dm`);
-
-router.use('/vtubers', vtuberRoutes);
-console.log(`${BOOT}   [OK] /api/vtubers`);
-
-router.use('/uploads', uploadRoutes);
-console.log(`${BOOT}   [OK] /api/uploads`);
-
-router.use('/stats', statsRoutes);
-console.log(`${BOOT}   [OK] /api/stats`);
-
-router.use('/activity', activityRoutes);
-console.log(`${BOOT}   [OK] /api/activity`);
-
-router.use('/shop', shopRoutes);
-console.log(`${BOOT}   [OK] /api/shop`);
-
-router.use('/daily-rewards', dailyRewardsRoutes);
-console.log(`${BOOT}   [OK] /api/daily-rewards`);
-
-router.use('/roulette', rouletteRoutes);
-console.log(`${BOOT}   [OK] /api/roulette`);
-
-router.use('/warnings', warningsRoutes);
-console.log(`${BOOT}   [OK] /api/warnings`);
-
-router.use('/ecosystem', ecosystemRoutes);
-console.log(`${BOOT}   [OK] /api/ecosystem (stardust, missions, subscriptions, titles)`);
 
 // Public stickers endpoint (no auth required, for sticker picker)
 router.get('/stickers', StickersController.getActiveStickers);
-console.log(`${BOOT}   [OK] GET /api/stickers (public)`);
 
-// Also mount health at root for quick checks
+// Root health check
 router.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'gremio-estelar-api', timestamp: new Date().toISOString() });
 });
 
-console.log(`${BOOT} All API routes registered successfully`);
+log.info('All API routes registered (23 modules)');
 
 export default router;

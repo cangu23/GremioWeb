@@ -44,17 +44,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ========== CORS (must be early) ==========
 console.log(`${BOOT} Configuring CORS...`);
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://localhost:4000',
-  'https://gremio-frontend.onrender.com',
-  'https://gremio-backend.onrender.com',
-  'https://gremioweb.onrender.com',
-];
-console.log(`${BOOT} CORS allowed origins:`, ALLOWED_ORIGINS);
+import env from './config/env';
+console.log(`${BOOT} CORS allowed origins:`, env.ALLOWED_ORIGINS);
 
 app.use(cors({
-  origin: ALLOWED_ORIGINS,
+  origin: env.ALLOWED_ORIGINS,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],

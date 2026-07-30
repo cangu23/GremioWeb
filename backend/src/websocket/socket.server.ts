@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import env from '../config/env';
 import prisma from '../database/prisma';
 import * as NotificationsService from '../modules/notifications/notifications.service';
+import { sanitizeMessage, isValidCuid, createSocketRateLimiter } from '../utils/sanitize';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -49,13 +50,13 @@ function broadcastOnline(guildId: string) {
 export const createSocketServer = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-        // In development, allow all origins
-        callback(null, true);
-      },
+      origin: env.ALLOWED_ORIGINS,
       credentials: true,
     },
   });
+
+  // Rate limiter: max 10 messages per 5 seconds per user
+  const messageLimiter = createSocketRateLimiter({ maxEvents: 10, windowMs: 5000 });
 
   // Authentication middleware
   io.use(async (socket: AuthenticatedSocket, next) => {
@@ -97,8 +98,16 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
     // Handle Direct Messages
     socket.on('dm:message', async (data: { receiverId: string; content: string }) => {
-      const content = data.content?.trim();
-      if (!content || content.length > 1000) return;
+      // Rate limiting
+      if (!messageLimiter.allow(userId)) {
+        socket.emit('dm:error', { message: 'Enviando mensajes muy rápido. Espera unos segundos.' });
+        return;
+      }
+      // Validate receiver ID
+      if (!data.receiverId || !isValidCuid(data.receiverId)) return;
+      // Sanitize content
+      const content = sanitizeMessage(data.content, 1000);
+      if (!content) return;
       if (data.receiverId === userId) return; // Can't DM self
 
       try {
@@ -232,9 +241,16 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
     // Send a message to a guild channel
     socket.on('guild:message', async (data: { guildId: string; channelId: string; content?: string; imageUrl?: string }) => {
-      const content = data.content?.trim();
+      // Rate limiting
+      if (!messageLimiter.allow(userId)) {
+        socket.emit('guild:error', { message: 'Enviando mensajes muy rápido. Espera unos segundos.' });
+        return;
+      }
+      // Validate IDs
+      if (!isValidCuid(data.guildId) || !isValidCuid(data.channelId)) return;
+      // Sanitize content
+      const content = data.content ? sanitizeMessage(data.content, 2000) : null;
       if (!content && !data.imageUrl) return;
-      if (content && content.length > 2000) return;
 
       try {
         // Verify membership
@@ -378,6 +394,9 @@ export const createSocketServer = (httpServer: HttpServer) => {
       // Remove from global presence tracking
       globalOnlineUsers.delete(userId);
       socket.broadcast.emit('user:offline', { userId });
+
+      // Clean up rate limiter entry
+      messageLimiter.remove(userId);
 
       // Remove user from all guilds they were in
       const guilds = socket.data.guilds as Set<string> | undefined;

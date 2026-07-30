@@ -1,26 +1,24 @@
 import { PrismaClient } from '@prisma/client';
 import path from 'path';
+import { createLogger } from '../utils/logger';
 
-const BOOT = '[BOOT]';
-
+const log = createLogger('DATABASE');
 const databaseUrl = process.env.DATABASE_URL;
 
-console.log(`${BOOT} Initializing Prisma client...`);
-console.log(`${BOOT} DATABASE_URL present: ${databaseUrl ? 'YES' : 'NO (using SQLite fallback)'}`);
-
 if (databaseUrl) {
-  // Log database host without credentials for debugging
   const maskedUrl = databaseUrl.replace(
     /postgresql:\/\/[^:]+:([^@]+)@(.+)/,
     'postgresql://***:***@$2'
   );
-  console.log(`${BOOT} Database connection: ${maskedUrl}`);
+  log.info(`Connecting to PostgreSQL: ${maskedUrl}`);
+} else {
+  log.info('DATABASE_URL not set — using local SQLite fallback');
 }
 
 // In production (Render), DATABASE_URL points to PostgreSQL.
 // In local dev, fall back to SQLite for zero-config setup.
 const prisma = databaseUrl
-  ? new PrismaClient() // PrismaClient reads DATABASE_URL from env("DATABASE_URL") in schema.prisma
+  ? new PrismaClient()
   : new PrismaClient({
       datasources: {
         db: {
@@ -29,16 +27,13 @@ const prisma = databaseUrl
       },
     });
 
-console.log(`${BOOT} Prisma client instance created`);
-
 // Test database connection on startup (non-blocking)
 prisma.$connect()
   .then(() => {
-    console.log(`${BOOT} Database connection established successfully`);
+    log.info('Database connection established successfully');
   })
   .catch((err: Error) => {
-    console.error(`${BOOT} Database connection failed:`, err.message);
-    console.error(`${BOOT} This will cause issues when querying the database`);
+    log.error(`Database connection failed: ${err.message}`);
   });
 
 export default prisma;

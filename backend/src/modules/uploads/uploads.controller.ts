@@ -37,6 +37,21 @@ interface PendingUpload {
 
 // In-memory store for pending uploads (could be moved to Redis later)
 const pendingUploads = new Map<string, PendingUpload>();
+const PENDING_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes
+const PENDING_MAX_SIZE = 1000;
+
+// Auto-cleanup stale entries every 5 minutes to prevent memory leaks
+const cleanupInterval = setInterval(() => {
+  const cutoff = Date.now() - PENDING_MAX_AGE_MS;
+  for (const [id, _upload] of pendingUploads) {
+    // Upload IDs start with a timestamp: "1690000000000-abc123"
+    const ts = parseInt(id.split('-')[0], 10);
+    if (!isNaN(ts) && ts < cutoff) {
+      pendingUploads.delete(id);
+    }
+  }
+}, PENDING_MAX_AGE_MS);
+if (cleanupInterval.unref) cleanupInterval.unref();
 
 /**
  * Process an image through the Media Engine, then emit Socket.IO event

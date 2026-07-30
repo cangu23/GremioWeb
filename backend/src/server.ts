@@ -3,63 +3,46 @@ import app from './app';
 import env from './config/env';
 import { createSocketServer } from './websocket/socket.server';
 import { startStreamMonitor } from './modules/vtubers/stream-monitor.service';
+import { seedAchievements } from './modules/gamification/gamification.service';
+import { createLogger } from './utils/logger';
 
-const BOOT = '[BOOT]';
+const log = createLogger('BOOT');
 
 // ──────────────────────────────────────────────
 // UNCAUGHT EXCEPTIONS & REJECTIONS
 // ──────────────────────────────────────────────
 
 process.on('uncaughtException', (err) => {
-  console.error(`${BOOT} [FATAL] Uncaught Exception:`, err);
-  console.error(`${BOOT} [FATAL] Stack:`, err.stack);
+  log.error('Uncaught Exception:', err);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error(`${BOOT} [FATAL] Unhandled Rejection at:`, promise);
-  console.error(`${BOOT} [FATAL] Reason:`, reason);
+  log.error('Unhandled Rejection:', reason);
 });
 
 // ──────────────────────────────────────────────
 // STARTUP
 // ──────────────────────────────────────────────
 
-console.log(`${BOOT} [${new Date().toISOString()}] Starting server...`);
-console.log(`${BOOT} Node version: ${process.version}`);
-console.log(`${BOOT} Platform: ${process.platform}`);
-console.log(`${BOOT} NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-console.log(`${BOOT} PORT: ${env.PORT}`);
+log.info(`Starting server — Node ${process.version}, ${process.platform}, NODE_ENV=${process.env.NODE_ENV || 'not set'}`);
 
 const server = http.createServer(app);
-console.log(`${BOOT} HTTP server created`);
-
-// Attach Socket.IO
-console.log(`${BOOT} Attaching Socket.IO...`);
 createSocketServer(server);
-console.log(`${BOOT} Socket.IO attached`);
-
-import { seedAchievements } from './modules/gamification/gamification.service';
+log.info('HTTP server + Socket.IO initialized');
 
 // Start automatic live stream detection
 startStreamMonitor();
 
 // Seed achievements in DB
-seedAchievements().catch(err => console.error(`${BOOT} Error seeding achievements:`, err));
+seedAchievements().catch(err => log.error('Error seeding achievements:', err));
 
-console.log(`${BOOT} Attempting to listen on port ${env.PORT}...`);
 server.listen(env.PORT, () => {
-  console.log(`${BOOT} [${new Date().toISOString()}] Server running on port ${env.PORT}`);
-  console.log(`${BOOT} Health check: http://localhost:${env.PORT}/api/health`);
-});
-
-// Log when server actually starts accepting connections
-server.on('listening', () => {
-  console.log(`${BOOT} Server listening event confirmed`);
+  log.info(`Server running on port ${env.PORT} — http://localhost:${env.PORT}/api/health`);
 });
 
 server.on('error', (err) => {
-  console.error(`${BOOT} [FATAL] Server error:`, err);
+  log.error('Server error:', err);
 });
 
 export default server;
