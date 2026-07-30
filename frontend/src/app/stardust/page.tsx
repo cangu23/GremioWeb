@@ -199,18 +199,28 @@ function StardustContent() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'right', zIndex: 1 }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+          gap: '6px',
+          zIndex: 1,
+          marginLeft: 'auto',
+        }}>
           <div style={{
             padding: '6px 14px', borderRadius: '14px',
             background: multiplier > 1 ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.08)',
             border: `1px solid ${multiplier > 1 ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'}`,
             color: multiplier > 1 ? '#f59e0b' : 'var(--text-muted)',
-            fontSize: '0.9rem', fontWeight: 800, display: 'inline-block',
+            fontSize: '0.9rem', fontWeight: 800, display: 'inline-flex',
+            alignItems: 'center', gap: '6px',
             boxShadow: multiplier > 1 ? '0 0 14px rgba(245,158,11,0.3)' : 'none',
+            whiteSpace: 'nowrap',
           }}>
             Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
           </div>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px', margin: 0 }}>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>
             {multiplier > 1 ? `Tu plan ${data?.plan} otorga un +${Math.round((multiplier - 1) * 100)}% extra` : 'Aumenta tus ganancias pasando a Premium'}
           </p>
         </div>

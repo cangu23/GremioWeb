@@ -37,9 +37,9 @@ function SparklesIcon({ size = 13, color = '#38bdf8' }: { size?: number; color?:
 }
 
 const ACTION_NAV_LINKS: Record<string, { label: string; href: string }> = {
-  POST_CREATE: { label: 'Ir al Feed', href: '/feed' },
-  COMMENT_CREATE: { label: 'Ver Posts', href: '/feed' },
-  POST_LIKE: { label: 'Explorar Feed', href: '/feed' },
+  POST_CREATE: { label: 'Ir al Feed', href: '/' },
+  COMMENT_CREATE: { label: 'Ver Posts', href: '/' },
+  POST_LIKE: { label: 'Explorar Feed', href: '/' },
   VTUBER_VISIT: { label: 'Ver VTubers', href: '/vtubers' },
   EVENT_JOIN: { label: 'Ver Eventos', href: '/events' },
   DAILY_LOGIN: { label: 'Reclamar Día', href: '/daily-rewards' },

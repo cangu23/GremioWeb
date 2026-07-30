@@ -12,7 +12,7 @@ export default function Footer() {
       { href: '/vtubers', label: 'VTubers' },
       { href: '/events', label: 'Eventos' },
       { href: '/guilds', label: 'Gremios' },
-      { href: '/feed', label: 'Feed' },
+      { href: '/', label: 'Feed' },
       { href: '/leaderboard', label: 'Ranking' },
     ],
     Comunidad: [

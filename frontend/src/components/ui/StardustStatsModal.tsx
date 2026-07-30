@@ -439,7 +439,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {/* GOLD CARD */}
                   <div className="glass" style={{
-                    padding: '24px 28px',
+                    padding: '22px 24px',
                     borderRadius: '22px',
                     background: 'linear-gradient(135deg, rgba(245,158,11,0.22), rgba(180,83,9,0.15), rgba(15,23,42,0.9))',
                     border: '1px solid rgba(245, 158, 11, 0.45)',
@@ -449,8 +449,8 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: '20px',
-                    flexWrap: 'nowrap',
+                    gap: '16px',
+                    flexWrap: 'wrap',
                   }}>
                     {/* Ambient shimmer background line */}
                     <div
@@ -465,7 +465,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                     />
 
                     {/* Left side: Avatar + Username + Big Stardust Balance */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1, minWidth: 0 }}>
                       {user && (
                         <UserAvatar
                           src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
@@ -487,7 +487,15 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                     </div>
 
                     {/* Right side: Multiplier Badge (Side Position) */}
-                    <div style={{ textAlign: 'right', flexShrink: 0, zIndex: 1 }}>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      zIndex: 1,
+                      marginLeft: 'auto',
+                    }}>
                       <div style={{
                         padding: '6px 14px',
                         borderRadius: '12px',
@@ -500,10 +508,11 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         alignItems: 'center',
                         gap: '6px',
                         boxShadow: multiplier > 1 ? '0 0 16px rgba(245,158,11,0.4)' : 'none',
+                        whiteSpace: 'nowrap',
                       }}>
                         Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
                       </div>
-                      <p style={{ fontSize: '0.74rem', color: '#d1d5db', marginTop: '6px', margin: 0, fontWeight: 600 }}>
+                      <p style={{ fontSize: '0.74rem', color: '#d1d5db', margin: 0, fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {multiplier > 1 ? `Tu plan ${data?.plan} otorga +${Math.round((multiplier - 1) * 100)}% extra` : 'Obtén Premium para +100% extra'}
                       </p>
                     </div>

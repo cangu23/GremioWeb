@@ -212,7 +212,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
       { label: 'VTubers', href: '/vtubers', icon: <Users size={16} color="var(--text-muted)" /> },
       { label: 'Eventos', href: '/events', icon: <Calendar size={16} color="var(--text-muted)" /> },
       { label: 'Gremios', href: '/guilds', icon: <Shield size={16} color="var(--text-muted)" /> },
-      { label: 'Feed', href: '/feed', icon: <FileText size={16} color="var(--text-muted)" /> },
+      { label: 'Feed', href: '/', icon: <FileText size={16} color="var(--text-muted)" /> },
       { label: 'Mensajes', href: '/chat', icon: <MessageCircle size={16} color="var(--text-muted)" /> },
       { label: 'Tienda', href: '/shop', icon: <ShoppingBag size={16} color="var(--text-muted)" /> },
       { label: 'Ranking', href: '/leaderboard', icon: <Award size={16} color="var(--text-muted)" /> },
@@ -563,7 +563,7 @@ function CreateDropdown({ closeMenu }: { closeMenu?: () => void }) {
   const canCreate = user?.role === 'VTUBER' || user?.role === 'ADMIN' || user?.role === 'MODERATOR';
 
   const actions = [
-    { icon: Icons.write, label: 'Nueva Publicación', href: '/feed', color: 'var(--primary)' },
+    { icon: Icons.write, label: 'Nueva Publicación', href: '/', color: 'var(--primary)' },
     ...(canCreate ? [
       { icon: Icons.calendar, label: 'Nuevo Evento', href: '/events/create', color: 'var(--accent)' },
       { icon: Icons.shield, label: 'Nuevo Gremio', href: '/guilds/create', color: 'var(--success)' },
@@ -863,7 +863,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
           </div>
 
           {[
-            { icon: <FileText size={18} />, label: 'Feed', href: '/feed' },
+            { icon: <FileText size={18} />, label: 'Feed', href: '/' },
             { icon: <Calendar size={18} />, label: 'Eventos', href: '/events' },
             { icon: <Shield size={18} />, label: 'Gremios', href: '/guilds' },
             { icon: <Users size={18} />, label: 'VTubers', href: '/vtubers' },
