@@ -46,8 +46,13 @@ model User {
   activeTitle   String?
   profileMusic  String?
   profileBg     String?
-  profileFrame  String?
   profilePet    String?
+  petName       String?
+  petImage2     String?
+  petLevel      Int            @default(1)
+  petExp        Int            @default(0)
+  petHunger     Int            @default(80)
+  lastFedAt     DateTime?
   profileParticles String?
   profileTheme  String?
 

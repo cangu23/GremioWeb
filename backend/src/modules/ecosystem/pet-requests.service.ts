@@ -134,6 +134,11 @@ export const approvePetRequestAdmin = async (
     where: { id: request.userId },
     data: {
       profilePet: data.image1Url.trim(),
+      petName: request.petName,
+      petImage2: data.image2Url?.trim() || null,
+      petLevel: 1,
+      petExp: 0,
+      petHunger: 100,
     },
   });
 

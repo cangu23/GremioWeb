@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 import UserAvatar, { getNoteBubbleStyle } from './UserAvatar';
+import PetWidget from './PetWidget';
 
 // ── Types ──
 interface ProfileCardData {
@@ -19,6 +20,12 @@ interface ProfileCardData {
   note?: string | null;
   noteColor?: string | null;
   noteUpdatedAt?: string | null;
+  profilePet?: string | null;
+  petName?: string | null;
+  petImage2?: string | null;
+  petLevel?: number | null;
+  petExp?: number | null;
+  petHunger?: number | null;
   vtuberProfile?: {
     displayName: string;
     avatarUrl: string | null;
@@ -430,6 +437,24 @@ function CardContent({
         }}>
           @{profile.username}
         </p>
+
+        {/* Compact Pet Badge if equipped */}
+        {profile.profilePet && (
+          <div style={{ marginTop: '4px', marginBottom: '8px' }}>
+            <PetWidget
+              compact
+              petOwnerId={profile.id}
+              petData={{
+                profilePet: profile.profilePet,
+                petName: profile.petName,
+                petImage2: profile.petImage2,
+                petLevel: profile.petLevel,
+                petExp: profile.petExp,
+                petHunger: profile.petHunger,
+              }}
+            />
+          </div>
+        )}
 
         {/* Equipped Title Tag */}
         {(equippedTitle || titleData?.title || titleData?.label) && (

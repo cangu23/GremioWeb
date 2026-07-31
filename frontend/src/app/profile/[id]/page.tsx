@@ -19,6 +19,7 @@ import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import KofiWidget from '@/components/ui/KofiWidget';
 import { SkeletonProfile } from '@/components/ui/Skeleton';
 import { getNoteBubbleStyle } from '@/components/ui/UserAvatar';
+import PetWidget from '@/components/ui/PetWidget';
 
 interface SocialUser {
   id: string;
@@ -52,6 +53,13 @@ interface SocialProfile {
   avatarUrl?: string | null;
   bio?: string | null;
   bannerColor?: string | null;
+  profilePet?: string | null;
+  petName?: string | null;
+  petImage2?: string | null;
+  petLevel?: number | null;
+  petExp?: number | null;
+  petHunger?: number | null;
+  lastFedAt?: string | null;
   vtuberProfile?: {
     id: string;
     displayName: string;
@@ -621,6 +629,27 @@ function ProfileContent() {
             }}>
               {vtuber.contentType}
             </span>
+          )}
+
+          {/* ===== PET WIDGET ===== */}
+          {profile.profilePet && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', marginBottom: '24px' }}>
+              <PetWidget
+                petOwnerId={profile.id}
+                petData={{
+                  profilePet: profile.profilePet,
+                  petName: profile.petName,
+                  petImage2: profile.petImage2,
+                  petLevel: profile.petLevel,
+                  petExp: profile.petExp,
+                  petHunger: profile.petHunger,
+                  lastFedAt: profile.lastFedAt,
+                }}
+                onPetUpdated={(updatedPet) => {
+                  setProfile((prev) => prev ? { ...prev, ...updatedPet } : null);
+                }}
+              />
+            </div>
           )}
         </div>
 

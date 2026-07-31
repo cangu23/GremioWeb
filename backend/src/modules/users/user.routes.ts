@@ -11,8 +11,13 @@ const router = Router();
 router.get('/me', authenticate, UserController.getMe);
 router.patch('/me', authenticate, validateRequest(updateUserSchema), UserController.updateMe);
 
+import * as PetController from './pet.controller';
+
 // Note (Instagram-style) — authenticated
 router.put('/note', authenticate, validateRequest(updateNoteSchema), UserController.updateNote);
+
+// Pet interaction (Feed pet with streak points/stardust)
+router.post('/pet/feed', authenticate, PetController.feedPet);
 
 // Public routes
 router.get('/search', UserController.searchUsers);
