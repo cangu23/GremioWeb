@@ -53,6 +53,7 @@ const adminNavItems = [
     section: 'Operaciones & Auth',
     items: [
       { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: 'requests', color: '#d4af37' },
+      { href: '/admin/pet-requests', label: 'Solicitudes Mascotas', icon: 'requests', color: '#ff9800' },
       { href: '/admin/codes', label: 'Códigos', icon: 'codes', color: '#a0a0a0' },
     ],
   },

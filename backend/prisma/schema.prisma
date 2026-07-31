@@ -84,6 +84,8 @@ model User {
   codesRedeemed  RoleCode[]    @relation("codeRedeemer")
   vtuberRequests VtuberRequest[]
   requestsReviewed VtuberRequest[] @relation("requestReviewer")
+  petRequests          PetRequest[] @relation("userPetRequests")
+  petRequestsReviewed  PetRequest[] @relation("petRequestReviewer")
 
   // Warnings (3 strikes system)
   warningsReceived Warning[]    @relation("warnedUser")
@@ -902,3 +904,28 @@ model SystemLog {
   context   String?
   createdAt DateTime @default(now())
 }
+
+// ========== PET REQUESTS (Solicitudes de Mascotas) ==========
+
+model PetRequest {
+  id           String   @id @default(cuid())
+  userId       String
+  petName      String
+  description  String?
+  referenceUrl String?
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNote    String?
+  image1Url    String?  // Imagen / GIF 1 de la mascota
+  image2Url    String?  // Imagen / GIF 2 de la mascota (opcional)
+  reviewerId   String?
+
+  user         User     @relation("userPetRequests", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer     User?    @relation("petRequestReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+

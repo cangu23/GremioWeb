@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../auth/authenticate';
 import * as EcosystemController from './ecosystem.controller';
+import * as PetRequestsController from './pet-requests.controller';
 
 const router = Router();
 
@@ -36,5 +37,9 @@ router.post('/chest/open', EcosystemController.openMysteryChest);
 
 router.get('/streak', EcosystemController.getDailyStreak);
 router.get('/community-challenge', EcosystemController.getCommunityChallenge);
+
+// Pet Requests (User)
+router.post('/pet-requests', PetRequestsController.createPetRequest);
+router.get('/pet-requests/my', PetRequestsController.getMyPetRequests);
 
 export default router;

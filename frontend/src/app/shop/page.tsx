@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PetRequestModal from '@/components/ui/PetRequestModal';
 
 interface ShopItem {
   id: string;
@@ -223,6 +224,7 @@ export default function ShopPage() {
   const [equipping, setEquipping] = useState<string | null>(null);
   const [category, setCategory] = useState('all');
   const [stardust, setStardust] = useState(0);
+  const [showPetModal, setShowPetModal] = useState(false);
 
   const fetchShopData = async () => {
     try {
@@ -390,6 +392,22 @@ export default function ShopPage() {
             >
               🏆 Mis Logros
             </Link>
+
+            {/* Solicitar Mascota Button */}
+            <button
+              onClick={() => setShowPetModal(true)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '12px 22px', borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(217,119,6,0.25))',
+                border: '1px solid rgba(245,158,11,0.5)',
+                color: '#fbbf24', fontWeight: 800, fontSize: '0.9rem',
+                cursor: 'pointer', transition: 'all 0.2s',
+                boxShadow: '0 4px 16px rgba(245,158,11,0.2)',
+              }}
+            >
+              🐾 Solicitar Mascota
+            </button>
           </div>
         </div>
 
@@ -609,6 +627,8 @@ export default function ShopPage() {
             })}
           </div>
         )}
+
+        <PetRequestModal isOpen={showPetModal} onClose={() => setShowPetModal(false)} />
       </div>
     </div>
   );

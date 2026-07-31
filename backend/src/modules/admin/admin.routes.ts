@@ -21,6 +21,7 @@ import * as CodesController from './codes.controller';
 import * as RequestsController from './requests.controller';
 import * as SettingsController from './settings.controller';
 import * as StickersController from './stickers.controller';
+import * as PetRequestsController from '../ecosystem/pet-requests.controller';
 
 const router = Router();
 
@@ -101,6 +102,11 @@ router.get('/vtuber-requests', validateRequest(adminQuerySchema), RequestsContro
 router.get('/vtuber-requests/:id', validateRequest(adminQuerySchema), RequestsController.getRequestDetail);
 router.post('/vtuber-requests/:id/approve', RequestsController.approveRequest);
 router.post('/vtuber-requests/:id/reject', RequestsController.rejectRequest);
+
+// ========== PET REQUESTS (Staff View & Approve) ==========
+router.get('/pet-requests', PetRequestsController.listPetRequestsAdmin);
+router.post('/pet-requests/:id/approve', PetRequestsController.approvePetRequestAdmin);
+router.post('/pet-requests/:id/reject', PetRequestsController.rejectPetRequestAdmin);
 
 // ========== LOGS (Staff) ==========
 router.get('/logs', validateRequest(adminQuerySchema), AdminController.listLogs);
