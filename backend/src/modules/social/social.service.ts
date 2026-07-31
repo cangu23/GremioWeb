@@ -91,6 +91,7 @@ export const getFollowers = async (userId: string) => {
     return {
       ...f.follower,
       note: isExpired ? null : f.follower.note,
+      noteColor: isExpired ? null : f.follower.noteColor,
       noteUpdatedAt: isExpired ? null : f.follower.noteUpdatedAt,
       vtuberProfile: f.follower.vtuberProfile ? {
         ...f.follower.vtuberProfile,
@@ -108,6 +109,7 @@ export const getFollowing = async (userId: string) => {
     return {
       ...f.following,
       note: isExpired ? null : f.following.note,
+      noteColor: isExpired ? null : f.following.noteColor,
       noteUpdatedAt: isExpired ? null : f.following.noteUpdatedAt,
       vtuberProfile: f.following.vtuberProfile ? {
         ...f.following.vtuberProfile,

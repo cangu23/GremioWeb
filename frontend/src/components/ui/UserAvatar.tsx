@@ -9,6 +9,7 @@ interface UserAvatarProps {
   alt: string;
   size?: number;
   note?: string | null;
+  noteColor?: string | null;
   noteUpdatedAt?: string | null;
   userId?: string;
   isVerified?: boolean;
@@ -93,7 +94,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function UserAvatar({
-  src, alt, size = 40, note, noteUpdatedAt, userId,
+  src, alt, size = 40, note, noteColor, noteUpdatedAt, userId,
   isVerified, isLive, frameUrl, equippedFrame, purchases, user, className, style,
 }: UserAvatarProps) {
   const { user: currentUser } = useAuth();
@@ -114,6 +115,7 @@ export default function UserAvatar({
   const [profileCardUserId, setProfileCardUserId] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
   const hasNote = !!note;
+  const customNoteColor = noteColor || user?.noteColor || (isSelf ? (currentUser as any)?.noteColor : null);
   const ringSize = size + 6; // 3px padding per side
   const noteDotSize = Math.max(10, Math.round(size * 0.28));
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -270,11 +272,11 @@ export default function UserAvatar({
             bottom: '-2px', right: '-2px',
             width: noteDotSize, height: noteDotSize,
             borderRadius: '50%',
-            background: 'var(--primary)',
+            background: customNoteColor || 'var(--primary)',
             border: `2px solid var(--background)`,
             zIndex: 2,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 8px rgba(139,92,246,0.5)',
+            boxShadow: `0 0 8px ${customNoteColor || 'rgba(139,92,246,0.5)'}`,
           }}
         >
           <svg width={noteDotSize * 0.5} height={noteDotSize * 0.5} viewBox="0 0 24 24" fill="white" stroke="none">
@@ -317,8 +319,8 @@ export default function UserAvatar({
             borderRadius: '14px',
             background: 'linear-gradient(135deg, rgba(28,25,50,0.97), rgba(15,14,30,0.97))',
             backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(139,92,246,0.4)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.5), 0 0 12px rgba(139,92,246,0.2)',
+            border: `1px solid ${customNoteColor ? customNoteColor + '80' : 'rgba(139,92,246,0.4)'}`,
+            boxShadow: `0 4px 16px rgba(0,0,0,0.5), 0 0 12px ${customNoteColor ? customNoteColor + '40' : 'rgba(139,92,246,0.2)'}`,
             zIndex: 20,
             maxWidth: '140px',
             whiteSpace: 'nowrap',
@@ -345,8 +347,8 @@ export default function UserAvatar({
               width: '8px',
               height: '8px',
               background: 'rgba(28,25,50,0.97)',
-              borderRight: '1px solid rgba(139,92,246,0.4)',
-              borderBottom: '1px solid rgba(139,92,246,0.4)',
+              borderRight: `1px solid ${customNoteColor ? customNoteColor + '80' : 'rgba(139,92,246,0.4)'}`,
+              borderBottom: `1px solid ${customNoteColor ? customNoteColor + '80' : 'rgba(139,92,246,0.4)'}`,
               borderRadius: '0 0 2px 0',
               zIndex: -1,
             }}
@@ -366,8 +368,8 @@ export default function UserAvatar({
             borderRadius: '18px',
             background: 'linear-gradient(135deg, rgba(30,28,55,0.98), rgba(20,20,40,0.98))',
             backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(139,92,246,0.4)',
-            boxShadow: '0 12px 48px rgba(0,0,0,0.6), 0 0 60px rgba(139,92,246,0.2)',
+            border: `1px solid ${customNoteColor ? customNoteColor + '80' : 'rgba(139,92,246,0.4)'}`,
+            boxShadow: `0 12px 48px rgba(0,0,0,0.6), 0 0 60px ${customNoteColor ? customNoteColor + '40' : 'rgba(139,92,246,0.2)'}`,
             zIndex: 100,
             minWidth: '150px',
             maxWidth: '280px',
@@ -381,7 +383,7 @@ export default function UserAvatar({
           {/* Decorative top gradient line */}
           <div style={{
             position: 'absolute', top: 0, left: '20%', right: '20%', height: '2px',
-            background: 'linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent)',
+            background: `linear-gradient(90deg, transparent, ${customNoteColor || 'var(--primary)'}, transparent)`,
             borderRadius: '1px',
           }} />
 
@@ -408,8 +410,8 @@ export default function UserAvatar({
               bottom: '-8px', left: '50%', transform: 'translateX(-50%) rotate(45deg)',
               width: '14px', height: '14px',
               background: 'rgba(30,28,55,0.98)',
-              borderRight: '1px solid rgba(139,92,246,0.4)',
-              borderBottom: '1px solid rgba(139,92,246,0.4)',
+              borderRight: `1px solid ${customNoteColor ? customNoteColor + '80' : 'rgba(139,92,246,0.4)'}`,
+              borderBottom: `1px solid ${customNoteColor ? customNoteColor + '80' : 'rgba(139,92,246,0.4)'}`,
               borderRadius: '0 0 4px 0',
               zIndex: -1,
             }}

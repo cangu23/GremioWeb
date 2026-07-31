@@ -42,6 +42,7 @@ export const getFollowers = (userId: string) => {
           avatarUrl: true,
           role: true,
           note: true,
+          noteColor: true,
           noteUpdatedAt: true,
           noteExpiresAt: true,
           vtuberProfile: {
@@ -73,6 +74,7 @@ export const getFollowing = (userId: string) => {
           avatarUrl: true,
           role: true,
           note: true,
+          noteColor: true,
           noteUpdatedAt: true,
           noteExpiresAt: true,
           vtuberProfile: {

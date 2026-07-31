@@ -17,6 +17,7 @@ interface ProfileCardData {
   displayName?: string | null;
   avatarUrl?: string | null;
   note?: string | null;
+  noteColor?: string | null;
   noteUpdatedAt?: string | null;
   vtuberProfile?: {
     displayName: string;
@@ -342,8 +343,8 @@ function CardContent({
               borderRadius: '14px',
               background: 'linear-gradient(135deg, rgba(28,25,50,0.97), rgba(15,14,30,0.97))',
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(139,92,246,0.4)',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.5), 0 0 10px rgba(139,92,246,0.2)',
+              border: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.4)'}`,
+              boxShadow: `0 4px 14px rgba(0,0,0,0.5), 0 0 10px ${profile.noteColor ? profile.noteColor + '40' : 'rgba(139,92,246,0.2)'}`,
               maxWidth: '180px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -363,8 +364,8 @@ function CardContent({
                 transform: 'translateX(-50%) rotate(45deg)',
                 width: '8px', height: '8px',
                 background: 'rgba(28,25,50,0.97)',
-                borderRight: '1px solid rgba(139,92,246,0.4)',
-                borderBottom: '1px solid rgba(139,92,246,0.4)',
+                borderRight: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.4)'}`,
+                borderBottom: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.4)'}`,
                 borderRadius: '0 0 2px 0',
                 zIndex: -1,
               }} />

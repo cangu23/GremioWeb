@@ -5,8 +5,9 @@ import { useState, useEffect, useRef } from 'react';
 interface NoteModalProps {
   isOpen: boolean;
   currentNote: string;
+  currentNoteColor?: string | null;
   onClose: () => void;
-  onSave: (note: string, durationHours?: number) => Promise<void>;
+  onSave: (note: string, durationHours?: number, noteColor?: string) => Promise<void>;
 }
 
 const DURATION_OPTIONS = [
@@ -17,9 +18,21 @@ const DURATION_OPTIONS = [
   { value: 0, label: 'Sin límite', title: 'Hasta eliminar' },
 ];
 
-export default function NoteModal({ isOpen, currentNote, onClose, onSave }: NoteModalProps) {
+const NOTE_COLORS = [
+  { value: '#8b5cf6', name: 'Neón Púrpura' },
+  { value: '#ec4899', name: 'Rosa Neón' },
+  { value: '#3b82f6', name: 'Azul Estelar' },
+  { value: '#06b6d4', name: 'Cian Neón' },
+  { value: '#10b981', name: 'Esmeralda' },
+  { value: '#f59e0b', name: 'Dorado Estelar' },
+  { value: '#ef4444', name: 'Rojo Neón' },
+  { value: '#a855f7', name: 'Orquídea' },
+];
+
+export default function NoteModal({ isOpen, currentNote, currentNoteColor, onClose, onSave }: NoteModalProps) {
   const [text, setText] = useState(currentNote);
   const [duration, setDuration] = useState<number>(24);
+  const [selectedColor, setSelectedColor] = useState<string>(currentNoteColor || '#8b5cf6');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -29,11 +42,12 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
     if (isOpen) {
       setText(currentNote);
       setDuration(24);
+      setSelectedColor(currentNoteColor || '#8b5cf6');
       setError('');
       // Focus after animation
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen, currentNote]);
+  }, [isOpen, currentNote, currentNoteColor]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,7 +58,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, text, duration]);
+  }, [isOpen, text, duration, selectedColor]);
 
   const handleSave = async () => {
     const trimmed = text.trim();
@@ -55,7 +69,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
     setSaving(true);
     setError('');
     try {
-      await onSave(trimmed || '', duration);
+      await onSave(trimmed || '', duration, selectedColor);
     } catch {
       setError('Error al guardar. Intenta de nuevo.');
     } finally {
@@ -223,7 +237,7 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
         </div>
 
         {/* Duración de la nota */}
-        <div style={{ marginBottom: '18px' }}>
+        <div style={{ marginBottom: '16px' }}>
           <div style={{
             fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)',
             marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px'
@@ -263,6 +277,45 @@ export default function NoteModal({ isOpen, currentNote, onClose, onSave }: Note
                 >
                   {opt.label}
                 </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Color de la nota */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{
+            fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)',
+            marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px'
+          }}>
+            <span>🎨 Color del Estado / Nota</span>
+          </div>
+
+          <div style={{
+            display: 'flex', gap: '8px', flexWrap: 'wrap',
+            background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '14px',
+            border: '1px solid rgba(255,255,255,0.06)', justifyContent: 'space-between',
+          }}>
+            {NOTE_COLORS.map(c => {
+              const isSelected = selectedColor === c.value;
+              return (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setSelectedColor(c.value)}
+                  title={c.name}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: c.value,
+                    border: isSelected ? '2px solid #ffffff' : '2px solid transparent',
+                    boxShadow: isSelected ? `0 0 14px ${c.value}` : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    transform: isSelected ? 'scale(1.15)' : 'scale(1)',
+                  }}
+                />
               );
             })}
           </div>

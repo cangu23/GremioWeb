@@ -70,8 +70,14 @@ export const searchUsers = async (query: string) => {
   return UserRepository.searchByUsername(query);
 };
 
-export const updateNote = async (userId: string, note: string | null, durationHours?: number | null) => {
+export const updateNote = async (
+  userId: string,
+  note: string | null,
+  durationHours?: number | null,
+  noteColor?: string | null
+) => {
   const trimmed = note?.trim() || null;
+  const color = noteColor?.trim() || null;
   if (trimmed && trimmed.length > 100) {
     throw new AppError('La nota no puede tener más de 100 caracteres', 400);
   }
@@ -89,11 +95,13 @@ export const updateNote = async (userId: string, note: string | null, durationHo
 
   const updated = await UserRepository.updateUser(userId, {
     note: trimmed,
+    noteColor: trimmed ? color : null,
     noteUpdatedAt: trimmed ? new Date() : null,
     noteExpiresAt,
   });
   return {
     note: updated.note,
+    noteColor: updated.noteColor,
     noteUpdatedAt: updated.noteUpdatedAt,
     noteExpiresAt: updated.noteExpiresAt,
   };

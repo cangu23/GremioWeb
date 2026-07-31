@@ -69,8 +69,8 @@ export const searchUsers = async (req: Request, res: Response, next: NextFunctio
 export const updateNote = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
-    const { note, durationHours } = req.body;
-    const result = await UserService.updateNote(userId, note, durationHours);
+    const { note, durationHours, noteColor } = req.body;
+    const result = await UserService.updateNote(userId, note, durationHours, noteColor);
     res.json(result);
   } catch (error) {
     next(error);

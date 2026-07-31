@@ -45,6 +45,7 @@ interface SocialProfile {
   xp: number;
   level: number;
   note: string | null;
+  noteColor?: string | null;
   noteUpdatedAt: string | null;
   displayName?: string | null;
   avatarUrl?: string | null;
@@ -352,8 +353,8 @@ function ProfileContent() {
               borderRadius: '16px',
               background: 'linear-gradient(135deg, rgba(28,25,50,0.97), rgba(15,14,30,0.97))',
               backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(139,92,246,0.45)',
-              boxShadow: '0 4px 18px rgba(0,0,0,0.5), 0 0 14px rgba(139,92,246,0.2)',
+              border: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.45)'}`,
+              boxShadow: `0 4px 18px rgba(0,0,0,0.5), 0 0 14px ${profile.noteColor ? profile.noteColor + '40' : 'rgba(139,92,246,0.2)'}`,
               maxWidth: '220px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -371,8 +372,8 @@ function ProfileContent() {
                 transform: 'translateX(-50%) rotate(45deg)',
                 width: '9px', height: '9px',
                 background: 'rgba(28,25,50,0.97)',
-                borderRight: '1px solid rgba(139,92,246,0.45)',
-                borderBottom: '1px solid rgba(139,92,246,0.45)',
+                borderRight: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.45)'}`,
+                borderBottom: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.45)'}`,
                 borderRadius: '0 0 2px 0',
                 zIndex: -1,
               }} />
@@ -846,13 +847,14 @@ function ProfileContent() {
           <NoteModal
             isOpen={showNoteModal}
             currentNote={profile.note || ''}
+            currentNoteColor={profile.noteColor}
             onClose={() => setShowNoteModal(false)}
-            onSave={async (note: string, durationHours?: number) => {
+            onSave={async (note: string, durationHours?: number, noteColor?: string) => {
               const data = await apiFetch('/user/note', {
                 method: 'PUT',
-                body: JSON.stringify({ note: note || null, durationHours }),
+                body: JSON.stringify({ note: note || null, durationHours, noteColor }),
               });
-              setProfile(prev => prev ? { ...prev, note: data.note, noteUpdatedAt: data.noteUpdatedAt } : prev);
+              setProfile(prev => prev ? { ...prev, note: data.note, noteColor: data.noteColor, noteUpdatedAt: data.noteUpdatedAt } : prev);
               setShowNoteModal(false);
             }}
           />
