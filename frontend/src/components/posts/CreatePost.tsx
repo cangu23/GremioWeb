@@ -161,7 +161,7 @@ export default function CreatePost({
       const post = await apiFetch('/posts', {
         method: 'POST',
         body: JSON.stringify({
-          content: content.trim() || '(imagen)',
+          content: content.trim(),
           mediaUrl,
           mentions: mentionIds.length > 0 ? mentionIds : undefined,
         }),

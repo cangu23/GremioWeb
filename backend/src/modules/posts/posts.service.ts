@@ -24,7 +24,7 @@ export const createPost = async (payload: CreatePostPayload, userId: string, men
 
   // Process hashtags
   const hashtagRegex = /#(\w+)/g;
-  const hashtags = payload.content.match(hashtagRegex);
+  const hashtags = cleanContent ? cleanContent.match(hashtagRegex) : null;
   if (hashtags) {
     for (const tag of hashtags) {
       const name = tag.slice(1); // Remove #

@@ -292,9 +292,11 @@ export default function FeaturedVtubersSection() {
                       fontSize: '0.82rem', color: 'var(--text-secondary)',
                       lineHeight: 1.6,
                     }}>
-                      <p style={{ overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                        {post.content}
-                      </p>
+                      {post.content && post.content !== '(imagen)' && post.content !== '[imagen]' && post.content.trim() !== '' && (
+                        <p style={{ overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          {post.content}
+                        </p>
+                      )}
                       <div style={{
                         display: 'flex', gap: '10px', marginTop: '6px',
                         fontSize: '0.7rem', color: 'var(--text-muted)',

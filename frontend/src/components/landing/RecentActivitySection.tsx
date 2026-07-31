@@ -255,12 +255,14 @@ function ActivityPosts({ data }: { data: ActivityPost[] }) {
               <span style={{ color: 'var(--text-muted)' }}> · {formatTimeAgo(post.createdAt)}</span>
             </div>
           </div>
-          <p style={{
-            fontSize: '0.85rem', lineHeight: 1.6, color: 'var(--text-muted)',
-            whiteSpace: 'pre-wrap',
-          }}>
-            {post.content}
-          </p>
+          {post.content && post.content !== '(imagen)' && post.content !== '[imagen]' && post.content.trim() !== '' && (
+            <p style={{
+              fontSize: '0.85rem', lineHeight: 1.6, color: 'var(--text-muted)',
+              whiteSpace: 'pre-wrap',
+            }}>
+              {post.content}
+            </p>
+          )}
           <div style={{
             display: 'flex', gap: '12px', marginTop: '8px',
             paddingTop: '8px', borderTop: '1px solid var(--glass-border)',

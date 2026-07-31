@@ -577,9 +577,12 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               </button>
             </div>
           </div>
-        ) : (            <p style={{ fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: '8px' }}>
-            {renderContentWithMentions(post.content)}
-          </p>
+        ) : (
+          post.content && post.content !== '(imagen)' && post.content !== '[imagen]' && post.content.trim() !== '' && (
+            <p style={{ fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: '8px' }}>
+              {renderContentWithMentions(post.content)}
+            </p>
+          )
         )}
 
         {/* ===== MEDIA ===== */}

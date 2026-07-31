@@ -1097,15 +1097,17 @@ function ProfileContent() {
                     </div>
 
                     {/* Content */}
-                    <p style={{
-                      fontSize: '0.9rem', lineHeight: 1.6,
-                      whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                      marginBottom: post.mediaUrl ? '10px' : 0,
-                    }}>
-                      {post.content.length > 280
-                        ? post.content.slice(0, 280) + '...'
-                        : post.content}
-                    </p>
+                    {post.content && post.content !== '(imagen)' && post.content !== '[imagen]' && post.content.trim() !== '' && (
+                      <p style={{
+                        fontSize: '0.9rem', lineHeight: 1.6,
+                        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                        marginBottom: post.mediaUrl ? '10px' : 0,
+                      }}>
+                        {post.content.length > 280
+                          ? post.content.slice(0, 280) + '...'
+                          : post.content}
+                      </p>
+                    )}
 
                     {/* Media */}
                     {post.mediaUrl && (
