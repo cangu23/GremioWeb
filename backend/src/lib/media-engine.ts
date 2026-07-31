@@ -16,6 +16,33 @@ export interface OptimizeResult {
   error?: string;
 }
 
+export function normalizeMediaUrl(url?: string | null): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+
+  // If already absolute URL
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  // If Cloudinary returned a relative public path (e.g. "v1785537025/gremio-estelar/pets/...")
+  if (trimmed.startsWith('v1') || trimmed.startsWith('v17') || trimmed.startsWith('gremio-estelar/')) {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'dc10f4n6m';
+    return `https://res.cloudinary.com/${cloudName}/image/upload/${trimmed}`;
+  }
+
+  // If local uploads relative path
+  if (trimmed.startsWith('/uploads/')) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('uploads/')) {
+    return `/${trimmed}`;
+  }
+
+  return trimmed;
+}
+
 /**
  * Send a buffer to the Python Media Engine for optimization + R2 upload.
  * Falls back to local Sharp processing + Cloudinary if the engine is unreachable.
@@ -58,11 +85,15 @@ export async function optimizeImage(
     }
 
     const data: OptimizeResult = await res.json();
+    const normalizedUrl = normalizeMediaUrl(data.url);
     console.log(
       `🎞️ [MediaEngine] ${folder}: ${((data.original_size_bytes || 0) / 1024).toFixed(1)}KB → ${((data.size_bytes || 0) / 1024).toFixed(1)}KB ` +
       `(${data.animated ? 'animated ' : ''}${data.format})`
     );
-    return data;
+    return {
+      ...data,
+      url: normalizedUrl,
+    };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.warn(`⚠️ [MediaEngine] Engine unreachable, falling back to Sharp: ${message}`);
@@ -127,7 +158,7 @@ async function fallbackToSharp(
   );
 
   try {
-    const url = await new Promise<string>((resolve, reject) => {
+    const rawUrl = await new Promise<string>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: `gremio-estelar/${folder}`,
@@ -136,11 +167,14 @@ async function fallbackToSharp(
         (error: UploadApiErrorResponse | undefined, result?: UploadApiResponse) => {
           if (error) return reject(error);
           if (!result) return reject(new Error('Cloudinary upload returned no result'));
-          resolve(result.secure_url);
+          const outUrl = result.secure_url || result.url || result.public_id;
+          resolve(outUrl);
         }
       );
       uploadStream.end(compressed);
     });
+
+    const url = normalizeMediaUrl(rawUrl);
 
     return {
       status: 'ok',

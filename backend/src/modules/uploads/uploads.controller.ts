@@ -121,8 +121,8 @@ async function handleUpload(
     const user = (req as any).user;
     const isGif = req.file.mimetype === 'image/gif';
 
-    // Restringir GIFs a roles premium/VTUBER
-    if (isGif && user?.role === 'USER') {
+    // Restringir GIFs a roles premium/VTUBER (permitido para mascotas y stickers)
+    if (isGif && user?.role === 'USER' && folder !== 'pets' && folder !== 'stickers') {
       res.status(403).json({ status: 'error', message: 'Usar GIFs es una función exclusiva para VTubers y premium.' });
       return;
     }
@@ -130,20 +130,40 @@ async function handleUpload(
     // Generate a unique upload ID for tracking
     const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    // Start processing in background (non-blocking)
-    processAndNotify(uploadId, req.file.buffer, user?.id, folder, {
+    const result = await optimizeImage(req.file.buffer, {
+      folder,
       keepAnimation: isGif && options.keepAnimation !== false,
       maxWidth: options.maxWidth,
       quality: options.quality,
     });
 
-    // Respond immediately with the upload ID (non-blocking)
-    res.json({
-      status: 'processing',
-      id: uploadId,
-      message: 'Imagen en procesamiento. Recibirás la URL vía WebSocket cuando esté lista.',
-      filename: req.file.originalname,
-    });
+    if (result.status === 'ok' && result.url) {
+      pendingUploads.set(uploadId, {
+        id: uploadId,
+        userId: user?.id,
+        status: 'ready',
+        url: result.url,
+      });
+
+      if (user?.id) {
+        ioContext.instance?.to(`user:${user.id}`).emit('media:ready', {
+          id: uploadId,
+          url: result.url,
+          format: result.format,
+          size_bytes: result.size_bytes,
+          animated: result.animated,
+        });
+      }
+
+      res.json({
+        status: 'ok',
+        id: uploadId,
+        url: result.url,
+        filename: req.file.originalname,
+      });
+    } else {
+      res.status(500).json({ status: 'error', message: result.error || 'Error al procesar la imagen.' });
+    }
   } catch (err) {
     next(err);
   }
