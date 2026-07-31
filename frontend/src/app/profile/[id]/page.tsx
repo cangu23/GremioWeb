@@ -463,34 +463,6 @@ function ProfileContent() {
                 displayName.charAt(0).toUpperCase()
               )}
             </div>
-
-            {/* Pet Companion floating beside Avatar */}
-            {profile.profilePet && (
-              <div style={{
-                position: 'absolute',
-                right: 'calc(-65px - 1vw)',
-                bottom: '0px',
-                zIndex: 10,
-              }}>
-                <PetWidget
-                  companion
-                  petOwnerId={profile.id}
-                  petOwnerUsername={profile.username}
-                  petData={{
-                    profilePet: profile.profilePet,
-                    petName: profile.petName,
-                    petImage2: profile.petImage2,
-                    petLevel: profile.petLevel,
-                    petExp: profile.petExp,
-                    petHunger: profile.petHunger,
-                    lastFedAt: profile.lastFedAt,
-                  }}
-                  onPetUpdated={(updatedPet) => {
-                    setProfile((prev) => prev ? { ...prev, ...updatedPet } : null);
-                  }}
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -1052,6 +1024,27 @@ function ProfileContent() {
 
           {/* ===== RIGHT COLUMN — POSTS FEED ===== */}
           <div style={{ borderLeft: `3px solid ${themeColor}`, paddingLeft: '16px' }}>
+            {/* Crisp Frameless Pet Character floating above Galería */}
+            {profile.profilePet && (
+              <PetWidget
+                frameless
+                petOwnerId={profile.id}
+                petOwnerUsername={profile.username}
+                petData={{
+                  profilePet: profile.profilePet,
+                  petName: profile.petName,
+                  petImage2: profile.petImage2,
+                  petLevel: profile.petLevel,
+                  petExp: profile.petExp,
+                  petHunger: profile.petHunger,
+                  lastFedAt: profile.lastFedAt,
+                }}
+                onPetUpdated={(updatedPet) => {
+                  setProfile((prev) => prev ? { ...prev, ...updatedPet } : null);
+                }}
+              />
+            )}
+
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               marginBottom: '16px',

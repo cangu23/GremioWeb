@@ -22,6 +22,7 @@ interface PetWidgetProps {
   onPetUpdated?: (updatedPet: any) => void;
   compact?: boolean;
   companion?: boolean;
+  frameless?: boolean;
 }
 
 export default function PetWidget({
@@ -31,6 +32,7 @@ export default function PetWidget({
   onPetUpdated,
   compact = false,
   companion = false,
+  frameless = false,
 }: PetWidgetProps) {
   const { showToast } = useToast();
   const { user } = useAuth();
@@ -129,6 +131,155 @@ export default function PetWidget({
         <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ffd700' }}>
           {petName} (Niv. {level})
         </span>
+      </div>
+    );
+  }
+
+  // Frameless Mode (Clean crisp image without any card or frame, above Galería)
+  if (frameless) {
+    return (
+      <div
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          marginBottom: '24px',
+          width: '100%',
+        }}
+      >
+        {/* Floating Hearts / Particle Animation */}
+        {showHearts && (
+          <div style={{
+            position: 'absolute', top: '-20px', left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '1.6rem',
+            animation: 'ping 1s cubic-bezier(0,0,0.2,1) infinite',
+            pointerEvents: 'none',
+            zIndex: 12,
+          }}>
+            🍖💖✨
+          </div>
+        )}
+
+        {/* Level Up Banner Overlay */}
+        {levelUpEffect && (
+          <div style={{
+            position: 'absolute', top: '-16px',
+            background: 'linear-gradient(135deg, #ffd700, #ff8c00)',
+            color: '#000', fontWeight: 900, fontSize: '0.75rem',
+            padding: '3px 12px', borderRadius: '12px',
+            boxShadow: '0 0 20px rgba(255,215,0,0.8)',
+            animation: 'bounce 0.6s infinite alternate',
+            zIndex: 15,
+          }}>
+            ⚡ LEVEL UP! ⚡
+          </div>
+        )}
+
+        {/* Crisp Pet Character (NO FRAME, NO CARD, NO BORDER) */}
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '6px',
+          marginBottom: '8px',
+        }}>
+          <img
+            src={activeImage}
+            alt={petName}
+            style={{
+              maxHeight: '170px',
+              maxWidth: '100%',
+              objectFit: 'contain',
+              imageRendering: 'auto',
+              animation: isFeeding ? 'bounce 0.4s infinite' : 'pulse 3.5s infinite ease-in-out',
+              transition: 'transform 0.25s ease',
+              transform: isHovered ? 'scale(1.06)' : 'scale(1)',
+              cursor: 'pointer',
+            }}
+            onClick={handleFeed}
+            title={`🐾 ${petName} — Haz clic para alimentar`}
+          />
+        </div>
+
+        {/* Sleek Floating Controls Bar */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '14px',
+          flexWrap: 'wrap',
+          width: '100%',
+          maxWidth: '480px',
+          padding: '8px 16px',
+          borderRadius: '16px',
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(8px)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff' }}>
+              🐾 {petName}
+            </span>
+            <span style={{
+              fontSize: '0.7rem', fontWeight: 800, color: '#ffd700',
+              padding: '2px 8px', borderRadius: '8px',
+              background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.3)',
+            }}>
+              Niv. {level}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, maxWidth: '200px' }}>
+            <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '2px', fontWeight: 600 }}>
+                <span>XP</span>
+                <span>{expInLevel}/100</span>
+              </div>
+              <div style={{ width: '100%', height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{ width: `${expInLevel}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', borderRadius: '3px' }} />
+              </div>
+            </div>
+
+            <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '2px', fontWeight: 600 }}>
+                <span>🍔</span>
+                <span>{hunger}%</span>
+              </div>
+              <div style={{ width: '100%', height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${hunger}%`, height: '100%',
+                  background: hunger > 50 ? '#10b981' : hunger > 20 ? '#f59e0b' : '#ef4444',
+                  borderRadius: '3px',
+                }} />
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleFeed}
+            disabled={isFeeding}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '10px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#ffffff',
+              fontWeight: 800,
+              fontSize: '0.75rem',
+              cursor: isFeeding ? 'wait' : 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: '0 3px 10px rgba(245,158,11,0.3)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isFeeding ? '🍖...' : isOwnPet ? '🍖 Alimentar (25⭐)' : `🍖 Regalar Comida (25⭐)`}
+          </button>
+        </div>
       </div>
     );
   }
