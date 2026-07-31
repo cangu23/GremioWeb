@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PetRequestModal from '@/components/ui/PetRequestModal';
 
 interface ShopItem {
   id: string;
@@ -192,6 +193,7 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [actionId, setActionId] = useState<string | null>(null);
+  const [showPetModal, setShowPetModal] = useState(false);
 
   const refreshInventory = async () => {
     try {
@@ -322,8 +324,25 @@ export default function InventoryPage() {
             >
               🏆 Mis Logros
             </Link>
+
+            <button
+              onClick={() => setShowPetModal(true)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '10px 22px', borderRadius: '14px',
+                background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(217,119,6,0.25))',
+                border: '1px solid rgba(245,158,11,0.5)',
+                color: '#fbbf24', fontWeight: 800, fontSize: '0.88rem',
+                cursor: 'pointer', transition: 'all 0.2s',
+                boxShadow: '0 4px 14px rgba(245,158,11,0.2)',
+              }}
+            >
+              🐾 Solicitar Mascota
+            </button>
           </div>
         </div>
+
+        <PetRequestModal isOpen={showPetModal} onClose={() => setShowPetModal(false)} />
 
         {/* Filters */}
         <div style={{

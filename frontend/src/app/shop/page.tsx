@@ -435,6 +435,37 @@ export default function ShopPage() {
           ))}
         </div>
 
+        {/* Callout Banner para Solicitar Mascota */}
+        <div style={{
+          margin: '0 auto 32px', maxWidth: '800px',
+          padding: '18px 24px', borderRadius: '20px',
+          background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.1))',
+          border: '1px solid rgba(245,158,11,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
+          flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <span style={{ fontSize: '2rem' }}>🐾</span>
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fbbf24' }}>¿Quieres tu propia Mascota en tu Perfil?</div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Solicita tu mascota personalizada o GIF y el Staff la aprobará para ti.</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowPetModal(true)}
+            style={{
+              padding: '10px 20px', borderRadius: '14px', border: 'none',
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#ffffff', fontWeight: 800, fontSize: '0.85rem',
+              cursor: 'pointer', transition: 'all 0.2s',
+              boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🐾 Solicitar Mascota
+          </button>
+        </div>
+
         {/* Items grid */}
         {filteredItems.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
