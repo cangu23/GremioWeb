@@ -3,6 +3,14 @@ import { prisma } from '../../database';
 
 export const getRecentActivity = async (_req: Request, res: Response, next: NextFunction) => {
   try {
+    await prisma.event.updateMany({
+      where: {
+        date: { lt: new Date() },
+        status: { in: ['UPCOMING', 'ONGOING'] },
+      },
+      data: { status: 'FINISHED' },
+    }).catch(() => {});
+
     const [recentPosts, upcomingEvents, recentVtubers] = await Promise.all([
       // Latest 5 posts
       prisma.post.findMany({

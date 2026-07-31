@@ -24,7 +24,24 @@ export const createEvent = (data: {
   });
 };
 
-export const findEventById = (id: string) => {
+export const autoUpdateExpiredEvents = async () => {
+  try {
+    await prisma.event.updateMany({
+      where: {
+        date: { lt: new Date() },
+        status: { in: ['UPCOMING', 'ONGOING'] },
+      },
+      data: {
+        status: 'FINISHED',
+      },
+    });
+  } catch {
+    // Ignore error
+  }
+};
+
+export const findEventById = async (id: string) => {
+  await autoUpdateExpiredEvents();
   return prisma.event.findUnique({
     where: { id },
     include: {
@@ -40,7 +57,8 @@ export const findEventById = (id: string) => {
   });
 };
 
-export const findAllEvents = (status?: string) => {
+export const findAllEvents = async (status?: string) => {
+  await autoUpdateExpiredEvents();
   const where = status ? { status } : {};
   return prisma.event.findMany({
     where,
@@ -101,7 +119,8 @@ export const countAttendees = (eventId: string) => {
   return prisma.eventAttendee.count({ where: { eventId } });
 };
 
-export const findUserEvents = (userId: string) => {
+export const findUserEvents = async (userId: string) => {
+  await autoUpdateExpiredEvents();
   return prisma.eventAttendee.findMany({
     where: { userId },
     include: {

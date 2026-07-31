@@ -30,6 +30,7 @@ interface EventItem {
 function EventCard({ event }: { event: EventItem }) {
   const eventDate = new Date(event.date);
   const isPast = eventDate < new Date();
+  const effectiveStatus = (isPast && (event.status === 'UPCOMING' || event.status === 'ONGOING')) ? 'FINISHED' : event.status;
 
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
     UPCOMING: { label: 'Próximo', color: 'var(--accent)', bg: 'rgba(0,212,255,0.1)' },
@@ -38,7 +39,7 @@ function EventCard({ event }: { event: EventItem }) {
     CANCELLED: { label: 'Cancelado', color: 'var(--error)', bg: 'rgba(255,77,79,0.1)' },
   };
 
-  const cfg = statusConfig[event.status] || statusConfig.UPCOMING;
+  const cfg = statusConfig[effectiveStatus] || statusConfig.UPCOMING;
 
   return (
     <Link
@@ -168,11 +169,25 @@ function EventsContent() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  const filteredEvents = events.filter((ev) => {
+    const isPast = new Date(ev.date) < new Date();
+    if (filter === 'UPCOMING') {
+      return !isPast && (ev.status === 'UPCOMING' || ev.status === 'ONGOING');
+    }
+    if (filter === 'FINISHED') {
+      return isPast || ev.status === 'FINISHED';
+    }
+    if (filter === 'ONGOING') {
+        return ev.status === 'ONGOING';
+    }
+    return true;
+  });
 
   const filters = [
     { value: '', label: 'Todos' },
@@ -248,20 +263,14 @@ function EventsContent() {
       {/* Content */}
       {error ? (
         <div className="glass" style={{
-          padding: '60px 40px', textAlign: 'center', borderRadius: '20px',
-          border: '1px solid rgba(255,77,79,0.2)',
-          background: 'rgba(255,77,79,0.03)',
+          padding: '40px', textAlign: 'center', borderRadius: '20px',
+          border: '1px solid var(--glass-border)',
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px', fontWeight: 700, color: 'var(--error)' }}>!</div>
-          <p style={{ color: 'var(--error)', fontSize: '1.05rem', marginBottom: '8px', fontWeight: 600 }}>
-            Error al cargar eventos
-          </p>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>
             {error}
           </p>
           <button onClick={fetchEvents} className="btn" style={{
             padding: '12px 28px', borderRadius: '12px',
-            display: 'inline-flex',
           }}>
             Reintentar
           </button>
@@ -273,7 +282,7 @@ function EventsContent() {
           <SkeletonEventCard />
           <SkeletonEventCard />
         </div>
-      ) : events.length === 0 ? (
+      ) : filteredEvents.length === 0 ? (
         <div className="glass" style={{
           padding: '60px 40px', textAlign: 'center', borderRadius: '20px',
           border: '1px solid var(--glass-border)',
@@ -305,7 +314,7 @@ function EventsContent() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {events.map((event, i) => (
+          {filteredEvents.map((event, i) => (
             <div key={event.id} style={{
               opacity: 0,
               animation: `fadeInUp 0.5s ease ${i * 0.08}s forwards`,
