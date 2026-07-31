@@ -1024,26 +1024,6 @@ function ProfileContent() {
 
           {/* ===== RIGHT COLUMN — POSTS FEED ===== */}
           <div style={{ borderLeft: `3px solid ${themeColor}`, paddingLeft: '16px' }}>
-            {/* Crisp Frameless Pet Character floating above Galería */}
-            {profile.profilePet && (
-              <PetWidget
-                frameless
-                petOwnerId={profile.id}
-                petOwnerUsername={profile.username}
-                petData={{
-                  profilePet: profile.profilePet,
-                  petName: profile.petName,
-                  petImage2: profile.petImage2,
-                  petLevel: profile.petLevel,
-                  petExp: profile.petExp,
-                  petHunger: profile.petHunger,
-                  lastFedAt: profile.lastFedAt,
-                }}
-                onPetUpdated={(updatedPet) => {
-                  setProfile((prev) => prev ? { ...prev, ...updatedPet } : null);
-                }}
-              />
-            )}
 
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1182,14 +1162,36 @@ function ProfileContent() {
       </div>
 
       {/* ===== GALLERY SECTION ===== */}
-      {(mediaPosts.length > 0 || mediaPostsLoading) && (
+      {(mediaPosts.length > 0 || mediaPostsLoading || profile.profilePet) && (
         <div className="container" style={{ paddingTop: '0', paddingBottom: '0', marginTop: '40px' }}>
-          <div style={{ borderLeft: `3px solid ${themeColor}`, paddingLeft: '16px' }}>
-            <h3 style={{
-              fontSize: '1.15rem', fontWeight: 700,
-              marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px',
-            }}>
-              <IconImage size={20} /> Galería
+          {/* Animated GOD & Kiut Frameless Pet Character floating directly above Galería */}
+          {profile.profilePet && (
+            <PetWidget
+              frameless
+              petOwnerId={profile.id}
+              petOwnerUsername={profile.username}
+              petData={{
+                profilePet: profile.profilePet,
+                petName: profile.petName,
+                petImage2: profile.petImage2,
+                petLevel: profile.petLevel,
+                petExp: profile.petExp,
+                petHunger: profile.petHunger,
+                lastFedAt: profile.lastFedAt,
+              }}
+              onPetUpdated={(updatedPet) => {
+                setProfile((prev) => prev ? { ...prev, ...updatedPet } : null);
+              }}
+            />
+          )}
+
+          {(mediaPosts.length > 0 || mediaPostsLoading) && (
+            <div style={{ borderLeft: `3px solid ${themeColor}`, paddingLeft: '16px' }}>
+              <h3 style={{
+                fontSize: '1.15rem', fontWeight: 700,
+                marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px',
+              }}>
+                <IconImage size={20} /> Galería
               {!mediaPostsLoading && (
                 <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-muted)' }}>
                   {mediaPosts.length} {mediaPosts.length === 1 ? 'imagen' : 'imágenes'}
@@ -1268,8 +1270,9 @@ function ProfileContent() {
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
 
       {/* ===== GALLERY LIGHTBOX ===== */}
       {galleryImage && (
