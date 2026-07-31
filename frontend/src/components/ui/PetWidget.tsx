@@ -43,6 +43,7 @@ export default function PetWidget({
   const [showHearts, setShowHearts] = useState(false);
   const [levelUpEffect, setLevelUpEffect] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [speechQuote, setSpeechQuote] = useState<string | null>(null);
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +75,20 @@ export default function PetWidget({
   // Active image: action GIF #2 when hovered, feeding, or popover open, idle image #1 otherwise
   const activeImage = (isHovered || isFeeding || popoverOpen) && pet.petImage2 ? pet.petImage2 : pet.profilePet;
 
+  const QUOTES = [
+    `¡Ñam ñam! ¡Gracias por el amor! 💖`,
+    `¡Soy ${petName}! ¡Nivel ${level} y contando! ✨`,
+    `¡Waa~! ¡Te quiero mucho! 🌸`,
+    `¡Tengo mucha energía! ⚡`,
+    `¡Rawr! 🐾 ¿Tienes alguna galletita? 🍪`,
+  ];
+
+  const triggerQuote = () => {
+    const random = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    setSpeechQuote(random);
+    setTimeout(() => setSpeechQuote(null), 3500);
+  };
+
   const handleFeed = async () => {
     if (!user) {
       showToast('Inicia sesión para alimentar a la mascota', 'error');
@@ -82,7 +97,8 @@ export default function PetWidget({
     try {
       setIsFeeding(true);
       setShowHearts(true);
-      setTimeout(() => setShowHearts(false), 2000);
+      triggerQuote();
+      setTimeout(() => setShowHearts(false), 2200);
 
       const res = await apiFetch('/user/pet/feed', {
         method: 'POST',
@@ -99,7 +115,7 @@ export default function PetWidget({
 
       if (res.leveledUp) {
         setLevelUpEffect(true);
-        setTimeout(() => setLevelUpEffect(false), 3500);
+        setTimeout(() => setLevelUpEffect(false), 4000);
         showToast(`🎉 ¡${petName} ha subido al Nivel ${res.pet?.petLevel || level + 1}! ✨`, 'success');
       } else {
         const feedMsg = isOwnPet
@@ -135,7 +151,7 @@ export default function PetWidget({
     );
   }
 
-  // Frameless Mode (Clean crisp image without any card or frame, above Galería)
+  // Frameless Mode (GOD-Tier & Kiut animations above Galería)
   if (frameless) {
     return (
       <div
@@ -146,138 +162,236 @@ export default function PetWidget({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          marginBottom: '24px',
+          marginBottom: '28px',
           width: '100%',
         }}
       >
-        {/* Floating Hearts / Particle Animation */}
+        {/* CSS Keyframes Injection */}
+        <style font-family="inherit">{`
+          @keyframes petLevitate {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+          }
+          @keyframes petShadow {
+            0%, 100% { transform: scale(1); opacity: 0.45; }
+            50% { transform: scale(0.72); opacity: 0.15; }
+          }
+          @keyframes petAuraGlow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.12); }
+          }
+          @keyframes speechPop {
+            0% { transform: translate(-50%, 10px) scale(0.8); opacity: 0; }
+            100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+          }
+        `}</style>
+
+        {/* Kawaii Speech Bubble */}
+        {(speechQuote || isHovered || hunger < 30) && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '-32px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.96), rgba(240,230,255,0.96))',
+              color: '#1a103c',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              padding: '5px 14px',
+              borderRadius: '16px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3), 0 0 10px rgba(255,215,0,0.4)',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              zIndex: 30,
+              animation: 'speechPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+          >
+            {speechQuote || (hunger < 30 ? `¡Tengo mucha hambre! 🍔🍖` : `¡Hola! Soy ${petName} 💖`)}
+            <div style={{
+              position: 'absolute',
+              bottom: '-5px', left: '50%',
+              transform: 'translateX(-50%) rotate(45deg)',
+              width: '8px', height: '8px',
+              background: 'rgba(255,255,255,0.96)',
+              borderRadius: '0 0 2px 0',
+            }} />
+          </div>
+        )}
+
+        {/* Floating Hearts / Sparkles Explosion */}
         {showHearts && (
           <div style={{
-            position: 'absolute', top: '-20px', left: '50%',
+            position: 'absolute', top: '10px', left: '50%',
             transform: 'translateX(-50%)',
-            fontSize: '1.6rem',
+            fontSize: '1.8rem',
             animation: 'ping 1s cubic-bezier(0,0,0.2,1) infinite',
             pointerEvents: 'none',
-            zIndex: 12,
+            zIndex: 40,
+            filter: 'drop-shadow(0 0 10px rgba(255,215,0,0.8))',
           }}>
-            🍖💖✨
+            🍖💖✨🌸⭐
           </div>
         )}
 
         {/* Level Up Banner Overlay */}
         {levelUpEffect && (
           <div style={{
-            position: 'absolute', top: '-16px',
+            position: 'absolute', top: '-18px',
             background: 'linear-gradient(135deg, #ffd700, #ff8c00)',
-            color: '#000', fontWeight: 900, fontSize: '0.75rem',
-            padding: '3px 12px', borderRadius: '12px',
-            boxShadow: '0 0 20px rgba(255,215,0,0.8)',
-            animation: 'bounce 0.6s infinite alternate',
-            zIndex: 15,
+            color: '#000', fontWeight: 900, fontSize: '0.8rem',
+            padding: '4px 14px', borderRadius: '14px',
+            boxShadow: '0 0 24px rgba(255,215,0,0.9)',
+            animation: 'bounce 0.5s infinite alternate',
+            zIndex: 45,
           }}>
-            ⚡ LEVEL UP! ⚡
+            👑 GOD LEVEL UP! ⚡
           </div>
         )}
 
-        {/* Crisp Pet Character (NO FRAME, NO CARD, NO BORDER) */}
-        <div style={{
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '6px',
-          marginBottom: '8px',
-        }}>
+        {/* Character Stage with Aura & Levitation */}
+        <div
+          onClick={() => {
+            triggerQuote();
+          }}
+          style={{
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '10px',
+            cursor: 'pointer',
+          }}
+          title={`🐾 ${petName} — Haz clic para interactuar o alimentar`}
+        >
+          {/* Mystical Magical Aura Halo (Behind Character) */}
+          <div style={{
+            position: 'absolute',
+            width: '140px', height: '140px',
+            borderRadius: '50%',
+            background: isFeeding || levelUpEffect
+              ? 'radial-gradient(circle, rgba(255,215,0,0.45) 0%, rgba(245,158,11,0.2) 60%, transparent 80%)'
+              : 'radial-gradient(circle, rgba(138,43,226,0.3) 0%, rgba(59,130,246,0.15) 60%, transparent 80%)',
+            animation: 'petAuraGlow 3s ease-in-out infinite alternate',
+            pointerEvents: 'none',
+            zIndex: 1,
+          }} />
+
+          {/* Crisp Animated Pet Character */}
           <img
             src={activeImage}
             alt={petName}
             style={{
-              maxHeight: '170px',
+              maxHeight: '180px',
               maxWidth: '100%',
               objectFit: 'contain',
               imageRendering: 'auto',
-              animation: isFeeding ? 'bounce 0.4s infinite' : 'pulse 3.5s infinite ease-in-out',
-              transition: 'transform 0.25s ease',
-              transform: isHovered ? 'scale(1.06)' : 'scale(1)',
-              cursor: 'pointer',
+              filter: isHovered
+                ? 'drop-shadow(0 8px 20px rgba(255,215,0,0.6))'
+                : 'drop-shadow(0 6px 14px rgba(0,0,0,0.4))',
+              animation: isFeeding
+                ? 'bounce 0.4s infinite'
+                : 'petLevitate 3.6s ease-in-out infinite',
+              transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease',
+              transform: isHovered ? 'scale(1.08) rotate(-2deg)' : 'scale(1)',
+              zIndex: 2,
             }}
-            onClick={handleFeed}
-            title={`🐾 ${petName} — Haz clic para alimentar`}
           />
+
+          {/* Levitation Dynamic Shadow */}
+          <div style={{
+            width: '80px', height: '12px',
+            borderRadius: '50%',
+            background: 'rgba(0,0,0,0.6)',
+            filter: 'blur(4px)',
+            marginTop: '6px',
+            animation: 'petShadow 3.6s ease-in-out infinite',
+            zIndex: 1,
+          }} />
         </div>
 
-        {/* Sleek Floating Controls Bar */}
+        {/* Sleek GOD-Tier Floating Control Bar */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '14px',
+          gap: '16px',
           flexWrap: 'wrap',
           width: '100%',
-          maxWidth: '480px',
-          padding: '8px 16px',
-          borderRadius: '16px',
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          backdropFilter: 'blur(8px)',
+          maxWidth: '520px',
+          padding: '10px 20px',
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, rgba(30,25,60,0.6), rgba(15,12,35,0.75))',
+          border: '1px solid rgba(255,215,0,0.25)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.35), 0 0 16px rgba(255,215,0,0.1)',
+          backdropFilter: 'blur(12px)',
+          marginTop: '4px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff' }}>
+          {/* Pet Name & Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.98rem', fontWeight: 900, color: '#ffffff', letterSpacing: '0.02em' }}>
               🐾 {petName}
             </span>
             <span style={{
-              fontSize: '0.7rem', fontWeight: 800, color: '#ffd700',
-              padding: '2px 8px', borderRadius: '8px',
-              background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.3)',
+              fontSize: '0.74rem', fontWeight: 800, color: '#ffd700',
+              padding: '3px 10px', borderRadius: '10px',
+              background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(245,158,11,0.25))',
+              border: '1px solid rgba(255,215,0,0.4)',
+              boxShadow: '0 2px 8px rgba(255,215,0,0.2)',
             }}>
-              Niv. {level}
+              ⭐ Niv. {level}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, maxWidth: '200px' }}>
+          {/* Progress Bars */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, maxWidth: '220px' }}>
             <div style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '2px', fontWeight: 600 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.64rem', color: 'var(--text-muted)', marginBottom: '3px', fontWeight: 700 }}>
                 <span>XP</span>
-                <span>{expInLevel}/100</span>
+                <span style={{ color: '#8b5cf6' }}>{expInLevel}/100</span>
               </div>
-              <div style={{ width: '100%', height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                <div style={{ width: `${expInLevel}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', borderRadius: '3px' }} />
+              <div style={{ width: '100%', height: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{ width: `${expInLevel}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #a855f7)', borderRadius: '4px', transition: 'width 0.4s ease' }} />
               </div>
             </div>
 
             <div style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '2px', fontWeight: 600 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.64rem', color: 'var(--text-muted)', marginBottom: '3px', fontWeight: 700 }}>
                 <span>🍔</span>
-                <span>{hunger}%</span>
+                <span style={{ color: hunger > 50 ? '#10b981' : '#f59e0b' }}>{hunger}%</span>
               </div>
-              <div style={{ width: '100%', height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                 <div style={{
                   width: `${hunger}%`, height: '100%',
-                  background: hunger > 50 ? '#10b981' : hunger > 20 ? '#f59e0b' : '#ef4444',
-                  borderRadius: '3px',
+                  background: hunger > 50 ? 'linear-gradient(90deg, #10b981, #34d399)' : hunger > 20 ? 'linear-gradient(90deg, #f59e0b, #fbbf24)' : 'linear-gradient(90deg, #ef4444, #f87171)',
+                  borderRadius: '4px', transition: 'width 0.4s ease',
                 }} />
               </div>
             </div>
           </div>
 
+          {/* Feed Button */}
           <button
             onClick={handleFeed}
             disabled={isFeeding}
             style={{
-              padding: '6px 14px',
-              borderRadius: '10px',
+              padding: '8px 16px',
+              borderRadius: '12px',
               border: 'none',
               background: 'linear-gradient(135deg, #f59e0b, #d97706)',
               color: '#ffffff',
               fontWeight: 800,
-              fontSize: '0.75rem',
+              fontSize: '0.78rem',
               cursor: isFeeding ? 'wait' : 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: '0 3px 10px rgba(245,158,11,0.3)',
+              transition: 'all 0.25s ease',
+              boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
               whiteSpace: 'nowrap',
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            {isFeeding ? '🍖...' : isOwnPet ? '🍖 Alimentar (25⭐)' : `🍖 Regalar Comida (25⭐)`}
+            {isFeeding ? '🍖 Alimentando...' : isOwnPet ? '🍖 Alimentar (25⭐)' : `🍖 Regalar Comida (25⭐)`}
           </button>
         </div>
       </div>
