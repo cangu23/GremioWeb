@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
-import UserAvatar from './UserAvatar';
+import UserAvatar, { getNoteBubbleStyle } from './UserAvatar';
 
 // ── Types ──
 interface ProfileCardData {
@@ -336,41 +336,45 @@ function CardContent({
           display: 'flex', flexDirection: 'column', alignItems: 'center',
         }}>
           {/* Note pill floating above avatar */}
-          {profile.note && (
-            <div style={{
-              marginBottom: '6px',
-              padding: '4px 12px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, rgba(28,25,50,0.97), rgba(15,14,30,0.97))',
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.4)'}`,
-              boxShadow: `0 4px 14px rgba(0,0,0,0.5), 0 0 10px ${profile.noteColor ? profile.noteColor + '40' : 'rgba(139,92,246,0.2)'}`,
-              maxWidth: '180px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              color: '#fff',
-              position: 'relative',
-              animation: 'pcfBubbleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}>
-              {profile.note}
-              {/* Tail pointing down to avatar */}
+          {profile.note && (() => {
+            const cardNoteStyle = getNoteBubbleStyle(profile.noteColor);
+            return (
               <div style={{
-                position: 'absolute',
-                bottom: '-5px',
-                left: '50%',
-                transform: 'translateX(-50%) rotate(45deg)',
-                width: '8px', height: '8px',
-                background: 'rgba(28,25,50,0.97)',
-                borderRight: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.4)'}`,
-                borderBottom: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.4)'}`,
-                borderRadius: '0 0 2px 0',
-                zIndex: -1,
-              }} />
-            </div>
-          )}
+                marginBottom: '6px',
+                padding: '5px 12px',
+                borderRadius: '16px',
+                background: cardNoteStyle.background,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${cardNoteStyle.borderColor}`,
+                boxShadow: cardNoteStyle.boxShadow,
+                maxWidth: '180px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#ffffff',
+                textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+                position: 'relative',
+                animation: 'pcfBubbleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}>
+                {profile.note}
+                {/* Tail pointing down to avatar */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-5px',
+                  left: '50%',
+                  transform: 'translateX(-50%) rotate(45deg)',
+                  width: '8px', height: '8px',
+                  background: cardNoteStyle.tailBackground,
+                  borderRight: `1px solid ${cardNoteStyle.borderColor}`,
+                  borderBottom: `1px solid ${cardNoteStyle.borderColor}`,
+                  borderRadius: '0 0 2px 0',
+                  zIndex: -1,
+                }} />
+              </div>
+            );
+          })()}
 
           <UserAvatar
             src={avatarUrl}

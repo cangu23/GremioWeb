@@ -18,6 +18,7 @@ import SendStardustModal from '@/components/ui/SendStardustModal';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import KofiWidget from '@/components/ui/KofiWidget';
 import { SkeletonProfile } from '@/components/ui/Skeleton';
+import { getNoteBubbleStyle } from '@/components/ui/UserAvatar';
 
 interface SocialUser {
   id: string;
@@ -346,39 +347,43 @@ function ProfileContent() {
           overflow: 'visible',
         }}>
           {/* Note bubble floating above avatar */}
-          {profile.note && (
-            <div style={{
-              marginBottom: '8px',
-              padding: '5px 14px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, rgba(28,25,50,0.97), rgba(15,14,30,0.97))',
-              backdropFilter: 'blur(12px)',
-              border: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.45)'}`,
-              boxShadow: `0 4px 18px rgba(0,0,0,0.5), 0 0 14px ${profile.noteColor ? profile.noteColor + '40' : 'rgba(139,92,246,0.2)'}`,
-              maxWidth: '220px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              color: '#fff',
-              position: 'relative',
-            }}>
-              {profile.note}
-              {/* Tail */}
+          {profile.note && (() => {
+            const pageNoteStyle = getNoteBubbleStyle(profile.noteColor);
+            return (
               <div style={{
-                position: 'absolute',
-                bottom: '-5px', left: '50%',
-                transform: 'translateX(-50%) rotate(45deg)',
-                width: '9px', height: '9px',
-                background: 'rgba(28,25,50,0.97)',
-                borderRight: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.45)'}`,
-                borderBottom: `1px solid ${profile.noteColor ? profile.noteColor + '80' : 'rgba(139,92,246,0.45)'}`,
-                borderRadius: '0 0 2px 0',
-                zIndex: -1,
-              }} />
-            </div>
-          )}
+                marginBottom: '8px',
+                padding: '6px 16px',
+                borderRadius: '18px',
+                background: pageNoteStyle.background,
+                backdropFilter: 'blur(12px)',
+                border: `1px solid ${pageNoteStyle.borderColor}`,
+                boxShadow: pageNoteStyle.boxShadow,
+                maxWidth: '230px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                color: '#ffffff',
+                textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+                position: 'relative',
+              }}>
+                {profile.note}
+                {/* Tail */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-5px', left: '50%',
+                  transform: 'translateX(-50%) rotate(45deg)',
+                  width: '9px', height: '9px',
+                  background: pageNoteStyle.tailBackground,
+                  borderRight: `1px solid ${pageNoteStyle.borderColor}`,
+                  borderBottom: `1px solid ${pageNoteStyle.borderColor}`,
+                  borderRadius: '0 0 2px 0',
+                  zIndex: -1,
+                }} />
+              </div>
+            );
+          })()}
 
           {/* Avatar Container with Frame Support */}
           <div style={{
