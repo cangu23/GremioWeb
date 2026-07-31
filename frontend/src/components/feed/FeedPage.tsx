@@ -793,7 +793,7 @@ function HomeContent() {
   return (
     <div className="home-layout">
       {/* ===== LEFT SIDEBAR ===== */}
-      <div className="home-sidebar-left" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="home-sidebar-left">
         {/* User quick profile */}
         <Link href={`/profile/${user.id}`} className="glass" style={{
           padding: '12px', display: 'flex', alignItems: 'center', gap: '10px',

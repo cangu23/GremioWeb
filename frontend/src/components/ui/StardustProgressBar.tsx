@@ -102,20 +102,21 @@ export default function StardustProgressBar() {
       <div
         className="glass"
         style={{
-          padding: '12px 18px',
+          padding: '12px 14px',
           borderRadius: '16px',
           background: 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(138,43,226,0.05))',
           border: '1px solid rgba(255,255,255,0.08)',
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '16px',
+          gap: '10px 14px',
           marginBottom: '14px',
           transition: 'all 0.2s ease',
         }}
       >
         {/* LEFT: STARDUST BADGE & LEVEL PROGRESS */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{ flex: '1 1 240px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', minWidth: 0 }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -139,13 +140,13 @@ export default function StardustProgressBar() {
           </div>
 
           {/* COMPACT PROGRESS BAR */}
-          <div style={{ flex: 1, minWidth: '120px', cursor: 'pointer' }} onClick={() => setShowModal(true)}>
+          <div style={{ flex: '1 1 140px', minWidth: '110px', cursor: 'pointer' }} onClick={() => setShowModal(true)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', fontSize: '0.72rem' }}>
               <span style={{ color: 'var(--text-muted, #a1a1aa)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <SparklesIcon size={11} color="#38bdf8" /> Misiones Diarias
+                <SparklesIcon size={11} color="#38bdf8" /> Misiones
               </span>
               <span style={{ fontWeight: 700, color: completedCount === totalCount ? '#00e676' : '#38bdf8' }}>
-                {completedCount}/{totalCount} completadas
+                {completedCount}/{totalCount}
               </span>
             </div>
 
@@ -170,7 +171,7 @@ export default function StardustProgressBar() {
         </div>
 
         {/* RIGHT: BUTTON TO OPEN MISSIONS MODAL & PASE */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           <button
             onClick={() => setShowModal(true)}
             style={{

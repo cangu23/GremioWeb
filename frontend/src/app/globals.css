@@ -684,6 +684,12 @@ textarea.input {
   padding-bottom: 12px;
 }
 
+.home-sidebar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .home-sidebar-left,
 .home-feed-center,
 .home-sidebar-right {
@@ -723,7 +729,7 @@ textarea.input {
     padding-top: 12px;
   }
   .home-sidebar-left {
-    display: none;
+    display: none !important;
   }
   .home-feed-center {
     height: auto;
