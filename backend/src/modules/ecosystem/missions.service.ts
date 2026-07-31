@@ -96,7 +96,7 @@ export const getUserMissions = async (userId: string) => {
 
   const progressMap = new Map(progressRecords.map(p => [p.missionId, p]));
 
-  return missions.map(m => {
+  const mapped = missions.map(m => {
     const userProgress = progressMap.get(m.id);
     return {
       id: m.id,
@@ -111,6 +111,21 @@ export const getUserMissions = async (userId: string) => {
       completed: userProgress ? userProgress.completed : false,
       claimedAt: userProgress?.claimedAt ? userProgress.claimedAt.toISOString() : null,
     };
+  });
+
+  return mapped.sort((a, b) => {
+    const aClaimed = !!a.claimedAt;
+    const bClaimed = !!b.claimedAt;
+    const aDone = a.completed || a.currentProgress >= a.goal;
+    const bDone = b.completed || b.currentProgress >= b.goal;
+
+    const getPriority = (claimed: boolean, done: boolean) => {
+      if (done && !claimed) return 0; // Ready to claim (TOP)
+      if (!done && !claimed) return 1; // In progress (MIDDLE)
+      return 2; // Claimed / Completed (BOTTOM)
+    };
+
+    return getPriority(aClaimed, aDone) - getPriority(bClaimed, bDone);
   });
 };
 

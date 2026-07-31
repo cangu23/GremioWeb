@@ -1495,7 +1495,18 @@ export default function StellarPassPage() {
               </div>
             ) : missions.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
-                {missions.map(m => {
+                {[...missions].sort((a, b) => {
+                  const aClaimed = !!a.claimedAt;
+                  const bClaimed = !!b.claimedAt;
+                  const aDone = a.completed || (a.currentProgress >= a.goal);
+                  const bDone = b.completed || (b.currentProgress >= b.goal);
+                  const getPriority = (claimed: boolean, done: boolean) => {
+                    if (done && !claimed) return 0;
+                    if (!done && !claimed) return 1;
+                    return 2;
+                  };
+                  return getPriority(aClaimed, aDone) - getPriority(bClaimed, bDone);
+                }).map(m => {
                   const actionInfo = getMissionActionInfo(m.action);
                   const isDone = m.completed;
                   const isClaimed = !!m.claimedAt;

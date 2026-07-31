@@ -276,7 +276,18 @@ function StardustContent() {
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No hay misiones disponibles.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {missions.map((m) => {
+              {[...missions].sort((a, b) => {
+                const aClaimed = !!a.isClaimed;
+                const bClaimed = !!b.isClaimed;
+                const aDone = a.isCompleted || (a.currentCount >= a.targetCount);
+                const bDone = b.isCompleted || (b.currentCount >= b.targetCount);
+                const getPriority = (claimed: boolean, done: boolean) => {
+                  if (done && !claimed) return 0;
+                  if (!done && !claimed) return 1;
+                  return 2;
+                };
+                return getPriority(aClaimed, aDone) - getPriority(bClaimed, bDone);
+              }).map((m) => {
                 const percent = Math.min(100, Math.round((m.currentCount / m.targetCount) * 100));
                 return (
                   <div

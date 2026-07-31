@@ -255,7 +255,18 @@ export default function StardustProgressBar() {
 
             {/* MISSIONS LIST */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {missions.map((m) => {
+              {[...missions].sort((a, b) => {
+                const aClaimed = !!a.claimedAt;
+                const bClaimed = !!b.claimedAt;
+                const aDone = a.completed || (a.currentProgress >= a.goal);
+                const bDone = b.completed || (b.currentProgress >= b.goal);
+                const getPriority = (claimed: boolean, done: boolean) => {
+                  if (done && !claimed) return 0;
+                  if (!done && !claimed) return 1;
+                  return 2;
+                };
+                return getPriority(aClaimed, aDone) - getPriority(bClaimed, bDone);
+              }).map((m) => {
                 const isClaimed = !!m.claimedAt;
                 const isReady = m.completed && !isClaimed;
                 const pct = Math.min(100, Math.round((m.currentProgress / m.goal) * 100));

@@ -691,7 +691,18 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                       No hay misiones activas por ahora.
                     </p>
                   ) : (
-                    missions.map((m) => {
+                    [...missions].sort((a, b) => {
+                      const aClaimed = !!a.isClaimed;
+                      const bClaimed = !!b.isClaimed;
+                      const aDone = a.isCompleted || (a.currentCount >= a.targetCount);
+                      const bDone = b.isCompleted || (b.currentCount >= b.targetCount);
+                      const getPriority = (claimed: boolean, done: boolean) => {
+                        if (done && !claimed) return 0;
+                        if (!done && !claimed) return 1;
+                        return 2;
+                      };
+                      return getPriority(aClaimed, aDone) - getPriority(bClaimed, bDone);
+                    }).map((m) => {
                       const percent = Math.min(100, Math.round((m.currentCount / m.targetCount) * 100));
                       return (
                         <div
