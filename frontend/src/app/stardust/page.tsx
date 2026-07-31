@@ -149,18 +149,17 @@ function StardustContent() {
       <div
         className="glass"
         style={{
-          padding: '32px',
+          padding: '24px 28px',
           borderRadius: '24px',
           marginBottom: '32px',
-          background: 'linear-gradient(135deg, rgba(245,158,11,0.18), rgba(139,92,246,0.1))',
-          border: '1px solid rgba(245,158,11,0.35)',
-          boxShadow: '0 16px 45px rgba(245,158,11,0.15)',
+          background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(139,92,246,0.12) 50%, rgba(15,23,42,0.95) 100%)',
+          border: '1px solid rgba(245,158,11,0.4)',
+          boxShadow: '0 16px 45px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          flexWrap: 'wrap',
           gap: '20px',
         }}
       >
@@ -172,29 +171,29 @@ function StardustContent() {
             left: '-100%',
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
             animation: 'stardustShimmer 4s infinite',
             pointerEvents: 'none',
           }}
         />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', zIndex: 1, minWidth: 0 }}>
           {user && (
             <UserAvatar
               src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
               alt={user.displayName || user.username}
-              size={64}
+              size={60}
               user={user}
             />
           )}
           <div>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
-              {user ? `${user.displayName || user.username} • Saldo Actual` : 'Saldo de Stardust Actual'}
+            <span style={{ fontSize: '0.78rem', color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>
+              {user ? `${user.displayName || user.username} • SALDO ACTUAL` : 'SALDO DE STARDUST ACTUAL'}
             </span>
-            <div style={{ fontSize: '3rem', fontWeight: 900, color: '#fff', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block' }}>⭐</span>
+            <div style={{ fontSize: '2.6rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '10px', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+              <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block', filter: 'drop-shadow(0 0 10px #fbbf24)' }}>⭐</span>
               {balance.toLocaleString()}
-              <span style={{ fontSize: '1.1rem', color: '#f59e0b', fontWeight: 700 }}>Stardust</span>
+              <span style={{ fontSize: '1.05rem', color: '#fbbf24', fontWeight: 800, marginLeft: '2px' }}>Stardust</span>
             </div>
           </div>
         </div>
@@ -206,21 +205,25 @@ function StardustContent() {
           justifyContent: 'center',
           gap: '6px',
           zIndex: 1,
-          marginLeft: 'auto',
+          flexShrink: 0,
         }}>
           <div style={{
-            padding: '6px 14px', borderRadius: '14px',
-            background: multiplier > 1 ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.08)',
-            border: `1px solid ${multiplier > 1 ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'}`,
-            color: multiplier > 1 ? '#f59e0b' : 'var(--text-muted)',
-            fontSize: '0.9rem', fontWeight: 800, display: 'inline-flex',
-            alignItems: 'center', gap: '6px',
-            boxShadow: multiplier > 1 ? '0 0 14px rgba(245,158,11,0.3)' : 'none',
+            padding: '7px 16px',
+            borderRadius: '999px',
+            background: multiplier > 1 ? 'linear-gradient(135deg, rgba(245,158,11,0.3), rgba(217,119,6,0.4))' : 'rgba(255,255,255,0.08)',
+            border: `1px solid ${multiplier > 1 ? '#fbbf24' : 'rgba(255,255,255,0.15)'}`,
+            color: multiplier > 1 ? '#fbbf24' : 'var(--text-muted)',
+            fontSize: '0.85rem',
+            fontWeight: 800,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: multiplier > 1 ? '0 0 16px rgba(245,158,11,0.35)' : 'none',
             whiteSpace: 'nowrap',
           }}>
             Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
           </div>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>
+          <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0, fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap' }}>
             {multiplier > 1 ? `Tu plan ${data?.plan} otorga un +${Math.round((multiplier - 1) * 100)}% extra` : 'Aumenta tus ganancias pasando a Premium'}
           </p>
         </div>

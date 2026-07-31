@@ -17,6 +17,7 @@ import GiftPlanModal from '@/components/ui/GiftPlanModal';
 import SendStardustModal from '@/components/ui/SendStardustModal';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import KofiWidget from '@/components/ui/KofiWidget';
+import { SkeletonProfile } from '@/components/ui/Skeleton';
 
 interface SocialUser {
   id: string;
@@ -217,7 +218,7 @@ function ProfileContent() {
   };
 
   if (error) return <div className="container" style={{ padding: '40px', textAlign: 'center' }}><p style={{ color: 'var(--error)' }}>Error: {error}</p></div>;
-  if (!profile) return <div className="container" style={{ padding: '40px', textAlign: 'center' }}><p style={{ color: 'var(--text-muted)' }}>Cargando perfil...</p></div>;
+  if (!profile) return <div className="container" style={{ padding: '40px 20px', width: '100%' }}><SkeletonProfile /></div>;
 
   const parseItemData = (data: string | null) => {
     try { return data ? JSON.parse(data) : {}; } catch { return {}; }

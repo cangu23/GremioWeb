@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import fs from 'fs';
+import compression from 'compression';
 import AppError from './errors/AppError';
 import mainRouter from './index';
 
@@ -54,6 +55,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
 }));
 console.log(`${BOOT} CORS configured`);
+
+// ========== COMPRESSION MIDDLEWARE ==========
+app.use(compression());
+console.log(`${BOOT} Compression middleware enabled`);
 
 // ========== SECURITY MIDDLEWARE ==========
 
@@ -138,7 +143,16 @@ try {
   console.warn(`${BOOT} Warning: could not initialize uploads directory:`, err);
 }
 console.log(`${BOOT} Static files: /uploads → ${uploadsPath}`);
-app.use('/uploads', express.static(uploadsPath));
+app.use(
+  '/uploads',
+  express.static(uploadsPath, {
+    maxAge: '1d',
+    immutable: true,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+    },
+  })
+);
 
 // ========== FRONTEND ==========
 // The frontend is served by Next.js directly (standalone server),

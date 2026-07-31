@@ -129,3 +129,61 @@ export interface EventItem {
   creator: { id: string; username: string };
   _count: { attendees: number };
 }
+
+// ============================================================================
+// API DTOs & Responses
+// ============================================================================
+export interface ApiResponse<T = any> {
+  status: 'success' | 'error';
+  message?: string;
+  data?: T;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export interface CreatePostDTO {
+  content: string;
+  mediaUrl?: string;
+  hashtags?: string[];
+}
+
+export interface CreateGuildDTO {
+  name: string;
+  description: string;
+  logoUrl?: string;
+}
+
+export interface GlobalSearchResults {
+  users: Array<{
+    id: string;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    vtuberProfile?: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
+  }>;
+  guilds: Array<{
+    id: string;
+    name: string;
+    description: string;
+    logoUrl: string | null;
+    _count: { members: number };
+  }>;
+  posts: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    user: { id: string; username: string; displayName?: string | null; avatarUrl?: string | null };
+  }>;
+  events: Array<{
+    id: string;
+    title: string;
+    date: string;
+    creator: { id: string; username: string };
+  }>;
+}

@@ -48,7 +48,6 @@ function SectionDivider() {
 function LandingPage() {
   return (
     <>
-      <ParticlesBackground />
       <HeroSection />
       <SectionDivider />
       <LiveNowSection />

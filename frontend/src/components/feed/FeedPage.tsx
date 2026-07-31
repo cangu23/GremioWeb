@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { connectSocket } from '@/lib/socket-client';
@@ -56,6 +56,28 @@ function HomeContent() {
   const [now, setNow] = useState(() => Date.now());
   const [maidsData, setMaidsData] = useState<any[]>([]);
   const [maidsLoading, setMaidsLoading] = useState(true);
+
+  // Sentinel ref for infinite scroll
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!hasMore || loadingMore || loading) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: '300px' }
+    );
+
+    const el = sentinelRef.current;
+    if (el) observer.observe(el);
+    return () => {
+      if (el) observer.unobserve(el);
+      observer.disconnect();
+    };
+  }, [hasMore, loadingMore, loading, loadMore]);
 
   // Tick every 60s for real-time countdown
   useEffect(() => {
@@ -149,6 +171,11 @@ function HomeContent() {
         });
       });
 
+      // Real-time notification count increment
+      sock.on('notification:new', () => {
+        setUnreadNotifs(prev => prev + 1);
+      });
+
       // User went offline
       sock.on('user:offline', (data: { userId: string }) => {
         setOnlineFriendIds(prev => {
@@ -166,6 +193,7 @@ function HomeContent() {
         sock.off('user:online-list');
         sock.off('user:online');
         sock.off('user:offline');
+        sock.off('notification:new');
       }
     };
   }, [user]);
@@ -1161,13 +1189,19 @@ function HomeContent() {
               <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user.id} currentUserRole={user.role} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
             ))}
             {hasMore && (
-              <button onClick={loadMore} disabled={loadingMore} className="btn btn--outline" style={{
-                padding: '12px', width: '100%', justifyContent: 'center', fontSize: '0.85rem',
-              }}>
+              <div ref={sentinelRef} style={{ width: '100%', padding: '8px 0' }}>
                 {loadingMore ? (
-                  <><span style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Cargando...</>
-                ) : 'Cargar más publicaciones ↓'}
-              </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <SkeletonPostCard />
+                  </div>
+                ) : (
+                  <button onClick={loadMore} className="btn btn--outline" style={{
+                    padding: '12px', width: '100%', justifyContent: 'center', fontSize: '0.85rem',
+                  }}>
+                    Cargar más publicaciones ↓
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}

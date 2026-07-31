@@ -13,12 +13,12 @@ const log = createLogger('BOOT');
 // ──────────────────────────────────────────────
 
 process.on('uncaughtException', (err) => {
-  log.error('Uncaught Exception:', err);
+  log.error({ err }, 'Uncaught Exception');
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  log.error('Unhandled Rejection:', reason);
+process.on('unhandledRejection', (reason) => {
+  log.error({ reason }, 'Unhandled Rejection');
 });
 
 // ──────────────────────────────────────────────
@@ -35,14 +35,14 @@ log.info('HTTP server + Socket.IO initialized');
 startStreamMonitor();
 
 // Seed achievements in DB
-seedAchievements().catch(err => log.error('Error seeding achievements:', err));
+seedAchievements().catch((err) => log.error({ err }, 'Error seeding achievements'));
 
 server.listen(env.PORT, () => {
   log.info(`Server running on port ${env.PORT} — http://localhost:${env.PORT}/api/health`);
 });
 
 server.on('error', (err) => {
-  log.error('Server error:', err);
+  log.error({ err }, 'Server error');
 });
 
 export default server;

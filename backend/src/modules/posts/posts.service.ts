@@ -8,12 +8,14 @@ import * as AdminRepository from '../admin/admin.repository';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 import { addStardust } from '../ecosystem/stardust.service';
 import prisma from '../../database/prisma';
+import { sanitizeString } from '../../middleware/sanitize';
 
 // ========== POSTS ==========
 
 export const createPost = async (payload: CreatePostPayload, userId: string, mentionedUserIds?: string[]) => {
+  const cleanContent = sanitizeString(payload.content || '');
   const post = await PostsRepository.createPost({
-    content: payload.content,
+    content: cleanContent,
     mediaUrl: payload.mediaUrl,
     isPinned: payload.isPinned,
     pollData: payload.pollData,

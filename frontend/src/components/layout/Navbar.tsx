@@ -197,35 +197,37 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
 function SearchModal({ onClose }: { onClose: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{ label: string; href: string; icon: React.ReactNode }[]>([]);
   const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<{
+    users: any[];
+    guilds: any[];
+    posts: any[];
+    events: any[];
+  }>({ users: [], guilds: [], posts: [], events: [] });
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
   useEffect(() => {
-    if (!query.trim()) { setResults([]); return; }
+    if (!query.trim()) {
+      setResults({ users: [], guilds: [], posts: [], events: [] });
+      setSearching(false);
+      return;
+    }
     setSearching(true);
-    const q = query.toLowerCase();
-    const items = [
-      { label: 'VTubers', href: '/vtubers', icon: <Users size={16} color="var(--text-muted)" /> },
-      { label: 'Eventos', href: '/events', icon: <Calendar size={16} color="var(--text-muted)" /> },
-      { label: 'Gremios', href: '/guilds', icon: <Shield size={16} color="var(--text-muted)" /> },
-      { label: 'Feed', href: '/', icon: <FileText size={16} color="var(--text-muted)" /> },
-      { label: 'Mensajes', href: '/chat', icon: <MessageCircle size={16} color="var(--text-muted)" /> },
-      { label: 'Tienda', href: '/shop', icon: <ShoppingBag size={16} color="var(--text-muted)" /> },
-      { label: 'Ranking', href: '/leaderboard', icon: <Award size={16} color="var(--text-muted)" /> },
-      { label: 'Dashboard', href: '/dashboard', icon: <BarChart size={16} color="var(--text-muted)" /> },
-      { label: 'Notificaciones', href: '/notifications', icon: <Bell size={16} color="var(--text-muted)" /> },
-      { label: 'Inventario', href: '/inventory', icon: <Backpack size={16} color="var(--text-muted)" /> },
-      { label: 'Logros', href: '/achievements', icon: <Award size={16} color="var(--text-muted)" /> },
-    ];
-    const filtered = items
-      .filter(item => item.label.toLowerCase().includes(q))
-      .slice(0, 6);
-    setResults(filtered);
-    setSearching(false);
+    const timer = setTimeout(async () => {
+      try {
+        const data = await apiFetch(`/search?q=${encodeURIComponent(query.trim())}&limit=4`, {});
+        setResults(data || { users: [], guilds: [], posts: [], events: [] });
+      } catch {
+        setResults({ users: [], guilds: [], posts: [], events: [] });
+      } finally {
+        setSearching(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
   }, [query]);
 
   useEffect(() => {
@@ -234,31 +236,36 @@ function SearchModal({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  const totalResults = results.users.length + results.guilds.length + results.posts.length + results.events.length;
+
   return (
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 2000,
-        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+        background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
         display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-        paddingTop: '120px', animation: 'fadeIn 0.15s ease',
+        paddingTop: '80px', paddingLeft: '16px', paddingRight: '16px',
+        animation: 'fadeIn 0.15s ease',
       }}
       onClick={onClose}
     >
       <div
         className="glass"
         style={{
-          width: '100%', maxWidth: '480px', padding: '16px',
+          width: '100%', maxWidth: '580px', padding: '16px', borderRadius: '16px',
+          background: 'rgba(15, 15, 22, 0.95)', border: '1px solid var(--glass-border)',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
           animation: 'slideDown 0.2s ease',
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-          <span style={{ color: 'var(--text-muted)', display: 'inline-flex' }}>{Icons.search}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)' }}>
+          <span style={{ color: 'var(--primary)', display: 'inline-flex' }}>{Icons.search}</span>
           <input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Buscar en Gremio Estelar..."
+            placeholder="Buscar usuarios, gremios, eventos o publicaciones..."
             style={{
               flex: 1, background: 'none', border: 'none', outline: 'none',
               color: 'var(--text)', fontSize: '0.95rem', fontFamily: 'inherit',
@@ -272,15 +279,29 @@ function SearchModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {!query.trim() && (
+        {searching && (
+          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <span style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block', marginRight: '8px' }} />
+            Buscando en GremioWeb...
+          </div>
+        )}
+
+        {!searching && query.trim() && totalResults === 0 && (
+          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            No se encontraron resultados para &quot;{query}&quot;
+          </div>
+        )}
+
+        {!searching && !query.trim() && (
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: '8px 0', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <span>Ir a:</span>
+            <span>Accesos rápidos:</span>
             {[
-              { label: 'Eventos', href: '/events' },
               { label: 'VTubers', href: '/vtubers' },
-              { label: 'Gremios', href: '/guilds' },          {label: 'Tienda', href: '/shop' },
-          {label: 'Hoshizora Maid', href: '/hoshizora-maid' },
-        ].map(q => (
+              { label: 'Eventos', href: '/events' },
+              { label: 'Gremios', href: '/guilds' },
+              { label: 'Tienda', href: '/shop' },
+              { label: 'Hoshizora Maid', href: '/hoshizora-maid' },
+            ].map(q => (
               <Link key={q.label} href={q.href} onClick={onClose} style={{
                 padding: '2px 10px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
                 color: 'var(--text-muted)', fontSize: '0.78rem', textDecoration: 'none',
@@ -291,32 +312,79 @@ function SearchModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {searching && (
-          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            Buscando...
-          </div>
-        )}
-        {!searching && results.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {results.map(item => (
-              <Link key={item.href} href={item.href} onClick={onClose} style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '10px 12px', borderRadius: '8px', textDecoration: 'none',
-                color: 'var(--text)', fontSize: '0.85rem', fontWeight: 500,
-                transition: 'background 0.12s',
-              }}
-                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <span style={{ display: 'inline-flex' }}>{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        )}
-        {!searching && query.trim() && results.length === 0 && (
-          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            No se encontraron resultados para &quot;{query}&quot;
+        {!searching && totalResults > 0 && (
+          <div style={{ maxHeight: '380px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {results.users.length > 0 && (
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '4px' }}>Usuarios</div>
+                {results.users.map(u => (
+                  <Link key={u.id} href={`/profile/${u.id}`} onClick={onClose} style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 8px', borderRadius: '6px',
+                    textDecoration: 'none', color: 'var(--text)', fontSize: '0.85rem',
+                  }}
+                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                    onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <div style={{
+                      width: '28px', height: '28px', borderRadius: '50%',
+                      background: u.avatarUrl ? `url(${u.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.75rem', fontWeight: 'bold',
+                    }}>
+                      {!u.avatarUrl && u.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{u.displayName || u.username}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>@{u.username}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {results.guilds.length > 0 && (
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#38bdf8', marginBottom: '4px' }}>Gremios</div>
+                {results.guilds.map(g => (
+                  <Link key={g.id} href={`/guilds/${g.id}`} onClick={onClose} style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 8px', borderRadius: '6px',
+                    textDecoration: 'none', color: 'var(--text)', fontSize: '0.85rem',
+                  }}
+                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                    onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <div style={{
+                      width: '28px', height: '28px', borderRadius: '6px',
+                      background: g.logoUrl ? `url(${g.logoUrl}) center/cover` : 'linear-gradient(135deg, #38bdf8, #8b5cf6)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.75rem', fontWeight: 'bold',
+                    }}>
+                      {!g.logoUrl && g.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{g.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{g._count?.members || 0} miembros</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {results.posts.length > 0 && (
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#4caf50', marginBottom: '4px' }}>Publicaciones</div>
+                {results.posts.map(p => (
+                  <Link key={p.id} href={`/feed?post=${p.id}`} onClick={onClose} style={{
+                    display: 'block', padding: '6px 8px', borderRadius: '6px',
+                    textDecoration: 'none', color: 'var(--text)', fontSize: '0.82rem',
+                  }}
+                    onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                    onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.75rem' }}>@{p.user.username}: </span>
+                    <span>{p.content}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -823,6 +891,33 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
   const { user, logout } = useAuth();
   const [showSearch, setShowSearch] = useState(false);
   const [showStardustModal, setShowStardustModal] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('gremio_theme') as 'dark' | 'light' | null;
+    if (saved) {
+      setTheme(saved);
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('gremio_theme', nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const iconBtn: React.CSSProperties = {
     padding: '7px', borderRadius: '8px', border: 'none',
@@ -941,12 +1036,35 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
           onClick={() => setShowStardustModal(true)}
         />
 
-        <button onClick={() => setShowSearch(true)} style={iconBtn}
+        <button
+          onClick={() => setShowSearch(true)}
+          style={iconBtn}
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-          title="Buscar"
+          title="Buscar (Ctrl+K)"
+          aria-label="Buscar en la plataforma"
         >
           {Icons.search}
+        </button>
+
+        {/* Theme Toggle (Dark / Light) */}
+        <button
+          onClick={toggleTheme}
+          style={iconBtn}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'var(--text)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          aria-label="Cambiar tema de color"
+        >
+          {theme === 'dark' ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          )}
         </button>
 
         <MessagesDropdown dmUnreadCount={dmUnreadCount} />
@@ -957,6 +1075,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(212,160,48,0.12)'; e.currentTarget.style.color = '#d4a030'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
           title="Hoshizora Maid Café"
+          aria-label="Hoshizora Maid Café"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
@@ -1101,7 +1220,7 @@ export default function Navbar() {
       >
         <div className={styles.navContainer}>
           <Link href="/" className={styles.logo} onClick={() => setMenuOpen(false)}>
-            <Image src="/logo.png" alt="Gremio Estelar" width={0} height={0} sizes="100vw" style={{ height: '28px', width: 'auto' }} />
+            <Image src="/logo.png" alt="Gremio Estelar" width={0} height={0} sizes="100vw" priority style={{ height: '28px', width: 'auto' }} />
           </Link>
 
           <div className={styles.desktopNav}>
@@ -1110,7 +1229,7 @@ export default function Navbar() {
             </ClientOnly>
           </div>
 
-          <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menú">
+          <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir navegación principal" aria-expanded={menuOpen}>
             <span style={{ transform: menuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' }} />
             <span style={{ opacity: menuOpen ? 0 : 1 }} />
             <span style={{ transform: menuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' }} />

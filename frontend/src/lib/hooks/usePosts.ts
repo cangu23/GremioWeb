@@ -72,23 +72,37 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
 
   const handleLike = useCallback(async (postId: string, isLiked: boolean) => {
     if (!user) return;
+    // Optimistic Update: update UI immediately
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          isLikedByMe: !isLiked,
+          _count: { ...p._count, likes: isLiked ? Math.max(0, p._count.likes - 1) : p._count.likes + 1 },
+        };
+      }
+      return p;
+    }));
+
     try {
       if (isLiked) {
         await apiFetch(`/posts/${postId}/unlike`, { method: 'POST' });
       } else {
         await apiFetch(`/posts/${postId}/like`, { method: 'POST' });
       }
+    } catch {
+      // Revert on failure
       setPosts(prev => prev.map(p => {
         if (p.id === postId) {
           return {
             ...p,
-            isLikedByMe: !isLiked,
-            _count: { ...p._count, likes: isLiked ? p._count.likes - 1 : p._count.likes + 1 },
+            isLikedByMe: isLiked,
+            _count: { ...p._count, likes: isLiked ? p._count.likes + 1 : Math.max(0, p._count.likes - 1) },
           };
         }
         return p;
       }));
-    } catch { /* ignore */ }
+    }
   }, [user]);
 
   const refetch = useCallback(() => {

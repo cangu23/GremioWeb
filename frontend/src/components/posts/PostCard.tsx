@@ -701,7 +701,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                 filter: post.isLikedByMe ? 'drop-shadow(0 0 6px rgba(139,92,246,0.5))' : 'none',
               }}
             >
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+              <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/>
             </svg>
             <span>Me gusta</span>
           </button>
@@ -970,7 +970,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                             animation: animatingCommentId === comment.id ? 'postHeartPop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none',
                           }}
                         >
-                          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                          <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/>
                         </svg>
                         <span>{(comment._count?.likes || 0) > 0 ? comment._count?.likes : 'Me gusta'}</span>
                       </button>

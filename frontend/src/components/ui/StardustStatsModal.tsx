@@ -439,18 +439,17 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {/* GOLD CARD */}
                   <div className="glass" style={{
-                    padding: '22px 24px',
-                    borderRadius: '22px',
-                    background: 'linear-gradient(135deg, rgba(245,158,11,0.22), rgba(180,83,9,0.15), rgba(15,23,42,0.9))',
-                    border: '1px solid rgba(245, 158, 11, 0.45)',
-                    boxShadow: '0 16px 40px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                    padding: '22px 26px',
+                    borderRadius: '24px',
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(180,83,9,0.12) 50%, rgba(15,23,42,0.95) 100%)',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
                     position: 'relative',
                     overflow: 'hidden',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: '16px',
-                    flexWrap: 'wrap',
+                    gap: '20px',
                   }}>
                     {/* Ambient shimmer background line */}
                     <div
@@ -475,18 +474,18 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         />
                       )}
                       <div>
-                        <span style={{ fontSize: '0.78rem', color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>
                           {user ? `${user.displayName || user.username} • SALDO ACTUAL` : 'SALDO DE STARDUST ACTUAL'}
                         </span>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '10px', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-                          <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block', filter: 'drop-shadow(0 0 12px #fbbf24)' }}>⭐</span>
+                        <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                          <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block', filter: 'drop-shadow(0 0 10px #fbbf24)' }}>⭐</span>
                           {balance.toLocaleString()}
-                          <span style={{ fontSize: '1rem', color: '#fbbf24', fontWeight: 800 }}>Stardust</span>
+                          <span style={{ fontSize: '1rem', color: '#fbbf24', fontWeight: 800, marginLeft: '2px' }}>Stardust</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Right side: Multiplier Badge (Side Position) */}
+                    {/* Right side: Multiplier Badge */}
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
@@ -494,25 +493,25 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                       justifyContent: 'center',
                       gap: '6px',
                       zIndex: 1,
-                      marginLeft: 'auto',
+                      flexShrink: 0,
                     }}>
                       <div style={{
-                        padding: '6px 14px',
-                        borderRadius: '12px',
-                        background: multiplier > 1 ? 'linear-gradient(135deg, rgba(245,158,11,0.35), rgba(217,119,6,0.45))' : 'rgba(255,255,255,0.08)',
+                        padding: '7px 16px',
+                        borderRadius: '999px',
+                        background: multiplier > 1 ? 'linear-gradient(135deg, rgba(245,158,11,0.3), rgba(217,119,6,0.4))' : 'rgba(255,255,255,0.08)',
                         border: `1px solid ${multiplier > 1 ? '#fbbf24' : 'rgba(255,255,255,0.15)'}`,
                         color: multiplier > 1 ? '#fbbf24' : 'var(--text-muted)',
-                        fontSize: '0.85rem',
-                        fontWeight: 900,
+                        fontSize: '0.82rem',
+                        fontWeight: 800,
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '6px',
-                        boxShadow: multiplier > 1 ? '0 0 16px rgba(245,158,11,0.4)' : 'none',
+                        boxShadow: multiplier > 1 ? '0 0 16px rgba(245,158,11,0.35)' : 'none',
                         whiteSpace: 'nowrap',
                       }}>
                         Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
                       </div>
-                      <p style={{ fontSize: '0.74rem', color: '#d1d5db', margin: 0, fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: '0.74rem', color: '#9ca3af', margin: 0, fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {multiplier > 1 ? `Tu plan ${data?.plan} otorga +${Math.round((multiplier - 1) * 100)}% extra` : 'Obtén Premium para +100% extra'}
                       </p>
                     </div>

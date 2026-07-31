@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import healthRoutes from './health.routes';
+import healthRoutes from './modules/health/health.routes';
 import authRoutes from './modules/auth/auth.routes';
 import adminRoutes from './modules/auth/admin.routes';
 import { adminRoutes as adminModuleRoutes } from './modules/admin';
@@ -26,7 +26,9 @@ import dailyRewardsRoutes from './modules/daily-rewards/daily-rewards.routes';
 import rouletteRoutes from './modules/roulette/roulette.routes';
 import warningsRoutes from './modules/warnings/warnings.routes';
 import ecosystemRoutes from './modules/ecosystem/ecosystem.routes';
+import searchRoutes from './modules/search/search.routes';
 import * as StickersController from './modules/admin/stickers.controller';
+import { searchRateLimiter, uploadRateLimiter } from './middleware/rateLimiters';
 import { createLogger } from './utils/logger';
 
 const log = createLogger('ROUTES');
@@ -34,7 +36,7 @@ const router = Router();
 
 // ─── Module Routes ────────────────────────────────────────────────
 
-router.use('/health', healthRoutes);
+router.use('/', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
 router.use('/admin', adminModuleRoutes);
@@ -51,7 +53,7 @@ router.use('/payments', paymentRoutes);
 router.use('/posts', postRoutes);
 router.use('/dm', dmRoutes);
 router.use('/vtubers', vtuberRoutes);
-router.use('/uploads', uploadRoutes);
+router.use('/uploads', uploadRateLimiter, uploadRoutes);
 router.use('/stats', statsRoutes);
 router.use('/activity', activityRoutes);
 router.use('/shop', shopRoutes);
@@ -59,6 +61,7 @@ router.use('/daily-rewards', dailyRewardsRoutes);
 router.use('/roulette', rouletteRoutes);
 router.use('/warnings', warningsRoutes);
 router.use('/ecosystem', ecosystemRoutes);
+router.use('/search', searchRateLimiter, searchRoutes);
 
 // ─── Standalone Routes ────────────────────────────────────────────
 

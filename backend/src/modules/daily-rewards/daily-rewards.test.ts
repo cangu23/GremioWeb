@@ -22,13 +22,16 @@ vi.mock('../gamification/gamification.repository', () => ({
 // ── Import SUT ───────────────────────────────────
 import * as DailyRewardsService from './daily-rewards.service';
 
-// ── Helpers ──────────────────────────────────────
-function daysAgo(days: number): Date {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+function yesterdayDate(): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d;
 }
 
-function hoursAgo(hours: number): Date {
-  return new Date(Date.now() - hours * 60 * 60 * 1000);
+function daysAgoDate(numDays: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - numDays);
+  return d;
 }
 
 describe('DailyRewardsService', () => {
@@ -50,9 +53,9 @@ describe('DailyRewardsService', () => {
       expect(status.history).toEqual([]);
     });
 
-    it('returns canClaim=true when 24h+ have passed since last claim', async () => {
+    it('returns canClaim=true when last claim was yesterday', async () => {
       mockPrisma.dailyReward.findFirst.mockResolvedValue({
-        claimedAt: hoursAgo(25),
+        claimedAt: yesterdayDate(),
         day: 2,
       });
       mockPrisma.dailyReward.findMany.mockResolvedValue([]);
@@ -62,9 +65,9 @@ describe('DailyRewardsService', () => {
       expect(status.canClaim).toBe(true);
     });
 
-    it('returns canClaim=false when <24h since last claim', async () => {
+    it('returns canClaim=false when claimed today', async () => {
       mockPrisma.dailyReward.findFirst.mockResolvedValue({
-        claimedAt: hoursAgo(10),
+        claimedAt: new Date(),
         day: 1,
       });
       mockPrisma.dailyReward.findMany.mockResolvedValue([]);
@@ -74,9 +77,9 @@ describe('DailyRewardsService', () => {
       expect(status.canClaim).toBe(false);
     });
 
-    it('resets streak to day 1 when 48h+ have passed', async () => {
+    it('resets streak to day 1 when 2+ days have passed', async () => {
       mockPrisma.dailyReward.findFirst.mockResolvedValue({
-        claimedAt: daysAgo(3),
+        claimedAt: daysAgoDate(3),
         day: 4,
       });
       mockPrisma.dailyReward.findMany.mockResolvedValue([]);
@@ -86,9 +89,9 @@ describe('DailyRewardsService', () => {
       expect(status.currentDay).toBe(1);
     });
 
-    it('continues streak if within 48h window', async () => {
+    it('continues streak if claimed yesterday', async () => {
       mockPrisma.dailyReward.findFirst.mockResolvedValue({
-        claimedAt: hoursAgo(30),
+        claimedAt: yesterdayDate(),
         day: 3,
       });
       mockPrisma.dailyReward.findMany.mockResolvedValue([]);
@@ -100,7 +103,7 @@ describe('DailyRewardsService', () => {
 
     it('resets to day 1 after completing day 7', async () => {
       mockPrisma.dailyReward.findFirst.mockResolvedValue({
-        claimedAt: hoursAgo(30),
+        claimedAt: yesterdayDate(),
         day: 7,
       });
       mockPrisma.dailyReward.findMany.mockResolvedValue([]);
@@ -127,7 +130,7 @@ describe('DailyRewardsService', () => {
   describe('claim', () => {
     it('throws if already claimed today', async () => {
       mockPrisma.dailyReward.findFirst.mockResolvedValue({
-        claimedAt: hoursAgo(5),
+        claimedAt: new Date(),
         day: 1,
       });
       mockPrisma.dailyReward.findMany.mockResolvedValue([]);
@@ -160,9 +163,8 @@ describe('DailyRewardsService', () => {
     });
 
     it('awards bonus XP on day 7', async () => {
-      // Mock that user has claimed 6 times, last one 30h ago → streak continues → day 7
       mockPrisma.dailyReward.findFirst.mockResolvedValue({
-        claimedAt: hoursAgo(30),
+        claimedAt: yesterdayDate(),
         day: 6,
       });
       mockPrisma.dailyReward.findMany.mockResolvedValue([]);

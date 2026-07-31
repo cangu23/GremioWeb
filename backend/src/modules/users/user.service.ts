@@ -2,6 +2,7 @@ import AppError from '../../errors/AppError';
 import * as UserRepository from './user.repository';
 import { UpdateUserPayload, PublicUser, UserProfile } from '@gremio-estelar/shared';
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
+import { sanitizeString } from '../../middleware/sanitize';
 
 export const getMe = async (userId: string): Promise<UserProfile & { dailyRewardClaimed?: any }> => {
   let userProfile = await UserRepository.getUserProfileById(userId);
@@ -30,6 +31,10 @@ export const getMe = async (userId: string): Promise<UserProfile & { dailyReward
 };
 
 export const updateMe = async (userId: string, payload: UpdateUserPayload): Promise<UserProfile> => {
+  if (payload.bio) payload.bio = sanitizeString(payload.bio);
+  if (payload.displayName) payload.displayName = sanitizeString(payload.displayName);
+  if ((payload as any).note) (payload as any).note = sanitizeString((payload as any).note);
+
   if (payload.username) {
     const existingUser = await UserRepository.findByUsername(payload.username);
     if (existingUser && existingUser.id !== userId) {

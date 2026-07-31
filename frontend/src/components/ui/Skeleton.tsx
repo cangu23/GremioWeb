@@ -96,3 +96,43 @@ export function SkeletonActions() {
 export function SkeletonDivider() {
   return <div style={{ height: '1px', background: 'rgba(255,255,255,0.04)', marginBottom: '10px' }} />;
 }
+
+// ==========================================================================
+// Skeleton Profile Header
+// ==========================================================================
+export function SkeletonProfile() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+      {/* Banner */}
+      <ShimmerBlock width="100%" height="180px" borderRadius="16px" />
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', marginTop: '-50px', padding: '0 20px' }}>
+        <ShimmerBlock width="100px" height="100px" borderRadius="50%" />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <ShimmerBlock width="180px" height="24px" borderRadius="6px" />
+          <ShimmerBlock width="120px" height="14px" borderRadius="4px" />
+        </div>
+      </div>
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <SkeletonText lines={2} />
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// Skeleton Guild / Event Card
+// ==========================================================================
+export function SkeletonGuildCard() {
+  return (
+    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <ShimmerBlock width="100%" height="120px" borderRadius="12px" />
+      <ShimmerBlock width="140px" height="18px" borderRadius="6px" />
+      <SkeletonText lines={2} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+        <ShimmerBlock width="80px" height="14px" borderRadius="4px" />
+        <ShimmerBlock width="60px" height="24px" borderRadius="8px" />
+      </div>
+    </div>
+  );
+}
+
