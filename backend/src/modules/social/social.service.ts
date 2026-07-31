@@ -87,15 +87,16 @@ export const getFollowers = async (userId: string) => {
   const follows = await SocialRepository.getFollowers(userId);
   const now = new Date();
   return follows.map(f => {
-    const isExpired = f.follower.noteExpiresAt && new Date(f.follower.noteExpiresAt) < now;
+    const follower = f.follower as any;
+    const isExpired = follower.noteExpiresAt && new Date(follower.noteExpiresAt) < now;
     return {
-      ...f.follower,
-      note: isExpired ? null : f.follower.note,
-      noteColor: isExpired ? null : f.follower.noteColor,
-      noteUpdatedAt: isExpired ? null : f.follower.noteUpdatedAt,
-      vtuberProfile: f.follower.vtuberProfile ? {
-        ...f.follower.vtuberProfile,
-        isVerified: f.follower.vtuberProfile.isVerified ?? false,
+      ...follower,
+      note: isExpired ? null : follower.note,
+      noteColor: isExpired ? null : follower.noteColor,
+      noteUpdatedAt: isExpired ? null : follower.noteUpdatedAt,
+      vtuberProfile: follower.vtuberProfile ? {
+        ...follower.vtuberProfile,
+        isVerified: follower.vtuberProfile.isVerified ?? false,
       } : null,
     };
   });
@@ -105,15 +106,16 @@ export const getFollowing = async (userId: string) => {
   const follows = await SocialRepository.getFollowing(userId);
   const now = new Date();
   return follows.map(f => {
-    const isExpired = f.following.noteExpiresAt && new Date(f.following.noteExpiresAt) < now;
+    const following = f.following as any;
+    const isExpired = following.noteExpiresAt && new Date(following.noteExpiresAt) < now;
     return {
-      ...f.following,
-      note: isExpired ? null : f.following.note,
-      noteColor: isExpired ? null : f.following.noteColor,
-      noteUpdatedAt: isExpired ? null : f.following.noteUpdatedAt,
-      vtuberProfile: f.following.vtuberProfile ? {
-        ...f.following.vtuberProfile,
-        isVerified: f.following.vtuberProfile.isVerified ?? false,
+      ...following,
+      note: isExpired ? null : following.note,
+      noteColor: isExpired ? null : following.noteColor,
+      noteUpdatedAt: isExpired ? null : following.noteUpdatedAt,
+      vtuberProfile: following.vtuberProfile ? {
+        ...following.vtuberProfile,
+        isVerified: following.vtuberProfile.isVerified ?? false,
       } : null,
     };
   });
