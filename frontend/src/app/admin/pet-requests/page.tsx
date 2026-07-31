@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
+import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 
 interface PetRequestItem {
   id: string;
@@ -37,6 +38,7 @@ const statusColors: Record<string, string> = {
 
 export default function AdminPetRequestsPage() {
   const { showToast } = useToast();
+  const { uploadAndWait } = useSocketMedia();
   const [requests, setRequests] = useState<PetRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('PENDING');
@@ -76,27 +78,11 @@ export default function AdminPetRequestsPage() {
   const handleFileUpload = async (file: File, target: 'image1' | 'image2') => {
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-
-      const response = await fetch(`${API_URL}/uploads/image`, {
-        method: 'POST',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (data.url) {
-        if (target === 'image1') setImage1Url(data.url);
-        else setImage2Url(data.url);
+      const url = await uploadAndWait(file, '/uploads/pet');
+      if (url) {
+        if (target === 'image1') setImage1Url(url);
+        else setImage2Url(url);
         showToast('Imagen/GIF subido con éxito ✨', 'success');
-      } else {
-        showToast(data.message || 'Error al subir la imagen', 'error');
       }
     } catch (err: any) {
       showToast(err?.message || 'Error al subir archivo', 'error');

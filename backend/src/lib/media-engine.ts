@@ -126,29 +126,53 @@ async function fallbackToSharp(
     `📦 [Sharp Fallback] ${folder}: ${(buffer.length / 1024).toFixed(1)}KB → ${(compressed.length / 1024).toFixed(1)}KB ${isGif ? '(animated GIF)' : '(webp)'}`
   );
 
-  const url = await new Promise<string>((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: `gremio-estelar/${folder}`,
-        resource_type: isGif ? 'auto' : 'image',
-      },
-      (error: UploadApiErrorResponse | undefined, result?: UploadApiResponse) => {
-        if (error) return reject(error);
-        if (!result) return reject(new Error('Cloudinary upload returned no result'));
-        resolve(result.secure_url);
-      }
-    );
-    uploadStream.end(compressed);
-  });
+  try {
+    const url = await new Promise<string>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: `gremio-estelar/${folder}`,
+          resource_type: isGif ? 'auto' : 'image',
+        },
+        (error: UploadApiErrorResponse | undefined, result?: UploadApiResponse) => {
+          if (error) return reject(error);
+          if (!result) return reject(new Error('Cloudinary upload returned no result'));
+          resolve(result.secure_url);
+        }
+      );
+      uploadStream.end(compressed);
+    });
 
-  return {
-    status: 'ok',
-    url,
-    format,
-    size_bytes: compressed.length,
-    original_size_bytes: buffer.length,
-    animated: isGif,
-  };
+    return {
+      status: 'ok',
+      url,
+      format,
+      size_bytes: compressed.length,
+      original_size_bytes: buffer.length,
+      animated: isGif,
+    };
+  } catch (cloudErr: any) {
+    console.warn(`⚠️ [Cloudinary] Failed to upload, saving to local disk: ${cloudErr?.message}`);
+    const fs = await import('fs');
+    const path = await import('path');
+    const uploadsDir = path.join(__dirname, '..', '..', 'uploads', folder);
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const ext = isGif ? 'gif' : 'webp';
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const filePath = path.join(uploadsDir, fileName);
+    fs.writeFileSync(filePath, compressed);
+
+    const localUrl = `/uploads/${folder}/${fileName}`;
+    return {
+      status: 'ok',
+      url: localUrl,
+      format,
+      size_bytes: compressed.length,
+      original_size_bytes: buffer.length,
+      animated: isGif,
+    };
+  }
 }
 
 /**

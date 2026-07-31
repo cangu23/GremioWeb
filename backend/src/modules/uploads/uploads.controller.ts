@@ -182,6 +182,16 @@ export const handleUploadCafeImage = async (req: Request, res: Response, next: N
   await handleUpload(req, res, next, folder, { maxWidth, quality: 80 });
 };
 
+// Upload pet image/GIF handler
+export const handleUploadPetImage = async (req: Request, res: Response, next: NextFunction) => {
+  await handleUpload(req, res, next, 'pets', { maxWidth: 1024, quality: 90 });
+};
+
+// Upload general image handler
+export const handleUploadGeneralImage = async (req: Request, res: Response, next: NextFunction) => {
+  await handleUpload(req, res, next, 'general', { maxWidth: 1200, quality: 85 });
+};
+
 // ─── Poll endpoint for upload status (backup if no WebSocket) ───
 
 export const handleUploadStatus = async (req: Request, res: Response, next: NextFunction) => {

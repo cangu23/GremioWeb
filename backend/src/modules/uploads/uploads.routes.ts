@@ -23,4 +23,10 @@ router.post('/sticker', authenticate, UploadsController.uploadImage, UploadsCont
 // Upload cafe image (logo/banner) (requires auth)
 router.post('/cafe', authenticate, UploadsController.uploadImage, UploadsController.handleUploadCafeImage);
 
+// Upload pet image / GIF (requires auth)
+router.post('/pet', authenticate, UploadsController.uploadImage, UploadsController.handleUploadPetImage);
+
+// Upload general image / GIF (requires auth)
+router.post('/image', authenticate, UploadsController.uploadImage, UploadsController.handleUploadGeneralImage);
+
 export default router;
