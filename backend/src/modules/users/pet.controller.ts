@@ -13,10 +13,13 @@ export const feedPet = async (req: Request, res: Response, next: NextFunction) =
     const { targetUserId } = req.body;
     const petOwnerId = targetUserId || feederId;
 
-    const [feeder, petOwner] = await Promise.all([
+    const [feederRaw, petOwnerRaw] = await Promise.all([
       prisma.user.findUnique({ where: { id: feederId } }),
       prisma.user.findUnique({ where: { id: petOwnerId } }),
     ]);
+
+    const feeder: any = feederRaw;
+    const petOwner: any = petOwnerRaw;
 
     if (!feeder) {
       res.status(404).json({ status: 'error', message: 'Usuario no encontrado.' });
@@ -54,7 +57,7 @@ export const feedPet = async (req: Request, res: Response, next: NextFunction) =
     const newLevel = Math.floor(newExp / 100) + 1;
     const leveledUp = newLevel > currentLevel;
 
-    const updatedOwner = await prisma.user.update({
+    const updatedOwner: any = await prisma.user.update({
       where: { id: petOwnerId },
       data: {
         petHunger: newHunger,
