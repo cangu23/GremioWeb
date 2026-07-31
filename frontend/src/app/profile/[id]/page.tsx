@@ -463,6 +463,34 @@ function ProfileContent() {
                 displayName.charAt(0).toUpperCase()
               )}
             </div>
+
+            {/* Pet Companion floating beside Avatar */}
+            {profile.profilePet && (
+              <div style={{
+                position: 'absolute',
+                right: 'calc(-65px - 1vw)',
+                bottom: '0px',
+                zIndex: 10,
+              }}>
+                <PetWidget
+                  companion
+                  petOwnerId={profile.id}
+                  petOwnerUsername={profile.username}
+                  petData={{
+                    profilePet: profile.profilePet,
+                    petName: profile.petName,
+                    petImage2: profile.petImage2,
+                    petLevel: profile.petLevel,
+                    petExp: profile.petExp,
+                    petHunger: profile.petHunger,
+                    lastFedAt: profile.lastFedAt,
+                  }}
+                  onPetUpdated={(updatedPet) => {
+                    setProfile((prev) => prev ? { ...prev, ...updatedPet } : null);
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -629,27 +657,6 @@ function ProfileContent() {
             }}>
               {vtuber.contentType}
             </span>
-          )}
-
-          {/* ===== PET WIDGET ===== */}
-          {profile.profilePet && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', marginBottom: '24px' }}>
-              <PetWidget
-                petOwnerId={profile.id}
-                petData={{
-                  profilePet: profile.profilePet,
-                  petName: profile.petName,
-                  petImage2: profile.petImage2,
-                  petLevel: profile.petLevel,
-                  petExp: profile.petExp,
-                  petHunger: profile.petHunger,
-                  lastFedAt: profile.lastFedAt,
-                }}
-                onPetUpdated={(updatedPet) => {
-                  setProfile((prev) => prev ? { ...prev, ...updatedPet } : null);
-                }}
-              />
-            </div>
           )}
         </div>
 
