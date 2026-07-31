@@ -131,7 +131,7 @@ export const getActiveStickers = async (req: Request, res: Response, next: NextF
     if (stickers.length === 0 && !type && !category) {
       const anyUser = await prisma.user.findFirst();
       if (anyUser) {
-        await prisma.sticker.createMany({
+        await (prisma.sticker.createMany as any)({
           data: [
             { name: 'hola', imageUrl: 'https://api.iconify.design/fluent-emoji:waving-hand.svg', category: 'general', type: 'emoji', addedById: anyUser.id },
             { name: 'corazon', imageUrl: 'https://api.iconify.design/fluent-emoji:sparkling-heart.svg', category: 'hearts', type: 'emoji', addedById: anyUser.id },

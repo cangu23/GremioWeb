@@ -1,12 +1,9 @@
 // ========================================
-// Gremio Estelar — Prisma Schema (SQLite)
+// Gremio Estelar — Prisma Schema
 // ========================================
-// For LOCAL DEVELOPMENT only.
-// Switch to this schema for dev:
-//   prisma generate --schema prisma/schema.sqlite.prisma
-//   prisma db push --schema prisma/schema.sqlite.prisma
-//
-// Set DATABASE_URL="file:./dev.db" in backend/.env
+// Production: PostgreSQL (via DATABASE_URL env var)
+// Local dev with SQLite: use schema.sqlite.prisma instead
+//   (run: prisma generate --schema prisma/schema.sqlite.prisma)
 // ========================================
 
 generator client {
@@ -33,14 +30,26 @@ model User {
   displayName   String?
   avatarUrl     String?
   bio           String?
+  bannerColor   String?
 
   // Note / status (Instagram-style note on avatar)
   note          String?
+  noteColor     String?
   noteUpdatedAt DateTime?
+  noteExpiresAt DateTime?
 
-  // Gamification
+  // Gamification & Ecosystem
   xp            Int            @default(0)
   level         Int            @default(1)
+  stardust      Int            @default(0)
+  plan          String         @default("FREE")
+  activeTitle   String?
+  profileMusic  String?
+  profileBg     String?
+  profileFrame  String?
+  profilePet    String?
+  profileParticles String?
+  profileTheme  String?
 
   // Relations
   vtuberProfile VTuberProfile?
@@ -76,6 +85,8 @@ model User {
   codesRedeemed  RoleCode[]    @relation("codeRedeemer")
   vtuberRequests VtuberRequest[]
   requestsReviewed VtuberRequest[] @relation("requestReviewer")
+  petRequests          PetRequest[] @relation("userPetRequests")
+  petRequestsReviewed  PetRequest[] @relation("petRequestReviewer")
 
   // Warnings (3 strikes system)
   warningsReceived Warning[]    @relation("warnedUser")
@@ -90,6 +101,9 @@ model User {
   reportsMade   Report[]       @relation("reportReporter")
   reportsModerated Report[]    @relation("reportModerator")
 
+  // Stickers (admin-managed)
+  stickersAdded Sticker[]    @relation("stickerAuthor")
+
   // Chat messages
   chatMessages  ChatMessage[]
   dmsSent       DirectMessage[] @relation("dmSender")
@@ -101,10 +115,17 @@ model User {
   likes         Like[]
   mentions      PostMention[]
 
-  // Payments
+  // Payments & Platform Subscriptions
   subscriptions UserSubscription[]
   donationsSent     Donation[] @relation("donor")
   donationsReceived Donation[] @relation("recipient")
+  platformSubscription PlatformSubscription?
+
+  // Ecosystem & Gamification
+  stardustTransactions StardustTransaction[]
+  userMissions         UserMissionProgress[]
+  userTitles           UserTitle[]
+  userSeasonPasses     UserSeasonPass[]
 
   @@index([username])
   @@index([xp])
@@ -125,32 +146,33 @@ model VTuberProfile {
   id          String   @id @default(cuid())
   displayName String
   avatarUrl   String?
-  bannerUrl   String?
+  bannerUrl   String?                    // Banner/image de portada
   description String?
-  lore        String?
-  socialLinks String?
-  twitchUrl   String?
-  youtubeUrl  String?
-  kickUrl     String?
-  tiktokUrl   String?
-  twitterUrl  String?
-  discordUrl  String?
-  websiteUrl  String?
-  streamSchedule String?
-  languages   String?
-  contentType String?
-  live2dModel String?
-  model3d     String?
-  fanName     String?
-  oshiMark    String?
-  hashtags    String?
-  themeColor  String?
-  isLive      Boolean  @default(false)
-  lastLiveAt  DateTime?
-  isVerified  Boolean  @default(false)
-  isApproved  Boolean  @default(false)
-  isFeatured  Boolean  @default(false)
-  isHidden    Boolean  @default(false)
+  lore        String?                    // Historia / lore del personaje
+  socialLinks String?                    // JSON con enlaces a redes sociales
+  twitchUrl   String?                    // Enlace directo a Twitch
+  youtubeUrl  String?                    // Enlace directo a YouTube
+  kickUrl     String?                    // Enlace a Kick
+  tiktokUrl   String?                    // Enlace a TikTok
+  twitterUrl  String?                    // Enlace a X/Twitter
+  discordUrl  String?                    // Enlace a Discord
+  websiteUrl  String?                    // Sitio web personal
+  kofiUrl     String?                    // Enlace personal de Ko-fi (ej: https://ko-fi.com/mi_nombre)
+  streamSchedule String?                // Horario de streams (texto libre, ej: "Lun-Mie 20:00 UTC")
+  languages   String?                    // JSON array de idiomas
+  contentType String?                    // Tipo de contenido (gaming, música, arte, etc.)
+  live2dModel String?                    // URL al modelo Live2D
+  model3d     String?                    // URL al modelo 3D
+  fanName     String?                    // Nombre de los fans (ej: "Estrellitas")
+  oshiMark    String?                    // Oshi mark (emoji/símbolo)
+  hashtags    String?                    // JSON array de hashtags oficiales
+  themeColor  String?                   // Color de tema del perfil (hex, ej: "#8a2be2")
+  isLive      Boolean  @default(false)  // Estado en directo / offline
+  lastLiveAt  DateTime?                  // Última vez que estuvo en vivo
+  isVerified  Boolean  @default(false)  // Admin: verified VTuber
+  isApproved  Boolean  @default(false)  // Admin: approved profile
+  isFeatured  Boolean  @default(false)  // Admin: featured VTuber
+  isHidden    Boolean  @default(false)  // Admin: hidden profile
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id])
@@ -161,15 +183,17 @@ model VTuberProfile {
   @@index([isApproved])
 }
 
+// ========== SOCIAL: POSTS / FEED ==========
+
 model Post {
   id           String       @id @default(cuid())
   content      String
-  mediaUrl     String?
+  mediaUrl     String?                    // URL de imagen/multimedia
   isPinned     Boolean      @default(false)
   isPoll       Boolean      @default(false)
-  pollData     String?
-  isHidden     Boolean      @default(false)
-  isFeatured   Boolean      @default(false)
+  pollData     String?                    // JSON con datos de la encuesta
+  isHidden     Boolean      @default(false) // Admin: hidden from public
+  isFeatured   Boolean      @default(false) // Admin: featured post
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -190,7 +214,7 @@ model Comment {
   id        String   @id @default(cuid())
   content   String
   mediaUrl  String?
-  isHidden  Boolean  @default(false)
+  isHidden  Boolean  @default(false) // Admin: hidden from public
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -250,19 +274,7 @@ model PostMention {
   @@index([userId])
 }
 
-model Follow {
-  id          String   @id @default(cuid())
-  followerId  String
-  followingId String
-  createdAt   DateTime @default(now())
-
-  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
-
-  @@unique([followerId, followingId])
-  @@index([followerId])
-  @@index([followingId])
-}
+// ========== SOCIAL: FRIENDS ==========
 
 model Friend {
   id          String   @id @default(cuid())
@@ -281,6 +293,24 @@ model Friend {
   @@index([status])
 }
 
+// ========== SOCIAL: FOLLOW ==========
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ========== EVENTS ==========
+
 model Event {
   id          String         @id @default(cuid())
   title       String
@@ -290,8 +320,8 @@ model Event {
   maxAttendees Int?
   coverUrl    String?
   status      String         @default("UPCOMING")
-  streamUrl   String?
-  isFeatured  Boolean        @default(false)
+  streamUrl   String?                    // URL de streaming asociado (Twitch/YouTube)
+  isFeatured  Boolean        @default(false) // Admin: featured event
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -319,6 +349,8 @@ model EventAttendee {
   @@index([userId])
 }
 
+// ========== GUILDS ==========
+
 model Guild {
   id          String       @id @default(cuid())
   name        String       @unique
@@ -326,9 +358,9 @@ model Guild {
   logoUrl     String?
   coverUrl    String?
   tags        String?
-  rules       String?
-  isSuspended Boolean      @default(false)
-  isFeatured  Boolean      @default(false)
+  rules       String?                    // Reglas del gremio (markdown/texto)
+  isSuspended Boolean      @default(false) // Admin: suspended guild
+  isFeatured  Boolean      @default(false) // Admin: featured guild
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -345,8 +377,8 @@ model Guild {
 model GuildChannel {
   id        String   @id @default(cuid())
   guildId   String
-  name      String
-  type      String   @default("TEXT")
+  name      String                    // e.g. "general", "anuncios", "musica"
+  type      String   @default("TEXT") // TEXT or VOICE
   position  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -390,12 +422,62 @@ model GuildMember {
   @@index([userId])
 }
 
+// ========== DAILY REWARDS ==========
+
+model DailyReward {
+  id        String   @id @default(cuid())
+  userId    String
+  day       Int      @default(1)                    // Day of streak (1-7, resets after 7)
+  xpAwarded Int      @default(0)
+  bonus     Boolean  @default(false)                 // Whether this was a bonus reward (day 7)
+  claimedAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, claimedAt])
+  @@index([userId])
+}
+
+// ========== ROULETTE SPINS ==========
+
+model RouletteSpin {
+  id        String   @id @default(cuid())
+  userId    String
+  prize     String                       // e.g. "xp_50", "xp_100", "badge_rare", "item_1"
+  prizeLabel String                     // Human-readable prize name
+  prizeValue Int      @default(0)        // XP amount or item ID
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId])
+}
+
+// ========== WARNINGS (3 strikes) ==========
+
+model Warning {
+  id          String   @id @default(cuid())
+  userId      String                       // User who received the warning
+  warnedById  String                       // Admin who issued the warning
+  reason      String
+  strike      Int      @default(1)          // 1st, 2nd, or 3rd strike
+  autoBanned  Boolean  @default(false)      // Whether this strike triggered auto-ban
+  createdAt   DateTime @default(now())
+
+  warnedUser  User     @relation("warnedUser", fields: [userId], references: [id], onDelete: Cascade)
+  warner      User     @relation("warnerUser", fields: [warnedById], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
 model GuildJoinRequest {
   id        String   @id @default(cuid())
   guildId   String
   userId    String
-  message   String?
-  status    String   @default("PENDING")
+  message   String?                    // Mensaje de solicitud
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -406,6 +488,8 @@ model GuildJoinRequest {
   @@index([guildId])
   @@index([userId])
 }
+
+// ========== ACHIEVEMENTS ==========
 
 model Achievement {
   id          String           @id @default(cuid())
@@ -433,6 +517,8 @@ model UserAchievement {
   @@index([achievementId])
 }
 
+// ========== NOTIFICATIONS ==========
+
 model Notification {
   id          String   @id @default(cuid())
   userId      String
@@ -449,12 +535,31 @@ model Notification {
   @@index([userId, createdAt])
 }
 
+// ========== ADMIN LOGS ==========
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String                    // e.g. BAN_USER, DELETE_POST, CHANGE_ROLE
+  detail    String?                   // JSON with additional info
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ========== REPORTS / MODERATION ==========
+
 model RoleCode {
   id            String   @id @default(cuid())
-  code          String   @unique
-  name          String
-  role          String
-  status        String   @default("ACTIVE")
+  code          String   @unique              // Hash del código (BCrypt)
+  name          String                       // Nombre personalizado (ej: "VTuber-Kira")
+  role          String                       // VTUBER, MODERATOR, ADMIN
+  status        String   @default("ACTIVE")  // ACTIVE, USED, EXPIRED, REVOKED
   generatedById String
   usedById      String?
   usedAt        DateTime?
@@ -473,13 +578,13 @@ model RoleCode {
 model VtuberRequest {
   id            String   @id @default(cuid())
   userId        String
-  status        String   @default("PENDING")
-  displayName   String
+  status        String   @default("PENDING")  // PENDING, APPROVED, REJECTED
+  displayName   String                       // Nombre VTuber solicitado
   description   String?
   avatarUrl     String?
   lore          String?
-  surveyAnswers String?
-  notes         String?
+  surveyAnswers String?                      // JSON con respuestas del cuestionario
+  notes         String?                      // Notas del admin
   reviewedById  String?
   reviewedAt    DateTime?
   createdAt     DateTime @default(now())
@@ -492,81 +597,16 @@ model VtuberRequest {
   @@index([userId])
 }
 
-// ========== DAILY REWARDS ==========
-
-model DailyReward {
-  id        String   @id @default(cuid())
-  userId    String
-  day       Int      @default(1)
-  xpAwarded Int      @default(0)
-  bonus     Boolean  @default(false)
-  claimedAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, claimedAt])
-  @@index([userId])
-}
-
-// ========== ROULETTE SPINS ==========
-
-model RouletteSpin {
-  id        String   @id @default(cuid())
-  userId    String
-  prize     String
-  prizeLabel String
-  prizeValue Int      @default(0)
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
-  @@index([userId])
-}
-
-// ========== WARNINGS (3 strikes) ==========
-
-model Warning {
-  id          String   @id @default(cuid())
-  userId      String
-  warnedById  String
-  reason      String
-  strike      Int      @default(1)
-  autoBanned  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  warnedUser  User     @relation("warnedUser", fields: [userId], references: [id], onDelete: Cascade)
-  warner      User     @relation("warnerUser", fields: [warnedById], references: [id])
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
-model AdminLog {
-  id        String   @id @default(cuid())
-  userId    String
-  action    String
-  detail    String?
-  ip        String?
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-}
-
 model Report {
   id          String   @id @default(cuid())
   reporterId  String
-  targetType  String
+  targetType  String                    // USER, POST, COMMENT, EVENT, GUILD
   targetId    String
   reason      String
   description String?
-  status      String   @default("PENDING")
+  status      String   @default("PENDING") // PENDING, IN_REVIEW, RESOLVED, DISMISSED
   moderatorId String?
-  resolution  String?
+  resolution  String?                   // Resolution note
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -582,13 +622,15 @@ model Report {
 
 model AppSetting {
   id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
+  key       String   @unique             // e.g. "cafe_schedule", "cafe_description"
+  value     String                       // JSON or plain text value
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 
   @@index([key])
 }
+
+// ========== CHAT ==========
 
 model ChatMessage {
   id        String   @id @default(cuid())
@@ -618,13 +660,15 @@ model DirectMessage {
   @@index([receiverId, read])
 }
 
+// ========== PAYMENTS / MONETIZATION ==========
+
 model SubscriptionTier {
   id          String             @id @default(cuid())
   name        String             @unique
   description String
   price       Float
   interval    String             @default("month")
-  benefits    String
+  benefits    String             // JSON array
   badgeLabel  String?
   color       String?
   active      Boolean            @default(true)
@@ -674,16 +718,34 @@ model Donation {
   @@index([createdAt])
 }
 
+// ========== STICKERS / EMOJIS (Staff-managed) ==========
+
+model Sticker {
+  id          String   @id @default(cuid())
+  name        String   @unique                    // e.g. "pepe_dance", "kira_heart" — usado como :pepe_dance:
+  imageUrl    String                              // URL de la imagen (WebP optimizado)
+  category    String   @default("general")        // general, anime, meme, hearts, etc.
+  type        String   @default("sticker")        // "emoji" (32x32) or "sticker" (96x96)
+  addedById   String                              // Admin que lo agregó
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  addedBy     User     @relation("stickerAuthor", fields: [addedById], references: [id])
+
+  @@index([category])
+  @@index([type])
+}
+
 // ========== SHOP ==========
 
 model ShopItem {
   id          String         @id @default(cuid())
   name        String
   description String
-  type        String
+  type        String         // BADGE, COLOR, BANNER, NAME_CHANGE, PIN_POST, HOVER
   price       Int
-  imageUrl    String?
-  data        String?
+  imageUrl    String?        // Preview image of the item
+  data        String?        // JSON: badge icon, color hex, banner URL, effect type
   active      Boolean        @default(true)
   sortOrder   Int            @default(0)
   createdAt   DateTime       @default(now())
@@ -699,8 +761,8 @@ model UserPurchase {
   id        String   @id @default(cuid())
   userId    String
   itemId    String
-  equipped  Boolean  @default(false)
-  remaining Int?
+  equipped  Boolean  @default(false) // For equippable items (badges, colors, banners, effects)
+  remaining Int?                     // For consumables (name changes, pin posts), null = infinite
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -710,35 +772,13 @@ model UserPurchase {
   @@index([itemId])
 }
 
-model SystemLog {
-  id        String   @id @default(cuid())
-  level     String   @default("INFO")
-  message   String
-  context   String?
-  createdAt DateTime @default(now())
-}
-
-model Sticker {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  imageUrl    String
-  category    String   @default("general")
-  type        String   @default("sticker")
-  addedById   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  addedBy     User     @relation("stickerAuthor", fields: [addedById], references: [id])
-
-  @@index([category])
-  @@index([type])
-}
+// ========== ECOSYSTEM: STARDUST & MISSIONS ==========
 
 model StardustTransaction {
   id        String   @id @default(cuid())
   userId    String
-  amount    Int
-  reason    String
+  amount    Int                      // Positive = earned, negative = spent
+  reason    String                   // e.g. "daily_login", "post_like", "mission_complete", "shop_purchase"
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -750,9 +790,9 @@ model Mission {
   id             String                @id @default(cuid())
   title          String
   description    String
-  type           String                @default("DAILY")
+  type           String                @default("DAILY") // DAILY, WEEKLY, SEASONAL
   goal           Int                   @default(1)
-  action         String
+  action         String                // "POST_CREATE", "POST_LIKE", "COMMENT_CREATE", "DAILY_LOGIN", "VTUBER_VISIT", "EVENT_JOIN"
   xpReward       Int                   @default(50)
   stardustReward Int                   @default(20)
   active         Boolean               @default(true)
@@ -781,7 +821,7 @@ model UserMissionProgress {
 model PlatformSubscription {
   id               String    @id @default(cuid())
   userId           String    @unique
-  plan             String    @default("ASTRO")
+  plan             String    @default("ASTRO") // ASTRO, NOVA, STELLAR
   status           String    @default("ACTIVE")
   currentPeriodEnd DateTime
   cancelledAt      DateTime?
@@ -797,7 +837,7 @@ model Title {
   description      String?
   color            String?
   icon             String?
-  requirementType  String      @default("ACHIEVEMENT")
+  requirementType  String      @default("ACHIEVEMENT") // ACHIEVEMENT, LEVEL, SEASONAL, PLAN
   requirementValue String?
 
   userTitles       UserTitle[]
@@ -815,10 +855,12 @@ model UserTitle {
   @@unique([userId, titleId])
 }
 
+// ========== ECOSYSTEM: SEASONS & STELLAR PASS ==========
+
 model Season {
   id          String           @id @default(cuid())
   name        String
-  theme       String?
+  theme       String?          // e.g. "Lluvia de Estrellas", "Festival Maid", "Sakura"
   number      Int              @default(1)
   startsAt    DateTime
   endsAt      DateTime
@@ -832,8 +874,8 @@ model PassLevel {
   id            String   @id @default(cuid())
   seasonId      String
   level         Int
-  freeReward    String?
-  premiumReward String?
+  freeReward    String?  // JSON string: { type: "stardust" | "xp" | "title", amount: 100, label: "100 Stardust" }
+  premiumReward String?  // JSON string: { type: "stardust" | "xp" | "title", amount: 300, label: "Título Leyenda" }
 
   season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
@@ -847,7 +889,7 @@ model UserSeasonPass {
   level         Int       @default(1)
   xp            Int       @default(0)
   isPremium     Boolean   @default(false)
-  claimedLevels String?
+  claimedLevels String?   // JSON array string of claimed level numbers e.g. "[1,2,3]"
 
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   season        Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
@@ -856,4 +898,35 @@ model UserSeasonPass {
   @@index([userId])
 }
 
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     String   @default("INFO")
+  message   String
+  context   String?
+  createdAt DateTime @default(now())
+}
+
+// ========== PET REQUESTS (Solicitudes de Mascotas) ==========
+
+model PetRequest {
+  id           String   @id @default(cuid())
+  userId       String
+  petName      String
+  description  String?
+  referenceUrl String?
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNote    String?
+  image1Url    String?  // Imagen / GIF 1 de la mascota
+  image2Url    String?  // Imagen / GIF 2 de la mascota (opcional)
+  reviewerId   String?
+
+  user         User     @relation("userPetRequests", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer     User?    @relation("petRequestReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
 
