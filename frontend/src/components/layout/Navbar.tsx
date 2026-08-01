@@ -478,7 +478,32 @@ function NotificationsDropdown({ unreadCount }: { unreadCount: number }) {
                     if (isGift) {
                       window.dispatchEvent(new CustomEvent('open-gift-envelope', { detail: n }));
                     } else {
-                      router.push('/notifications');
+                      const type = (n.type || '').toUpperCase();
+                      const ref = n.referenceId;
+                      let link: string | null = null;
+                      if (type.includes('FOLLOW') || type.includes('FRIEND') || type.includes('REFERRAL')) {
+                        link = ref ? `/profile/${ref}` : '/feed';
+                      } else if (type.includes('LIKE') || type.includes('COMMENT') || type.includes('MENTION')) {
+                        link = ref ? `/feed?post=${ref}` : '/feed';
+                      } else if (type.includes('EVENT')) {
+                        link = ref ? `/events/${ref}` : '/events';
+                      } else if (type.includes('GUILD')) {
+                        link = ref ? `/guilds/${ref}` : '/guilds';
+                      } else if (type.includes('DM')) {
+                        link = '/chat';
+                      } else if (type.includes('VTUBER')) {
+                        link = '/vtuber-profile';
+                      } else if (type.includes('PET') || type.includes('STARDUST')) {
+                        link = '/inventory';
+                      } else if (ref) {
+                        link = `/feed?post=${ref}`;
+                      }
+
+                      if (link) {
+                        router.push(link);
+                      } else {
+                        router.push('/notifications');
+                      }
                     }
                   }}
                   style={{

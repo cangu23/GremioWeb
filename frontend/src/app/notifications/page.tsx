@@ -137,28 +137,62 @@ function NotificationsContent() {
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
 
-  const getNotificationLink = (n: Notification) => {
-    switch (n.type) {
-      case 'follow': return `/profile/${n.referenceId}`;
-      case 'like':
-      case 'comment':
-      case 'mention': return `/feed?post=${n.referenceId}`;
-      case 'event_attend':
-      case 'event_created': return `/events/${n.referenceId}`;
-      case 'guild_joined': return `/guilds/${n.referenceId}`;
-      case 'achievement':
-      case 'level_up': return '/achievements';
-      case 'dm': return '/chat';
-      case 'friend_request':
-      case 'friend_accept': return `/profile/${n.referenceId}`;
-      case 'vtuber_request': return '/admin/vtuber-requests';
+  const getNotificationLink = (n: Notification): string | null => {
+    const type = (n.type || '').toUpperCase();
+    const ref = n.referenceId;
+
+    switch (type) {
+      case 'FOLLOW':
+      case 'FRIEND_REQUEST':
+      case 'FRIEND_ACCEPT':
+      case 'REFERRAL_JOIN':
+        return ref ? `/profile/${ref}` : (n.userId ? `/profile/${n.userId}` : '/feed');
+
+      case 'LIKE':
+      case 'COMMENT':
+      case 'MENTION':
+      case 'POST_DELETED':
+      case 'COMMENT_DELETED':
+        return ref ? `/feed?post=${ref}` : '/feed';
+
+      case 'EVENT_ATTEND':
+      case 'EVENT_CREATED':
+        return ref ? `/events/${ref}` : '/events';
+
+      case 'GUILD_JOINED':
+      case 'GUILD_JOIN_REQUEST':
+      case 'GUILD_REQUEST_APPROVED':
+      case 'GUILD_REQUEST_REJECTED':
+        return ref ? `/guilds/${ref}` : '/guilds';
+
+      case 'ACHIEVEMENT':
+      case 'LEVEL_UP':
+        return '/pass';
+
+      case 'DM':
+        return '/chat';
+
+      case 'VTUBER_REQUEST':
+        return '/admin/vtuber-requests';
+
       case 'VTUBER_APPROVED':
-      case 'vtuber_approved':
       case 'VTUBER_REJECTED':
-      case 'vtuber_rejected':
       case 'VTUBER_VERIFIED':
-      case 'vtuber_verified': return '/vtuber-profile';
-      default: return null;
+        return '/vtuber-profile';
+
+      case 'PET_REQUEST_APPROVED':
+      case 'PET_REQUEST_REJECTED':
+      case 'STARDUST_GRANT':
+      case 'STARDUST_ADMIN_GRANT':
+        return '/inventory';
+
+      case 'GIFT_PLAN_RECEIVED':
+      case 'STARDUST_RECEIVED':
+        return '/inventory';
+
+      default:
+        if (ref) return `/feed?post=${ref}`;
+        return null;
     }
   };
 
