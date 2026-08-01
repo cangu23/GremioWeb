@@ -89,6 +89,21 @@ export default function MissionsWidget() {
     }
   };
 
+  const handleInviteClick = async () => {
+    const inviteUrl = `${window.location.origin}?ref=${user?.username || 'gremio'}`;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      showToast('🔗 ¡Enlace de invitación copiado al portapapeles!', 'success');
+      await apiFetch('/ecosystem/missions/track', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'INVITE_FRIEND' }),
+      });
+      await loadData();
+    } catch {
+      showToast('🔗 Tu enlace: ' + inviteUrl, 'info');
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -229,6 +244,25 @@ export default function MissionsWidget() {
                   >
                     <SparklesIcon size={13} color="#000" />
                     Reclamar
+                  </button>
+                ) : m.action === 'INVITE_FRIEND' ? (
+                  <button
+                    onClick={handleInviteClick}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(56, 189, 248, 0.4)',
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      color: '#38bdf8',
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    🔗 Copiar Enlace
                   </button>
                 ) : (
                   <span style={{ fontSize: '0.78rem', color: '#71717a', padding: '6px 12px' }}>

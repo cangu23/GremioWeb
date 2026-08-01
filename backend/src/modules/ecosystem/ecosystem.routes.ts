@@ -17,6 +17,7 @@ router.post('/stardust/transfer', EcosystemController.transferStardust);
 router.post('/stardust/gift-plan', EcosystemController.giftPlan);
 
 router.get('/missions', EcosystemController.getMissions);
+router.post('/missions/track', EcosystemController.trackMission);
 router.post('/missions/claim-all', EcosystemController.claimAllMissions);
 router.post('/missions/:id/claim', EcosystemController.claimMission);
 

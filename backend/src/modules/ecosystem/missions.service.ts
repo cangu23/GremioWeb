@@ -67,6 +67,15 @@ export const DEFAULT_MISSIONS = [
     xpReward: 50,
     stardustReward: 30,
   },
+  {
+    title: '👥 Ampliar el Gremio',
+    description: 'Invita a una persona a ser parte del gremio compartiendo tu enlace',
+    type: 'DAILY',
+    goal: 1,
+    action: 'INVITE_FRIEND',
+    xpReward: 70,
+    stardustReward: 40,
+  },
 ];
 
 export const seedDefaultMissions = async () => {

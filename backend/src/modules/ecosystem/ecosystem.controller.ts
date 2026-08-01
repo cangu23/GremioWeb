@@ -52,6 +52,14 @@ export const claimAllMissions = async (req: any, res: Response) => {
   res.json({ success: true, data: result });
 };
 
+export const trackMission = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const { action } = req.body;
+  if (!action) throw new AppError('Acción requerida', 400);
+  await MissionsService.trackMissionProgress(userId, action);
+  res.json({ success: true, message: 'Progreso de misión actualizado' });
+};
+
 export const getPlatformPlan = async (req: any, res: Response) => {
   const userId = req.user!.id;
   const planDetails = await PlatformService.getMyPlatformPlan(userId);
