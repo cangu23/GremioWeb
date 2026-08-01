@@ -157,7 +157,7 @@ export default function PetWidget({
     );
   }
 
-  // Frameless Mode (Left-aligned, crisp image without any background circle)
+  // Frameless Mode (Sleek Compact RPG HUD Card above Galería)
   if (frameless) {
     return (
       <div
@@ -249,7 +249,7 @@ export default function PetWidget({
           </div>
         )}
 
-        {/* Character Stage (NO CIRCLE, NO AURA CONTAINER) */}
+        {/* Character Stage (Clean floating crisp character) */}
         <div
           onClick={() => {
             triggerQuote();
@@ -270,7 +270,7 @@ export default function PetWidget({
             src={activeImage}
             alt={petName}
             style={{
-              maxHeight: '180px',
+              maxHeight: '170px',
               maxWidth: '100%',
               objectFit: 'contain',
               imageRendering: 'auto',
@@ -298,57 +298,58 @@ export default function PetWidget({
           }} />
         </div>
 
-        {/* Sleek GOD-Tier Floating Control Bar */}
+        {/* Sleek RPG HUD Pet Control Card (Compact & Balanced) */}
         <div style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '16px',
-          flexWrap: 'wrap',
+          flexDirection: 'column',
+          gap: '12px',
           width: '100%',
-          maxWidth: '520px',
-          padding: '10px 20px',
+          maxWidth: '320px',
+          padding: '14px 18px',
           borderRadius: '20px',
-          background: 'linear-gradient(135deg, rgba(30,25,60,0.6), rgba(15,12,35,0.75))',
-          border: '1px solid rgba(255,215,0,0.25)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.35), 0 0 16px rgba(255,215,0,0.1)',
+          background: 'linear-gradient(135deg, rgba(28,24,55,0.75), rgba(16,13,38,0.85))',
+          border: '1px solid rgba(255,215,0,0.3)',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.4), 0 0 16px rgba(255,215,0,0.12)',
           backdropFilter: 'blur(12px)',
           marginTop: '4px',
         }}>
-          {/* Pet Name & Badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '0.98rem', fontWeight: 900, color: '#ffffff', letterSpacing: '0.02em' }}>
+          {/* Header Row: Pet Name & Level Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ffffff', letterSpacing: '0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               🐾 {petName}
             </span>
             <span style={{
-              fontSize: '0.74rem', fontWeight: 800, color: '#ffd700',
-              padding: '3px 10px', borderRadius: '10px',
+              fontSize: '0.72rem', fontWeight: 800, color: '#ffd700',
+              padding: '2px 9px', borderRadius: '10px',
               background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(245,158,11,0.25))',
               border: '1px solid rgba(255,215,0,0.4)',
               boxShadow: '0 2px 8px rgba(255,215,0,0.2)',
+              flexShrink: 0,
             }}>
               ⭐ Niv. {level}
             </span>
           </div>
 
-          {/* Progress Bars */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, maxWidth: '220px' }}>
-            <div style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.64rem', color: 'var(--text-muted)', marginBottom: '3px', fontWeight: 700 }}>
-                <span>XP</span>
-                <span style={{ color: '#8b5cf6' }}>{expInLevel}/100</span>
+          {/* Progress Bars Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%' }}>
+            {/* XP Bar */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.66rem', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 700 }}>
+                <span>✨ XP</span>
+                <span style={{ color: '#a855f7' }}>{expInLevel}/100</span>
               </div>
-              <div style={{ width: '100%', height: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
                 <div style={{ width: `${expInLevel}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #a855f7)', borderRadius: '4px', transition: 'width 0.4s ease' }} />
               </div>
             </div>
 
-            <div style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.64rem', color: 'var(--text-muted)', marginBottom: '3px', fontWeight: 700 }}>
-                <span>🍔</span>
-                <span style={{ color: hunger > 50 ? '#10b981' : '#f59e0b' }}>{hunger}%</span>
+            {/* Hunger Bar */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '6px 10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.66rem', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 700 }}>
+                <span>🍔 Hambre</span>
+                <span style={{ color: hunger > 50 ? '#34d399' : hunger > 20 ? '#fbbf24' : '#f87171' }}>{hunger}%</span>
               </div>
-              <div style={{ width: '100%', height: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
                 <div style={{
                   width: `${hunger}%`, height: '100%',
                   background: hunger > 50 ? 'linear-gradient(90deg, #10b981, #34d399)' : hunger > 20 ? 'linear-gradient(90deg, #f59e0b, #fbbf24)' : 'linear-gradient(90deg, #ef4444, #f87171)',
@@ -358,25 +359,26 @@ export default function PetWidget({
             </div>
           </div>
 
-          {/* Feed Button */}
+          {/* Full-width Feed Action Button */}
           <button
             onClick={handleFeed}
             disabled={isFeeding}
             style={{
-              padding: '8px 16px',
-              borderRadius: '12px',
+              width: '100%',
+              padding: '9px 16px',
+              borderRadius: '14px',
               border: 'none',
               background: 'linear-gradient(135deg, #f59e0b, #d97706)',
               color: '#ffffff',
               fontWeight: 800,
-              fontSize: '0.78rem',
+              fontSize: '0.8rem',
               cursor: isFeeding ? 'wait' : 'pointer',
               transition: 'all 0.25s ease',
-              boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
-              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 16px rgba(245,158,11,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.filter = 'brightness(1.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)'; }}
           >
             {isFeeding ? '🍖 Alimentando...' : isOwnPet ? '🍖 Alimentar (25⭐)' : `🍖 Regalar Comida (25⭐)`}
           </button>
