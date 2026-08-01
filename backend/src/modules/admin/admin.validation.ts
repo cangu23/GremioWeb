@@ -25,11 +25,16 @@ export const updateUserAdminSchema = z.object({
   body: z.object({
     username: z.string().min(3).max(30).optional(),
     email: z.string().email().optional(),
-    role: z.enum([
-      'USER', 'VTUBER', 'MAID', 'ARTIST', 'CLIPPER',
-      'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR',
-      'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN', 'BOT'
-    ]).optional(),
+    role: z.string().refine((val) => {
+      if (!val) return true;
+      const validRoles = [
+        'USER', 'VTUBER', 'MAID', 'ARTIST', 'CLIPPER',
+        'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR',
+        'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN', 'BOT', 'OWNER', 'HELPER', 'MOD'
+      ];
+      const roles = val.split(',').map(r => r.trim().toUpperCase());
+      return roles.every(r => validRoles.includes(r));
+    }, { message: 'Uno o más roles seleccionados no son válidos' }).optional(),
     plan: z.string().optional(),
     stardust: z.number().int().min(0).optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'BANNED', 'PENDING']).optional(),
