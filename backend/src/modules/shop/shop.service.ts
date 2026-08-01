@@ -2,6 +2,7 @@ import AppError from '../../errors/AppError';
 import * as ShopRepository from './shop.repository';
 import { spendStardust, addStardust } from '../ecosystem/stardust.service';
 import prisma from '../../database/prisma';
+import { trackMissionProgress } from '../ecosystem/missions.service';
 
 // ─── List shop items ───
 
@@ -106,6 +107,9 @@ export const equipItem = async (userId: string, itemId: string) => {
   }
 
   await ShopRepository.setItemEquipped(userId, itemId, isEquipping);
+  if (isEquipping) {
+    trackMissionProgress(userId, 'EQUIP_ITEM').catch(() => {});
+  }
 
   return { equipped: isEquipping, type };
 };

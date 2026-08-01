@@ -20,6 +20,7 @@ export const follow = async (followerId: string, followingId: string) => {
 
   const follower = await UserRepository.findById(followerId);
   await SocialRepository.followUser(followerId, followingId);
+  trackMissionProgress(followerId, 'USER_FOLLOW').catch(() => {});
 
   // Send notification
   if (follower) {

@@ -3,6 +3,7 @@ import * as UserRepository from './user.repository';
 import { UpdateUserPayload, PublicUser, UserProfile } from '@gremio-estelar/shared';
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
+import { trackMissionProgress } from '../ecosystem/missions.service';
 
 export const getMe = async (userId: string): Promise<UserProfile & { dailyRewardClaimed?: any }> => {
   let userProfile = await UserRepository.getUserProfileById(userId);
@@ -46,6 +47,8 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
   if (!updatedProfile) {
     throw new AppError('Failed to update user profile', 500);
   }
+
+  trackMissionProgress(userId, 'NOTE_UPDATE').catch(() => {});
 
   const { password, ...safeProfile } = updatedProfile;
   return safeProfile as UserProfile;

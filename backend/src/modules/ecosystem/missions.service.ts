@@ -58,6 +58,33 @@ export const DEFAULT_MISSIONS = [
     xpReward: 40,
     stardustReward: 25,
   },
+  {
+    title: '📝 Pensamiento del Día',
+    description: 'Actualiza la nota o estado de tu perfil',
+    type: 'DAILY',
+    goal: 1,
+    action: 'NOTE_UPDATE',
+    xpReward: 50,
+    stardustReward: 30,
+  },
+  {
+    title: '🤝 Ampliar el Gremio',
+    description: 'Sigue a un miembro o VTuber de la comunidad',
+    type: 'DAILY',
+    goal: 1,
+    action: 'USER_FOLLOW',
+    xpReward: 50,
+    stardustReward: 30,
+  },
+  {
+    title: '👑 Cambia tu Estilo',
+    description: 'Equipa o cambia un título o marco en tu inventario',
+    type: 'DAILY',
+    goal: 1,
+    action: 'EQUIP_ITEM',
+    xpReward: 45,
+    stardustReward: 30,
+  },
 ];
 
 export const seedDefaultMissions = async () => {
@@ -87,6 +114,37 @@ export const seedDefaultMissions = async () => {
       });
     }
   }
+};
+
+const getDailyRotatedMissions = (missions: any[], userId: string): any[] => {
+  const loginMission = missions.find(m => m.action === 'DAILY_LOGIN');
+  const pool = missions.filter(m => m.action !== 'DAILY_LOGIN');
+
+  if (pool.length === 0) return missions;
+
+  // Today's date string YYYY-MM-DD
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const seedString = `${userId}-${dateStr}`;
+
+  // Simple deterministic hash
+  let hash = 0;
+  for (let i = 0; i < seedString.length; i++) {
+    hash = (hash << 5) - hash + seedString.charCodeAt(i);
+    hash |= 0;
+  }
+  const positiveSeed = Math.abs(hash);
+
+  // Sort pool deterministically based on seed + mission action
+  const sortedPool = [...pool].sort((a, b) => {
+    const valA = (positiveSeed + a.action.charCodeAt(0) * 17) % 1000;
+    const valB = (positiveSeed + b.action.charCodeAt(0) * 17) % 1000;
+    return valA - valB;
+  });
+
+  // Select 3 rotated pool missions for today
+  const todaysRotated = sortedPool.slice(0, 3);
+
+  return loginMission ? [loginMission, ...todaysRotated] : todaysRotated;
 };
 
 const getTodayResetDate = (): Date => {
@@ -131,7 +189,10 @@ export const getUserMissions = async (userId: string) => {
     };
   });
 
-  return mapped.sort((a, b) => {
+  // Select today's 4 active missions for this user
+  const todaysMissions = getDailyRotatedMissions(mapped, userId);
+
+  return todaysMissions.sort((a, b) => {
     const aClaimed = !!a.claimedAt;
     const bClaimed = !!b.claimedAt;
     const aDone = a.completed || a.currentProgress >= a.goal;
