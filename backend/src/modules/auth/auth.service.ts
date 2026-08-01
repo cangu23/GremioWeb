@@ -35,18 +35,17 @@ export const register = async (input: RegisterInput) => {
   // Handle referral tracking & reward if ref provided
   if ((input as any).ref) {
     try {
-      const refClean = String((input as any).ref).trim();
-      const referrer = await prisma.user.findFirst({
-        where: { username: { equals: refClean, mode: 'insensitive' as any } },
-      });
+      const refClean = String((input as any).ref).trim().toLowerCase();
+      const allUsers = await prisma.user.findMany({ select: { id: true, username: true } });
+      const referrer = allUsers.find(u => u.username.toLowerCase() === refClean);
 
       if (referrer && referrer.id !== user.id) {
         // Track referrer's mission and grant referrer bonus
-        await trackMissionProgress(referrer.id, 'INVITE_FRIEND').catch(() => {});
-        await addStardust(referrer.id, 50, 'REFERRAL_BONUS').catch(() => {});
+        await trackMissionProgress(referrer.id, 'INVITE_FRIEND');
+        await addStardust(referrer.id, 50, 'REFERRAL_BONUS');
 
         // Grant new user welcome bonus for using an invite link
-        await addStardust(user.id, 50, 'WELCOME_REFERRAL_BONUS').catch(() => {});
+        await addStardust(user.id, 50, 'WELCOME_REFERRAL_BONUS');
 
         // Notify referrer
         await prisma.notification.create({
@@ -57,7 +56,7 @@ export const register = async (input: RegisterInput) => {
             message: `@${input.username} se ha unido a Gremio Estelar con tu enlace. (+50 ⭐)`,
             referenceId: user.id,
           },
-        }).catch(() => {});
+        });
 
         // Notify new user
         await prisma.notification.create({
