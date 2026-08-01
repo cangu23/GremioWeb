@@ -2,6 +2,7 @@ import AppError from '../../errors/AppError';
 import prisma from '../../database/prisma';
 import * as AdminRepository from '../admin/admin.repository';
 import * as NotificationsService from '../notifications/notifications.service';
+import { isStaffRole } from '@gremio-estelar/shared';
 
 export const issueWarning = async (inputUserId: string, warnedById: string, reason: string, ip?: string) => {
   if (!reason?.trim()) throw new AppError('Debes proporcionar una razón para la advertencia', 400);
@@ -12,6 +13,10 @@ export const issueWarning = async (inputUserId: string, warnedById: string, reas
     user = await prisma.user.findUnique({ where: { username: cleanInput } });
   }
   if (!user) throw new AppError('Usuario no encontrado. Ingresa un ID o nombre de usuario válido.', 404);
+
+  if (isStaffRole(user.role)) {
+    throw new AppError('No se pueden aplicar advertencias ni sanciones a miembros del staff', 400);
+  }
 
   const userId = user.id;
 

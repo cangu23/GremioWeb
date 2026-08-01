@@ -294,7 +294,7 @@ export default function InventoryPage() {
             🎒 Mi Inventario
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '20px' }}>
-            Administra y equipa los ítems que has comprado en la tienda
+            Administra y equipa los ítems que has adquirido en el Observatorio Estelar
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -308,7 +308,7 @@ export default function InventoryPage() {
                 textDecoration: 'none', boxShadow: '0 4px 16px rgba(139,92,246,0.3)',
               }}
             >
-              🛒 Ir a la Tienda
+              🔭 Observatorio Estelar
             </Link>
 
             <Link
@@ -381,7 +381,7 @@ export default function InventoryPage() {
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
             <p style={{ fontSize: '1.1rem', marginBottom: '12px' }}>No tienes ítems en esta sección</p>
             <Link href="/shop" style={{ color: 'var(--primary)', fontWeight: 600 }}>
-              Explorar la Tienda →
+              Explorar el Observatorio Estelar →
             </Link>
           </div>
         ) : (

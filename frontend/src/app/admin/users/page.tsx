@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
+import { isStaffRole } from '@gremio-estelar/shared';
 
 interface User {
   id: string;
@@ -49,6 +50,7 @@ const statusColors: Record<string, string> = {
 const roleColors: Record<string, string> = {
   ADMIN: '#8a2be2',
   MODERATOR: '#2196f3',
+  STAFF: '#10b981',
   VTUBER: '#ff007f',
   MAID: '#d4a030',
   USER: '#4caf50',
@@ -171,6 +173,7 @@ export default function AdminUsersPage() {
               <option value="">Todos</option>
               <option value="ADMIN">Admin</option>
               <option value="MODERATOR">Moderador</option>
+              <option value="STAFF">Staff</option>
               <option value="VTUBER">VTuber</option>
               <option value="MAID">Maid</option>
               <option value="USER">Usuario</option>
@@ -198,81 +201,89 @@ export default function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.data.map((user) => (
-                    <tr key={user.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
-                      <td style={{ padding: '12px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '32px', height: '32px', borderRadius: '50%',
-                            background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
-                              ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
-                              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.8rem', fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden',
-                          }}>
-                            {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && user.username.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              {user.username}
-                              {user.vtuberProfile?.isVerified && (
-                                <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado">
-                                  <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
-                                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              )}
-                              {user.role === 'MAID' && (
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#d4a030', background: 'rgba(212,160,48,0.15)', padding: '1px 6px', borderRadius: '4px' }}>MAID</span>
+                  {data.data.map((user) => {
+                    const isStaff = isStaffRole(user.role);
+                    return (
+                      <tr key={user.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%',
+                              background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
+                                ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
+                                : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '0.8rem', fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden',
+                            }}>
+                              {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && user.username.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {user.username}
+                                {user.vtuberProfile?.isVerified && (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado">
+                                    <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                                    <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                )}
+                                {user.role === 'MAID' && (
+                                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#d4a030', background: 'rgba(212,160,48,0.15)', padding: '1px 6px', borderRadius: '4px' }}>MAID</span>
+                                )}
+                              </div>
+                              {user.vtuberProfile?.displayName && (
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                  {user.vtuberProfile.displayName}
+                                </div>
                               )}
                             </div>
-                            {user.vtuberProfile?.displayName && (
-                              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                {user.vtuberProfile.displayName}
-                              </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{user.email}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, background: `${roleColors[user.role] || '#666'}22`, color: roleColors[user.role] || '#666' }}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: statusColors[user.status] || '#666' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: statusColors[user.status] || '#666' }} />
+                            {user.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.9rem' }}>{user.level}</td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{user._count?.posts || 0}</td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{user._count?.followers || 0}</td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                          {new Date(user.createdAt).toLocaleDateString('es-ES')}
+                        </td>
+                        <td style={{ padding: '12px 16px', minWidth: '280px', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'nowrap' }}>
+                            <button onClick={() => openEdit(user)} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(138,43,226,0.2)', color: '#a855f7', border: '1px solid rgba(138,43,226,0.4)', fontWeight: 600 }}>Editar</button>
+                            {!isStaff && user.role !== 'VTUBER' && (
+                              <button onClick={() => confirmAction(user.id, 'vtuber', 'promover a VTuber')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.4)', fontWeight: 600 }}>
+                                + VTuber
+                              </button>
+                            )}
+                            {!isStaff && user.status === 'ACTIVE' && (
+                              <button onClick={() => confirmAction(user.id, 'suspend', 'suspender')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.4)', fontWeight: 600 }}>Suspender</button>
+                            )}
+                            {!isStaff && (user.status === 'SUSPENDED' || user.status === 'BANNED') && (
+                              <button onClick={() => confirmAction(user.id, 'restore', 'restaurar')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.4)', fontWeight: 600 }}>Restaurar</button>
+                            )}
+                            {!isStaff && user.status !== 'BANNED' && (
+                              <button onClick={() => confirmAction(user.id, 'ban', 'banear')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.4)', fontWeight: 600 }}>Banear</button>
+                            )}
+                            {isStaff && (
+                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#a855f7', background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.3)', padding: '3px 8px', borderRadius: '6px' }}>
+                                🛡️ Staff Protegido
+                              </span>
                             )}
                           </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{user.email}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, background: `${roleColors[user.role] || '#666'}22`, color: roleColors[user.role] || '#666' }}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: statusColors[user.status] || '#666' }}>
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: statusColors[user.status] || '#666' }} />
-                          {user.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: '0.9rem' }}>{user.level}</td>
-                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{user._count?.posts || 0}</td>
-                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{user._count?.followers || 0}</td>
-                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-                        {new Date(user.createdAt).toLocaleDateString('es-ES')}
-                      </td>
-                      <td style={{ padding: '12px 16px', minWidth: '280px', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'nowrap' }}>
-                          <button onClick={() => openEdit(user)} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(138,43,226,0.2)', color: '#a855f7', border: '1px solid rgba(138,43,226,0.4)', fontWeight: 600 }}>Editar</button>
-                          {user.role !== 'VTUBER' && (
-                            <button onClick={() => confirmAction(user.id, 'vtuber', 'promover a VTuber')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.4)', fontWeight: 600 }}>
-                              + VTuber
-                            </button>
-                          )}
-                          {user.status === 'ACTIVE' && (
-                            <button onClick={() => confirmAction(user.id, 'suspend', 'suspender')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.4)', fontWeight: 600 }}>Suspender</button>
-                          )}
-                          {(user.status === 'SUSPENDED' || user.status === 'BANNED') && (
-                            <button onClick={() => confirmAction(user.id, 'restore', 'restaurar')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.4)', fontWeight: 600 }}>Restaurar</button>
-                          )}
-                          {user.status !== 'BANNED' && (
-                            <button onClick={() => confirmAction(user.id, 'ban', 'banear')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.4)', fontWeight: 600 }}>Banear</button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -296,52 +307,63 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Edit Modal */}
-      {selectedUser && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => setSelectedUser(null)}>
-          <div className="glass" style={{ padding: '32px', borderRadius: '20px', width: '100%', maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Editar Usuario</h2>
-              <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
-            </div>
+      {selectedUser && (() => {
+        const isSelectedStaff = isStaffRole(selectedUser.role);
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => setSelectedUser(null)}>
+            <div className="glass" style={{ padding: '32px', borderRadius: '20px', width: '100%', maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Editar Usuario</h2>
+                <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="form-group">
-                <label className="form-label">Nombre de usuario</label>
-                <input className="input" value={editData.username} onChange={e => setEditData({ ...editData, username: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input className="input" value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Rol</label>
-                <select className="input" value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })}>
-                  <option value="USER">Usuario</option>              <option value="VTUBER">VTuber</option>
-              <option value="MAID">Maid</option>
-              <option value="MODERATOR">Moderador</option>
-              <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Estado</label>
-                <select className="input" value={editData.status} onChange={e => setEditData({ ...editData, status: e.target.value })}>
-                  <option value="ACTIVE">Activo</option>
-                  <option value="SUSPENDED">Suspendido</option>
-                  <option value="BANNED">Baneado</option>
-                  <option value="PENDING">Pendiente</option>
-                </select>
-              </div>
-            </div>
+              {isSelectedStaff && (
+                <div style={{ padding: '12px 16px', background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: '12px', fontSize: '0.82rem', color: '#d8b4fe', marginBottom: '20px' }}>
+                  🛡️ <strong>Usuario de Staff Protegido:</strong> No se pueden banear, suspender ni modificar los roles de miembros del staff.
+                </div>
+              )}
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setSelectedUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
-              <button onClick={saveUser} className="btn" disabled={saving}>
-                {saving ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">Nombre de usuario</label>
+                  <input className="input" value={editData.username} onChange={e => setEditData({ ...editData, username: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input className="input" value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Rol</label>
+                  <select className="input" value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })} disabled={isSelectedStaff}>
+                    <option value="USER">Usuario</option>
+                    <option value="VTUBER">VTuber</option>
+                    <option value="MAID">Maid</option>
+                    <option value="STAFF">Staff</option>
+                    <option value="MODERATOR">Moderador</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Estado</label>
+                  <select className="input" value={editData.status} onChange={e => setEditData({ ...editData, status: e.target.value })} disabled={isSelectedStaff}>
+                    <option value="ACTIVE">Activo</option>
+                    <option value="SUSPENDED" disabled={isSelectedStaff}>Suspendido</option>
+                    <option value="BANNED" disabled={isSelectedStaff}>Baneado</option>
+                    <option value="PENDING">Pendiente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
+                <button onClick={() => setSelectedUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
+                <button onClick={saveUser} className="btn" disabled={saving}>
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

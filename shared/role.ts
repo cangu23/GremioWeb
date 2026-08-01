@@ -55,3 +55,9 @@ export enum Role {
   ADMIN = 'ADMIN',
   BOT = 'BOT',
 }
+
+export const isStaffRole = (role?: string | null): boolean => {
+  if (!role) return false;
+  const staffRoles = ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'HELPER', 'OWNER'];
+  return staffRoles.includes(role.toUpperCase());
+};

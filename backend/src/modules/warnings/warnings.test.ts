@@ -59,6 +59,14 @@ describe('WarningsService', () => {
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'nonexistent' } });
     });
 
+    it('throws when target user is a staff member', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: userId, username: 'moduser', role: 'MODERATOR', status: 'ACTIVE' });
+
+      await expect(WarningsService.issueWarning(userId, warnedById, reason)).rejects.toThrow(
+        'No se pueden aplicar advertencias ni sanciones a miembros del staff'
+      );
+    });
+
     it('creates a warning with correct strike number (1st)', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ id: userId, username: 'testuser', status: 'ACTIVE' });
       mockPrisma.warning.count.mockResolvedValue(0);

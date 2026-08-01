@@ -334,14 +334,14 @@ export default function ShopPage() {
             fontSize: '0.82rem', color: 'var(--primary)', fontWeight: 700,
             marginBottom: '12px',
           }}>
-            <span>✨ TIENDA ESTELAR</span>
+            <span>✨ OBSERVATORIO ESTELAR ⭐</span>
           </div>
 
           <h1 style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 800, marginBottom: '8px' }}>
-            Personaliza tu Perfil
+            Observatorio Estelar
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '24px', maxWidth: '500px', margin: '0 auto 24px' }}>
-            Desbloquea insignias, títulos, marcos y efectos con tus Stardust ⭐
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '24px', maxWidth: '560px', margin: '0 auto 24px' }}>
+            Explora el firmamento de artefactos, títulos, mascotas e insignias exclusivas para personalizar tu perfil con tus Stardust ⭐
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>

@@ -605,15 +605,15 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         }}
                       >
                         <div style={{
-                          width: '42px', height: '42px', borderRadius: '12px',
-                          background: 'linear-gradient(135deg, #38bdf8, #0284c7)',
+                          width: 38, height: 38, borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #38bdf8, #818cf8)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '1.3rem', boxShadow: '0 4px 12px rgba(56, 189, 248, 0.4)',
                         }}>
-                          🛍️
+                          🔭
                         </div>
                         <div>
-                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>Tienda</div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>Observatorio Estelar</div>
                           <div style={{ fontSize: '0.72rem', color: '#a1a1aa', marginTop: '2px' }}>Gastar Stardust</div>
                         </div>
                       </Link>

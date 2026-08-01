@@ -4,7 +4,7 @@ import * as AdminRepository from './admin.repository';
 import AppError from '../../errors/AppError';
 import { AdminQueryInput, PaginatedResponse } from './admin.types';
 import { UpdateUserAdminInput, UpdateVtuberAdminInput, UpdateEventAdminInput, UpdateGuildAdminInput, UpdatePostAdminInput, UpdateCommentAdminInput } from './admin.types';
-import { NOTIFICATION_TYPES } from '@gremio-estelar/shared';
+import { NOTIFICATION_TYPES, isStaffRole } from '@gremio-estelar/shared';
 
 // ========== HELPERS ==========
 
@@ -89,6 +89,16 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     }
   }
 
+  // Safety check: prevent banning, suspending, or modifying roles between staff members
+  if (id !== adminId && isStaffRole(user.role)) {
+    if (data.status === 'BANNED' || data.status === 'SUSPENDED') {
+      throw new AppError('No se puede banear ni suspender a otros miembros del staff', 400);
+    }
+    if (data.role && data.role !== user.role) {
+      throw new AppError('No se puede modificar el rol de otros miembros del staff', 400);
+    }
+  }
+
   const changes: string[] = [];
   if (data.role && data.role !== user.role) {
     changes.push(`rol: ${user.role} → ${data.role}`);
@@ -143,6 +153,10 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 export const deleteUser = async (id: string, adminId: string, ip?: string) => {
   const user = await AdminRepository.findUserById(id);
   if (!user) throw new AppError('Usuario no encontrado', 404);
+
+  if (isStaffRole(user.role)) {
+    throw new AppError('No se puede eliminar la cuenta de un miembro del staff', 400);
+  }
 
   await AdminRepository.deleteUser(id);
 

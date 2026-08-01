@@ -869,14 +869,18 @@ export default function StellarPassPage() {
   };
 
   const handleBuyPremiumWithStardust = async () => {
+    if (!window.confirm('¿Deseas activar el Pase Estelar Premium VIP por 2,500 ⭐ Polvo Estelar para la temporada activa?')) {
+      return;
+    }
     setBuyingPremium(true);
     try {
       const res = await apiFetch('/ecosystem/pass/buy-premium', { method: 'POST' });
       triggerConfettiBurst();
       showToast(res.data?.message || '¡Pase Premium VIP activado!', 'success');
+      window.dispatchEvent(new Event('stardust-updated'));
       await loadPass();
     } catch (err: any) {
-      showToast(err?.message || 'No se pudo comprar el Pase Premium', 'error');
+      showToast(err?.message || 'No se pudo comprar el Pase Premium. Verifica que tengas al menos 2,500 ⭐ Polvo Estelar.', 'error');
     } finally {
       setBuyingPremium(false);
     }

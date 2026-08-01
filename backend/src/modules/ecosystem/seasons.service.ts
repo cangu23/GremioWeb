@@ -113,24 +113,38 @@ export const getUserSeasonPass = async (userId: string) => {
   });
 
   if (!userPass) {
+    // Check if user previously bought the pass with Stardust
+    const passPurchase = await prisma.stardustTransaction.findFirst({
+      where: { userId, reason: { contains: 'Pase Estelar Premium' } },
+    });
+
     userPass = await prisma.userSeasonPass.create({
       data: {
         userId,
         seasonId: season.id,
         level: userLevel,
         xp: 0,
-        isPremium: !!isPremiumUser,
+        isPremium: !!isPremiumUser || !!passPurchase,
         claimedLevels: '[]',
       },
     });
   } else {
     const updatedLevel = Math.max(userPass.level, userLevel);
-    if (userPass.level !== updatedLevel || userPass.isPremium !== !!isPremiumUser) {
+    // If not premium yet, check if user has a Stardust purchase transaction
+    let targetPremium = userPass.isPremium || !!isPremiumUser;
+    if (!targetPremium) {
+      const passPurchase = await prisma.stardustTransaction.findFirst({
+        where: { userId, reason: { contains: 'Pase Estelar Premium' } },
+      });
+      if (passPurchase) targetPremium = true;
+    }
+
+    if (userPass.level !== updatedLevel || userPass.isPremium !== targetPremium) {
       userPass = await prisma.userSeasonPass.update({
         where: { id: userPass.id },
         data: {
           level: updatedLevel,
-          isPremium: !!isPremiumUser,
+          isPremium: targetPremium,
         },
       });
     }

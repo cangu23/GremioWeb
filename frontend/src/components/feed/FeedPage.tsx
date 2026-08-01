@@ -224,7 +224,7 @@ function HomeContent() {
     { icon: NavIcons.guilds, label: 'Gremios', href: '/guilds' },
     { icon: NavIcons.vtubers, label: 'VTubers', href: '/vtubers' },
     { icon: NavIcons.chat, label: 'Chat', href: '/chat' },
-    { icon: NavIcons.shop, label: 'Tienda', href: '/shop', color: 'var(--warm)' },
+    { icon: NavIcons.shop, label: 'Observatorio Estelar ⭐', href: '/shop', color: 'var(--warm)' },
     { icon: NavIcons.leaderboard, label: 'Ranking', href: '/leaderboard' },
     { icon: NavIcons.dashboard, label: 'Dashboard', href: '/dashboard' },
   ];

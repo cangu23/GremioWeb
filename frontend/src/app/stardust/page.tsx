@@ -240,9 +240,9 @@ function StardustContent() {
         </button>
 
         <Link href="/shop" className="glass" style={actionCardStyle}>
-          <span style={{ fontSize: '2rem' }}>🛍️</span>
+          <span style={{ fontSize: '2rem' }}>🔭</span>
           <div>
-            <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Tienda Stardust</div>
+            <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Observatorio Estelar</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Compra marcos, roles y títulos</div>
           </div>
         </Link>
