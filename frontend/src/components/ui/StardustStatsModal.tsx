@@ -479,7 +479,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         </span>
                         <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
                           <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block', filter: 'drop-shadow(0 0 10px #fbbf24)' }}>⭐</span>
-                          {balance.toLocaleString()}
+                          {user?.role === 'ADMIN' ? '♾️ Infinito (ADMIN)' : balance.toLocaleString()}
                           <span style={{ fontSize: '1rem', color: '#fbbf24', fontWeight: 800, marginLeft: '2px' }}>Stardust</span>
                         </div>
                       </div>

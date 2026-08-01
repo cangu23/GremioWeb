@@ -26,6 +26,16 @@ export const transferStardust = async (req: any, res: Response) => {
   res.json({ ...result, data: result });
 };
 
+export const grantAdminStardust = async (req: any, res: Response) => {
+  if (req.user?.role !== 'ADMIN') {
+    throw new AppError('Acceso denegado. Solo administradores.', 403);
+  }
+  const adminUserId = req.user!.id;
+  const { targetUser, amount, reason } = req.body;
+  const result = await StardustService.grantAdminStardust(adminUserId, targetUser, Number(amount), reason);
+  res.json({ ...result, data: result });
+};
+
 export const giftPlan = async (req: any, res: Response) => {
   const userId = req.user!.id;
   const { targetUser, plan } = req.body;

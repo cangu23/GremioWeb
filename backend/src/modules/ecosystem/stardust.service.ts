@@ -73,10 +73,19 @@ export const spendStardust = async (userId: string, amount: number, reason: stri
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { stardust: true },
+    select: { stardust: true, role: true },
   });
 
   if (!user) throw new AppError('Usuario no encontrado', 404);
+
+  // ADMINS HAVE INFINITE STARDUST - NEVER CONSUME OR BLOCK ADMINS
+  if (user.role === 'ADMIN') {
+    return {
+      stardustSpent: 0,
+      newBalance: 999999999,
+    };
+  }
+
   if (user.stardust < amount) {
     throw new AppError(`No tienes suficiente Stardust. Tienes ⭐ ${user.stardust} pero necesitas ⭐ ${amount}.`, 400);
   }
@@ -109,11 +118,14 @@ export const getStardustBalance = async (userId: string) => {
 
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
+  const isAdmin = user.role === 'ADMIN';
+
   return {
-    stardust: user.stardust,
+    stardust: isAdmin ? 999999999 : user.stardust,
     plan: user.plan,
     role: user.role,
     multiplier: getStardustMultiplier(user.plan || 'FREE', user.role || 'USER'),
+    isAdmin,
   };
 };
 
@@ -266,6 +278,73 @@ export const giftPlatformPlanWithStardust = async (
     newBalance: spendResult.newBalance,
     recipient: recipient.username,
     plan,
-    activation,
+    expiresAt: activation.subscription.currentPeriodEnd,
+  };
+};
+
+export const grantAdminStardust = async (
+  adminUserId: string,
+  targetQuery: string,
+  amount: number,
+  reason?: string
+) => {
+  const admin = await prisma.user.findUnique({
+    where: { id: adminUserId },
+    select: { role: true, username: true },
+  });
+
+  if (!admin || admin.role !== 'ADMIN') {
+    throw new AppError('Solo los administradores pueden otorgar Stardust.', 403);
+  }
+
+  if (!amount || amount <= 0) {
+    throw new AppError('La cantidad de Stardust a otorgar debe ser mayor a 0.', 400);
+  }
+
+  const cleanTarget = targetQuery.trim().replace(/^@/, '');
+  const recipient = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { id: cleanTarget },
+        { username: { equals: cleanTarget, mode: 'insensitive' as any } },
+        { email: { equals: cleanTarget, mode: 'insensitive' as any } },
+      ],
+    },
+    select: { id: true, username: true, stardust: true },
+  });
+
+  if (!recipient) {
+    throw new AppError(`No se encontró ningún usuario con el identificador "${targetQuery}"`, 404);
+  }
+
+  const customReason = reason && reason.trim().length > 0 ? reason.trim() : 'Regalo del Administrador 👑';
+
+  const [updatedRecipient] = await prisma.$transaction([
+    prisma.user.update({
+      where: { id: recipient.id },
+      data: { stardust: { increment: amount } },
+    }),
+    prisma.stardustTransaction.create({
+      data: {
+        userId: recipient.id,
+        amount,
+        reason: `👑 ${customReason} (por @${admin.username})`,
+      },
+    }),
+  ]);
+
+  await createNotification({
+    userId: recipient.id,
+    type: 'ADMIN_STARDUST_GRANT',
+    title: '👑 ¡Has recibido un Regalo del Administrador!',
+    message: `@${admin.username} te ha otorgado ⭐ ${amount.toLocaleString()} Stardust. Razón: "${customReason}"`,
+    referenceId: adminUserId,
+  }).catch(() => {});
+
+  return {
+    success: true,
+    message: `¡Se han otorgado ⭐ ${amount.toLocaleString()} Stardust a @${recipient.username}!`,
+    recipient: recipient.username,
+    newRecipientBalance: updatedRecipient.stardust,
   };
 };

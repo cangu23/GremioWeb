@@ -96,6 +96,37 @@ export default function AdminDashboardPage() {
   const [cleaningUp, setCleaningUp] = useState(false);
   const [cleanupResult, setCleanupResult] = useState<string | null>(null);
 
+  const [grantTarget, setGrantTarget] = useState('');
+  const [grantAmount, setGrantAmount] = useState('');
+  const [grantReason, setGrantReason] = useState('');
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantResult, setGrantResult] = useState<string | null>(null);
+
+  const handleAdminGrantStardust = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!grantTarget.trim() || !grantAmount) return;
+    setGrantLoading(true);
+    setGrantResult(null);
+    try {
+      const res = await apiFetch('/ecosystem/stardust/admin-grant', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetUser: grantTarget.trim(),
+          amount: Number(grantAmount),
+          reason: grantReason.trim(),
+        }),
+      });
+      setGrantResult(`✅ ${res.message || 'Stardust otorgado con éxito'}`);
+      setGrantTarget('');
+      setGrantAmount('');
+      setGrantReason('');
+    } catch (err: unknown) {
+      setGrantResult(`❌ Error: ${err instanceof Error ? err.message : 'Error al otorgar Stardust'}`);
+    } finally {
+      setGrantLoading(false);
+    }
+  };
+
   const handleCleanupProfiles = useCallback(async () => {
     if (!confirm('⚠️ ¿Estás seguro? Se eliminarán los VTuberProfiles de TODOS los usuarios con role USER. Esta acción no se puede deshacer.')) return;
     setCleaningUp(true);
@@ -272,6 +303,76 @@ export default function AdminDashboardPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Admin Grant Stardust (Infinite/Custom Admin Power) */}
+          <div style={{ background: '#0d0d12', border: '1px solid rgba(251, 191, 36, 0.4)', borderRadius: '4px', padding: '20px', boxShadow: '0 0 20px rgba(251, 191, 36, 0.1)' }}>
+            <h3 style={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#fbbf24', marginBottom: '14px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              👑 Otorgar Stardust ⭐ (ADMIN)
+            </h3>
+            <form onSubmit={handleAdminGrantStardust} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ fontSize: '0.72rem', color: '#aaa', display: 'block', marginBottom: '3px', fontWeight: 600 }}>Usuario o Correo:</label>
+                <input
+                  type="text"
+                  placeholder="@usuario o correo"
+                  value={grantTarget}
+                  onChange={e => setGrantTarget(e.target.value)}
+                  style={{
+                    width: '100%', padding: '8px 12px', background: '#050505',
+                    border: '1px solid #262626', color: '#fff', fontSize: '0.82rem', borderRadius: '4px', outline: 'none'
+                  }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.72rem', color: '#aaa', display: 'block', marginBottom: '3px', fontWeight: 600 }}>Cantidad de Stardust ⭐:</label>
+                <input
+                  type="number"
+                  placeholder="ej. 1000, 50000"
+                  value={grantAmount}
+                  onChange={e => setGrantAmount(e.target.value)}
+                  style={{
+                    width: '100%', padding: '8px 12px', background: '#050505',
+                    border: '1px solid #262626', color: '#fff', fontSize: '0.82rem', borderRadius: '4px', outline: 'none'
+                  }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.72rem', color: '#aaa', display: 'block', marginBottom: '3px', fontWeight: 600 }}>Razón o Mensaje (Opcional):</label>
+                <input
+                  type="text"
+                  placeholder="ej. Recompensa de evento / Concurso"
+                  value={grantReason}
+                  onChange={e => setGrantReason(e.target.value)}
+                  style={{
+                    width: '100%', padding: '8px 12px', background: '#050505',
+                    border: '1px solid #262626', color: '#fff', fontSize: '0.82rem', borderRadius: '4px', outline: 'none'
+                  }}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={grantLoading}
+                style={{
+                  width: '100%', padding: '10px', background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                  color: '#000', fontWeight: 900, border: 'none', borderRadius: '4px', cursor: grantLoading ? 'wait' : 'pointer',
+                  marginTop: '4px', fontSize: '0.82rem', transition: 'all 0.2s', boxShadow: '0 0 12px rgba(251, 191, 36, 0.3)'
+                }}
+              >
+                {grantLoading ? 'OTORGANDO...' : '👑 OTORGAR STARDUST ⭐'}
+              </button>
+              {grantResult && (
+                <div style={{
+                  marginTop: '6px', padding: '8px 12px', background: '#050505',
+                  border: '1px solid #262626', borderRadius: '4px', fontSize: '0.78rem',
+                  color: grantResult.startsWith('✅') ? '#34d399' : '#f87171', fontWeight: 600
+                }}>
+                  {grantResult}
+                </div>
+              )}
+            </form>
           </div>
 
           {/* Growth / Roles */}
