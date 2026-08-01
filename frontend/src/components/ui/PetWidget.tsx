@@ -161,7 +161,7 @@ export default function PetWidget({
           position: 'relative',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           marginBottom: '28px',
           width: '100%',
         }}
@@ -181,8 +181,8 @@ export default function PetWidget({
             50% { opacity: 0.85; transform: scale(1.12); }
           }
           @keyframes speechPop {
-            0% { transform: translate(-50%, 10px) scale(0.8); opacity: 0; }
-            100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+            0% { transform: translateY(10px) scale(0.8); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
           }
         `}</style>
 
@@ -192,8 +192,7 @@ export default function PetWidget({
             style={{
               position: 'absolute',
               top: '-32px',
-              left: '50%',
-              transform: 'translateX(-50%)',
+              left: '40px',
               background: 'linear-gradient(135deg, rgba(255,255,255,0.96), rgba(240,230,255,0.96))',
               color: '#1a103c',
               fontSize: '0.78rem',
@@ -210,8 +209,8 @@ export default function PetWidget({
             {speechQuote || (hunger < 30 ? `¡Tengo mucha hambre! 🍔🍖` : `¡Hola! Soy ${petName} 💖`)}
             <div style={{
               position: 'absolute',
-              bottom: '-5px', left: '50%',
-              transform: 'translateX(-50%) rotate(45deg)',
+              bottom: '-5px', left: '30px',
+              transform: 'rotate(45deg)',
               width: '8px', height: '8px',
               background: 'rgba(255,255,255,0.96)',
               borderRadius: '0 0 2px 0',
@@ -222,8 +221,7 @@ export default function PetWidget({
         {/* Floating Hearts / Sparkles Explosion */}
         {showHearts && (
           <div style={{
-            position: 'absolute', top: '10px', left: '50%',
-            transform: 'translateX(-50%)',
+            position: 'absolute', top: '10px', left: '50px',
             fontSize: '1.8rem',
             animation: 'ping 1s cubic-bezier(0,0,0.2,1) infinite',
             pointerEvents: 'none',
@@ -237,7 +235,7 @@ export default function PetWidget({
         {/* Level Up Banner Overlay */}
         {levelUpEffect && (
           <div style={{
-            position: 'absolute', top: '-18px',
+            position: 'absolute', top: '-18px', left: '20px',
             background: 'linear-gradient(135deg, #ffd700, #ff8c00)',
             color: '#000', fontWeight: 900, fontSize: '0.8rem',
             padding: '4px 14px', borderRadius: '14px',
@@ -260,7 +258,7 @@ export default function PetWidget({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '10px',
+            padding: '10px 10px 10px 30px',
             cursor: 'pointer',
           }}
           title={`🐾 ${petName} — Haz clic para interactuar o alimentar`}
