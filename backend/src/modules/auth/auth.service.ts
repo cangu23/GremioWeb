@@ -35,11 +35,20 @@ export const register = async (input: RegisterInput) => {
   // Handle referral tracking & reward if ref provided
   if ((input as any).ref) {
     try {
-      const referrer = await UserRepository.findByUsername((input as any).ref);
+      const refClean = String((input as any).ref).trim();
+      const referrer = await prisma.user.findFirst({
+        where: { username: { equals: refClean, mode: 'insensitive' as any } },
+      });
+
       if (referrer && referrer.id !== user.id) {
+        // Track referrer's mission and grant referrer bonus
         await trackMissionProgress(referrer.id, 'INVITE_FRIEND').catch(() => {});
         await addStardust(referrer.id, 50, 'REFERRAL_BONUS').catch(() => {});
 
+        // Grant new user welcome bonus for using an invite link
+        await addStardust(user.id, 50, 'WELCOME_REFERRAL_BONUS').catch(() => {});
+
+        // Notify referrer
         await prisma.notification.create({
           data: {
             userId: referrer.id,
@@ -47,6 +56,17 @@ export const register = async (input: RegisterInput) => {
             title: '🎉 ¡Nuevo miembro invitado!',
             message: `@${input.username} se ha unido a Gremio Estelar con tu enlace. (+50 ⭐)`,
             referenceId: user.id,
+          },
+        }).catch(() => {});
+
+        // Notify new user
+        await prisma.notification.create({
+          data: {
+            userId: user.id,
+            type: 'referral_welcome',
+            title: '🎁 ¡Bienvenido al Gremio!',
+            message: `¡Recibiste +50 ⭐ Stardust de regalo por unirte con el enlace de @${referrer.username}!`,
+            referenceId: referrer.id,
           },
         }).catch(() => {});
       }
