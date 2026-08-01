@@ -2,6 +2,13 @@ export enum Role {
   USER = 'USER',
   VTUBER = 'VTUBER',
   MAID = 'MAID',
+  ARTIST = 'ARTIST',
+  CLIPPER = 'CLIPPER',
+  VIP_ASTRO = 'VIP_ASTRO',
+  VIP_NOVA = 'VIP_NOVA',
+  VIP_STELLAR = 'VIP_STELLAR',
+  STAFF = 'STAFF',
   MODERATOR = 'MODERATOR',
   ADMIN = 'ADMIN',
+  BOT = 'BOT',
 }

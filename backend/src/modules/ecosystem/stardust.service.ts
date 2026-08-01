@@ -18,8 +18,14 @@ export const GIFT_PLAN_STARDUST_COSTS: Record<string, number> = {
 };
 
 export const getStardustMultiplier = (userPlan: string, userRole: string): number => {
-  if (userRole === 'VTUBER' || userRole === 'MAID' || userRole === 'ADMIN') {
-    return 2.0; // Automatically equivalent to STELLAR
+  if (['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'MODERATOR', 'ADMIN'].includes(userRole)) {
+    return 2.0; // Automatically equivalent to STELLAR (×2.0)
+  }
+  if (userRole === 'VIP_NOVA') {
+    return 1.5; // Nova (×1.5)
+  }
+  if (userRole === 'VIP_ASTRO') {
+    return 1.2; // Astro (×1.2)
   }
   return PLAN_STARDUST_MULTIPLIERS[userPlan] || 1.0;
 };

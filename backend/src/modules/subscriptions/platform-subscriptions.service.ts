@@ -118,10 +118,15 @@ export const getMyPlatformPlan = async (userId: string) => {
     }
   }
 
-  // VTUBER, MAID, MODERATOR, ADMIN disfrutan automáticamente de jerarquía STELLAR
-  const effectivePlan = (user.role === 'VTUBER' || user.role === 'MAID' || user.role === 'ADMIN')
-    ? 'STELLAR'
-    : (user.plan || 'FREE');
+  // VTUBER, MAID, STAFF, MODERATOR, ADMIN & VIP roles receive effective plans automatically
+  let effectivePlan = user.plan || 'FREE';
+  if (['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'MODERATOR', 'ADMIN'].includes(user.role)) {
+    effectivePlan = 'STELLAR';
+  } else if (user.role === 'VIP_NOVA') {
+    effectivePlan = 'NOVA';
+  } else if (user.role === 'VIP_ASTRO') {
+    effectivePlan = 'ASTRO';
+  }
 
   return {
     plan: effectivePlan,

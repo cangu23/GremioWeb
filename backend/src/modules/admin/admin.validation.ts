@@ -25,7 +25,11 @@ export const updateUserAdminSchema = z.object({
   body: z.object({
     username: z.string().min(3).max(30).optional(),
     email: z.string().email().optional(),
-    role: z.enum(['USER', 'VTUBER', 'MAID', 'MODERATOR', 'ADMIN']).optional(),
+    role: z.enum([
+      'USER', 'VTUBER', 'MAID', 'ARTIST', 'CLIPPER',
+      'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR',
+      'STAFF', 'MODERATOR', 'ADMIN', 'BOT'
+    ]).optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'BANNED', 'PENDING']).optional(),
     xp: z.number().int().min(0).optional(),
     isVerified: z.boolean().optional(),
