@@ -441,12 +441,13 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           {(() => {
             const { frameUrl, equippedFrame } = extractEquippedFrame(post.user);
+            const isUserVerified = !!(post.user.vtuberProfile?.isVerified || (post.user as any).isVerified);
             return (
               <UserAvatar
                 src={post.user.avatarUrl || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.avatarUrl : null)}
                 alt={post.user.displayName || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.displayName : null) || post.user.username}
                 userId={post.user.id}
-                isVerified={post.user.role === 'VTUBER' && (post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved)}
+                isVerified={isUserVerified}
                 frameUrl={frameUrl}
                 equippedFrame={equippedFrame}
                 size={40}
@@ -454,18 +455,42 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             );
           })()}
           <div style={{ minWidth: 0, flex: 1 }}>
-            <Link href={`/profile/${post.user.id}`} style={{
-              color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
-              display: 'inline-flex', alignItems: 'center', gap: '4px',
-            }}>
-              {post.user.displayName || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.displayName : null) || post.user.username}
-              {(post.user.role === 'VTUBER' && (post.user.vtuberProfile?.isVerified || post.user.vtuberProfile?.isApproved)) && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
-                  <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
-                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <Link href={`/profile/${post.user.id}`} style={{
+                color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+              }}>
+                {post.user.displayName || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.displayName : null) || post.user.username}
+                {!!(post.user.vtuberProfile?.isVerified || (post.user as any).isVerified) && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
+                    <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
+                    <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </Link>
+              {post.user.role === 'VTUBER' && (
+                <span style={{
+                  fontSize: '0.66rem', fontWeight: 800,
+                  padding: '1px 6px', borderRadius: '6px',
+                  background: post.user.vtuberProfile?.isVerified ? 'rgba(236,72,153,0.15)' : 'rgba(255,255,255,0.06)',
+                  border: post.user.vtuberProfile?.isVerified ? '1px solid rgba(236,72,153,0.3)' : '1px solid rgba(255,255,255,0.12)',
+                  color: post.user.vtuberProfile?.isVerified ? '#ec4899' : 'var(--text-muted)',
+                }}>
+                  🌸 VTuber{post.user.vtuberProfile?.isVerified ? ' Verificada' : ''}
+                </span>
               )}
-            </Link>
+              {post.user.role !== 'VTUBER' && !!(post.user as any).isVerified && (
+                <span style={{
+                  fontSize: '0.66rem', fontWeight: 800,
+                  padding: '1px 6px', borderRadius: '6px',
+                  background: 'rgba(29,155,240,0.15)',
+                  border: '1px solid rgba(29,155,240,0.3)',
+                  color: '#1d9bf0',
+                }}>
+                  ✔️ Verificado
+                </span>
+              )}
+            </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               @{post.user.username} · {timeAgo(post.createdAt)}
             </div>

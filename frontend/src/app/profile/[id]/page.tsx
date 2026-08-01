@@ -332,7 +332,7 @@ function ProfileContent() {
           }} />
 
           {/* Verified badge floating */}
-          {vtuber?.isVerified && (
+          {(vtuber?.isVerified || (profile as any)?.isVerified) && (
             <div style={{
               position: 'absolute', top: '20px', right: '20px', zIndex: 2,
               padding: '6px 14px', borderRadius: '20px',
