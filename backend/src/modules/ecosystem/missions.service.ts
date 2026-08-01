@@ -59,38 +59,20 @@ export const DEFAULT_MISSIONS = [
     stardustReward: 25,
   },
   {
-    title: '📝 Pensamiento del Día',
-    description: 'Actualiza la nota o estado de tu perfil',
-    type: 'DAILY',
-    goal: 1,
-    action: 'NOTE_UPDATE',
-    xpReward: 50,
-    stardustReward: 30,
-  },
-  {
-    title: '🤝 Ampliar el Gremio',
-    description: 'Sigue a un miembro o VTuber de la comunidad',
+    title: '🤝 Ampliar la Red',
+    description: 'Descubre y sigue a un creador o miembro de la comunidad',
     type: 'DAILY',
     goal: 1,
     action: 'USER_FOLLOW',
     xpReward: 50,
     stardustReward: 30,
   },
-  {
-    title: '👑 Cambia tu Estilo',
-    description: 'Equipa o cambia un título o marco en tu inventario',
-    type: 'DAILY',
-    goal: 1,
-    action: 'EQUIP_ITEM',
-    xpReward: 45,
-    stardustReward: 30,
-  },
 ];
 
 export const seedDefaultMissions = async () => {
-  // Deactivate old impossible or forced missions (e.g. EVENT_JOIN, forced POST_CREATE)
+  // Deactivate old intrusive or forced missions
   await prisma.mission.updateMany({
-    where: { action: { in: ['EVENT_JOIN', 'POST_CREATE'] } },
+    where: { action: { in: ['EVENT_JOIN', 'POST_CREATE', 'NOTE_UPDATE', 'EQUIP_ITEM'] } },
     data: { active: false },
   });
 
