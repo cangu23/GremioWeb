@@ -30,6 +30,8 @@ export const updateUserAdminSchema = z.object({
       'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR',
       'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN', 'BOT'
     ]).optional(),
+    plan: z.string().optional(),
+    stardust: z.number().int().min(0).optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'BANNED', 'PENDING']).optional(),
     xp: z.number().int().min(0).optional(),
     isVerified: z.boolean().optional(),

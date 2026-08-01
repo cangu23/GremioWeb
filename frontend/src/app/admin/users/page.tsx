@@ -13,6 +13,8 @@ interface User {
   email: string;
   avatarUrl?: string | null;
   role: string;
+  plan?: string;
+  stardust?: number;
   status: string;
   createdAt: string;
   xp: number;
@@ -51,6 +53,7 @@ const roleColors: Record<string, string> = {
   ADMIN: '#8a2be2',
   MODERATOR: '#2196f3',
   STAFF: '#10b981',
+  BETA_TESTER: '#00bcd4',
   VTUBER: '#ff007f',
   MAID: '#d4a030',
   USER: '#4caf50',
@@ -65,7 +68,17 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [editData, setEditData] = useState({ username: '', email: '', role: '', status: '' });
+
+  const [editData, setEditData] = useState({
+    username: '',
+    email: '',
+    role: '',
+    plan: 'FREE',
+    stardust: 0,
+    status: '',
+    level: 1,
+    isVerified: false,
+  });
   const [saving, setSaving] = useState(false);
 
   const fetchUsers = useCallback(async () => {
@@ -78,7 +91,7 @@ export default function AdminUsersPage() {
       const res = await apiFetch(`/admin/users?${params}`);
       setData(res);
     } catch (err: any) {
-      showToast(err.message, 'error');
+      showToast(err.message || 'Error al cargar usuarios', 'error');
     } finally {
       setLoading(false);
     }
@@ -94,7 +107,16 @@ export default function AdminUsersPage() {
 
   const openEdit = (user: User) => {
     setSelectedUser(user);
-    setEditData({ username: user.username, email: user.email, role: user.role, status: user.status });
+    setEditData({
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      plan: user.plan || 'FREE',
+      stardust: user.stardust || 0,
+      status: user.status,
+      level: user.level || 1,
+      isVerified: !!user.vtuberProfile?.isVerified,
+    });
   };
 
   const saveUser = async () => {
@@ -103,16 +125,39 @@ export default function AdminUsersPage() {
     try {
       const payload: any = {};
       if (editData.username !== selectedUser.username) payload.username = editData.username;
+      if (editData.email !== selectedUser.email) payload.email = editData.email;
       if (editData.role !== selectedUser.role) payload.role = editData.role;
+      if (editData.plan !== (selectedUser.plan || 'FREE')) payload.plan = editData.plan;
+      if (editData.stardust !== (selectedUser.stardust || 0)) payload.stardust = Number(editData.stardust);
       if (editData.status !== selectedUser.status) payload.status = editData.status;
-      await apiFetch(`/admin/users/${selectedUser.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
-      showToast('Usuario actualizado', 'success');
+      if (editData.level !== selectedUser.level) payload.level = Number(editData.level);
+      if (editData.isVerified !== !!selectedUser.vtuberProfile?.isVerified) payload.isVerified = editData.isVerified;
+
+      await apiFetch(`/admin/users/${selectedUser.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+      showToast('Usuario actualizado con éxito', 'success');
       setSelectedUser(null);
       fetchUsers();
     } catch (err: any) {
-      showToast(err.message, 'error');
+      showToast(err.message || 'Error al actualizar usuario', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleVerified = async (user: User) => {
+    const nextState = !user.vtuberProfile?.isVerified;
+    try {
+      await apiFetch(`/admin/users/${user.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isVerified: nextState }),
+      });
+      showToast(nextState ? 'Usuario verificado 🔵' : 'Insignia de verificación removida', 'success');
+      fetchUsers();
+    } catch (err: any) {
+      showToast(err.message || 'Error al cambiar verificación', 'error');
     }
   };
 
@@ -147,15 +192,19 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Usuarios</h1>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Gestión completa de usuarios de la plataforma</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Gestión de Usuarios</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Administra roles, planes premium, verificaciones y estados de los usuarios.</p>
+        </div>
+      </div>
 
       {/* Search & Filters */}
       <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px' }}>
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: '1', minWidth: '200px' }}>
-            <label className="form-label">Buscar</label>
-            <input className="input" value={search} onChange={e => setSearch(e.target.value)} placeholder="Usuario o email..." style={{ marginTop: '6px' }} />
+          <div style={{ flex: '1', minWidth: '220px' }}>
+            <label className="form-label">Buscar Usuario</label>
+            <input className="input" value={search} onChange={e => setSearch(e.target.value)} placeholder="Username o email..." style={{ marginTop: '6px' }} />
           </div>
           <div>
             <label className="form-label">Estado</label>
@@ -170,10 +219,11 @@ export default function AdminUsersPage() {
           <div>
             <label className="form-label">Rol</label>
             <select className="input" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} style={{ marginTop: '6px', minWidth: '140px' }}>
-              <option value="">Todos</option>
+              <option value="">Todos los Roles</option>
               <option value="ADMIN">Admin</option>
               <option value="MODERATOR">Moderador</option>
               <option value="STAFF">Staff</option>
+              <option value="BETA_TESTER">Beta Tester</option>
               <option value="VTUBER">VTuber</option>
               <option value="MAID">Maid</option>
               <option value="USER">Usuario</option>
@@ -183,52 +233,57 @@ export default function AdminUsersPage() {
         </form>
       </div>
 
-      {/* Users Table */}
-      <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+      {/* Users Table Container with Sticky Actions */}
+      <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando usuarios...</div>
         ) : !data || data.data.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron usuarios</div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ overflowX: 'auto', position: 'relative' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '950px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                    {['Usuario', 'Email', 'Rol', 'Estado', 'Nivel', 'Posts', 'Seguidores', 'Registro', 'Acciones'].map(h => (
-                      <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{h}</th>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.2)' }}>
+                    {['Usuario', 'Email', 'Rol', 'Plan / Status', 'Stardust ⭐', 'Nivel', 'Registro'].map(h => (
+                      <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
+                    {/* STICKY RIGHT COLUMN FOR ACTIONS */}
+                    <th style={{
+                      padding: '14px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap',
+                      position: 'sticky', right: 0, zIndex: 10, background: '#161217', boxShadow: '-6px 0 16px rgba(0,0,0,0.6)',
+                    }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.data.map((user) => {
                     const isStaff = isStaffRole(user.role);
+                    const isVer = !!user.vtuberProfile?.isVerified;
+
                     return (
                       <tr key={user.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
                         <td style={{ padding: '12px 16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%',
+                            <div style={{
+                              width: '34px', height: '34px', borderRadius: '50%',
                               background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
                                 ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
                                 : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: '0.8rem', fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden',
+                              fontSize: '0.85rem', fontWeight: 700, color: '#fff', flexShrink: 0, overflow: 'hidden',
                             }}>
                               {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && user.username.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 {user.username}
-                                {user.vtuberProfile?.isVerified && (
+                                {isVer && (
                                   <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado">
                                     <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
                                     <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                                   </svg>
-                                )}
-                                {user.role === 'MAID' && (
-                                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#d4a030', background: 'rgba(212,160,48,0.15)', padding: '1px 6px', borderRadius: '4px' }}>MAID</span>
                                 )}
                               </div>
                               {user.vtuberProfile?.displayName && (
@@ -241,41 +296,84 @@ export default function AdminUsersPage() {
                         </td>
                         <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{user.email}</td>
                         <td style={{ padding: '12px 16px' }}>
-                          <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, background: `${roleColors[user.role] || '#666'}22`, color: roleColors[user.role] || '#666' }}>
+                          <span style={{ padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, background: `${roleColors[user.role] || '#666'}22`, color: roleColors[user.role] || '#666', border: `1px solid ${roleColors[user.role] || '#666'}44` }}>
                             {user.role}
                           </span>
                         </td>
                         <td style={{ padding: '12px 16px' }}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: statusColors[user.status] || '#666' }}>
-                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: statusColors[user.status] || '#666' }} />
-                            {user.status}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', color: statusColors[user.status] || '#666', fontWeight: 600 }}>
+                              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColors[user.status] || '#666' }} />
+                              {user.status}
+                            </span>
+                            {user.plan && user.plan !== 'FREE' && (
+                              <span style={{ fontSize: '0.7rem', color: '#d4a030', fontWeight: 700 }}>
+                                💎 PLAN {user.plan}
+                              </span>
+                            )}
+                          </div>
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.9rem' }}>{user.level}</td>
-                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{user._count?.posts || 0}</td>
-                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{user._count?.followers || 0}</td>
-                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '12px 16px', fontSize: '0.88rem', fontWeight: 700, color: '#e8c060' }}>
+                          {user.stardust?.toLocaleString() || 0} ⭐
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '0.88rem', fontWeight: 700 }}>
+                          Lvl {user.level}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
                           {new Date(user.createdAt).toLocaleDateString('es-ES')}
                         </td>
-                        <td style={{ padding: '12px 16px', minWidth: '280px', whiteSpace: 'nowrap' }}>
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'nowrap' }}>
-                            <button onClick={() => openEdit(user)} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(138,43,226,0.2)', color: '#a855f7', border: '1px solid rgba(138,43,226,0.4)', fontWeight: 600 }}>Editar</button>
+
+                        {/* STICKY RIGHT ACTIONS CELL */}
+                        <td style={{
+                          padding: '10px 14px', whiteSpace: 'nowrap',
+                          position: 'sticky', right: 0, zIndex: 10, background: '#161217', boxShadow: '-6px 0 16px rgba(0,0,0,0.6)',
+                        }}>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center' }}>
+                            <button
+                              onClick={() => openEdit(user)}
+                              className="btn"
+                              style={{
+                                padding: '6px 14px', fontSize: '0.8rem',
+                                background: 'linear-gradient(135deg, rgba(138,43,226,0.3), rgba(168,85,247,0.2))',
+                                color: '#d8b4fe', border: '1px solid rgba(168,85,247,0.5)', fontWeight: 700,
+                                borderRadius: '8px',
+                              }}
+                            >
+                              ✏️ Editar
+                            </button>
+
+                            <button
+                              onClick={() => toggleVerified(user)}
+                              title="Conceder / Quitar Verificación"
+                              style={{
+                                padding: '6px 10px', fontSize: '0.78rem',
+                                background: isVer ? 'rgba(29,155,240,0.25)' : 'rgba(255,255,255,0.06)',
+                                color: isVer ? '#1d9bf0' : 'var(--text-muted)',
+                                border: isVer ? '1px solid rgba(29,155,240,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                                borderRadius: '8px', cursor: 'pointer', fontWeight: 600,
+                              }}
+                            >
+                              {isVer ? '🔵 Verificado' : '⚪ Verificar'}
+                            </button>
+
                             {!isStaff && user.role !== 'VTUBER' && (
-                              <button onClick={() => confirmAction(user.id, 'vtuber', 'promover a VTuber')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.4)', fontWeight: 600 }}>
+                              <button onClick={() => confirmAction(user.id, 'vtuber', 'promover a VTuber')} className="btn" style={{ padding: '6px 10px', fontSize: '0.78rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.4)', fontWeight: 700, borderRadius: '8px' }}>
                                 + VTuber
                               </button>
                             )}
+
                             {!isStaff && user.status === 'ACTIVE' && (
-                              <button onClick={() => confirmAction(user.id, 'suspend', 'suspender')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.4)', fontWeight: 600 }}>Suspender</button>
+                              <button onClick={() => confirmAction(user.id, 'suspend', 'suspender')} className="btn" style={{ padding: '6px 10px', fontSize: '0.78rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.4)', fontWeight: 700, borderRadius: '8px' }}>Suspender</button>
                             )}
                             {!isStaff && (user.status === 'SUSPENDED' || user.status === 'BANNED') && (
-                              <button onClick={() => confirmAction(user.id, 'restore', 'restaurar')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.4)', fontWeight: 600 }}>Restaurar</button>
+                              <button onClick={() => confirmAction(user.id, 'restore', 'restaurar')} className="btn" style={{ padding: '6px 10px', fontSize: '0.78rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.4)', fontWeight: 700, borderRadius: '8px' }}>Restaurar</button>
                             )}
                             {!isStaff && user.status !== 'BANNED' && (
-                              <button onClick={() => confirmAction(user.id, 'ban', 'banear')} className="btn" style={{ padding: '5px 12px', fontSize: '0.78rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.4)', fontWeight: 600 }}>Banear</button>
+                              <button onClick={() => confirmAction(user.id, 'ban', 'banear')} className="btn" style={{ padding: '6px 10px', fontSize: '0.78rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.4)', fontWeight: 700, borderRadius: '8px' }}>Banear</button>
                             )}
+
                             {isStaff && (
-                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#a855f7', background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.3)', padding: '3px 8px', borderRadius: '6px' }}>
+                              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#a855f7', background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.3)', padding: '4px 8px', borderRadius: '6px' }}>
                                 🛡️ Staff Protegido
                               </span>
                             )}
@@ -306,14 +404,24 @@ export default function AdminUsersPage() {
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit User Modal */}
       {selectedUser && (() => {
         const isSelectedStaff = isStaffRole(selectedUser.role);
         return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }} onClick={() => setSelectedUser(null)}>
-            <div className="glass" style={{ padding: '32px', borderRadius: '20px', width: '100%', maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Editar Usuario</h2>
+          <div style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '20px',
+          }} onClick={() => setSelectedUser(null)}>
+            <div className="glass" style={{
+              padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '640px',
+              border: '1px solid rgba(212,160,48,0.3)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+            }} onClick={e => e.stopPropagation()}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f5e6d3' }}>Editar Usuario</h2>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Modifica rol, plan VIP, stardust y verificación de @{selectedUser.username}</p>
+                </div>
                 <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
               </div>
 
@@ -323,41 +431,77 @@ export default function AdminUsersPage() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                 <div className="form-group">
-                  <label className="form-label">Nombre de usuario</label>
+                  <label className="form-label">Nombre de Usuario</label>
                   <input className="input" value={editData.username} onChange={e => setEditData({ ...editData, username: e.target.value })} />
                 </div>
+
                 <div className="form-group">
                   <label className="form-label">Email</label>
                   <input className="input" value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} />
                 </div>
+
                 <div className="form-group">
-                  <label className="form-label">Rol</label>
+                  <label className="form-label" style={{ color: '#e8c060', fontWeight: 700 }}>Rol de Usuario</label>
                   <select className="input" value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })} disabled={isSelectedStaff}>
-                    <option value="USER">Usuario</option>
-                    <option value="VTUBER">VTuber</option>
-                    <option value="MAID">Maid</option>
-                    <option value="STAFF">Staff</option>
-                    <option value="MODERATOR">Moderador</option>
-                    <option value="ADMIN">Admin</option>
+                    <option value="USER">👤 Usuario Normal</option>
+                    <option value="VTUBER">🌸 VTuber / Creador</option>
+                    <option value="MAID">☕ Maid Café Host</option>
+                    <option value="BETA_TESTER">🧪 Beta Tester</option>
+                    <option value="STAFF">🛡️ Staff</option>
+                    <option value="MODERATOR">⚔️ Moderador</option>
+                    <option value="ADMIN">👑 Administrador</option>
                   </select>
                 </div>
+
                 <div className="form-group">
-                  <label className="form-label">Estado</label>
-                  <select className="input" value={editData.status} onChange={e => setEditData({ ...editData, status: e.target.value })} disabled={isSelectedStaff}>
-                    <option value="ACTIVE">Activo</option>
-                    <option value="SUSPENDED" disabled={isSelectedStaff}>Suspendido</option>
-                    <option value="BANNED" disabled={isSelectedStaff}>Baneado</option>
-                    <option value="PENDING">Pendiente</option>
+                  <label className="form-label" style={{ color: '#e8c060', fontWeight: 700 }}>Plan Premium VIP</label>
+                  <select className="input" value={editData.plan} onChange={e => setEditData({ ...editData, plan: e.target.value })}>
+                    <option value="FREE">Gratuito (FREE)</option>
+                    <option value="VIP">💎 Plan VIP</option>
+                    <option value="PREMIUM">⭐ Plan Premium Estelar</option>
+                    <option value="ESTELAR">🚀 Plan Estelar VIP</option>
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Saldo de Stardust ⭐</label>
+                  <input type="number" className="input" value={editData.stardust} onChange={e => setEditData({ ...editData, stardust: Number(e.target.value) })} />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Nivel de Usuario</label>
+                  <input type="number" className="input" value={editData.level} onChange={e => setEditData({ ...editData, level: Number(e.target.value) })} />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Estado de la Cuenta</label>
+                  <select className="input" value={editData.status} onChange={e => setEditData({ ...editData, status: e.target.value })} disabled={isSelectedStaff}>
+                    <option value="ACTIVE">🟢 Activo</option>
+                    <option value="SUSPENDED" disabled={isSelectedStaff}>🟠 Suspendido</option>
+                    <option value="BANNED" disabled={isSelectedStaff}>🔴 Baneado</option>
+                    <option value="PENDING">⚪ Pendiente</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', paddingTop: '24px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem', color: '#f5e6d3', fontWeight: 700 }}>
+                    <input
+                      type="checkbox"
+                      checked={editData.isVerified}
+                      onChange={e => setEditData({ ...editData, isVerified: e.target.checked })}
+                      style={{ width: '18px', height: '18px', accentColor: '#1d9bf0', cursor: 'pointer' }}
+                    />
+                    <span>🔵 Usuario Verificado (Insignia)</span>
+                  </label>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button onClick={() => setSelectedUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
-                <button onClick={saveUser} className="btn" disabled={saving}>
-                  {saving ? 'Guardando...' : 'Guardar Cambios'}
+                <button onClick={saveUser} className="btn" disabled={saving} style={{ background: 'linear-gradient(135deg, #d4a030, #a0782c)', color: '#1a1410', fontWeight: 800 }}>
+                  {saving ? 'Guardando...' : '💾 Guardar Cambios'}
                 </button>
               </div>
             </div>
