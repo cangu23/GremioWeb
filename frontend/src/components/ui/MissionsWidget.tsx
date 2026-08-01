@@ -158,7 +158,7 @@ export default function MissionsWidget() {
           return getPriority(aClaimed, aDone) - getPriority(bClaimed, bDone);
         }).map((m) => {
           const isClaimed = !!m.claimedAt;
-          const isReady = m.completed && !isClaimed;
+          const isReady = (m.completed || m.currentProgress >= m.goal) && !isClaimed;
           const pct = Math.min(100, Math.round((m.currentProgress / m.goal) * 100));
 
           // Clean title of unicode emojis if present

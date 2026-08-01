@@ -228,6 +228,7 @@ export default function ShopPage() {
 
   const fetchShopData = async () => {
     try {
+      apiFetch('/ecosystem/missions/track', { method: 'POST', body: JSON.stringify({ action: 'SHOP_VISIT' }) }).catch(() => {});
       const [itemsData, invData, stardustData] = await Promise.all([
         apiFetch('/shop/items', {}),
         apiFetch('/shop/inventory', {}),

@@ -174,6 +174,7 @@ export const getUserMissions = async (userId: string) => {
 
   const mapped = missions.map(m => {
     const userProgress = progressMap.get(m.id);
+    const isDone = userProgress ? (userProgress.completed || userProgress.progress >= m.goal) : false;
     return {
       id: m.id,
       title: m.title,
@@ -184,7 +185,7 @@ export const getUserMissions = async (userId: string) => {
       xpReward: m.xpReward,
       stardustReward: m.stardustReward,
       currentProgress: userProgress ? userProgress.progress : 0,
-      completed: userProgress ? userProgress.completed : false,
+      completed: isDone,
       claimedAt: userProgress?.claimedAt ? userProgress.claimedAt.toISOString() : null,
     };
   });
@@ -269,7 +270,7 @@ export const claimMissionReward = async (userId: string, missionId: string) => {
     orderBy: { createdAt: 'desc' },
   });
 
-  if (!progress || !progress.completed) {
+  if (!progress || (!progress.completed && progress.progress < mission.goal)) {
     throw new AppError('Aún no has completado esta misión', 400);
   }
 
