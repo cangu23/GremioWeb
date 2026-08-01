@@ -65,29 +65,43 @@ export default function PetWidget({
 
   if (!pet.profilePet) return null;
 
+  const isOwnPet = user?.id === petOwnerId;
   const hasCustomName = !!pet.petName && pet.petName.trim().length > 0;
-  const ownerLabel = petOwnerUsername ? `@${petOwnerUsername}` : 'mi dueño';
-  const petName = hasCustomName ? pet.petName! : `Mascota de ${ownerLabel}`;
+  const ownerHandle = petOwnerUsername ? `@${petOwnerUsername}` : 'su dueño';
+
+  const petName = hasCustomName
+    ? pet.petName!
+    : isOwnPet
+    ? 'Mi Mascota'
+    : `Mascota de ${ownerHandle}`;
+
   const level = pet.petLevel || 1;
   const exp = pet.petExp || 0;
   const hunger = pet.petHunger ?? 80;
   const expInLevel = exp % 100;
-  const isOwnPet = user?.id === petOwnerId;
 
   // Active image: action GIF #2 when hovered, feeding, or popover open, idle image #1 otherwise
   const activeImage = (isHovered || isFeeding || popoverOpen) && pet.petImage2 ? pet.petImage2 : pet.profilePet;
 
-  const defaultGreeting = hasCustomName
-    ? `¡Hola! Soy ${pet.petName} 💖`
-    : `¡Hola! Soy la mascota de ${ownerLabel} 💖`;
+  const defaultGreeting = isOwnPet
+    ? (hasCustomName ? `¡Hola! Soy ${pet.petName} 💖 ¡Qué bueno verte!` : `¡Hola! ¡Me alegra verte de nuevo! 💖`)
+    : (hasCustomName ? `¡Hola! Soy ${pet.petName}, la mascota de ${ownerHandle} 💖` : `¡Hola! Soy la mascota de ${ownerHandle} 💖`);
 
-  const QUOTES = [
-    `¡Ñam ñam! ¡Gracias por el amor! 💖`,
-    hasCustomName ? `¡Soy ${pet.petName}! ¡Nivel ${level} y contando! ✨` : `¡Soy la mascota de ${ownerLabel}! ✨`,
-    `¡Waa~! ¡Te quiero mucho! 🌸`,
-    `¡Tengo mucha energía! ⚡`,
-    `¡Rawr! 🐾 ¿Tienes alguna galletita? 🍪`,
-  ];
+  const QUOTES = isOwnPet
+    ? [
+        `¡Ñam ñam! ¡Gracias por alimentarme! 💖`,
+        hasCustomName ? `¡Soy ${pet.petName}! ¡Nivel ${level} y contando! ✨` : `¡Nivel ${level} y con mucha energía! ✨`,
+        `¡Waa~! ¡Te extrañaba mucho! 🌸`,
+        `¡Tengo mucha energía hoy! ⚡`,
+        `¡Rawr! 🐾 ¿Me das un premio? 🍪`,
+      ]
+    : [
+        `¡Ñam ñam! ¡Gracias por el regalo! 💖`,
+        hasCustomName ? `¡Soy ${pet.petName}! ¡Mascota de ${ownerHandle}! ✨` : `¡Soy la mascota de ${ownerHandle}! ✨`,
+        `¡Waa~! ¡Gracias por visitarnos! 🌸`,
+        `¡Tengo mucha energía! ⚡`,
+        `¡Rawr! 🐾 ¿Conoces a ${ownerHandle}? 🍪`,
+      ];
 
   const triggerQuote = () => {
     const random = QUOTES[Math.floor(Math.random() * QUOTES.length)];
