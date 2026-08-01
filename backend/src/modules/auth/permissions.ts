@@ -1,28 +1,55 @@
-import { Role } from '@gremio-estelar/shared';
+import { StaffRole } from '@gremio-estelar/shared';
 
 export enum Permission {
+  VIEW_ADMIN_PANEL = 'VIEW_ADMIN_PANEL',
   MANAGE_USERS = 'MANAGE_USERS',
   MANAGE_ROLES = 'MANAGE_ROLES',
-  VIEW_ADMIN_PANEL = 'VIEW_ADMIN_PANEL',
   MODERATE_CONTENT = 'MODERATE_CONTENT',
+  REVIEW_REPORTS = 'REVIEW_REPORTS',
+  CREATE_OFFICIAL_EVENTS = 'CREATE_OFFICIAL_EVENTS',
+  VIEW_SYSTEM_LOGS = 'VIEW_SYSTEM_LOGS',
+  VIEW_IP_DEVICES = 'VIEW_IP_DEVICES',
 }
 
-export const rolePermissions: Record<Role, Permission[]> = {
-  [Role.ADMIN]: [
+export const staffPermissions: Record<string, Permission[]> = {
+  OWNER: [
+    Permission.VIEW_ADMIN_PANEL,
     Permission.MANAGE_USERS,
     Permission.MANAGE_ROLES,
+    Permission.MODERATE_CONTENT,
+    Permission.REVIEW_REPORTS,
+    Permission.CREATE_OFFICIAL_EVENTS,
+    Permission.VIEW_SYSTEM_LOGS,
+    Permission.VIEW_IP_DEVICES,
+  ],
+  ADMIN: [
+    Permission.VIEW_ADMIN_PANEL,
+    Permission.MANAGE_USERS,
+    Permission.MANAGE_ROLES,
+    Permission.MODERATE_CONTENT,
+    Permission.REVIEW_REPORTS,
+    Permission.CREATE_OFFICIAL_EVENTS,
+    Permission.VIEW_SYSTEM_LOGS,
+  ],
+  STAFF: [
     Permission.VIEW_ADMIN_PANEL,
     Permission.MODERATE_CONTENT,
+    Permission.REVIEW_REPORTS,
+    Permission.CREATE_OFFICIAL_EVENTS,
   ],
-  [Role.MODERATOR]: [
-    Permission.MODERATE_CONTENT,
+  MOD: [
     Permission.VIEW_ADMIN_PANEL,
+    Permission.MODERATE_CONTENT,
+    Permission.REVIEW_REPORTS,
   ],
-  [Role.VTUBER]: [],
-  [Role.MAID]: [],
-  [Role.USER]: [],
+  HELPER: [
+    Permission.REVIEW_REPORTS,
+  ],
+  NONE: [],
 };
 
-export const checkPermission = (role: Role, permission: Permission): boolean => {
-  return rolePermissions[role]?.includes(permission) || false;
+export const rolePermissions = staffPermissions;
+
+export const checkPermission = (role: string, permission: Permission): boolean => {
+  return staffPermissions[role]?.includes(permission) || false;
 };
