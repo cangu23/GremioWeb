@@ -5,68 +5,86 @@ import { awardCustomXp } from '../gamification/gamification.service';
 
 export const DEFAULT_MISSIONS = [
   {
-    title: '⭐ Publica una historia o post',
-    description: 'Comparte un pensamiento, clip o imagen con la comunidad',
-    type: 'DAILY',
-    goal: 1,
-    action: 'POST_CREATE',
-    xpReward: 100,
-    stardustReward: 50,
-  },
-  {
-    title: '💬 Comenta en la comunidad',
-    description: 'Deja al menos 3 comentarios en publicaciones de otros miembros',
-    type: 'DAILY',
-    goal: 3,
-    action: 'COMMENT_CREATE',
-    xpReward: 60,
-    stardustReward: 30,
-  },
-  {
-    title: '🔥 Reacciona con estrellas',
-    description: 'Reacciona a 10 publicaciones o comentarios en el feed',
-    type: 'DAILY',
-    goal: 10,
-    action: 'POST_LIKE',
-    xpReward: 40,
-    stardustReward: 20,
-  },
-  {
-    title: '🌸 Visita un VTuber',
-    description: 'Explora el perfil de cualquier VTuber de la comunidad',
-    type: 'DAILY',
-    goal: 1,
-    action: 'VTUBER_VISIT',
-    xpReward: 40,
-    stardustReward: 20,
-  },
-  {
-    title: '🎪 Participa en un evento o grupo',
-    description: 'Únete a un evento o canal de Constelación',
-    type: 'DAILY',
-    goal: 1,
-    action: 'EVENT_JOIN',
-    xpReward: 80,
-    stardustReward: 40,
-  },
-  {
     title: '✨ Conexión Estelar Diaria',
-    description: 'Entra a Gremio Estelar hoy',
+    description: 'Entra a Gremio Estelar hoy y reclama tu energía estelar',
     type: 'DAILY',
     goal: 1,
     action: 'DAILY_LOGIN',
-    xpReward: 30,
-    stardustReward: 15,
+    xpReward: 50,
+    stardustReward: 30,
+  },
+  {
+    title: '💖 Esparcir Cariño',
+    description: 'Reacciona a 3 publicaciones o imágenes en el feed',
+    type: 'DAILY',
+    goal: 3,
+    action: 'POST_LIKE',
+    xpReward: 50,
+    stardustReward: 30,
+  },
+  {
+    title: '💬 Charla en la Comunidad',
+    description: 'Deja 1 comentario amigable en cualquier publicación',
+    type: 'DAILY',
+    goal: 1,
+    action: 'COMMENT_CREATE',
+    xpReward: 60,
+    stardustReward: 40,
+  },
+  {
+    title: '🌸 Exploración VTuber',
+    description: 'Visita el perfil de cualquier VTuber de la comunidad',
+    type: 'DAILY',
+    goal: 1,
+    action: 'VTUBER_VISIT',
+    xpReward: 50,
+    stardustReward: 30,
+  },
+  {
+    title: '🍖 Cuida a una Mascota',
+    description: 'Alimenta a tu mascota o a la de un amigo',
+    type: 'DAILY',
+    goal: 1,
+    action: 'PET_FEED',
+    xpReward: 60,
+    stardustReward: 40,
+  },
+  {
+    title: '🛍️ Escaparate Estelar',
+    description: 'Visita la Tienda Estelar de la comunidad',
+    type: 'DAILY',
+    goal: 1,
+    action: 'SHOP_VISIT',
+    xpReward: 40,
+    stardustReward: 25,
   },
 ];
 
 export const seedDefaultMissions = async () => {
+  // Deactivate old impossible or forced missions (e.g. EVENT_JOIN, forced POST_CREATE)
+  await prisma.mission.updateMany({
+    where: { action: { in: ['EVENT_JOIN', 'POST_CREATE'] } },
+    data: { active: false },
+  });
+
   for (const m of DEFAULT_MISSIONS) {
     const existing = await prisma.mission.findFirst({
       where: { action: m.action, type: m.type },
     });
     if (!existing) {
-      await prisma.mission.create({ data: m });
+      await prisma.mission.create({ data: { ...m, active: true } });
+    } else {
+      await prisma.mission.update({
+        where: { id: existing.id },
+        data: {
+          title: m.title,
+          description: m.description,
+          goal: m.goal,
+          xpReward: m.xpReward,
+          stardustReward: m.stardustReward,
+          active: true,
+        },
+      });
     }
   }
 };

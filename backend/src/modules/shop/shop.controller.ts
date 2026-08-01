@@ -1,8 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import * as ShopService from './shop.service';
+import { trackMissionProgress } from '../ecosystem/missions.service';
 
-export const listItems = async (_req: Request, res: Response, next: NextFunction) => {
+export const listItems = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const userId = (req as any).user?.id;
+    if (userId) {
+      trackMissionProgress(userId, 'SHOP_VISIT').catch(() => {});
+    }
     const items = await ShopService.listItems();
     res.json(items);
   } catch (err) {
@@ -12,6 +17,9 @@ export const listItems = async (_req: Request, res: Response, next: NextFunction
 
 export const getInventory = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (req.user?.id) {
+      trackMissionProgress(req.user.id, 'SHOP_VISIT').catch(() => {});
+    }
     const inventory = await ShopService.getInventory(req.user!.id);
     res.json(inventory);
   } catch (err) {

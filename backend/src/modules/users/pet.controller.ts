@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../../database';
 import { ioContext } from '../../websocket/socket.server';
+import { trackMissionProgress } from '../ecosystem/missions.service';
 
 export const feedPet = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -66,6 +67,9 @@ export const feedPet = async (req: Request, res: Response, next: NextFunction) =
         lastFedAt: new Date(),
       },
     });
+
+    // Track PET_FEED mission
+    trackMissionProgress(feederId, 'PET_FEED').catch(() => {});
 
     // Notify pet owner if fed by another user
     if (feederId !== petOwnerId) {
