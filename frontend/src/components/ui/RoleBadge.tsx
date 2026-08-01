@@ -323,7 +323,6 @@ export default function RoleBadge({
     >
       <IconComponent size={sizeMap.iconSize} />
       {showLabel && <span>{label}</span>}
-      {isVerified && <VerifiedCheckmarkIcon size={sizeMap.iconSize + 1} />}
     </span>
   );
 }

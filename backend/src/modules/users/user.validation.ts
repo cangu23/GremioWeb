@@ -16,6 +16,7 @@ export const updateUserSchema = z.object({
     bio: z.string().max(2000).optional(),
     bannerColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Color hex inválido (ej: #8a2be2)').optional().or(z.literal('')),
     bannerUrl: z.string().url().optional().or(z.literal('')),
+    displayedRole: z.string().optional().nullable(),
     description: z.string().max(2000).optional(),
     lore: z.string().max(5000).optional(),
     twitchUrl: z.string().url().optional().or(z.literal('')),

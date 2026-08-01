@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
-import { isStaffRole } from '@gremio-estelar/shared';
+import { isStaffRole, parseUserRoles } from '@gremio-estelar/shared';
 
 interface User {
   id: string;
@@ -59,6 +59,16 @@ const roleColors: Record<string, string> = {
   USER: '#4caf50',
 };
 
+const AVAILABLE_ROLES = [
+  { id: 'ADMIN', label: '👑 Administrador', color: '#8a2be2' },
+  { id: 'MODERATOR', label: '⚔️ Moderador', color: '#2196f3' },
+  { id: 'STAFF', label: '🛡️ Staff', color: '#10b981' },
+  { id: 'BETA_TESTER', label: '🧪 Beta Tester', color: '#00bcd4' },
+  { id: 'VTUBER', label: '🌸 VTuber / Creador', color: '#ff007f' },
+  { id: 'MAID', label: '☕ Maid Café Host', color: '#d4a030' },
+  { id: 'USER', label: '👤 Usuario Normal', color: '#4caf50' },
+];
+
 export default function AdminUsersPage() {
   const { showToast } = useToast();
   const [data, setData] = useState<PaginatedResponse | null>(null);
@@ -69,10 +79,10 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  const [editRoles, setEditRoles] = useState<string[]>(['USER']);
   const [editData, setEditData] = useState({
     username: '',
     email: '',
-    role: '',
     plan: 'FREE',
     stardust: 0,
     status: '',
@@ -107,10 +117,11 @@ export default function AdminUsersPage() {
 
   const openEdit = (user: User) => {
     setSelectedUser(user);
+    const userRolesList = parseUserRoles(user.role);
+    setEditRoles(userRolesList);
     setEditData({
       username: user.username,
       email: user.email,
-      role: user.role,
       plan: user.plan || 'FREE',
       stardust: user.stardust || 0,
       status: user.status,
@@ -124,9 +135,11 @@ export default function AdminUsersPage() {
     setSaving(true);
     try {
       const payload: any = {};
+      const targetRoleStr = editRoles.join(',');
+
       if (editData.username !== selectedUser.username) payload.username = editData.username;
       if (editData.email !== selectedUser.email) payload.email = editData.email;
-      if (editData.role !== selectedUser.role) payload.role = editData.role;
+      if (targetRoleStr !== selectedUser.role) payload.role = targetRoleStr;
       if (editData.plan !== (selectedUser.plan || 'FREE')) payload.plan = editData.plan;
       if (editData.stardust !== (selectedUser.stardust || 0)) payload.stardust = Number(editData.stardust);
       if (editData.status !== selectedUser.status) payload.status = editData.status;
@@ -137,7 +150,7 @@ export default function AdminUsersPage() {
         method: 'PATCH',
         body: JSON.stringify(payload),
       });
-      showToast('Usuario actualizado con éxito', 'success');
+      showToast('Usuario y roles actualizados con éxito', 'success');
       setSelectedUser(null);
       fetchUsers();
     } catch (err: any) {
@@ -161,41 +174,12 @@ export default function AdminUsersPage() {
     }
   };
 
-  const confirmAction = async (userId: string, action: string, label: string) => {
-    if (!window.confirm(`¿Estás seguro de ${label} a este usuario?`)) return;
-    try {
-      if (action === 'delete') {
-        await apiFetch(`/admin/users/${userId}`, { method: 'DELETE' });
-      } else if (action === 'vtuber') {
-        await apiFetch(`/admin/users/${userId}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ role: 'VTUBER', isVerified: true }),
-        });
-      } else {
-        const statusMap: Record<string, string> = {
-          ban: 'BANNED',
-          suspend: 'SUSPENDED',
-          restore: 'ACTIVE',
-        };
-        const targetStatus = statusMap[action] || action.toUpperCase();
-        await apiFetch(`/admin/users/${userId}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status: targetStatus }),
-        });
-      }
-      showToast(`Usuario ${label} con éxito`, 'success');
-      fetchUsers();
-    } catch (err: any) {
-      showToast(err.message || 'Error al ejecutar acción', 'error');
-    }
-  };
-
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Gestión de Usuarios</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Administra roles, planes premium, verificaciones y estados de los usuarios.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Asigna múltiples roles, planes premium, verificaciones y administra usuarios.</p>
         </div>
       </div>
 
@@ -220,13 +204,9 @@ export default function AdminUsersPage() {
             <label className="form-label">Rol</label>
             <select className="input" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} style={{ marginTop: '6px', minWidth: '140px' }}>
               <option value="">Todos los Roles</option>
-              <option value="ADMIN">Admin</option>
-              <option value="MODERATOR">Moderador</option>
-              <option value="STAFF">Staff</option>
-              <option value="BETA_TESTER">Beta Tester</option>
-              <option value="VTUBER">VTuber</option>
-              <option value="MAID">Maid</option>
-              <option value="USER">Usuario</option>
+              {AVAILABLE_ROLES.map(r => (
+                <option key={r.id} value={r.id}>{r.label}</option>
+              ))}
             </select>
           </div>
           <button type="submit" className="btn" style={{ padding: '10px 24px' }}>Buscar</button>
@@ -246,15 +226,15 @@ export default function AdminUsersPage() {
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.2)' }}>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Usuario / Email</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Rol & Plan</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Estado & Saldo</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Roles Asignados</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Plan & Saldo</th>
                     <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.data.map((user) => {
-                    const isStaff = isStaffRole(user.role);
                     const isVer = !!user.vtuberProfile?.isVerified;
+                    const rolesList = parseUserRoles(user.role);
 
                     return (
                       <tr key={user.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}
@@ -291,34 +271,30 @@ export default function AdminUsersPage() {
                           </div>
                         </td>
 
-                        {/* 2. Rol & Plan */}
+                        {/* 2. Roles Asignados (Multi-Role Badges) */}
                         <td style={{ padding: '12px 16px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
-                            <span style={{
-                              padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800,
-                              background: `${roleColors[user.role] || '#666'}22`, color: roleColors[user.role] || '#666',
-                              border: `1px solid ${roleColors[user.role] || '#666'}44`,
-                            }}>
-                              {user.role}
-                            </span>
-                            {user.plan && user.plan !== 'FREE' ? (
-                              <span style={{ fontSize: '0.7rem', color: '#d4a030', fontWeight: 700 }}>
-                                💎 {user.plan}
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {rolesList.map((r, idx) => (
+                              <span key={idx} style={{
+                                padding: '3px 9px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800,
+                                background: `${roleColors[r] || '#666'}22`, color: roleColors[r] || '#666',
+                                border: `1px solid ${roleColors[r] || '#666'}44`, whiteSpace: 'nowrap',
+                              }}>
+                                {r}
                               </span>
-                            ) : (
-                              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                                Plan Gratuito
-                              </span>
-                            )}
+                            ))}
                           </div>
                         </td>
 
-                        {/* 3. Estado & Saldo */}
+                        {/* 3. Plan & Saldo */}
                         <td style={{ padding: '12px 16px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', color: statusColors[user.status] || '#666', fontWeight: 700 }}>
                               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColors[user.status] || '#666' }} />
                               {user.status}
+                              {user.plan && user.plan !== 'FREE' && (
+                                <span style={{ color: '#d4a030', marginLeft: '6px' }}>💎 {user.plan}</span>
+                              )}
                             </span>
                             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e8c060' }}>
                               {user.stardust?.toLocaleString() || 0} ⭐ (Lvl {user.level})
@@ -339,7 +315,7 @@ export default function AdminUsersPage() {
                                 borderRadius: '8px',
                               }}
                             >
-                              ✏️ Editar / Asignar
+                              ✏️ Editar Roles
                             </button>
 
                             <button
@@ -382,34 +358,65 @@ export default function AdminUsersPage() {
         )}
       </div>
 
-      {/* Edit User Modal */}
-      {selectedUser && (() => {
-        const isSelectedStaff = isStaffRole(selectedUser.role);
-        return (
-          <div style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '20px',
-          }} onClick={() => setSelectedUser(null)}>
-            <div className="glass" style={{
-              padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '640px',
-              border: '1px solid rgba(212,160,48,0.3)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
-            }} onClick={e => e.stopPropagation()}>
+      {/* Edit User Modal with Multi-Role Assignment */}
+      {selectedUser && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '20px',
+        }} onClick={() => setSelectedUser(null)}>
+          <div className="glass" style={{
+            padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '640px',
+            border: '1px solid rgba(212,160,48,0.3)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+            maxHeight: '90vh', overflowY: 'auto',
+          }} onClick={e => e.stopPropagation()}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f5e6d3' }}>Editar Roles y Usuario</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Asigna múltiples roles, plan VIP, stardust y verificación de @{selectedUser.username}</p>
+              </div>
+              <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f5e6d3' }}>Editar Usuario</h2>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Modifica rol, plan VIP, stardust y verificación de @{selectedUser.username}</p>
+              {/* Multi-Role Selector Checkboxes */}
+              <div style={{ background: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(212,160,48,0.2)' }}>
+                <label className="form-label" style={{ color: '#e8c060', fontWeight: 800, marginBottom: '10px', display: 'block', fontSize: '0.9rem' }}>
+                  🎯 Roles Asignados (Puedes marcar múltiples roles simultáneamente)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+                  {AVAILABLE_ROLES.map(r => {
+                    const isChecked = editRoles.includes(r.id);
+                    return (
+                      <label key={r.id} style={{
+                        display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 12px',
+                        borderRadius: '10px', background: isChecked ? `${r.color}22` : 'rgba(255,255,255,0.03)',
+                        border: isChecked ? `1px solid ${r.color}66` : '1px solid rgba(255,255,255,0.08)',
+                        color: isChecked ? '#fff' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: isChecked ? 700 : 500,
+                        transition: 'all 0.15s ease',
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={e => {
+                            if (e.target.checked) {
+                              setEditRoles(prev => [...prev, r.id]);
+                            } else {
+                              setEditRoles(prev => prev.length > 1 ? prev.filter(x => x !== r.id) : prev);
+                            }
+                          }}
+                          style={{ accentColor: r.color, width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                        <span>{r.label}</span>
+                      </label>
+                    );
+                  })}
                 </div>
-                <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
               </div>
 
-              {isSelectedStaff && (
-                <div style={{ padding: '12px 16px', background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: '12px', fontSize: '0.82rem', color: '#d8b4fe', marginBottom: '20px' }}>
-                  🛡️ <strong>Usuario de Staff Protegido:</strong> No se pueden banear, suspender ni modificar los roles de miembros del staff.
-                </div>
-              )}
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+              {/* Form Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                 <div className="form-group">
                   <label className="form-label">Nombre de Usuario</label>
                   <input className="input" value={editData.username} onChange={e => setEditData({ ...editData, username: e.target.value })} />
@@ -418,19 +425,6 @@ export default function AdminUsersPage() {
                 <div className="form-group">
                   <label className="form-label">Email</label>
                   <input className="input" value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" style={{ color: '#e8c060', fontWeight: 700 }}>Rol de Usuario</label>
-                  <select className="input" value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })} disabled={isSelectedStaff}>
-                    <option value="USER">👤 Usuario Normal</option>
-                    <option value="VTUBER">🌸 VTuber / Creador</option>
-                    <option value="MAID">☕ Maid Café Host</option>
-                    <option value="BETA_TESTER">🧪 Beta Tester</option>
-                    <option value="STAFF">🛡️ Staff</option>
-                    <option value="MODERATOR">⚔️ Moderador</option>
-                    <option value="ADMIN">👑 Administrador</option>
-                  </select>
                 </div>
 
                 <div className="form-group">
@@ -455,37 +449,37 @@ export default function AdminUsersPage() {
 
                 <div className="form-group">
                   <label className="form-label">Estado de la Cuenta</label>
-                  <select className="input" value={editData.status} onChange={e => setEditData({ ...editData, status: e.target.value })} disabled={isSelectedStaff}>
+                  <select className="input" value={editData.status} onChange={e => setEditData({ ...editData, status: e.target.value })}>
                     <option value="ACTIVE">🟢 Activo</option>
-                    <option value="SUSPENDED" disabled={isSelectedStaff}>🟠 Suspendido</option>
-                    <option value="BANNED" disabled={isSelectedStaff}>🔴 Baneado</option>
+                    <option value="SUSPENDED">🟠 Suspendido</option>
+                    <option value="BANNED">🔴 Baneado</option>
                     <option value="PENDING">⚪ Pendiente</option>
                   </select>
                 </div>
-
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', paddingTop: '24px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem', color: '#f5e6d3', fontWeight: 700 }}>
-                    <input
-                      type="checkbox"
-                      checked={editData.isVerified}
-                      onChange={e => setEditData({ ...editData, isVerified: e.target.checked })}
-                      style={{ width: '18px', height: '18px', accentColor: '#1d9bf0', cursor: 'pointer' }}
-                    />
-                    <span>🔵 Usuario Verificado (Insignia)</span>
-                  </label>
-                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button onClick={() => setSelectedUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
-                <button onClick={saveUser} className="btn" disabled={saving} style={{ background: 'linear-gradient(135deg, #d4a030, #a0782c)', color: '#1a1410', fontWeight: 800 }}>
-                  {saving ? 'Guardando...' : '💾 Guardar Cambios'}
-                </button>
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', paddingTop: '4px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem', color: '#f5e6d3', fontWeight: 700 }}>
+                  <input
+                    type="checkbox"
+                    checked={editData.isVerified}
+                    onChange={e => setEditData({ ...editData, isVerified: e.target.checked })}
+                    style={{ width: '18px', height: '18px', accentColor: '#1d9bf0', cursor: 'pointer' }}
+                  />
+                  <span>🔵 Usuario Verificado (Insignia Oficial)</span>
+                </label>
               </div>
             </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setSelectedUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
+              <button onClick={saveUser} className="btn" disabled={saving} style={{ background: 'linear-gradient(135deg, #d4a030, #a0782c)', color: '#1a1410', fontWeight: 800 }}>
+                {saving ? 'Guardando...' : '💾 Guardar Cambios'}
+              </button>
+            </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
     </div>
   );
 }

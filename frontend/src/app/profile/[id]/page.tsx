@@ -21,6 +21,7 @@ import { SkeletonProfile } from '@/components/ui/Skeleton';
 import { getNoteBubbleStyle } from '@/components/ui/UserAvatar';
 import PetWidget from '@/components/ui/PetWidget';
 import RoleBadge from '@/components/ui/RoleBadge';
+import { parseUserRoles, getPrimaryRole } from '@gremio-estelar/shared';
 
 interface SocialUser {
   id: string;
@@ -42,6 +43,7 @@ interface SocialProfile {
   username: string;
   email: string;
   role: string;
+  displayedRole?: string | null;
   status: string;
   provider: string;
   createdAt: string;
@@ -484,7 +486,13 @@ function ProfileContent() {
               alignItems: 'center',
               gap: '8px',
             }}>
-              {displayName}
+              <span>{displayName}</span>
+              {!!(vtuber?.isVerified || (profile as any)?.isVerified) && (
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-label="Verificado" style={{ flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(29, 155, 240, 0.6))' }}>
+                  <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
               {/* Equipped Shop Badge */}
               {badgeData?.icon && (
                 <span
@@ -499,11 +507,12 @@ function ProfileContent() {
                 </span>
               )}
             </h1>
-            <RoleBadge
-              role={profile.role || (vtuber ? 'VTUBER' : 'USER')}
-              size="lg"
-              isVerified={!!(vtuber?.isVerified || (profile as any)?.isVerified)}
-            />
+            {getPrimaryRole(profile.role, profile.displayedRole) !== 'USER' && (
+              <RoleBadge
+                role={getPrimaryRole(profile.role, profile.displayedRole)}
+                size="lg"
+              />
+            )}
             {vtuber?.isFeatured && (
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: '4px',
@@ -539,6 +548,32 @@ function ProfileContent() {
           <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginBottom: titleData?.text ? '4px' : '8px' }}>
             @{profile.username}
           </p>
+
+          {/* All Roles Showcase */}
+          {(() => {
+            const allRoles = parseUserRoles(profile.role);
+            if (allRoles.length <= 1) return null;
+            return (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                flexWrap: 'wrap',
+                marginTop: '10px',
+                marginBottom: '14px',
+              }}>
+                {allRoles.map((r, idx) => (
+                  <RoleBadge
+                    key={idx}
+                    role={r}
+                    size="sm"
+                    isVerified={r === 'VTUBER' ? !!(vtuber?.isVerified || (profile as any)?.isVerified) : false}
+                  />
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Equipped Title Tag */}
           {titleData?.text && (

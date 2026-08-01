@@ -12,6 +12,8 @@ import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import Link from 'next/link';
 
+import RoleBadge from '@/components/ui/RoleBadge';
+import { parseUserRoles, getPrimaryRole } from '@gremio-estelar/shared';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
 
 function UserSettings() {
@@ -23,6 +25,7 @@ function UserSettings() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
   const [bannerColor, setBannerColor] = useState('#1a1040');
+  const [displayedRole, setDisplayedRole] = useState('');
   const [saving, setSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -73,6 +76,7 @@ function UserSettings() {
       setAvatarUrl(user.avatarUrl || '');
       setBio(user.bio || '');
       setBannerColor(user.bannerColor || '#1a1040');
+      setDisplayedRole(user.displayedRole || '');
     }
   }, [user, isLoading, router]);
 
@@ -87,6 +91,7 @@ function UserSettings() {
           avatarUrl: avatarUrl.trim() || undefined,
           bio: bio.trim() || undefined,
           bannerColor: bannerColor || undefined,
+          displayedRole: displayedRole || undefined,
         }),
       });
       showToast('Perfil actualizado correctamente', 'success');
@@ -259,6 +264,48 @@ function UserSettings() {
             </div>
           </div>
         </div>
+
+        {/* Preferred Display Badge (when user has multiple roles) */}
+        {user && parseUserRoles(user.role).length > 1 && (
+          <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>
+            <h3 style={{
+              fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px',
+              display: 'flex', alignItems: 'center', gap: '8px', color: '#f5e6d3'
+            }}>
+              🏷️ Insignia Principal Visible en Publicaciones
+            </h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              Tienes múltiples roles asignados. Selecciona cuál de ellos deseas mostrar al lado de tu nombre en el Feed y comentarios:
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+              {parseUserRoles(user.role).map((r) => {
+                const isSelected = (displayedRole || getPrimaryRole(user.role, null)) === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setDisplayedRole(r)}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      border: isSelected ? '2px solid #d4a030' : '1px solid rgba(255,255,255,0.1)',
+                      background: isSelected ? 'rgba(212,160,48,0.15)' : 'rgba(255,255,255,0.03)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <RoleBadge role={r} size="sm" />
+                    {isSelected && <span style={{ color: '#d4a030', fontWeight: 800, fontSize: '0.9rem' }}>✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Basic info */}
         <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>

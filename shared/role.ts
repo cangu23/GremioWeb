@@ -56,8 +56,34 @@ export enum Role {
   BOT = 'BOT',
 }
 
+export const parseUserRoles = (role?: string | null): string[] => {
+  if (!role) return ['USER'];
+  const roles = role.split(',').map(r => r.trim().toUpperCase()).filter(Boolean);
+  return roles.length > 0 ? roles : ['USER'];
+};
+
+export const hasAnyRole = (role?: string | null, targetRoles: string[] = []): boolean => {
+  const userRoles = parseUserRoles(role);
+  const targets = targetRoles.map(t => t.toUpperCase());
+  return userRoles.some(r => targets.includes(r));
+};
+
+export const ROLE_PRIORITY = ['ADMIN', 'OWNER', 'STAFF', 'MODERATOR', 'VTUBER', 'MAID', 'BETA_TESTER', 'USER'];
+
+export const getPrimaryRole = (roleStr?: string | null, displayedRole?: string | null): string => {
+  const userRoles = parseUserRoles(roleStr);
+  if (displayedRole && userRoles.includes(displayedRole.toUpperCase())) {
+    return displayedRole.toUpperCase();
+  }
+  for (const pRole of ROLE_PRIORITY) {
+    if (userRoles.includes(pRole)) return pRole;
+  }
+  return userRoles[0] || 'USER';
+};
+
 export const isStaffRole = (role?: string | null): boolean => {
   if (!role) return false;
+  const userRoles = parseUserRoles(role);
   const staffRoles = ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'HELPER', 'OWNER'];
-  return staffRoles.includes(role.toUpperCase());
+  return userRoles.some(r => staffRoles.includes(r));
 };

@@ -20,6 +20,7 @@ model User {
   email         String         @unique
   username      String         @unique
   role          String         @default("USER")
+  displayedRole String?
   status        String         @default("PENDING")
   provider      String         @default("EMAIL")
   createdAt     DateTime       @default(now())

@@ -13,6 +13,7 @@ import { useStickersCache } from '@/lib/content-renderer';
 import MediaLightbox from './MediaLightbox';
 import SendStardustModal from '@/components/ui/SendStardustModal';
 import RoleBadge from '@/components/ui/RoleBadge';
+import { getPrimaryRole } from '@gremio-estelar/shared';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -457,26 +458,32 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           })()}
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <Link href={`/profile/${post.user.id}`} style={{
-                color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
-              }}>
-                {post.user.displayName || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.displayName : null) || post.user.username}
-              </Link>
-              {post.user.role && post.user.role !== 'USER' && (
-                <RoleBadge
-                  role={post.user.role}
-                  size="sm"
-                  isVerified={!!(post.user.vtuberProfile?.isVerified || (post.user as any).isVerified)}
-                />
-              )}
-              {post.user.role === 'USER' && !!(post.user as any).isVerified && (
-                <RoleBadge
-                  role="USER"
-                  size="sm"
-                  isVerified={true}
-                />
-              )}
+              {(() => {
+                const isVerified = !!(post.user.vtuberProfile?.isVerified || (post.user as any).isVerified);
+                const displayRole = getPrimaryRole(post.user.role, (post.user as any).displayedRole);
+                return (
+                  <>
+                    <Link href={`/profile/${post.user.id}`} style={{
+                      color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
+                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    }}>
+                      <span>{post.user.displayName || (post.user.role === 'VTUBER' ? post.user.vtuberProfile?.displayName : null) || post.user.username}</span>
+                      {isVerified && (
+                        <svg width="15" height="15" viewBox="0 0 24 24" aria-label="Verificado" style={{ flexShrink: 0, filter: 'drop-shadow(0 0 4px rgba(29, 155, 240, 0.6))' }}>
+                          <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
+                          <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </Link>
+                    {displayRole !== 'USER' && (
+                      <RoleBadge
+                        role={displayRole}
+                        size="sm"
+                      />
+                    )}
+                  </>
+                );
+              })()}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               @{post.user.username} · {timeAgo(post.createdAt)}

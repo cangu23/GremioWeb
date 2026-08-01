@@ -8,6 +8,7 @@ export interface User {
   username: string;
   email: string;
   role: Role;
+  displayedRole?: string | null;
   status: AccountStatus;
   provider: AuthProvider;
   createdAt: Date;
@@ -25,6 +26,7 @@ export interface PublicUser {
   id: string;
   username: string;
   role: Role;
+  displayedRole?: string | null;
   displayName?: string | null;
   avatarUrl?: string | null;
   bio?: string | null;

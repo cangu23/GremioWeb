@@ -10,7 +10,10 @@ export const authorize = (...allowedRoles: Role[]) => {
       );
     }
 
-    if (!allowedRoles.includes(req.user.role as Role)) {
+    const userRoles = req.user.role ? req.user.role.split(',').map(r => r.trim().toUpperCase()) : ['USER'];
+    const hasAccess = allowedRoles.some(role => userRoles.includes(role.toUpperCase()));
+
+    if (!hasAccess) {
       return next(new AppError('Forbidden: Insufficient permissions.', 403));
     }
 

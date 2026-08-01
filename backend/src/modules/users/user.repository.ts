@@ -165,7 +165,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
   return prisma.$transaction(async (tx) => {
     // Fields that go directly on the User model
     const userFields = [
-      'displayName', 'avatarUrl', 'bio', 'bannerColor',
+      'displayName', 'avatarUrl', 'bio', 'bannerColor', 'displayedRole',
       'profileFrame', 'profileBg', 'profileMusic', 'profilePet', 'profileParticles', 'profileTheme', 'activeTitle'
     ];
     // Fields that specifically belong to VTuberProfile (excluding shared userFields)

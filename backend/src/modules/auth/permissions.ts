@@ -51,5 +51,7 @@ export const staffPermissions: Record<string, Permission[]> = {
 export const rolePermissions = staffPermissions;
 
 export const checkPermission = (role: string, permission: Permission): boolean => {
-  return staffPermissions[role]?.includes(permission) || false;
+  if (!role) return false;
+  const roles = role.split(',').map(r => r.trim().toUpperCase());
+  return roles.some(r => staffPermissions[r]?.includes(permission));
 };
