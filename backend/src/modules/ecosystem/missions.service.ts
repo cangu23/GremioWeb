@@ -139,15 +139,18 @@ const getDailyRotatedMissions = (missions: any[], userId: string): any[] => {
 };
 
 const getTodayResetDate = (): Date => {
-  const date = new Date();
-  date.setHours(23, 59, 59, 0);
-  return date;
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 0));
+};
+
+const getTodayStartUTC = (): Date => {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 };
 
 export const getUserMissions = async (userId: string) => {
   await seedDefaultMissions();
   await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
-  const resetAt = getTodayResetDate();
 
   const missions = await prisma.mission.findMany({
     where: { active: true },
@@ -157,11 +160,17 @@ export const getUserMissions = async (userId: string) => {
   const progressRecords = await prisma.userMissionProgress.findMany({
     where: {
       userId,
-      resetAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+      resetAt: { gte: getTodayStartUTC() },
     },
+    orderBy: { createdAt: 'desc' },
   });
 
-  const progressMap = new Map(progressRecords.map(p => [p.missionId, p]));
+  const progressMap = new Map();
+  for (const p of progressRecords) {
+    if (!progressMap.has(p.missionId)) {
+      progressMap.set(p.missionId, p);
+    }
+  }
 
   const mapped = missions.map(m => {
     const userProgress = progressMap.get(m.id);
@@ -207,14 +216,13 @@ export const trackMissionProgress = async (userId: string, action: string, amoun
     });
 
     for (const mission of missions) {
-      const existing = await prisma.userMissionProgress.findUnique({
+      const existing = await prisma.userMissionProgress.findFirst({
         where: {
-          userId_missionId_resetAt: {
-            userId,
-            missionId: mission.id,
-            resetAt,
-          },
+          userId,
+          missionId: mission.id,
+          resetAt: { gte: getTodayStartUTC() },
         },
+        orderBy: { createdAt: 'desc' },
       });
 
       if (existing?.completed) continue;
@@ -222,26 +230,25 @@ export const trackMissionProgress = async (userId: string, action: string, amoun
       const newProgress = Math.min(mission.goal, (existing?.progress || 0) + amount);
       const isCompleted = newProgress >= mission.goal;
 
-      await prisma.userMissionProgress.upsert({
-        where: {
-          userId_missionId_resetAt: {
+      if (existing) {
+        await prisma.userMissionProgress.update({
+          where: { id: existing.id },
+          data: {
+            progress: newProgress,
+            completed: isCompleted,
+          },
+        });
+      } else {
+        await prisma.userMissionProgress.create({
+          data: {
             userId,
             missionId: mission.id,
+            progress: newProgress,
+            completed: isCompleted,
             resetAt,
           },
-        },
-        update: {
-          progress: newProgress,
-          completed: isCompleted,
-        },
-        create: {
-          userId,
-          missionId: mission.id,
-          progress: newProgress,
-          completed: isCompleted,
-          resetAt,
-        },
-      });
+        });
+      }
     }
   } catch (err) {
     console.error('Error tracking mission progress:', err);
@@ -249,19 +256,17 @@ export const trackMissionProgress = async (userId: string, action: string, amoun
 };
 
 export const claimMissionReward = async (userId: string, missionId: string) => {
-  const resetAt = getTodayResetDate();
   const mission = await prisma.mission.findUnique({ where: { id: missionId } });
 
   if (!mission) throw new AppError('Misión no encontrada', 404);
 
-  const progress = await prisma.userMissionProgress.findUnique({
+  const progress = await prisma.userMissionProgress.findFirst({
     where: {
-      userId_missionId_resetAt: {
-        userId,
-        missionId,
-        resetAt,
-      },
+      userId,
+      missionId,
+      resetAt: { gte: getTodayStartUTC() },
     },
+    orderBy: { createdAt: 'desc' },
   });
 
   if (!progress || !progress.completed) {
@@ -298,19 +303,17 @@ export const claimAllMissions = async (userId: string) => {
     throw new AppError('No tienes misiones completadas pendientes por reclamar', 400);
   }
 
-  const resetAt = getTodayResetDate();
   let totalXp = 0;
   let totalStardust = 0;
 
   for (const m of claimable) {
-    const progress = await prisma.userMissionProgress.findUnique({
+    const progress = await prisma.userMissionProgress.findFirst({
       where: {
-        userId_missionId_resetAt: {
-          userId,
-          missionId: m.id,
-          resetAt,
-        },
+        userId,
+        missionId: m.id,
+        resetAt: { gte: getTodayStartUTC() },
       },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (progress && progress.completed && !progress.claimedAt) {
