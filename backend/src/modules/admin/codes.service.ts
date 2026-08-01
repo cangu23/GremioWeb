@@ -41,7 +41,7 @@ export const generateCode = async (data: {
   const validRoles = [
     'VTUBER', 'MAID', 'ARTIST', 'CLIPPER',
     'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR',
-    'STAFF', 'MODERATOR', 'ADMIN', 'BOT'
+    'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN', 'BOT'
   ];
   if (!validRoles.includes(data.role)) {
     throw new AppError(`Rol inválido. Debe ser: ${validRoles.join(', ')}`, 400);

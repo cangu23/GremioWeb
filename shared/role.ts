@@ -8,6 +8,7 @@ export enum Role {
   VIP_NOVA = 'VIP_NOVA',
   VIP_STELLAR = 'VIP_STELLAR',
   STAFF = 'STAFF',
+  BETA_TESTER = 'BETA_TESTER',
   MODERATOR = 'MODERATOR',
   ADMIN = 'ADMIN',
   BOT = 'BOT',

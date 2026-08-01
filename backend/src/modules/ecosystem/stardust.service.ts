@@ -18,7 +18,7 @@ export const GIFT_PLAN_STARDUST_COSTS: Record<string, number> = {
 };
 
 export const getStardustMultiplier = (userPlan: string, userRole: string): number => {
-  if (['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'MODERATOR', 'ADMIN'].includes(userRole)) {
+  if (['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN'].includes(userRole)) {
     return 2.0; // Automatically equivalent to STELLAR (×2.0)
   }
   if (userRole === 'VIP_NOVA') {

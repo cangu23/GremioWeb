@@ -118,9 +118,9 @@ export const getMyPlatformPlan = async (userId: string) => {
     }
   }
 
-  // VTUBER, MAID, STAFF, MODERATOR, ADMIN & VIP roles receive effective plans automatically
+  // VTUBER, MAID, STAFF, BETA_TESTER, MODERATOR, ADMIN & VIP roles receive effective plans automatically
   let effectivePlan = user.plan || 'FREE';
-  if (['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'MODERATOR', 'ADMIN'].includes(user.role)) {
+  if (['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN'].includes(user.role)) {
     effectivePlan = 'STELLAR';
   } else if (user.role === 'VIP_NOVA') {
     effectivePlan = 'NOVA';

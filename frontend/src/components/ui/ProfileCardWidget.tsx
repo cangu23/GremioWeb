@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 import UserAvatar, { getNoteBubbleStyle } from './UserAvatar';
 import PetWidget from './PetWidget';
+import RoleBadge from './RoleBadge';
 
 // ── Types ──
 interface ProfileCardData {
@@ -402,7 +403,7 @@ function CardContent({
         {/* Display name + badges */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: '6px', marginBottom: '2px', flexWrap: 'wrap',
+          gap: '8px', marginBottom: '4px', flexWrap: 'wrap',
         }}>
           <h3 style={{
             margin: 0, fontSize: '1.15rem', fontWeight: 700,
@@ -411,24 +412,11 @@ function CardContent({
             {displayName}
           </h3>
 
-          {isVerified && (
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-label="Verificado" style={{ flexShrink: 0 }}>
-              <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
-              <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-
-          {isVtubers && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Oficial">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-          )}
-
-          {isFeatured && (
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#ffd700' }}>
-              ★
-            </span>
-          )}
+          <RoleBadge
+            role={profile.role || (isVtubers ? 'VTUBER' : 'USER')}
+            size="sm"
+            isVerified={isVerified}
+          />
         </div>
 
         {/* Username */}
