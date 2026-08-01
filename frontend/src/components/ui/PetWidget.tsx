@@ -65,7 +65,9 @@ export default function PetWidget({
 
   if (!pet.profilePet) return null;
 
-  const petName = pet.petName || 'Mascota';
+  const hasCustomName = !!pet.petName && pet.petName.trim().length > 0;
+  const ownerLabel = petOwnerUsername ? `@${petOwnerUsername}` : 'mi dueño';
+  const petName = hasCustomName ? pet.petName! : `Mascota de ${ownerLabel}`;
   const level = pet.petLevel || 1;
   const exp = pet.petExp || 0;
   const hunger = pet.petHunger ?? 80;
@@ -75,9 +77,13 @@ export default function PetWidget({
   // Active image: action GIF #2 when hovered, feeding, or popover open, idle image #1 otherwise
   const activeImage = (isHovered || isFeeding || popoverOpen) && pet.petImage2 ? pet.petImage2 : pet.profilePet;
 
+  const defaultGreeting = hasCustomName
+    ? `¡Hola! Soy ${pet.petName} 💖`
+    : `¡Hola! Soy la mascota de ${ownerLabel} 💖`;
+
   const QUOTES = [
     `¡Ñam ñam! ¡Gracias por el amor! 💖`,
-    `¡Soy ${petName}! ¡Nivel ${level} y contando! ✨`,
+    hasCustomName ? `¡Soy ${pet.petName}! ¡Nivel ${level} y contando! ✨` : `¡Soy la mascota de ${ownerLabel}! ✨`,
     `¡Waa~! ¡Te quiero mucho! 🌸`,
     `¡Tengo mucha energía! ⚡`,
     `¡Rawr! 🐾 ¿Tienes alguna galletita? 🍪`,
@@ -151,7 +157,7 @@ export default function PetWidget({
     );
   }
 
-  // Frameless Mode (GOD-Tier & Kiut animations above Galería)
+  // Frameless Mode (Left-aligned, crisp image without any background circle)
   if (frameless) {
     return (
       <div
@@ -176,10 +182,6 @@ export default function PetWidget({
             0%, 100% { transform: scale(1); opacity: 0.45; }
             50% { transform: scale(0.72); opacity: 0.15; }
           }
-          @keyframes petAuraGlow {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.85; transform: scale(1.12); }
-          }
           @keyframes speechPop {
             0% { transform: translateY(10px) scale(0.8); opacity: 0; }
             100% { transform: translateY(0) scale(1); opacity: 1; }
@@ -192,7 +194,7 @@ export default function PetWidget({
             style={{
               position: 'absolute',
               top: '-32px',
-              left: '40px',
+              left: '30px',
               background: 'linear-gradient(135deg, rgba(255,255,255,0.96), rgba(240,230,255,0.96))',
               color: '#1a103c',
               fontSize: '0.78rem',
@@ -206,10 +208,10 @@ export default function PetWidget({
               animation: 'speechPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}
           >
-            {speechQuote || (hunger < 30 ? `¡Tengo mucha hambre! 🍔🍖` : `¡Hola! Soy ${petName} 💖`)}
+            {speechQuote || (hunger < 30 ? `¡Tengo mucha hambre! 🍔🍖` : defaultGreeting)}
             <div style={{
               position: 'absolute',
-              bottom: '-5px', left: '30px',
+              bottom: '-5px', left: '25px',
               transform: 'rotate(45deg)',
               width: '8px', height: '8px',
               background: 'rgba(255,255,255,0.96)',
@@ -221,7 +223,7 @@ export default function PetWidget({
         {/* Floating Hearts / Sparkles Explosion */}
         {showHearts && (
           <div style={{
-            position: 'absolute', top: '10px', left: '50px',
+            position: 'absolute', top: '10px', left: '40px',
             fontSize: '1.8rem',
             animation: 'ping 1s cubic-bezier(0,0,0.2,1) infinite',
             pointerEvents: 'none',
@@ -235,7 +237,7 @@ export default function PetWidget({
         {/* Level Up Banner Overlay */}
         {levelUpEffect && (
           <div style={{
-            position: 'absolute', top: '-18px', left: '20px',
+            position: 'absolute', top: '-18px', left: '10px',
             background: 'linear-gradient(135deg, #ffd700, #ff8c00)',
             color: '#000', fontWeight: 900, fontSize: '0.8rem',
             padding: '4px 14px', borderRadius: '14px',
@@ -247,7 +249,7 @@ export default function PetWidget({
           </div>
         )}
 
-        {/* Character Stage with Aura & Levitation */}
+        {/* Character Stage (NO CIRCLE, NO AURA CONTAINER) */}
         <div
           onClick={() => {
             triggerQuote();
@@ -258,24 +260,11 @@ export default function PetWidget({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '10px 10px 10px 30px',
+            padding: '10px 10px 10px 20px',
             cursor: 'pointer',
           }}
           title={`🐾 ${petName} — Haz clic para interactuar o alimentar`}
         >
-          {/* Mystical Magical Aura Halo (Behind Character) */}
-          <div style={{
-            position: 'absolute',
-            width: '140px', height: '140px',
-            borderRadius: '50%',
-            background: isFeeding || levelUpEffect
-              ? 'radial-gradient(circle, rgba(255,215,0,0.45) 0%, rgba(245,158,11,0.2) 60%, transparent 80%)'
-              : 'radial-gradient(circle, rgba(138,43,226,0.3) 0%, rgba(59,130,246,0.15) 60%, transparent 80%)',
-            animation: 'petAuraGlow 3s ease-in-out infinite alternate',
-            pointerEvents: 'none',
-            zIndex: 1,
-          }} />
-
           {/* Crisp Animated Pet Character */}
           <img
             src={activeImage}
