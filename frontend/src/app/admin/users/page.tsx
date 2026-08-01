@@ -233,26 +233,22 @@ export default function AdminUsersPage() {
         </form>
       </div>
 
-      {/* Users Table Container with Sticky Actions */}
-      <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
+      {/* Users Table Container */}
+      <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden' }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando usuarios...</div>
         ) : !data || data.data.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron usuarios</div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto', position: 'relative' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '950px' }}>
+            <div style={{ width: '100%', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.2)' }}>
-                    {['Usuario', 'Email', 'Rol', 'Plan / Status', 'Stardust ⭐', 'Nivel', 'Registro'].map(h => (
-                      <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{h}</th>
-                    ))}
-                    {/* STICKY RIGHT COLUMN FOR ACTIONS */}
-                    <th style={{
-                      padding: '14px 16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap',
-                      position: 'sticky', right: 0, zIndex: 10, background: '#161217', boxShadow: '-6px 0 16px rgba(0,0,0,0.6)',
-                    }}>Acciones</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Usuario / Email</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Rol & Plan</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Estado & Saldo</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -264,10 +260,12 @@ export default function AdminUsersPage() {
                       <tr key={user.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+                        
+                        {/* 1. Usuario / Email */}
                         <td style={{ padding: '12px 16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div style={{
-                              width: '34px', height: '34px', borderRadius: '50%',
+                              width: '36px', height: '36px', borderRadius: '50%',
                               background: (user.avatarUrl || user.vtuberProfile?.avatarUrl)
                                 ? `url(${user.avatarUrl || user.vtuberProfile?.avatarUrl}) center/cover`
                                 : 'linear-gradient(135deg, var(--primary), var(--secondary))',
@@ -276,107 +274,87 @@ export default function AdminUsersPage() {
                             }}>
                               {!(user.avatarUrl || user.vtuberProfile?.avatarUrl) && user.username.charAt(0).toUpperCase()}
                             </div>
-                            <div>
+                            <div style={{ minWidth: 0 }}>
                               <div style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                {user.username}
+                                <span>{user.username}</span>
                                 {isVer && (
-                                  <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado" style={{ flexShrink: 0 }}>
                                     <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
                                     <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                                   </svg>
                                 )}
                               </div>
-                              {user.vtuberProfile?.displayName && (
-                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                  {user.vtuberProfile.displayName}
-                                </div>
-                              )}
+                              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }}>
+                                {user.email}
+                              </div>
                             </div>
                           </div>
                         </td>
-                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{user.email}</td>
+
+                        {/* 2. Rol & Plan */}
                         <td style={{ padding: '12px 16px' }}>
-                          <span style={{ padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, background: `${roleColors[user.role] || '#666'}22`, color: roleColors[user.role] || '#666', border: `1px solid ${roleColors[user.role] || '#666'}44` }}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', color: statusColors[user.status] || '#666', fontWeight: 600 }}>
-                              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColors[user.status] || '#666' }} />
-                              {user.status}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
+                            <span style={{
+                              padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800,
+                              background: `${roleColors[user.role] || '#666'}22`, color: roleColors[user.role] || '#666',
+                              border: `1px solid ${roleColors[user.role] || '#666'}44`,
+                            }}>
+                              {user.role}
                             </span>
-                            {user.plan && user.plan !== 'FREE' && (
+                            {user.plan && user.plan !== 'FREE' ? (
                               <span style={{ fontSize: '0.7rem', color: '#d4a030', fontWeight: 700 }}>
-                                💎 PLAN {user.plan}
+                                💎 {user.plan}
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                                Plan Gratuito
                               </span>
                             )}
                           </div>
                         </td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.88rem', fontWeight: 700, color: '#e8c060' }}>
-                          {user.stardust?.toLocaleString() || 0} ⭐
-                        </td>
-                        <td style={{ padding: '12px 16px', fontSize: '0.88rem', fontWeight: 700 }}>
-                          Lvl {user.level}
-                        </td>
-                        <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
-                          {new Date(user.createdAt).toLocaleDateString('es-ES')}
+
+                        {/* 3. Estado & Saldo */}
+                        <td style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.78rem', color: statusColors[user.status] || '#666', fontWeight: 700 }}>
+                              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColors[user.status] || '#666' }} />
+                              {user.status}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e8c060' }}>
+                              {user.stardust?.toLocaleString() || 0} ⭐ (Lvl {user.level})
+                            </span>
+                          </div>
                         </td>
 
-                        {/* STICKY RIGHT ACTIONS CELL */}
-                        <td style={{
-                          padding: '10px 14px', whiteSpace: 'nowrap',
-                          position: 'sticky', right: 0, zIndex: 10, background: '#161217', boxShadow: '-6px 0 16px rgba(0,0,0,0.6)',
-                        }}>
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center' }}>
+                        {/* 4. Acciones */}
+                        <td style={{ padding: '12px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end' }}>
                             <button
                               onClick={() => openEdit(user)}
                               className="btn"
                               style={{
                                 padding: '6px 14px', fontSize: '0.8rem',
-                                background: 'linear-gradient(135deg, rgba(138,43,226,0.3), rgba(168,85,247,0.2))',
-                                color: '#d8b4fe', border: '1px solid rgba(168,85,247,0.5)', fontWeight: 700,
+                                background: 'linear-gradient(135deg, rgba(138,43,226,0.35), rgba(168,85,247,0.2))',
+                                color: '#e9d5ff', border: '1px solid rgba(168,85,247,0.5)', fontWeight: 800,
                                 borderRadius: '8px',
                               }}
                             >
-                              ✏️ Editar
+                              ✏️ Editar / Asignar
                             </button>
 
                             <button
                               onClick={() => toggleVerified(user)}
-                              title="Conceder / Quitar Verificación"
+                              title={isVer ? 'Remover Verificado' : 'Otorgar Verificado'}
                               style={{
                                 padding: '6px 10px', fontSize: '0.78rem',
-                                background: isVer ? 'rgba(29,155,240,0.25)' : 'rgba(255,255,255,0.06)',
+                                background: isVer ? 'rgba(29,155,240,0.2)' : 'rgba(255,255,255,0.05)',
                                 color: isVer ? '#1d9bf0' : 'var(--text-muted)',
-                                border: isVer ? '1px solid rgba(29,155,240,0.5)' : '1px solid rgba(255,255,255,0.15)',
-                                borderRadius: '8px', cursor: 'pointer', fontWeight: 600,
+                                border: isVer ? '1px solid rgba(29,155,240,0.4)' : '1px solid rgba(255,255,255,0.12)',
+                                borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
                               }}
                             >
                               {isVer ? '🔵 Verificado' : '⚪ Verificar'}
                             </button>
-
-                            {!isStaff && user.role !== 'VTUBER' && (
-                              <button onClick={() => confirmAction(user.id, 'vtuber', 'promover a VTuber')} className="btn" style={{ padding: '6px 10px', fontSize: '0.78rem', background: 'rgba(255,0,127,0.2)', color: '#ff007f', border: '1px solid rgba(255,0,127,0.4)', fontWeight: 700, borderRadius: '8px' }}>
-                                + VTuber
-                              </button>
-                            )}
-
-                            {!isStaff && user.status === 'ACTIVE' && (
-                              <button onClick={() => confirmAction(user.id, 'suspend', 'suspender')} className="btn" style={{ padding: '6px 10px', fontSize: '0.78rem', background: 'rgba(255,152,0,0.2)', color: '#ff9800', border: '1px solid rgba(255,152,0,0.4)', fontWeight: 700, borderRadius: '8px' }}>Suspender</button>
-                            )}
-                            {!isStaff && (user.status === 'SUSPENDED' || user.status === 'BANNED') && (
-                              <button onClick={() => confirmAction(user.id, 'restore', 'restaurar')} className="btn" style={{ padding: '6px 10px', fontSize: '0.78rem', background: 'rgba(0,230,118,0.2)', color: '#00e676', border: '1px solid rgba(0,230,118,0.4)', fontWeight: 700, borderRadius: '8px' }}>Restaurar</button>
-                            )}
-                            {!isStaff && user.status !== 'BANNED' && (
-                              <button onClick={() => confirmAction(user.id, 'ban', 'banear')} className="btn" style={{ padding: '6px 10px', fontSize: '0.78rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.4)', fontWeight: 700, borderRadius: '8px' }}>Banear</button>
-                            )}
-
-                            {isStaff && (
-                              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#a855f7', background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.3)', padding: '4px 8px', borderRadius: '6px' }}>
-                                🛡️ Staff Protegido
-                              </span>
-                            )}
                           </div>
                         </td>
                       </tr>

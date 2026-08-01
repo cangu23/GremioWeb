@@ -1221,9 +1221,39 @@ function ComingSoonContent() {
 
 /* ─────────── Export wrapper ─────────── */
 export default function HoshizoraMaidPage() {
+  const { user } = useAuth();
+
+  const isAuthorized = user && (
+    user.role === 'ADMIN' ||
+    user.role === 'BETA_TESTER' ||
+    user.role === 'MODERATOR' ||
+    user.role === 'STAFF'
+  );
+
   return (
-    <ClientOnly fallback={<div style={{ minHeight: '100vh', background: '#1a1410' }} />}>
-      <ComingSoonContent />
+    <ClientOnly fallback={<div style={{ minHeight: '100vh', background: theme.bg }} />}>
+      {isAuthorized ? (
+        <>
+          <div style={{
+            background: 'linear-gradient(90deg, #8a2be2, #d4a030)',
+            color: '#fff',
+            textAlign: 'center',
+            padding: '10px 16px',
+            fontSize: '0.85rem',
+            fontWeight: 800,
+            letterSpacing: '0.05em',
+            position: 'sticky',
+            top: '70px',
+            zIndex: 90,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+          }}>
+            🛡️ VISTA PREVIA EXCLUSIVA ADMIN / BETA TESTER: Estás viendo la página completa del Hoshizora Maid Café.
+          </div>
+          <HoshizoraMaidContent />
+        </>
+      ) : (
+        <ComingSoonContent />
+      )}
     </ClientOnly>
   );
 }
