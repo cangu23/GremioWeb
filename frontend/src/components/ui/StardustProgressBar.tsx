@@ -91,6 +91,16 @@ export default function StardustProgressBar() {
     }
   };
 
+  const handleInviteClick = async () => {
+    const inviteUrl = `${window.location.origin}/register?ref=${user?.username || 'gremio'}`;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      showToast('🔗 ¡Enlace de invitación copiado! Ganarás +70 XP y +50 ⭐ cuando tu amigo se registre ✨', 'success');
+    } catch {
+      showToast('🔗 Tu enlace de invitación: ' + inviteUrl, 'info');
+    }
+  };
+
   if (!user) return null;
 
   const totalCount = missions.length || 6;
@@ -201,125 +211,85 @@ export default function StardustProgressBar() {
               fontSize: '0.78rem',
               fontWeight: 700,
               textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.15s ease',
             }}
           >
-            Pase ⭐
+            Pase Estelar ⭐
           </Link>
         </div>
       </div>
 
-      {/* MISSIONS DETAIL MODAL */}
       {showModal && (
         <div
           style={{
             position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '20px',
+            background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
           }}
           onClick={() => setShowModal(false)}
         >
           <div
-            className="glass"
             style={{
-              width: '100%', maxWidth: '540px',
-              padding: '24px', borderRadius: '20px',
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 27, 75, 0.95))',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+              width: '100%', maxWidth: '520px', background: '#0d0d14',
+              border: '1px solid rgba(255,255,255,0.12)', borderRadius: '20px',
+              padding: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+              display: 'flex', flexDirection: 'column', gap: '16px',
               maxHeight: '85vh', overflowY: 'auto',
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-              <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <SparklesIcon size={18} color="#38bdf8" /> Misiones Diarias
-                </h3>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #a1a1aa)' }}>
-                  Completa misiones para ganar Stardust ⭐ y avanzar en tu Pase Estelar
-                </span>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <SparklesIcon size={18} color="#fbbf24" /> Misiones Diarias
+              </h3>
               <button
                 onClick={() => setShowModal(false)}
-                style={{
-                  background: 'none', border: 'none', color: '#a1a1aa',
-                  fontSize: '1.4rem', cursor: 'pointer', padding: '4px',
-                }}
+                style={{ background: 'none', border: 'none', color: '#a1a1aa', fontSize: '1.2rem', cursor: 'pointer' }}
               >
                 ✕
               </button>
             </div>
 
-            {/* MISSIONS LIST */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {[...missions].sort((a, b) => {
-                const aClaimed = !!a.claimedAt;
-                const bClaimed = !!b.claimedAt;
-                const aDone = a.completed || (a.currentProgress >= a.goal);
-                const bDone = b.completed || (b.currentProgress >= b.goal);
-                const getPriority = (claimed: boolean, done: boolean) => {
-                  if (done && !claimed) return 0;
-                  if (!done && !claimed) return 1;
-                  return 2;
-                };
-                return getPriority(aClaimed, aDone) - getPriority(bClaimed, bDone);
-              }).map((m) => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {missions.map(m => {
                 const isClaimed = !!m.claimedAt;
-                const isReady = m.completed && !isClaimed;
+                const isReady = (m.completed || m.currentProgress >= m.goal) && !isClaimed;
                 const pct = Math.min(100, Math.round((m.currentProgress / m.goal) * 100));
                 const nav = ACTION_NAV_LINKS[m.action] || { label: 'Ir', href: '/feed' };
 
                 return (
-                  <div
-                    key={m.id}
-                    style={{
-                      padding: '16px', borderRadius: '14px',
-                      background: isReady ? 'rgba(251, 191, 36, 0.1)' : 'rgba(255,255,255,0.03)',
-                      border: isReady ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid rgba(255,255,255,0.06)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                      <div style={{ fontWeight: 800, fontSize: '0.95rem', color: isClaimed ? '#71717a' : '#fff' }}>
-                        {m.title}
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        +{m.stardustReward} <StarIcon size={12} color="#fbbf24" /> | +{m.xpReward} XP
-                      </div>
+                  <div key={m.id} style={{ padding: '16px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ fontWeight: 800, color: '#fff' }}>{m.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#fbbf24' }}>+{m.stardustReward} ⭐</div>
                     </div>
-
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #a1a1aa)', margin: '0 0 12px 0' }}>
-                      {m.description}
-                    </p>
-
-                    {/* PROGRESS BAR & BUTTON */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ height: '6px', width: '100%', borderRadius: '999px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginBottom: '4px' }}>
-                          <div style={{ width: `${pct}%`, height: '100%', background: isClaimed ? '#4b5563' : isReady ? '#fbbf24' : '#38bdf8', transition: 'width 0.3s' }} />
-                        </div>
-                        <span style={{ fontSize: '0.72rem', color: '#a1a1aa', fontWeight: 600 }}>
-                          Progreso: {m.currentProgress} de {m.goal}
-                        </span>
-                      </div>
-
-                      <div>
+                    <div style={{ height: '6px', background: '#222', borderRadius: '4px', overflow: 'hidden', marginBottom: '12px' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: isReady ? '#fbbf24' : '#38bdf8' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                         {isClaimed ? (
-                          <span style={{ fontSize: '0.8rem', color: '#71717a', fontWeight: 600 }}>Reclamado ✓</span>
+                          <span style={{ fontSize: '0.8rem', color: '#71717a' }}>Reclamado</span>
                         ) : isReady ? (
                           <button
                             disabled={claimingId === m.id}
                             onClick={() => handleClaim(m.id)}
                             style={{
-                              padding: '8px 16px', borderRadius: '10px', border: 'none',
-                              background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-                              color: '#000', fontWeight: 900, fontSize: '0.82rem', cursor: 'pointer',
-                              boxShadow: '0 0 12px rgba(251, 191, 36, 0.4)',
+                              padding: '6px 14px', borderRadius: '8px', border: 'none',
+                              background: '#fbbf24', color: '#000', fontWeight: 900, fontSize: '0.78rem', cursor: 'pointer',
                             }}
                           >
                             Reclamar ✨
+                          </button>
+                        ) : m.action === 'INVITE_FRIEND' ? (
+                          <button
+                            onClick={handleInviteClick}
+                            style={{
+                              padding: '6px 14px', borderRadius: '8px',
+                              background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)',
+                              color: '#38bdf8', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer',
+                              display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            }}
+                          >
+                            🔗 Copiar Enlace
                           </button>
                         ) : (
                           <Link
@@ -328,13 +298,12 @@ export default function StardustProgressBar() {
                             style={{
                               padding: '6px 14px', borderRadius: '8px',
                               background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                              color: '#38bdf8', fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none',
+                              color: '#fff', fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none',
                             }}
                           >
                             {nav.label} →
                           </Link>
                         )}
-                      </div>
                     </div>
                   </div>
                 );
