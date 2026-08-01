@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
@@ -13,6 +13,8 @@ import DiscordLoginButton from '@/components/auth/DiscordLoginButton';
 function RegisterForm() {
   const { register } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refParam = searchParams ? (searchParams.get('ref') || undefined) : undefined;
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -41,7 +43,7 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      await register({ username, email, password });
+      await register({ username, email, password, ref: refParam });
       router.push('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al registrarse');

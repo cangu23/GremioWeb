@@ -21,6 +21,7 @@ export const registerSchema = z.object({
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters long'),
+    ref: z.string().optional(),
   }),
 });
 

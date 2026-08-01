@@ -8,6 +8,8 @@ import AppError from '../../errors/AppError';
 import env from '../../config/env';
 import { generateTokens, hashToken } from './tokens';
 import { LoginInput, RegisterInput, RefreshTokenInput } from './auth.types';
+import { trackMissionProgress } from '../ecosystem/missions.service';
+import { addStardust } from '../ecosystem/stardust.service';
 
 /**
  * Registers a new user and returns the user object without tokens.
@@ -29,6 +31,29 @@ export const register = async (input: RegisterInput) => {
     status: 'ACTIVE',
     role: Role.USER, // Default role
   });
+
+  // Handle referral tracking & reward if ref provided
+  if ((input as any).ref) {
+    try {
+      const referrer = await UserRepository.findByUsername((input as any).ref);
+      if (referrer && referrer.id !== user.id) {
+        await trackMissionProgress(referrer.id, 'INVITE_FRIEND').catch(() => {});
+        await addStardust(referrer.id, 50, 'REFERRAL_BONUS').catch(() => {});
+
+        await prisma.notification.create({
+          data: {
+            userId: referrer.id,
+            type: 'referral_join',
+            title: '🎉 ¡Nuevo miembro invitado!',
+            message: `@${input.username} se ha unido a Gremio Estelar con tu enlace. (+50 ⭐)`,
+            referenceId: user.id,
+          },
+        }).catch(() => {});
+      }
+    } catch (refErr) {
+      console.error('Referral processing error:', refErr);
+    }
+  }
 
   // Omit password from the returned user object
   const { password, ...userWithoutPassword } = user;

@@ -90,15 +90,10 @@ export default function MissionsWidget() {
   };
 
   const handleInviteClick = async () => {
-    const inviteUrl = `${window.location.origin}?ref=${user?.username || 'gremio'}`;
+    const inviteUrl = `${window.location.origin}/register?ref=${user?.username || 'gremio'}`;
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      showToast('🔗 ¡Enlace de invitación copiado al portapapeles!', 'success');
-      await apiFetch('/ecosystem/missions/track', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'INVITE_FRIEND' }),
-      });
-      await loadData();
+      showToast('🔗 ¡Enlace copiado! Ganarás +70 XP y +50⭐ cuando tu amigo se registre ✨', 'success');
     } catch {
       showToast('🔗 Tu enlace: ' + inviteUrl, 'info');
     }

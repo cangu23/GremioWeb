@@ -10,7 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (data: LoginPayload) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
-  register: (data: RegisterPayload) => Promise<void>;
+  register: (data: RegisterPayload & { ref?: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
