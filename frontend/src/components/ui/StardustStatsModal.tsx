@@ -439,17 +439,16 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {/* GOLD CARD */}
                   <div className="glass" style={{
-                    padding: '22px 26px',
+                    padding: '22px 24px',
                     borderRadius: '24px',
-                    background: 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(180,83,9,0.12) 50%, rgba(15,23,42,0.95) 100%)',
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(180,83,9,0.12) 50%, rgba(15,23,42,0.95) 100%)',
                     border: '1px solid rgba(245, 158, 11, 0.4)',
                     boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
                     position: 'relative',
                     overflow: 'hidden',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '20px',
+                    flexDirection: 'column',
+                    gap: '16px',
                   }}>
                     {/* Ambient shimmer background line */}
                     <div
@@ -463,57 +462,75 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                       }}
                     />
 
-                    {/* Left side: Avatar + Username + Big Stardust Balance */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1, minWidth: 0 }}>
-                      {user && (
-                        <UserAvatar
-                          src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
-                          alt={user.displayName || user.username}
-                          size={56}
-                          user={user}
-                        />
-                      )}
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>
-                          {user ? `${user.displayName || user.username} • SALDO ACTUAL` : 'SALDO DE STARDUST ACTUAL'}
-                        </span>
-                        <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-                          <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block', filter: 'drop-shadow(0 0 10px #fbbf24)' }}>⭐</span>
-                          {user?.role === 'ADMIN' ? '♾️ Infinito (ADMIN)' : balance.toLocaleString()}
-                          <span style={{ fontSize: '1rem', color: '#fbbf24', fontWeight: 800, marginLeft: '2px' }}>Stardust</span>
+                    {/* TOP ROW: User Profile Header + Multiplier Badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', zIndex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                        {user && (
+                          <UserAvatar
+                            src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
+                            alt={user.displayName || user.username}
+                            size={44}
+                            user={user}
+                          />
+                        )}
+                        <div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {user?.displayName || user?.username}
+                            {user?.role === 'ADMIN' && (
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', padding: '1px 7px', borderRadius: '999px' }}>
+                                ADMIN
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '0.72rem', color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>
+                            SALDO DE STARDUST ACTUAL
+                          </span>
                         </div>
+                      </div>
+
+                      {/* Multiplier Badge */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                        <div style={{
+                          padding: '6px 14px',
+                          borderRadius: '999px',
+                          background: multiplier > 1 ? 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.35))' : 'rgba(255,255,255,0.08)',
+                          border: `1px solid ${multiplier > 1 ? '#fbbf24' : 'rgba(255,255,255,0.15)'}`,
+                          color: multiplier > 1 ? '#fbbf24' : 'var(--text-muted)',
+                          fontSize: '0.8rem',
+                          fontWeight: 800,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          boxShadow: multiplier > 1 ? '0 0 14px rgba(245,158,11,0.3)' : 'none',
+                        }}>
+                          Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
+                        </div>
+                        <span style={{ fontSize: '0.7rem', color: '#9ca3af', fontWeight: 500 }}>
+                          {multiplier > 1 ? `Plan ${data?.plan} (+${Math.round((multiplier - 1) * 100)}%)` : 'Consigue Premium'}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Right side: Multiplier Badge */}
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-end',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      zIndex: 1,
-                      flexShrink: 0,
-                    }}>
-                      <div style={{
-                        padding: '7px 16px',
-                        borderRadius: '999px',
-                        background: multiplier > 1 ? 'linear-gradient(135deg, rgba(245,158,11,0.3), rgba(217,119,6,0.4))' : 'rgba(255,255,255,0.08)',
-                        border: `1px solid ${multiplier > 1 ? '#fbbf24' : 'rgba(255,255,255,0.15)'}`,
-                        color: multiplier > 1 ? '#fbbf24' : 'var(--text-muted)',
-                        fontSize: '0.82rem',
-                        fontWeight: 800,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        boxShadow: multiplier > 1 ? '0 0 16px rgba(245,158,11,0.35)' : 'none',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
+                    {/* BOTTOM ROW: Clean Big Stardust Display */}
+                    <div style={{ zIndex: 1, paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '2rem', animation: 'stardustFloat 3s ease-in-out infinite alternate', filter: 'drop-shadow(0 0 10px #fbbf24)' }}>⭐</span>
+                        {user?.role === 'ADMIN' ? (
+                          <div>
+                            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fbbf24', letterSpacing: '-0.02em', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                              ♾️ Stardust Infinito
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Poderes de Administración activados</span>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                            <span style={{ fontSize: '2.2rem', fontWeight: 900, color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                              {balance.toLocaleString()}
+                            </span>
+                            <span style={{ fontSize: '1.1rem', color: '#fbbf24', fontWeight: 800 }}>Stardust</span>
+                          </div>
+                        )}
                       </div>
-                      <p style={{ fontSize: '0.74rem', color: '#9ca3af', margin: 0, fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        {multiplier > 1 ? `Tu plan ${data?.plan} otorga +${Math.round((multiplier - 1) * 100)}% extra` : 'Obtén Premium para +100% extra'}
-                      </p>
                     </div>
                   </div>
 
