@@ -215,7 +215,7 @@ export default function PetWidget({
               fontWeight: 800,
               padding: '5px 14px',
               borderRadius: '16px',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.3), 0 0 10px rgba(255,215,0,0.4)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
               zIndex: 30,
@@ -242,7 +242,7 @@ export default function PetWidget({
             animation: 'ping 1s cubic-bezier(0,0,0.2,1) infinite',
             pointerEvents: 'none',
             zIndex: 40,
-            filter: 'drop-shadow(0 0 10px rgba(255,215,0,0.8))',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
           }}>
             🍖💖✨🌸⭐
           </div>
@@ -252,14 +252,14 @@ export default function PetWidget({
         {levelUpEffect && (
           <div style={{
             position: 'absolute', top: '-18px', left: '10px',
-            background: 'linear-gradient(135deg, #ffd700, #ff8c00)',
-            color: '#000', fontWeight: 900, fontSize: '0.8rem',
+            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+            color: '#fff', fontWeight: 900, fontSize: '0.8rem',
             padding: '4px 14px', borderRadius: '14px',
-            boxShadow: '0 0 24px rgba(255,215,0,0.9)',
+            boxShadow: '0 4px 20px rgba(138,43,226,0.6)',
             animation: 'bounce 0.5s infinite alternate',
             zIndex: 45,
           }}>
-            👑 GOD LEVEL UP! ⚡
+            ⚡ LEVEL UP! ⚡
           </div>
         )}
 
@@ -289,7 +289,7 @@ export default function PetWidget({
               objectFit: 'contain',
               imageRendering: 'auto',
               filter: isHovered
-                ? 'drop-shadow(0 8px 20px rgba(255,215,0,0.6))'
+                ? 'drop-shadow(0 8px 24px rgba(0,0,0,0.6))'
                 : 'drop-shadow(0 6px 14px rgba(0,0,0,0.4))',
               animation: isFeeding
                 ? 'bounce 0.4s infinite'
@@ -312,7 +312,7 @@ export default function PetWidget({
           }} />
         </div>
 
-        {/* Sleek RPG HUD Pet Control Card (Compact & Balanced) */}
+        {/* Sleek RPG HUD Pet Control Card (Compact & Clean) */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
@@ -322,8 +322,8 @@ export default function PetWidget({
           padding: '14px 18px',
           borderRadius: '20px',
           background: 'linear-gradient(135deg, rgba(28,24,55,0.75), rgba(16,13,38,0.85))',
-          border: '1px solid rgba(255,215,0,0.3)',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.4), 0 0 16px rgba(255,215,0,0.12)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
           backdropFilter: 'blur(12px)',
           marginTop: '4px',
         }}>
@@ -333,11 +333,10 @@ export default function PetWidget({
               🐾 {petName}
             </span>
             <span style={{
-              fontSize: '0.72rem', fontWeight: 800, color: '#ffd700',
+              fontSize: '0.72rem', fontWeight: 800, color: 'var(--primary)',
               padding: '2px 9px', borderRadius: '10px',
-              background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(245,158,11,0.25))',
-              border: '1px solid rgba(255,215,0,0.4)',
-              boxShadow: '0 2px 8px rgba(255,215,0,0.2)',
+              background: 'rgba(138,43,226,0.15)',
+              border: '1px solid rgba(138,43,226,0.3)',
               flexShrink: 0,
             }}>
               ⭐ Niv. {level}
