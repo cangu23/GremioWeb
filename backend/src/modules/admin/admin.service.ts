@@ -89,13 +89,10 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     }
   }
 
-  // Safety check: prevent banning, suspending, or modifying roles between staff members
+  // Safety check: prevent banning or suspending staff members
   if (id !== adminId && isStaffRole(user.role)) {
     if (data.status === 'BANNED' || data.status === 'SUSPENDED') {
       throw new AppError('No se puede banear ni suspender a otros miembros del staff', 400);
-    }
-    if (data.role && data.role !== user.role) {
-      throw new AppError('No se puede modificar el rol de otros miembros del staff', 400);
     }
   }
 

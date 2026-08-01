@@ -745,153 +745,150 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
         title={displayName}
         style={{
           padding: 0, border: 'none', background: 'none', cursor: 'pointer',
-          display: 'inline-flex', flexShrink: 0,
-          outline: open ? '2px solid var(--primary)' : '2px solid transparent',
+          display: 'inline-flex', flexShrink: 0, borderRadius: '50%',
+          outline: open ? '2px solid #d4a030' : '2px solid transparent',
           outlineOffset: '2px',
-          transition: 'outline 0.15s',
+          boxShadow: open ? '0 0 12px rgba(212,160,48,0.4)' : 'none',
+          transition: 'all 0.2s ease',
         }}
       >
         <UserAvatar
           src={avatarUrl}
           alt={displayName}
           user={user}
-          size={32}
+          size={34}
         />
       </button>
 
       {open && (
         <div style={{
-          position: 'absolute', top: '100%', right: '0', marginTop: '6px',
-          minWidth: '190px', zIndex: 100,
-          background: 'rgba(20,20,30,0.96)', backdropFilter: 'blur(16px)',
-          border: '1px solid var(--glass-border)', borderRadius: '12px',
-          padding: '6px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          animation: 'slideDown 0.15s ease',
+          position: 'absolute', top: '100%', right: '0', marginTop: '8px',
+          width: '235px', zIndex: 100,
+          background: 'rgba(18, 16, 23, 0.96)', backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(212, 160, 48, 0.25)', borderRadius: '16px',
+          padding: '8px', boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 160, 48, 0.1)',
+          animation: 'slideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
-          {/* User info header with badge */}
+          {/* User Profile Header */}
           <div style={{
-            padding: '8px 12px 10px', borderBottom: '1px solid var(--glass-border)',
-            marginBottom: '4px',
+            padding: '10px 12px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(212, 160, 48, 0.12), rgba(139, 92, 246, 0.08))',
+            border: '1px solid rgba(212, 160, 48, 0.2)',
+            marginBottom: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
           }}>
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {displayName}
-              {equippedBadge && (
-                <span title={`Insignia: ${equippedBadge.label}`} style={{ fontSize: '1rem', lineHeight: 1 }}>
-                  {equippedBadge.icon}
-                </span>
-              )}
+            <UserAvatar src={avatarUrl} alt={displayName} user={user} size={36} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#f5e6d3', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span>{displayName}</span>
+                {equippedBadge && (
+                  <span title={`Insignia: ${equippedBadge.label}`} style={{ fontSize: '0.9rem' }}>
+                    {equippedBadge.icon}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '0.72rem', color: '#b8a898', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                @{user.username}
+              </div>
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>@{user.username}</div>
           </div>
 
-          <Link href={`/profile/${user.id}`}
-            onClick={() => setOpen(false)}
-            style={menuItemStyle}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <span style={{ color: 'var(--text-muted)', display: 'inline-flex' }}>{Icons.user}</span>
-            <span>Mi Perfil</span>
-          </Link>
-
-          <Link href={(user.role === 'VTUBER' || user.role === 'MAID') ? "/vtuber-profile" : "/settings"}
-            onClick={() => setOpen(false)}
-            style={menuItemStyle}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <span style={{ color: 'var(--text-muted)', display: 'inline-flex' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            </span>
-            <span>{(user.role === 'VTUBER' || user.role === 'MAID') ? 'Perfil VTuber' : 'Configuración'}</span>
-          </Link>
-
-          <Link href="/dashboard"
-            onClick={() => setOpen(false)}
-            style={menuItemStyle}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <span style={{ color: 'var(--text-muted)', display: 'inline-flex' }}>{Icons.grid}</span>
-            <span>Dashboard</span>
-          </Link>
-
-          <Link href="/achievements"
-            onClick={() => setOpen(false)}
-            style={menuItemStyle}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <span style={{ color: '#ffd700', display: 'inline-flex' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
-              </svg>
-            </span>
-            <span style={{ color: '#ffd700', fontWeight: 600 }}>Logros y Trofeos 🏆</span>
-          </Link>
-
-          <Link href="/pass"
-            onClick={() => setOpen(false)}
-            style={menuItemStyle}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <span style={{ color: '#38bdf8', display: 'inline-flex' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#38bdf8" stroke="#38bdf8" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </span>
-            <span style={{ color: '#38bdf8', fontWeight: 600 }}>Pase Estelar</span>
-          </Link>
-
-          <Link href="/premium"
-            onClick={() => setOpen(false)}
-            style={menuItemStyle}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <span style={{ color: '#fbbf24', display: 'inline-flex' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
-            </span>
-            <span style={{ color: '#fbbf24', fontWeight: 600 }}>Planes Premium</span>
-          </Link>
-
-          <Link href="/shop"
-            onClick={() => setOpen(false)}
-            style={menuItemStyle}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <span style={{ color: 'var(--warm)', display: 'inline-flex' }}>{Icons.shop}</span>
-            <span style={{ color: 'var(--warm)' }}>Observatorio Estelar ⭐</span>
-          </Link>
-
-          {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
-            <Link href="/admin"
-              onClick={() => setOpen(false)}
-              style={menuItemStyle}
-              onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              <span style={{ color: 'var(--primary)', display: 'inline-flex' }}>{Icons.trending}</span>
-              <span style={{ color: 'var(--primary)' }}>{user.role === 'ADMIN' ? 'Panel Admin' : 'Panel Moderación'}</span>
+          {/* Nav Items */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <Link href={`/profile/${user.id}`} onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(212,160,48,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#d4a030', display: 'inline-flex' }}>{Icons.user}</span>
+              <span>Mi Perfil</span>
             </Link>
-          )}
 
-          <div style={{ height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />
+            <Link href={(user.role === 'VTUBER' || user.role === 'MAID') ? "/vtuber-profile" : "/settings"} onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#a855f7', display: 'inline-flex' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              </span>
+              <span>{(user.role === 'VTUBER' || user.role === 'MAID') ? 'Perfil VTuber' : 'Configuración'}</span>
+            </Link>
 
-          <button onClick={() => { setOpen(false); logout(); closeMenu?.(); }}
-            style={{
-              ...menuItemStyle, border: 'none', background: 'transparent', width: '100%',
-              cursor: 'pointer', color: 'var(--error)',
-            }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            <span style={{ display: 'inline-flex' }}>{Icons.logout}</span>
-            <span>Cerrar Sesión</span>
-          </button>
+            <Link href="/dashboard" onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#3b82f6', display: 'inline-flex' }}>{Icons.grid}</span>
+              <span>Dashboard</span>
+            </Link>
+
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+
+            <Link href="/achievements" onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(234,179,8,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#eab308', display: 'inline-flex' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+                </svg>
+              </span>
+              <span>Logros y Trofeos</span>
+            </Link>
+
+            <Link href="/pass" onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(56,189,248,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#38bdf8', display: 'inline-flex' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#38bdf8" stroke="#38bdf8" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </span>
+              <span>Pase Estelar</span>
+            </Link>
+
+            <Link href="/premium" onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#f59e0b', display: 'inline-flex' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+              </span>
+              <span>Planes Premium</span>
+            </Link>
+
+            <Link href="/shop" onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#f59e0b', display: 'inline-flex' }}>{Icons.shop}</span>
+              <span>Observatorio Estelar</span>
+            </Link>
+
+            {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
+              <>
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+                <Link href="/admin" onClick={() => setOpen(false)} style={menuItemStyle}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(236,72,153,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+                  <span style={{ color: '#ec4899', display: 'inline-flex' }}>{Icons.trending}</span>
+                  <span style={{ color: '#ec4899', fontWeight: 700 }}>{user.role === 'ADMIN' ? 'Panel Admin' : 'Panel Moderación'}</span>
+                </Link>
+              </>
+            )}
+
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
+
+            <button
+              onClick={() => { setOpen(false); logout(); closeMenu?.(); }}
+              style={{
+                ...menuItemStyle, border: 'none', background: 'transparent', width: '100%',
+                cursor: 'pointer', color: '#ef4444', fontWeight: 600,
+              }}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}
+            >
+              <span style={{ display: 'inline-flex' }}>{Icons.logout}</span>
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -899,10 +896,17 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
 }
 
 const menuItemStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: '10px',
-  padding: '10px 12px', borderRadius: '8px', textDecoration: 'none',
-  color: 'var(--text)', fontSize: '0.85rem', fontWeight: 500,
-  transition: 'background 0.12s',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  padding: '8px 12px',
+  borderRadius: '8px',
+  textDecoration: 'none',
+  color: '#f5e6d3',
+  fontSize: '0.85rem',
+  fontWeight: 600,
+  whiteSpace: 'nowrap',
+  transition: 'all 0.15s ease',
 };
 
 // ==========================================================================
