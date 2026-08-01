@@ -1,6 +1,5 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles, Gift, Heart, Star, Check } from '@/components/ui/Icons';
 import { apiFetch } from '@/lib/api';
 
@@ -119,7 +118,12 @@ export default function GiftEnvelopeModal({
     onClose();
   };
 
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  if (!isOpen || !mounted || typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       style={{
         position: 'fixed',
@@ -453,6 +457,7 @@ export default function GiftEnvelopeModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

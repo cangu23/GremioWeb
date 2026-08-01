@@ -1,6 +1,5 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Gift, X } from '@/components/ui/Icons';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
@@ -135,14 +134,19 @@ export default function GiftPlanModal({
     }
   };
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  if (!isOpen || !mounted || typeof document === 'undefined') return null;
+
   const activePlan = PLAN_OPTIONS.find(p => p.key === selectedPlan) || PLAN_OPTIONS[1];
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: 10000,
         background: 'rgba(0,0,0,0.8)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
@@ -428,6 +432,7 @@ export default function GiftPlanModal({
             : `Regalar ${activePlan.name} por $${activePlan.price} USD`}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

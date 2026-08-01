@@ -33,6 +33,8 @@ export const getLeaderboard = async (limit = 50) => {
     xp: u.xp,
     level: u.level,
     role: u.role,
+    displayedRole: u.displayedRole,
+    isVerified: !!(u.vtuberProfile?.isVerified || (u as any).isVerified),
     avatarUrl: u.avatarUrl || u.vtuberProfile?.avatarUrl || null,
     displayName: u.displayName || u.vtuberProfile?.displayName || u.username,
     rank: i + 1,

@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 
@@ -57,6 +58,8 @@ export default function AdminVtubersPage() {
   const [quickVerifyError, setQuickVerifyError] = useState(false);
   const [quickApprovalError, setQuickApprovalError] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<AdminVtuber | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const [editTab, setEditTab] = useState<'basico' | 'redes' | 'stream'>('basico');
   const [editData, setEditData] = useState({
     displayName: '', description: '', lore: '',
@@ -532,8 +535,8 @@ export default function AdminVtubersPage() {
         )}
       </div>
 
-      {selectedProfile && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px', overflowY: 'auto' }} onClick={() => setSelectedProfile(null)}>
+      {mounted && selectedProfile && createPortal(
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '20px', overflowY: 'auto' }} onClick={() => setSelectedProfile(null)}>
           <div className="glass" style={{ padding: '32px', borderRadius: '20px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -699,7 +702,8 @@ export default function AdminVtubersPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

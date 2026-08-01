@@ -47,6 +47,7 @@ interface ConversationData {
   sender: UserInfo;
   receiver: UserInfo;
   isPinned?: boolean;
+  unreadCount?: number;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -305,6 +306,10 @@ function MessengerContent() {
     apiFetch(`/dm/conversations/${activeUserId}`, {})
       .then((data: DmMessageData[]) => {
         setMessages(data || []);
+
+        // Mark conversation read on backend DB & trigger dm-read event
+        apiFetch(`/dm/conversations/${activeUserId}/read`, { method: 'POST' }).catch(() => {});
+        window.dispatchEvent(new CustomEvent('dm-read'));
 
         const unreadIds = (data || [])
           .filter(m => m.receiverId === currentUser.id && !m.read)
@@ -683,6 +688,9 @@ function MessengerContent() {
                 {friendsList.map(friend => {
                   const isOnline = onlineUsers.has(friend.id);
                   const isSelected = activeUserId === friend.id;
+                  const friendConv = conversations.find(c => c.senderId === friend.id || c.receiverId === friend.id);
+                  const friendUnread = unreadMap[friend.id] ?? friendConv?.unreadCount ?? (friendConv?.receiverId === currentUser.id && !friendConv.read ? 1 : 0);
+
                   return (
                     <button
                       key={friend.id}
@@ -710,6 +718,18 @@ function MessengerContent() {
                         }}>
                           {!(friend.avatarUrl || friend.vtuberProfile?.avatarUrl) && getInitial(friend)}
                         </div>
+                        {friendUnread > 0 && (
+                          <span style={{
+                            position: 'absolute', top: '-4px', right: '-4px',
+                            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                            color: '#fff', fontSize: '0.58rem', fontWeight: 800,
+                            minWidth: '16px', height: '16px', borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            padding: '0 3px', boxShadow: '0 0 6px rgba(255,0,127,0.6)', zIndex: 3,
+                          }}>
+                            {friendUnread > 99 ? '99+' : friendUnread}
+                          </span>
+                        )}
                         <div style={{
                           position: 'absolute', bottom: '-2px', right: '-2px',
                           width: '11px', height: '11px', borderRadius: '50%',
@@ -770,7 +790,7 @@ function MessengerContent() {
             ) : (
               filteredConversations.map((conv) => {
                 const other = getOtherUser(conv, currentUser.id);
-                const unread = getUnreadCount(other.id);
+                const unread = unreadMap[other.id] ?? conv.unreadCount ?? (conv.receiverId === currentUser.id && !conv.read ? 1 : 0);
                 const isActive = activeUserId === other.id;
                 const isPinned = pinnedUserIds.has(other.id);
 

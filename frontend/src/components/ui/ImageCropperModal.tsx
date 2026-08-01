@@ -1,6 +1,5 @@
-'use client';
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ImageCropperModalProps {
   isOpen: boolean;
@@ -19,6 +18,8 @@ export default function ImageCropperModal({
   onCropComplete,
   onClose,
 }: ImageCropperModalProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [flipH, setFlipH] = useState(false);
@@ -208,12 +209,12 @@ export default function ImageCropperModal({
     }
   };
 
-  if (!isOpen || !imageSrc) return null;
+  if (!isOpen || !imageSrc || !mounted || typeof document === 'undefined') return null;
 
   const frameWidth = cropType === 'banner' ? 480 : 300;
   const frameHeight = cropType === 'banner' ? 160 : 300;
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
       style={{
@@ -423,7 +424,8 @@ export default function ImageCropperModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

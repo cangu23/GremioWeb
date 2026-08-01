@@ -191,3 +191,18 @@ export const getUnreadDmCount = async (req: Request, res: Response, next: NextFu
     res.json({ count });
   } catch (err) { next(err); }
 };
+
+export const markConversationRead = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const otherUserId = String(req.params.userId);
+    await PostsService.markConversationAsRead(req.user!.id, otherUserId);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+};
+
+export const markAllDmsRead = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await PostsService.markAllDmsAsRead(req.user!.id);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+};

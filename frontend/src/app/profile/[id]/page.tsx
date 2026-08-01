@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/lib/ToastContext';
@@ -135,6 +136,11 @@ function ProfileContent() {
   const [galleryImage, setGalleryImage] = useState<string | null>(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [equippedItems, setEquippedItems] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -1293,10 +1299,10 @@ function ProfileContent() {
   )}
 
       {/* ===== GALLERY LIGHTBOX ===== */}
-      {galleryImage && (
+      {mounted && galleryImage && createPortal(
         <div
           style={{
-            position: 'fixed', inset: 0, zIndex: 2000,
+            position: 'fixed', inset: 0, zIndex: 10000,
             background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '40px', cursor: 'zoom-out',
@@ -1334,16 +1340,17 @@ function ProfileContent() {
           >
             ✕
           </button>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ===== DONATE MODAL ===== */}
-      {showDonate && (
+      {mounted && showDonate && createPortal(
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 2000,
+          zIndex: 10000,
         }}
           onClick={() => setShowDonate(false)}>
           <div className="glass" style={{
@@ -1414,16 +1421,17 @@ function ProfileContent() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ===== FOLLOWERS MODAL ===== */}
-      {showFollowers && (
+      {mounted && showFollowers && createPortal(
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 2000,
+          zIndex: 10000,
         }}
           onClick={() => setShowFollowers(false)}>
           <div className="glass" style={{
@@ -1478,16 +1486,17 @@ function ProfileContent() {
               Cerrar
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ===== FOLLOWING MODAL ===== */}
-      {showFollowing && (
+      {mounted && showFollowing && createPortal(
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 2000,
+          zIndex: 10000,
         }}
           onClick={() => setShowFollowing(false)}>
           <div className="glass" style={{
@@ -1534,7 +1543,8 @@ function ProfileContent() {
               Cerrar
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       {/* MODAL REGALAR PLAN */}
       <GiftPlanModal

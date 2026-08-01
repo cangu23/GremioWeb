@@ -342,7 +342,6 @@ export const findConversation = (user1Id: string, user2Id: string, limit = 50) =
 };
 
 export const findUserConversations = async (userId: string) => {
-  // Get all DMs and deduplicate in-memory (SQLite doesn't support multi-field distinct)
   const messages = await prisma.directMessage.findMany({
     where: {
       OR: [{ senderId: userId }, { receiverId: userId }],
@@ -353,27 +352,50 @@ export const findUserConversations = async (userId: string) => {
         select: {
           id: true,
           username: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+          displayName: true,
+          avatarUrl: true,
+          role: true,
+          displayedRole: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
         },
       },
       receiver: {
         select: {
           id: true,
           username: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+          displayName: true,
+          avatarUrl: true,
+          role: true,
+          displayedRole: true,
+          vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
         },
       },
     },
   });
   
-  // Deduplicate: keep only the most recent message per conversation pair
+  const unreadCounts: Record<string, number> = {};
+  for (const msg of messages) {
+    if (msg.receiverId === userId && !msg.read) {
+      unreadCounts[msg.senderId] = (unreadCounts[msg.senderId] || 0) + 1;
+    }
+  }
+
   const seen = new Set<string>();
-  return messages.filter(msg => {
+  const conversations: any[] = [];
+
+  for (const msg of messages) {
     const pairId = [msg.senderId, msg.receiverId].sort().join(':');
-    if (seen.has(pairId)) return false;
-    seen.add(pairId);
-    return true;
-  });
+    if (!seen.has(pairId)) {
+      seen.add(pairId);
+      const otherId = msg.senderId === userId ? msg.receiverId : msg.senderId;
+      conversations.push({
+        ...msg,
+        unreadCount: unreadCounts[otherId] || 0,
+      });
+    }
+  }
+
+  return conversations;
 };
 
 export const markDmAsRead = (dmId: string) => {
@@ -386,5 +408,26 @@ export const markDmAsRead = (dmId: string) => {
 export const countUnreadDms = (userId: string) => {
   return prisma.directMessage.count({
     where: { receiverId: userId, read: false },
+  });
+};
+
+export const markConversationAsRead = (receiverId: string, senderId: string) => {
+  return prisma.directMessage.updateMany({
+    where: {
+      receiverId,
+      senderId,
+      read: false,
+    },
+    data: { read: true },
+  });
+};
+
+export const markAllDmsAsRead = (receiverId: string) => {
+  return prisma.directMessage.updateMany({
+    where: {
+      receiverId,
+      read: false,
+    },
+    data: { read: true },
   });
 };

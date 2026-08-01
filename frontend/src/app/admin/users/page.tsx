@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { isStaffRole, parseUserRoles } from '@gremio-estelar/shared';
@@ -71,6 +72,8 @@ const AVAILABLE_ROLES = [
 
 export default function AdminUsersPage() {
   const { showToast } = useToast();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const [data, setData] = useState<PaginatedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -359,10 +362,10 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Edit User Modal with Multi-Role Assignment */}
-      {selectedUser && (
+      {mounted && selectedUser && createPortal(
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '20px',
         }} onClick={() => setSelectedUser(null)}>
           <div className="glass" style={{
             padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '640px',
@@ -478,7 +481,8 @@ export default function AdminUsersPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

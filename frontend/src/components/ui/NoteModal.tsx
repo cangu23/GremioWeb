@@ -1,6 +1,5 @@
-'use client';
-
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface NoteModalProps {
   isOpen: boolean;
@@ -80,9 +79,12 @@ export default function NoteModal({ isOpen, currentNote, currentNoteColor, onClo
   const charsLeft = maxChars - text.length;
   const isOverLimit = charsLeft < 0;
 
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-  return (
+  if (!isOpen || !mounted || typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -426,6 +428,7 @@ export default function NoteModal({ isOpen, currentNote, currentNoteColor, onClo
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }

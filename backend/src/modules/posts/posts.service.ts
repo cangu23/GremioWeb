@@ -506,6 +506,8 @@ export const sendMessage = async (content: string, senderId: string, receiverId:
 };
 
 export const getConversation = async (user1Id: string, user2Id: string) => {
+  // Automatically mark any DMs sent from user2Id to user1Id as read
+  await PostsRepository.markConversationAsRead(user1Id, user2Id);
   return PostsRepository.findConversation(user1Id, user2Id);
 };
 
@@ -516,6 +518,14 @@ export const getConversations = async (userId: string) => {
 export const markAsRead = async (dmId: string, userId: string) => {
   const dm = await PostsRepository.markDmAsRead(dmId);
   return dm;
+};
+
+export const markConversationAsRead = async (receiverId: string, senderId: string) => {
+  return PostsRepository.markConversationAsRead(receiverId, senderId);
+};
+
+export const markAllDmsAsRead = async (receiverId: string) => {
+  return PostsRepository.markAllDmsAsRead(receiverId);
 };
 
 export const getUnreadDmCount = async (userId: string) => {

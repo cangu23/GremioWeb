@@ -62,8 +62,9 @@ export const getLeaderboard = (limit = 50) =>
       displayName: true,
       avatarUrl: true,
       role: true,
+      displayedRole: true,
       xp: true,
       level: true,
-      vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+      vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
     },
   });

@@ -166,18 +166,23 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
     if (isLoading || !user) { setDmUnreadCount(0); return; }
 
     const fetchDmUnread = async () => {
-      try { const data = await apiFetch('/dm/unread-count', {}); setDmUnreadCount(data.count); } catch { }
+      try { const data = await apiFetch('/dm/unread-count', {}); setDmUnreadCount(data.count || 0); } catch { }
     };
     fetchDmUnread();
-    const interval = setInterval(fetchDmUnread, 120000); // Cada 2 minutos
+    const interval = setInterval(fetchDmUnread, 15000);
+
+    const handleDmRead = () => {
+      fetchDmUnread();
+    };
+
+    window.addEventListener('dm-read', handleDmRead);
 
     let sock: any;
     try {
       sock = connectSocket();
-      // Increment when a new DM arrives (not from ourselves)
       sock.on(DM_EVENTS.MESSAGE, (msg: { receiverId: string }) => {
         if (msg.receiverId === user.id) {
-          setDmUnreadCount(prev => prev + 1);
+          fetchDmUnread();
         }
       });
     } catch (err) {
@@ -186,9 +191,10 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
 
     return () => {
       clearInterval(interval);
+      window.removeEventListener('dm-read', handleDmRead);
       if (sock) sock.off(DM_EVENTS.MESSAGE);
     };
-  }, [user]);
+  }, [user, isLoading]);
 
   return { unreadCount, dmUnreadCount, equippedBadge };
 }
@@ -596,9 +602,29 @@ function MessagesDropdown({ dmUnreadCount }: { dmUnreadCount: number }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
             <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>Bandeja de Entrada</span>
-            <Link href="/chat" onClick={() => setOpen(false)} style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
-              Ver chat completo →
-            </Link>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {dmUnreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    try {
+                      await apiFetch('/dm/read-all', { method: 'POST' });
+                      window.dispatchEvent(new CustomEvent('dm-read'));
+                    } catch {}
+                  }}
+                  style={{
+                    background: 'none', border: 'none', color: '#38bdf8',
+                    fontSize: '0.72rem', cursor: 'pointer', fontWeight: 700,
+                  }}
+                >
+                  ✓ Leídos
+                </button>
+              )}
+              <Link href="/chat" onClick={() => setOpen(false)} style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+                Ver chat →
+              </Link>
+            </div>
           </div>
 
           {loading ? (
@@ -613,7 +639,14 @@ function MessagesDropdown({ dmUnreadCount }: { dmUnreadCount: number }) {
                 return (
                   <div
                     key={c.id}
-                    onClick={() => { setOpen(false); router.push(`/chat?user=${other.id}`); }}
+                    onClick={async () => {
+                      setOpen(false);
+                      try {
+                        await apiFetch(`/dm/conversations/${other.id}/read`, { method: 'POST' });
+                        window.dispatchEvent(new CustomEvent('dm-read'));
+                      } catch {}
+                      router.push(`/chat?user=${other.id}`);
+                    }}
                     style={{
                       padding: '8px 10px', borderRadius: '10px', cursor: 'pointer',
                       background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)',
