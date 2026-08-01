@@ -4,6 +4,11 @@ const nextConfig = {
   // https://nextjs.org/docs/pages/api-reference/next-config-js/output
   output: 'standalone',
 
+  // Performance & Speed Optimizations
+  swcMinify: true,
+  compress: true,
+  reactStrictMode: true,
+
   transpilePackages: ['@gremio-estelar/shared'],
 
   // Rewrite /api requests to the Express backend running on internal port 4001

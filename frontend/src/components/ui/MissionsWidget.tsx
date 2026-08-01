@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, notifyMissionsChanged } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -74,16 +74,37 @@ export default function MissionsWidget() {
 
   useEffect(() => {
     loadData();
+
+    const handleUpdate = () => {
+      loadData();
+    };
+
+    window.addEventListener('stardust:updated', handleUpdate);
+    window.addEventListener('missions:updated', handleUpdate);
+    return () => {
+      window.removeEventListener('stardust:updated', handleUpdate);
+      window.removeEventListener('missions:updated', handleUpdate);
+    };
   }, [user]);
 
   const handleClaim = async (missionId: string) => {
+    const targetMission = missions.find(m => m.id === missionId);
+    if (!targetMission) return;
+
     setClaimingId(missionId);
+
+    // Optimistic UI update - Instant zero-latency feedback!
+    setMissions(prev => prev.map(m => m.id === missionId ? { ...m, claimedAt: new Date().toISOString(), completed: true } : m));
+    setStardust(prev => prev + (targetMission.stardustReward || 0));
+
     try {
       const res = await apiFetch(`/ecosystem/missions/${missionId}/claim`, { method: 'POST' });
-      showToast(res.data?.message || '¡Recompensa reclamada!', 'success');
-      await loadData();
+      showToast(res.data?.message || `¡+${targetMission.stardustReward} ⭐ Reclamados!`, 'success');
+      notifyMissionsChanged();
     } catch (err: any) {
       showToast(err?.message || 'Error al reclamar misión', 'error');
+      // Rollback on error
+      await loadData();
     } finally {
       setClaimingId(null);
     }

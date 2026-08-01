@@ -890,4 +890,14 @@ body {
   }
 }
 
+/* Performance & GPU Speed Optimizations */
+img, svg {
+  content-visibility: auto;
+}
+
+.glass, button, input {
+  will-change: auto;
+  transform: translateZ(0);
+}
+
 

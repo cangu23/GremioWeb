@@ -52,6 +52,19 @@ export async function performRefresh(): Promise<string | null> {
   return refreshPromise;
 }
 
+export const notifyStardustChanged = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('stardust:updated'));
+  }
+};
+
+export const notifyMissionsChanged = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('missions:updated'));
+    window.dispatchEvent(new CustomEvent('stardust:updated'));
+  }
+};
+
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
@@ -102,6 +115,13 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     throw new Error(data?.message || 'Something went wrong');
+  }
+
+  // Auto-dispatch real-time updates for score/reward modifying routes
+  if (options.method && ['POST', 'PUT', 'DELETE'].includes(options.method.toUpperCase())) {
+    if (endpoint.includes('/claim') || endpoint.includes('/missions') || endpoint.includes('/like') || endpoint.includes('/comment') || endpoint.includes('/feed') || endpoint.includes('/stardust') || endpoint.includes('/buy') || endpoint.includes('/equip')) {
+      notifyMissionsChanged();
+    }
   }
 
   return data;
