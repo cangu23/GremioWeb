@@ -45,11 +45,9 @@ export const updateSettings = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const allowedKeys = Object.keys(DEFAULT_SETTINGS);
     const results: Record<string, string> = {};
 
     for (const [key, value] of Object.entries(incoming)) {
-      if (!allowedKeys.includes(key)) continue;
       if (typeof value !== 'string') continue;
 
       const trimmed = value.trim();
@@ -59,9 +57,10 @@ export const updateSettings = async (req: Request, res: Response, next: NextFunc
         update: { value: trimmed },
         create: { key, value: trimmed },
       });
+
       results[key] = trimmed;
     }
 
-    res.json({ settings: results });
+    res.json({ message: 'Ajustes guardados con éxito', settings: results });
   } catch (err) { next(err); }
 };
