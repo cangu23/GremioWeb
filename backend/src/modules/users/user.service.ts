@@ -4,8 +4,12 @@ import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpoti
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
+import { getMyPlatformPlan } from '../subscriptions/platform-subscriptions.service';
 
 export const getMe = async (userId: string): Promise<UserProfile & { dailyRewardClaimed?: any }> => {
+  // Automatically check subscription expiration and update user plan status
+  await getMyPlatformPlan(userId).catch(() => {});
+
   let userProfile = await UserRepository.getUserProfileById(userId);
   if (!userProfile) {
     throw new AppError('User not found', 404);

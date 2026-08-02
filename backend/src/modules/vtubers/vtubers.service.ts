@@ -68,10 +68,32 @@ export const getVtubersDirectory = async (params: {
       }).catch(() => {});
     }
 
-    // Auto-approve and unhide profiles so VTubers are visible in the directory
+    // Ensure Guren VT and users with VTuber profiles have VTUBER role
+    const vtubersToEnsure = await prisma.user.findMany({
+      where: {
+        OR: [
+          { username: 'canguvt' },
+          { username: 'aleshaW' },
+          { username: 'yusuki_yukihira' },
+          { username: 'hoshi' },
+        ],
+      },
+    });
+
+    for (const u of vtubersToEnsure) {
+      if (!u.role.includes('VTUBER')) {
+        await prisma.user.update({
+          where: { id: u.id },
+          data: { role: `${u.role},VTUBER` },
+        });
+      }
+    }
+
+    // Auto-approve profiles for valid VTubers
     await prisma.vTuberProfile.updateMany({
       where: {
         displayName: { not: '' },
+        user: { role: { contains: 'VTUBER' } },
       },
       data: {
         isApproved: true,
@@ -84,6 +106,10 @@ export const getVtubersDirectory = async (params: {
 
   const where: any = {
     isHidden: false,
+    isApproved: true,
+    user: {
+      role: { contains: 'VTUBER' },
+    },
   };
 
   if (search) {
