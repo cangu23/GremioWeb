@@ -1054,7 +1054,7 @@ function RouletteContent() {
       />
 
       {/* Global CSS animations */}
-      <style jsx global>{`
+      <style>{`
         @keyframes roulette-pulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); }
           50% { box-shadow: 0 0 0 16px rgba(139,92,246,0); }

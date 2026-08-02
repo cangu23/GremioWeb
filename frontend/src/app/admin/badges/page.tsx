@@ -133,6 +133,171 @@ export default function BadgeBuilderPage() {
         ))}
       </div>
 
+      {/* Manual Admin Achievement Assigner Component */}
+      <AdminAchievementAssigner />
+
+    </div>
+  );
+}
+
+function AdminAchievementAssigner() {
+  const { showToast } = useToast();
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [selectedAchievementId, setSelectedAchievementId] = useState('');
+  const [usernameQuery, setUsernameQuery] = useState('');
+  const [foundUsers, setFoundUsers] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  useEffect(() => {
+    apiFetch('/gamification/achievements')
+      .then((data) => setAchievements(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
+  const handleSearchUser = async () => {
+    if (!usernameQuery.trim()) return;
+    try {
+      const data = await apiFetch(`/users/search?q=${encodeURIComponent(usernameQuery.trim())}`);
+      const list = Array.isArray(data) ? data : data?.data || [];
+      setFoundUsers(list);
+      if (list.length > 0) setSelectedUserId(list[0].id);
+    } catch {
+      showToast('Error al buscar usuario', 'error');
+    }
+  };
+
+  const handleAssignAchievement = async () => {
+    if (!selectedUserId || !selectedAchievementId) {
+      showToast('Selecciona un usuario y un logro a otorgar', 'error');
+      return;
+    }
+
+    setAssigning(true);
+    try {
+      await apiFetch('/gamification/award-manual', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: selectedUserId,
+          achievementId: selectedAchievementId,
+        }),
+      });
+      showToast('¡Logro e insignia asignados correctamente al usuario! 🏆', 'success');
+      setUsernameQuery('');
+      setFoundUsers([]);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al otorgar logro', 'error');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  return (
+    <div style={{
+      background: '#0d0d12',
+      border: '1px solid rgba(139,92,246,0.3)',
+      borderRadius: '12px',
+      padding: '24px',
+      marginTop: '20px',
+      boxShadow: '0 4px 24px rgba(139,92,246,0.15)',
+    }}>
+      <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fff', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        👑 Asignador Manual de Logros e Insignias de Prestigio
+      </h3>
+      <p style={{ fontSize: '0.82rem', color: '#a0a0a0', marginBottom: '20px' }}>
+        Otorga distinciones únicas como <strong>Pionero de la Racha Gremial ⚡</strong>, <strong>Señor del Fuego 🔥</strong> o <strong>Leyenda 👑</strong> a miembros destacados.
+      </p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', alignItems: 'end' }}>
+        {/* Step 1: Select Achievement */}
+        <div>
+          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#a0a0a0', marginBottom: '6px' }}>
+            1. Seleccionar Logro / Insignia:
+          </label>
+          <select
+            value={selectedAchievementId}
+            onChange={(e) => setSelectedAchievementId(e.target.value)}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', background: '#14141a', border: '1px solid #333', color: '#fff', fontSize: '0.85rem' }}
+          >
+            <option value="">-- Selecciona un logro --</option>
+            {achievements.map((ach) => (
+              <option key={ach.id} value={ach.id}>
+                {ach.name} (+{ach.xpReward} XP) - [{ach.category}]
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Step 2: Search User */}
+        <div>
+          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#a0a0a0', marginBottom: '6px' }}>
+            2. Buscar Usuario (Username / Display):
+          </label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              type="text"
+              placeholder="Ej: sebas, vtuberguild..."
+              value={usernameQuery}
+              onChange={(e) => setUsernameQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearchUser(); }}
+              style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', background: '#14141a', border: '1px solid #333', color: '#fff', fontSize: '0.85rem' }}
+            />
+            <button
+              onClick={handleSearchUser}
+              style={{ padding: '10px 16px', borderRadius: '8px', background: '#222', border: '1px solid #444', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+            >
+              🔍 Buscar
+            </button>
+          </div>
+        </div>
+
+        {/* Step 3: Confirm Selection & Award */}
+        <div>
+          {foundUsers.length > 0 ? (
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#34d399', marginBottom: '6px' }}>
+                Seleccionar Usuario Encontrado:
+              </label>
+              <select
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', background: '#14141a', border: '1px solid #34d399', color: '#fff', fontSize: '0.85rem' }}
+              >
+                {foundUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    @{u.username} ({u.displayName || u.username})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div style={{ fontSize: '0.8rem', color: '#71717a', fontStyle: 'italic', paddingBottom: '10px' }}>
+              Busca un usuario arriba para asignarle el logro.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <button
+        onClick={handleAssignAchievement}
+        disabled={assigning || !selectedUserId || !selectedAchievementId}
+        style={{
+          marginTop: '20px',
+          width: '100%',
+          padding: '12px',
+          borderRadius: '10px',
+          background: 'linear-gradient(135deg, #10b981, #059669)',
+          border: 'none',
+          color: '#fff',
+          fontWeight: 900,
+          fontSize: '0.92rem',
+          cursor: assigning || !selectedUserId || !selectedAchievementId ? 'not-allowed' : 'pointer',
+          opacity: assigning || !selectedUserId || !selectedAchievementId ? 0.5 : 1,
+          boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
+        }}
+      >
+        {assigning ? 'OTORGANDO LOGRO...' : '🏆 ASIGNAR LOGRO E INSIGNIA DE PRESTIGIO'}
+      </button>
     </div>
   );
 }

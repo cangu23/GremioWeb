@@ -98,6 +98,16 @@ export const awardStreamXp = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const awardManualAchievement = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId, achievementId } = req.body;
+    const result = await GamificationService.awardAchievementManually(userId, achievementId);
+    res.json({ message: 'Logro asignado correctamente', result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const seed = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     await GamificationService.seedAchievements();

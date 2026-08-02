@@ -381,7 +381,7 @@ export default function StickersAdminPage() {
                 className="delete-btn"
                 title="Eliminar sticker"
               >✕</button>
-              <style jsx>{`
+              <style>{`
                 div:hover .delete-btn { opacity: 1; }
               `}</style>
             </div>

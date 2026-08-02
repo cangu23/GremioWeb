@@ -143,8 +143,16 @@ export async function checkAndAwardUserAchievements(userId: string) {
       if (commentCount === null) commentCount = await prisma.comment.count({ where: { userId } });
       unlocked = commentCount >= 1;
     }
-    // 4. Daily rewards & login
-    else if (name.includes('racha') || name.includes('diaria')) {
+    // 4. Daily rewards & streaks
+    else if (name.includes('señor del fuego') || name.includes('30 días')) {
+      const spins = await prisma.rouletteSpin.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, select: { createdAt: true } });
+      const dates = Array.from(new Set(spins.map(s => s.createdAt.toISOString().split('T')[0])));
+      unlocked = dates.length >= 30;
+    } else if (name.includes('invocador de la racha') || name.includes('7 días')) {
+      const spins = await prisma.rouletteSpin.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, select: { createdAt: true } });
+      const dates = Array.from(new Set(spins.map(s => s.createdAt.toISOString().split('T')[0])));
+      unlocked = dates.length >= 7;
+    } else if (name.includes('racha') || name.includes('diaria')) {
       if (dailyCount === null) {
         const dRewardCount = await prisma.dailyReward.count({ where: { userId } });
         const missionLoginCount = await prisma.userMissionProgress.count({
@@ -154,13 +162,20 @@ export async function checkAndAwardUserAchievements(userId: string) {
       }
       unlocked = dailyCount >= 1;
     }
-    // 5. Level based
+    // 5. Cosmic & Chest achievements
+    else if (name.includes('cósmico') || name.includes('cosmic')) {
+      const cosmicSpin = await prisma.rouletteSpin.findFirst({
+        where: { userId, prize: { contains: 'cosmic' } }
+      });
+      unlocked = !!cosmicSpin;
+    }
+    // 6. Level based
     else if (name.includes('nivel 5') || name.includes('level 5')) {
       unlocked = runningLevel >= 5;
     } else if (name.includes('nivel 10') || name.includes('level 10')) {
       unlocked = runningLevel >= 10;
     }
-    // 6. XP based
+    // 7. XP based
     else if (name.includes('100 xp') || name.includes('100xp')) {
       unlocked = runningTotal >= 100;
     } else if (name.includes('500 xp') || name.includes('500xp')) {
@@ -168,7 +183,7 @@ export async function checkAndAwardUserAchievements(userId: string) {
     } else if (name.includes('1000 xp') || name.includes('1000xp')) {
       unlocked = runningTotal >= 1000;
     }
-    // 7. Events (Creator vs Attendee)
+    // 8. Events (Creator vs Attendee)
     else if (name.includes('creador de eventos') || name.includes('crear evento')) {
       if (eventCount === null) {
         eventCount = await prisma.event.count({ where: { creatorId: userId } });
@@ -182,7 +197,7 @@ export async function checkAndAwardUserAchievements(userId: string) {
       }
       unlocked = eventCount >= 1;
     }
-    // 8. Guilds (Founder vs Member)
+    // 9. Guilds (Founder vs Member)
     else if (name.includes('fundador de gremio') || name.includes('fundador')) {
       if (guildCount === null) {
         guildCount = await prisma.guild.count({ where: { creatorId: userId } });
@@ -196,7 +211,7 @@ export async function checkAndAwardUserAchievements(userId: string) {
       }
       unlocked = guildCount >= 1;
     }
-    // 9. Social (Friends & Followers)
+    // 10. Social (Friends & Followers)
     else if (name.includes('social') || name.includes('sociable') || name.includes('seguidor')) {
       if (followCount === null) {
         const follows = await prisma.follow.count({
@@ -237,6 +252,11 @@ export const seedAchievements = async () => {
     { name: 'Primer Post', description: 'Publica tu primer mensaje en la comunidad', xpReward: 15, category: 'GENERAL' },
     { name: 'Primer Comentario', description: 'Escribe tu primer comentario en una publicación', xpReward: 15, category: 'GENERAL' },
     { name: 'Racha Diaria', description: 'Reclama tu primera recompensa diaria', xpReward: 20, category: 'GENERAL' },
+    { name: 'Invocador de la Racha Mística', description: 'Mantén una racha de giros/login activa por 7 días consecutivos', xpReward: 1000, category: 'RACHA' },
+    { name: 'Señor del Fuego Ininterrumpido', description: '¡Leyenda! Mantén tu racha diaria activa durante más de 30 días consecutivos', xpReward: 5000, category: 'RACHA' },
+    { name: 'Pionero de la Racha Gremial', description: 'Insignia de Prestigio Asignada por Administradores a los pioneros en activar la racha gremial', xpReward: 2500, category: 'ESPECIAL' },
+    { name: 'Coleccionista Cósmico', description: 'Desbloquea y abre un Cofre Estelar Cósmico en la Ruleta', xpReward: 3000, category: 'RULETA' },
+    { name: 'Leyenda de la Comunidad', description: 'Máxima distinción asignada por administradores a miembros legendarios', xpReward: 10000, category: 'ESPECIAL' },
     { name: '100 XP', description: 'Acumula 100 puntos de experiencia', xpReward: 20, category: 'XP' },
     { name: '500 XP', description: 'Acumula 500 puntos de experiencia', xpReward: 50, category: 'XP' },
     { name: '1000 XP', description: 'Acumula 1000 puntos de experiencia', xpReward: 100, category: 'XP' },
@@ -253,4 +273,22 @@ export const seedAchievements = async () => {
       await GamificationRepository.createAchievement(ach);
     }
   }
+};
+
+// Admin manual achievement assignment
+export const awardAchievementManually = async (targetUserId: string, achievementId: string) => {
+  const user = await GamificationRepository.getUserGamificationProfile(targetUserId);
+  if (!user) throw new AppError('Usuario no encontrado', 404);
+
+  const achievement = await prisma.achievement.findUnique({ where: { id: achievementId } });
+  if (!achievement) throw new AppError('Logro no encontrado', 404);
+
+  const awarded = await GamificationRepository.awardAchievementToUser(targetUserId, achievementId);
+  await NotificationsService.notifyAchievement(achievement.name, targetUserId, achievement.id).catch(() => {});
+
+  if (achievement.xpReward > 0) {
+    await awardCustomXp(targetUserId, achievement.xpReward).catch(() => {});
+  }
+
+  return awarded;
 };

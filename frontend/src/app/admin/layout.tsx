@@ -293,7 +293,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </main>
       </div>
 
-      <style jsx global>{`
+      <style>{`
         body { background: #0a0a0c !important; color: #f0f0f5 !important; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0a0a0c; }

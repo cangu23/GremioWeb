@@ -104,6 +104,10 @@ function AchievementsContent() {
       EVENTOS: '#00d4aa',
       GREMIOS: '#9b6bff',
       SOCIAL: '#ff8c42',
+      RACHA: '#ff4500',
+      RULETA: '#9333ea',
+      ESPECIAL: '#ec4899',
+      SPECIAL: '#ec4899',
     };
     return colors[category] || 'var(--primary)';
   };
