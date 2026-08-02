@@ -8,6 +8,7 @@ import { apiFetch, notifyStardustChanged } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
+import ChestOpeningModal, { ChestData } from '@/components/ui/ChestOpeningModal';
 
 interface Prize {
   id: string;
@@ -26,6 +27,8 @@ interface RouletteStatus {
   streakBonusPercent: number;
   stardustCostForExtraSpin: number;
   userStardust: number;
+  rouletteTier?: number;
+  tierName?: string;
 }
 
 interface SpinResult {
@@ -52,16 +55,18 @@ interface RouletteStats {
   bestStreak: number;
 }
 
-// Meta info for prize cards & badges
+// Meta info for prize cards & badges (Evolving & Chest prizes)
 const PRIZE_META: Record<string, { rarity: string; icon: string; badgeBg: string; pct: string }> = {
-  xp_10: { rarity: 'Común', icon: '⚡', badgeBg: 'rgba(139, 92, 246, 0.2)', pct: '30%' },
-  xp_25: { rarity: 'Común', icon: '⚡', badgeBg: 'rgba(124, 58, 237, 0.2)', pct: '25%' },
-  xp_50: { rarity: 'Poco Común', icon: '✨', badgeBg: 'rgba(59, 130, 246, 0.2)', pct: '20%' },
-  xp_100: { rarity: 'Raro', icon: '🔥', badgeBg: 'rgba(16, 185, 129, 0.2)', pct: '12%' },
-  xp_200: { rarity: 'Épico', icon: '💎', badgeBg: 'rgba(236, 72, 153, 0.2)', pct: '7%' },
-  xp_500: { rarity: 'Legendario', icon: '👑', badgeBg: 'rgba(245, 158, 11, 0.25)', pct: '3%' },
-  badge_lucky: { rarity: 'Mítico', icon: '🍀', badgeBg: 'rgba(239, 68, 68, 0.25)', pct: '2%' },
-  nothing: { rarity: 'Desafortunado', icon: '💨', badgeBg: 'rgba(107, 114, 128, 0.2)', pct: '1%' },
+  xp_50: { rarity: 'Común', icon: '✨', badgeBg: 'rgba(139, 92, 246, 0.2)', pct: '24%' },
+  stardust_25: { rarity: 'Común', icon: '⭐', badgeBg: 'rgba(245, 158, 11, 0.2)', pct: '20%' },
+  xp_200: { rarity: 'Poco Común', icon: '⚡', badgeBg: 'rgba(124, 58, 237, 0.2)', pct: '15%' },
+  chest_bronze: { rarity: 'Especial', icon: '🥉', badgeBg: 'rgba(205, 127, 50, 0.25)', pct: '12%' },
+  stardust_100: { rarity: 'Raro', icon: '💎', badgeBg: 'rgba(59, 130, 246, 0.2)', pct: '10%' },
+  chest_silver: { rarity: 'Épico', icon: '🥈', badgeBg: 'rgba(192, 192, 192, 0.25)', pct: '8%' },
+  xp_1000: { rarity: 'Épico', icon: '🔥', badgeBg: 'rgba(236, 72, 153, 0.2)', pct: '5%' },
+  chest_gold: { rarity: 'Legendario', icon: '🥇', badgeBg: 'rgba(255, 215, 0, 0.25)', pct: '3%' },
+  badge_lucky: { rarity: 'Mítico', icon: '🍀', badgeBg: 'rgba(16, 185, 129, 0.25)', pct: '2%' },
+  chest_cosmic: { rarity: 'JACKPOT CÓSMICO', icon: '🌌', badgeBg: 'rgba(147, 51, 234, 0.35)', pct: '1%' },
 };
 
 // Helper to format wheel prize labels into 1 or 2 clean lines
@@ -163,6 +168,7 @@ function RouletteContent() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [ledPhase, setLedPhase] = useState(0);
   const [pointerFlick, setPointerFlick] = useState(false);
+  const [chestModalData, setChestModalData] = useState<ChestData | null>(null);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -384,7 +390,25 @@ function RouletteContent() {
           angleRef.current = targetTotalAngle;
           setRotationAngle(targetTotalAngle);
           setSpinning(false);
-          setModalOpen(true);
+
+          if (apiResult) {
+            const isChest = apiResult.prize.id.startsWith('chest_') || (apiResult.prize as any).type === 'CHEST';
+            if (isChest) {
+              const chestType = (apiResult.prize as any).chestType || (apiResult.prize.id.includes('cosmic') ? 'COSMIC' : apiResult.prize.id.includes('gold') ? 'GOLD' : apiResult.prize.id.includes('silver') ? 'SILVER' : 'BRONZE');
+              setChestModalData({
+                type: chestType as any,
+                label: apiResult.prize.label,
+                finalXp: (apiResult as any).finalXp || apiResult.prize.value || 0,
+                finalStardust: (apiResult as any).finalStardust || 0,
+                itemsWon: (apiResult as any).chestDetails?.itemsWon || [],
+              });
+            } else {
+              setModalOpen(true);
+            }
+          } else {
+            setModalOpen(true);
+          }
+
           playWinSound();
           notifyStardustChanged();
           fetchStatus();
@@ -470,10 +494,23 @@ function RouletteContent() {
             🔥
           </div>
           <div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 800 }}>
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
               Racha de Giro: {status?.currentStreak || 0} {status?.currentStreak === 1 ? 'Día' : 'Días'}
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: '8px',
+                background: status?.rouletteTier === 3 ? 'linear-gradient(135deg, #9333EA, #EC4899)' : status?.rouletteTier === 2 ? 'linear-gradient(135deg, #3B82F6, #8B5CF6)' : 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                boxShadow: status?.rouletteTier === 3 ? '0 0 12px rgba(147, 51, 234, 0.5)' : 'none',
+              }}>
+                ✦ Nivel {status?.rouletteTier || 1}: {status?.tierName || 'Estándar'}
+              </span>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
               Bono activo: <span style={{ color: '#F59E0B', fontWeight: 700 }}>+{status?.streakBonusPercent || 0}% XP</span> (Racha Récord: {status?.bestStreak || 0}d)
             </div>
           </div>
@@ -1008,6 +1045,13 @@ function RouletteContent() {
           </div>
         </div>
       )}
+
+      {/* 3D Animated Chest Opening Modal */}
+      <ChestOpeningModal
+        isOpen={!!chestModalData}
+        onClose={() => setChestModalData(null)}
+        chestData={chestModalData}
+      />
 
       {/* Global CSS animations */}
       <style jsx global>{`

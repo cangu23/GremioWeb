@@ -3,16 +3,18 @@ import prisma from '../../database/prisma';
 import * as GamificationRepository from '../gamification/gamification.repository';
 import { addStardust, spendStardust, getStardustBalance } from '../ecosystem/stardust.service';
 
-// Roulette prize pool
+// ── Enhanced Prize Pool (Includes Mystic Chests & Epic Rewards) ──
 const PRIZES = [
-  { id: 'xp_10', label: '10 XP', value: 10, weight: 30, color: '#8B5CF6' },
-  { id: 'xp_25', label: '25 XP', value: 25, weight: 25, color: '#7C3AED' },
-  { id: 'xp_50', label: '50 XP', value: 50, weight: 20, color: '#6D28D9' },
-  { id: 'xp_100', label: '100 XP', value: 100, weight: 12, color: '#5B21B6' },
-  { id: 'xp_200', label: '200 XP', value: 200, weight: 7, color: '#4C1D95' },
-  { id: 'xp_500', label: '500 XP', value: 500, weight: 3, color: '#F59E0B' },
-  { id: 'badge_lucky', label: 'Insignia Suertuda', value: 0, weight: 2, color: '#EF4444' },
-  { id: 'nothing', label: '¡Suerte para la próxima!', value: 0, weight: 1, color: '#6B7280' },
+  { id: 'xp_50', label: '50 XP', value: 50, stardust: 5, weight: 24, color: '#8B5CF6', type: 'XP' },
+  { id: 'stardust_25', label: '⭐ 25 Stardust', value: 25, stardust: 25, weight: 20, color: '#F59E0B', type: 'STARDUST' },
+  { id: 'xp_200', label: '200 XP', value: 200, stardust: 20, weight: 15, color: '#7C3AED', type: 'XP' },
+  { id: 'chest_bronze', label: '🥉 Cofre Bronce', value: 150, stardust: 50, weight: 12, color: '#CD7F32', type: 'CHEST', chestType: 'BRONZE' },
+  { id: 'stardust_100', label: '⭐ 100 Stardust', value: 100, stardust: 100, weight: 10, color: '#3B82F6', type: 'STARDUST' },
+  { id: 'chest_silver', label: '🥈 Cofre Plata', value: 400, stardust: 150, weight: 8, color: '#C0C0C0', type: 'CHEST', chestType: 'SILVER' },
+  { id: 'xp_1000', label: '1,000 XP', value: 1000, stardust: 100, weight: 5, color: '#EC4899', type: 'XP' },
+  { id: 'chest_gold', label: '🥇 Cofre Oro', value: 1200, stardust: 350, weight: 3, color: '#FFD700', type: 'CHEST', chestType: 'GOLD' },
+  { id: 'badge_lucky', label: '🍀 Insignia Mítica', value: 500, stardust: 200, weight: 2, color: '#10B981', type: 'BADGE' },
+  { id: 'chest_cosmic', label: '🌌 Cofre Cósmico', value: 5000, stardust: 1000, weight: 1, color: '#9333EA', type: 'CHEST', chestType: 'COSMIC' },
 ];
 
 const TOTAL_WEIGHT = PRIZES.reduce((sum, p) => sum + p.weight, 0);
@@ -28,6 +30,33 @@ function pickPrize() {
   return PRIZES[0];
 }
 
+// ── Mystic Chest Contents Generator ──
+async function processChestReward(userId: string, chestType: string) {
+  let bonusXp = 0;
+  let bonusStardust = 0;
+  let itemsWon: string[] = [];
+
+  if (chestType === 'BRONZE') {
+    bonusXp = Math.floor(Math.random() * 100) + 100;
+    bonusStardust = Math.floor(Math.random() * 30) + 20;
+    itemsWon.push('📦 Ficha Extra');
+  } else if (chestType === 'SILVER') {
+    bonusXp = Math.floor(Math.random() * 300) + 250;
+    bonusStardust = Math.floor(Math.random() * 100) + 75;
+    itemsWon.push('⚡ Multiplicador 2x');
+  } else if (chestType === 'GOLD') {
+    bonusXp = Math.floor(Math.random() * 800) + 700;
+    bonusStardust = Math.floor(Math.random() * 250) + 200;
+    itemsWon.push('👑 Título Dorado');
+  } else if (chestType === 'COSMIC') {
+    bonusXp = Math.floor(Math.random() * 3000) + 3000;
+    bonusStardust = Math.floor(Math.random() * 1000) + 1000;
+    itemsWon.push('🌌 Insignia Estelar Leyenda');
+  }
+
+  return { bonusXp, bonusStardust, itemsWon };
+}
+
 export const calculateStreak = async (userId: string) => {
   const spins = await prisma.rouletteSpin.findMany({
     where: { userId },
@@ -39,7 +68,6 @@ export const calculateStreak = async (userId: string) => {
     return { currentStreak: 0, bestStreak: 0 };
   }
 
-  // Extract unique YYYY-MM-DD dates in order
   const dates = Array.from(
     new Set(spins.map((s) => s.createdAt.toISOString().split('T')[0]))
   );
@@ -51,7 +79,6 @@ export const calculateStreak = async (userId: string) => {
 
   let currentStreak = 0;
 
-  // Check if most recent spin is today or yesterday
   if (dates[0] === todayStr || dates[0] === yesterdayStr) {
     let checkDate = new Date(dates[0]);
     for (let i = 0; i < dates.length; i++) {
@@ -65,7 +92,6 @@ export const calculateStreak = async (userId: string) => {
     }
   }
 
-  // Calculate best streak historically
   let bestStreak = 0;
   let tempStreak = 0;
   if (dates.length > 0) {
@@ -104,6 +130,10 @@ export const getStatus = async (userId: string) => {
 
   const streakBonusPercent = Math.min(50, Math.max(0, (streakInfo.currentStreak - 1) * 5));
 
+  // Evolving Tier Level based on streak and total spins
+  const rouletteTier = streakInfo.currentStreak >= 7 ? 3 : streakInfo.currentStreak >= 3 ? 2 : 1;
+  const tierName = rouletteTier === 3 ? 'Cósmico' : rouletteTier === 2 ? 'Épico' : 'Estándar';
+
   return {
     canSpin,
     nextSpinAt: lastSpin ? new Date(lastSpin.createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString() : null,
@@ -113,6 +143,8 @@ export const getStatus = async (userId: string) => {
     streakBonusPercent,
     stardustCostForExtraSpin: EXTRA_SPIN_STARDUST_COST,
     userStardust: stardustInfo.stardust,
+    rouletteTier,
+    tierName,
   };
 };
 
@@ -124,12 +156,23 @@ export const spin = async (userId: string) => {
 
   const prize = pickPrize();
   const streakBonusPercent = status.streakBonusPercent || 0;
-  const finalXp = prize.value > 0 ? Math.round(prize.value * (1 + streakBonusPercent / 100)) : 0;
+  
+  let finalXp = prize.value > 0 ? Math.round(prize.value * (1 + streakBonusPercent / 100)) : 0;
+  let finalStardust = prize.stardust || 0;
+  let chestDetails = null;
 
-  // Award XP and Stardust
+  if (prize.type === 'CHEST' && prize.chestType) {
+    chestDetails = await processChestReward(userId, prize.chestType);
+    finalXp += chestDetails.bonusXp;
+    finalStardust += chestDetails.bonusStardust;
+  }
+
+  // Award XP & Stardust
   if (finalXp > 0) {
     await GamificationRepository.addXpToUser(userId, finalXp);
-    await addStardust(userId, Math.round(finalXp / 2), `Ruleta: ${prize.label}`).catch(() => {});
+  }
+  if (finalStardust > 0) {
+    await addStardust(userId, finalStardust, `Ruleta: ${prize.label}`).catch(() => {});
   }
 
   // Record spin
@@ -148,16 +191,19 @@ export const spin = async (userId: string) => {
   const randomOffset = Math.random() * segmentAngle * 0.8;
   const rotation = 720 + (360 - targetAngle - randomOffset);
 
+  let message = `¡Ganaste ${prize.label}! (+${finalXp} XP, ⭐ ${finalStardust} Stardust)`;
+  if (chestDetails && chestDetails.itemsWon.length > 0) {
+    message = `¡Abriste ${prize.label}! Ganaste +${finalXp} XP, ⭐ ${finalStardust} Stardust y ${chestDetails.itemsWon.join(', ')}`;
+  }
+
   return {
     prize,
     rotation,
     finalXp,
+    finalStardust,
+    chestDetails,
     streakBonusPercent,
-    message: finalXp > 0
-      ? `¡Ganaste ${prize.label}!${streakBonusPercent > 0 ? ` (+${streakBonusPercent}% bono racha)` : ''}`
-      : prize.id === 'nothing'
-        ? 'No ganaste nada esta vez. ¡Intenta mañana!'
-        : `¡Ganaste ${prize.label}!`,
+    message,
   };
 };
 
@@ -167,11 +213,22 @@ export const spinWithStardust = async (userId: string) => {
   const prize = pickPrize();
   const streakInfo = await calculateStreak(userId);
   const streakBonusPercent = Math.min(50, Math.max(0, (streakInfo.currentStreak - 1) * 5));
-  const finalXp = prize.value > 0 ? Math.round(prize.value * (1 + streakBonusPercent / 100)) : 0;
+  
+  let finalXp = prize.value > 0 ? Math.round(prize.value * (1 + streakBonusPercent / 100)) : 0;
+  let finalStardust = prize.stardust || 0;
+  let chestDetails = null;
+
+  if (prize.type === 'CHEST' && prize.chestType) {
+    chestDetails = await processChestReward(userId, prize.chestType);
+    finalXp += chestDetails.bonusXp;
+    finalStardust += chestDetails.bonusStardust;
+  }
 
   if (finalXp > 0) {
     await GamificationRepository.addXpToUser(userId, finalXp);
-    await addStardust(userId, Math.round(finalXp / 2), `Ruleta (Extra): ${prize.label}`).catch(() => {});
+  }
+  if (finalStardust > 0) {
+    await addStardust(userId, finalStardust, `Ruleta (Extra): ${prize.label}`).catch(() => {});
   }
 
   await prisma.rouletteSpin.create({
@@ -189,16 +246,19 @@ export const spinWithStardust = async (userId: string) => {
   const randomOffset = Math.random() * segmentAngle * 0.8;
   const rotation = 720 + (360 - targetAngle - randomOffset);
 
+  let message = `¡Ganaste ${prize.label}! (+${finalXp} XP, ⭐ ${finalStardust} Stardust)`;
+  if (chestDetails && chestDetails.itemsWon.length > 0) {
+    message = `¡Abriste ${prize.label}! Ganaste +${finalXp} XP, ⭐ ${finalStardust} Stardust y ${chestDetails.itemsWon.join(', ')}`;
+  }
+
   return {
     prize,
     rotation,
     finalXp,
+    finalStardust,
+    chestDetails,
     streakBonusPercent,
-    message: finalXp > 0
-      ? `¡Ganaste ${prize.label}!${streakBonusPercent > 0 ? ` (+${streakBonusPercent}% bono racha)` : ''}`
-      : prize.id === 'nothing'
-        ? 'No ganaste nada esta vez.'
-        : `¡Ganaste ${prize.label}!`,
+    message,
   };
 };
 

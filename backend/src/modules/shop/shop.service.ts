@@ -6,9 +6,29 @@ import { trackMissionProgress } from '../ecosystem/missions.service';
 
 // ─── List shop items ───
 
+let hasSeeded = false;
+let shopItemsCache: { data: any; timestamp: number } | null = null;
+const CACHE_TTL_MS = 60 * 1000; // 1 minute memory cache
+
+export const invalidateShopItemsCache = () => {
+  shopItemsCache = null;
+};
+
 export const listItems = async () => {
-  await seedDefaultItems().catch(() => {});
-  return ShopRepository.findActiveItems();
+  // Return cached shop items if fresh
+  if (shopItemsCache && Date.now() - shopItemsCache.timestamp < CACHE_TTL_MS) {
+    return shopItemsCache.data;
+  }
+
+  // Asynchronously seed default items once in background if not done yet
+  if (!hasSeeded) {
+    hasSeeded = true;
+    seedDefaultItems().catch(() => {});
+  }
+
+  const items = await ShopRepository.findActiveItems();
+  shopItemsCache = { data: items, timestamp: Date.now() };
+  return items;
 };
 
 // ─── Get user inventory ───
