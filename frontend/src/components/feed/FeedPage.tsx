@@ -12,6 +12,7 @@ import SkeletonPostCard from '@/components/posts/SkeletonPostCard';
 import UserAvatar from '@/components/ui/UserAvatar';
 import StardustProgressBar from '@/components/ui/StardustProgressBar';
 import PlanBadge from '@/components/ui/PlanBadge';
+import { hasAnyRole } from '@gremio-estelar/shared';
 import { usePosts } from '@/lib/hooks/usePosts';
 import type { GuildItem, TrendingHashtag, LiveVTuberProfile, FollowingUser, EventItem } from '../../../../shared/types';
 
@@ -249,7 +250,7 @@ function HomeContent() {
           <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{displayName}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{user.username}</div>
         </Link>
-        {user.role === 'VTUBER' && (
+        {hasAnyRole(user.role, ['VTUBER', 'MAID']) && (
           <Link href="/vtuber-profile" className="btn" style={{ marginTop: '10px', padding: '6px 14px', fontSize: '0.78rem', width: '100%' }}>
             Editar Perfil VTuber
           </Link>

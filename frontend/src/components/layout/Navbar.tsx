@@ -13,6 +13,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import StardustStatsModal from '@/components/ui/StardustStatsModal';
 import StardustCardButton from '@/components/ui/StardustCardButton';
 import GiftEnvelopeModal, { GiftData } from '@/components/ui/GiftEnvelopeModal';
+import { hasAnyRole } from '@gremio-estelar/shared';
 import styles from './Navbar.module.css';
 import { Users, Calendar, Shield, FileText, MessageCircle, ShoppingBag, Award, BarChart, Bell, Backpack, Sparkles, Settings, LogOut, Key, Plus, Grid, TrendingUp, User, HelpCircle } from '@/components/ui/Icons';
 
@@ -839,7 +840,7 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
               <span>Mi Perfil</span>
             </Link>
 
-            <Link href={(user.role === 'VTUBER' || user.role === 'MAID') ? "/vtuber-profile" : "/settings"} onClick={() => setOpen(false)} style={menuItemStyle}
+            <Link href={hasAnyRole(user.role, ['VTUBER', 'MAID']) ? "/vtuber-profile" : "/settings"} onClick={() => setOpen(false)} style={menuItemStyle}
               onMouseOver={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
               <span style={{ color: '#a855f7', display: 'inline-flex' }}>
@@ -848,7 +849,7 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
               </span>
-              <span>{(user.role === 'VTUBER' || user.role === 'MAID') ? 'Perfil VTuber' : 'Configuración'}</span>
+              <span>{hasAnyRole(user.role, ['VTUBER', 'MAID']) ? 'Perfil VTuber' : 'Configuración'}</span>
             </Link>
 
             <Link href="/dashboard" onClick={() => setOpen(false)} style={menuItemStyle}
@@ -896,14 +897,14 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
               <span>Observatorio Estelar</span>
             </Link>
 
-            {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
+            {hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']) && (
               <>
                 <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
                 <Link href="/admin" onClick={() => setOpen(false)} style={menuItemStyle}
                   onMouseOver={e => { e.currentTarget.style.background = 'rgba(236,72,153,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
                   onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
                   <span style={{ color: '#ec4899', display: 'inline-flex' }}>{Icons.trending}</span>
-                  <span style={{ color: '#ec4899', fontWeight: 700 }}>{user.role === 'ADMIN' ? 'Panel Admin' : 'Panel Moderación'}</span>
+                  <span style={{ color: '#ec4899', fontWeight: 700 }}>{hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? '👑 Panel Admin' : '🛡️ Panel Moderación'}</span>
                 </Link>
               </>
             )}
