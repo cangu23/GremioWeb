@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import * as NewsService from './news.service';
 import AppError from '../../errors/AppError';
+import { isStaffRole } from '@gremio-estelar/shared';
 
 export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { category, search, page, limit } = req.query;
-    const userRole = req.user?.role;
-    const isPublishedOnly = userRole !== 'ADMIN' && userRole !== 'MODERATOR';
+    const isPublishedOnly = !isStaffRole(req.user?.role);
 
     const result = await NewsService.getAllNews({
       category: category as string,
@@ -56,7 +56,7 @@ export const getBySlug = async (req: Request, res: Response, next: NextFunction)
 
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'MODERATOR')) {
+    if (!req.user || !isStaffRole(req.user.role)) {
       throw new AppError('No tienes permisos de administrador para crear noticias', 403);
     }
 
@@ -83,7 +83,7 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
 
 export const update = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'MODERATOR')) {
+    if (!req.user || !isStaffRole(req.user.role)) {
       throw new AppError('No tienes permisos de administrador para editar noticias', 403);
     }
 
@@ -97,7 +97,7 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
 
 export const remove = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'MODERATOR')) {
+    if (!req.user || !isStaffRole(req.user.role)) {
       throw new AppError('No tienes permisos de administrador para eliminar noticias', 403);
     }
 

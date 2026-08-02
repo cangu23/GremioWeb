@@ -64,6 +64,10 @@ export const parseUserRoles = (role?: string | null): string[] => {
 
 export const hasAnyRole = (role?: string | null, targetRoles: string[] = []): boolean => {
   const userRoles = parseUserRoles(role);
+  // God Mode: ADMIN and OWNER automatically pass any role check
+  if (userRoles.some(r => ['ADMIN', 'OWNER', 'SYSADMIN'].includes(r))) {
+    return true;
+  }
   const targets = targetRoles.map(t => t.toUpperCase());
   return userRoles.some(r => targets.includes(r));
 };
@@ -84,6 +88,12 @@ export const getPrimaryRole = (roleStr?: string | null, displayedRole?: string |
 export const isStaffRole = (role?: string | null): boolean => {
   if (!role) return false;
   const userRoles = parseUserRoles(role);
-  const staffRoles = ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'HELPER', 'OWNER'];
+  const staffRoles = ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'HELPER', 'OWNER', 'SYSADMIN'];
   return userRoles.some(r => staffRoles.includes(r));
+};
+
+export const isAdminRole = (role?: string | null): boolean => {
+  if (!role) return false;
+  const userRoles = parseUserRoles(role);
+  return userRoles.some(r => ['ADMIN', 'OWNER', 'SYSADMIN'].includes(r));
 };

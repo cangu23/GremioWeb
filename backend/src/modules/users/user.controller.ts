@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as UserService from './user.service';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 export const getMe = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -36,7 +37,7 @@ export const getUsersByRole = async (req: Request, res: Response, next: NextFunc
     const role = String(req.params.role || '').toUpperCase();
     // Roles administrativos solo los puede consultar un ADMIN
     const sensitiveRoles = ['ADMIN', 'MODERATOR'];
-    if (sensitiveRoles.includes(role) && req.user?.role !== 'ADMIN') {
+    if (sensitiveRoles.includes(role) && !hasAnyRole(req.user?.role, ['ADMIN', 'OWNER'])) {
       return res.status(403).json({ message: 'No tienes permiso para ver este listado.' });
     }
     const users = await UserService.getUsersByRole(role);
