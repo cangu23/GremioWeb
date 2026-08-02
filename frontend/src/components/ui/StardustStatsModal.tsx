@@ -107,9 +107,6 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
 
       if (stardustRes?.data) {
         setData(stardustRes.data);
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('stardust-updated'));
-        }
       }
       if (missionsRes?.data) {
         setMissions(missionsRes.data);

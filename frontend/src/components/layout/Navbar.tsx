@@ -148,10 +148,6 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
         showToast(toastMsg, 'success');
         window.dispatchEvent(new CustomEvent('stardust:updated'));
         window.dispatchEvent(new CustomEvent('missions:updated'));
-        const isGift = notif?.type === 'STARDUST_RECEIVED' || notif?.type === 'GIFT_PLAN_RECEIVED' || notif?.title?.includes('Regalo') || notif?.title?.includes('Polvo Estelar');
-        if (isGift) {
-          window.dispatchEvent(new CustomEvent('open-gift-envelope', { detail: notif }));
-        }
       });
     } catch (err) {
       console.warn('[Socket] Could not connect for notifications:', err);
