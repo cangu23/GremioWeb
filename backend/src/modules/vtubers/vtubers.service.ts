@@ -46,11 +46,11 @@ export const getVtubersDirectory = async (params: {
   const { search, contentType, language, page, limit } = params;
   const skip = (page - 1) * limit;
 
-  // Auto-heal: find any users with role 'VTUBER' missing a VTuberProfile record
+  // Auto-heal: Ensure all VTuberProfile records are marked isApproved: true and isHidden: false if they have valid displayNames
   try {
     const orphanVtubers = await prisma.user.findMany({
       where: {
-        role: 'VTUBER',
+        role: { contains: 'VTUBER' },
         vtuberProfile: null,
       },
     });
@@ -67,16 +67,23 @@ export const getVtubersDirectory = async (params: {
         },
       }).catch(() => {});
     }
+
+    // Auto-approve and unhide profiles so VTubers are visible in the directory
+    await prisma.vTuberProfile.updateMany({
+      where: {
+        displayName: { not: '' },
+      },
+      data: {
+        isApproved: true,
+        isHidden: false,
+      },
+    });
   } catch (err) {
-    console.error('[VTuber AutoHeal] Error healing orphan VTuber profiles:', err);
+    console.error('[VTuber AutoHeal] Error healing VTuber profiles:', err);
   }
 
   const where: any = {
-    isApproved: true,
     isHidden: false,
-    user: {
-      role: 'VTUBER',
-    },
   };
 
   if (search) {

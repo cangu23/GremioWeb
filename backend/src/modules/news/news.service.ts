@@ -274,68 +274,75 @@ export const deleteNews = async (id: string) => {
 };
 
 export const seedDefaultNewsIfEmpty = async (authorId: string) => {
+  // Clear any previous sample/placeholder articles
+  await prisma.newsArticle.deleteMany({
+    where: {
+      OR: [
+        { coverImage: { contains: 'unsplash' } },
+        { title: { contains: 'Llegó la actualización' } },
+      ],
+    },
+  }).catch(() => {});
+
   const count = await prisma.newsArticle.count();
   if (count > 0) return;
 
-  const sampleArticles = [
+  const realArticles = [
     {
-      title: '¡Nueva Ruleta de la Suerte con Polvo Estelar y Animación 60FPS!',
-      summary: 'Llegó la actualización del sistema de Ruleta Diaria. Ahora incluye físicas de giro fluido, efectos de sonido dinámicos y giros extra con Polvo Estelar.',
-      content: `### 🎰 ¡Gran Actualización en la Ruleta del Gremio!
+      title: '🎰 ¡Gran Lanzamiento de la Ruleta Estelar a 60FPS y Polvo Estelar!',
+      summary: 'La Ruleta de la Suerte ha sido reconstruida con motor físico a 60FPS, sonidos dinámicos de clavija, sistema de rachas (+50% XP) y giros extra con Polvo Estelar.',
+      content: `### 🎰 ¡Remodelación Completa de la Ruleta Estelar!
 
-Nos complace anunciar la remodelación completa del sistema de **Ruleta de la Suerte**.
+Nos complace presentar la nueva **Ruleta de la Suerte** ([ir a la Ruleta](/roulette)) totalmente optimizada con tecnología de animación fluida a 60FPS y nuevas mecánicas de recompensa.
 
-#### ✨ ¿Qué hay de nuevo?
-- **Físicas de Giro Continuo**: Animación de giro a 60FPS sin congelamiento ni tiempos de espera.
-- **Sonidos de Clavija Dinámicos**: Los ticks de audio y el movimiento del puntero se aceleran y desaceleran en sincronía total con la rueda.
-- **Giros Extra con Polvo Estelar**: ¿Ya usaste tu giro diario? ¡Ahora puedes usar 🪙 **50 Polvo Estelar** para obtener un giro extra!
-- **Rachas de Giro**: Mantén tu racha diaria activa para obtener un bono acumulativo de hasta **+50% de XP**.
-
-¡Pruébala ahora en la sección [Ruleta](/roulette)!`,
-      coverImage: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80',
+#### ✨ Principales Novedades:
+- **Motor Físico a 60FPS**: Animaciones de rotación en tiempo real sin latencia ni congelamientos al presionar "Girar".
+- **Audio Físico Sincronizado**: Los ticks de sonido y el movimiento del puntero (*pointer flick*) se aceleran y desaceleran en sincronía perfecta con la rotación de la rueda.
+- **Giros Extra con Polvo Estelar**: ¿Usaste tu giro diario? ¡Consigue giros adicionales usando 🪙 **50 Polvo Estelar**!
+- **Bono de Racha Diaria**: Mantén tu racha activa día a día para desbloquear hasta un **+50% de XP adicional** en tus victorias.
+- **Acreditación Instantánea**: Tus ganancias de XP y Polvo Estelar se reflejan de inmediato en tu perfil y barra superior.`,
+      coverImage: 'https://images-ext-1.discordapp.net/external/ZN39TPiFOV_5zjm7w9BRv8NCZJsuPvoKhBdwnSwYtJ4/https/i.pinimg.com/736x/1c/17/bd/1c17bdc0c15c22705213c052a3af6653.jpg?format=webp&width=536&height=641',
       category: 'PLATFORM',
       isPinned: true,
       isPublished: true,
     },
     {
-      title: 'Debuts VTuber de la Semana y Nuevas Salas de Chat',
-      summary: 'Conoce a las nuevas talentos que se unen al Gremio esta semana y descubre las salas temáticas exclusivas.',
-      content: `### 🎙️ ¡Nuevas Estrellas en el Firmamento VTuber!
+      title: '⚡ Notas del Parche v2.0: Hub de Noticias y Mejoras Globales de Formularios',
+      summary: 'Lanzamiento del nuevo Hub de Noticias y Novedades unificado, optimización de contraste en formularios globales en modo oscuro y corrección de selección en inputs.',
+      content: `### 🛠️ Notas del Parche v2.0 — GremioWeb
 
-Esta semana damos la bienvenida a increíbles creadoras de contenido que se integran a la comunidad del **Gremio Estelar**.
+Hemos desplegado una actualización completa enfocada en la experiencia de usuario, diseño visual y facilidades de administración.
 
-#### 🌟 Destacadas de la semana:
-1. **Hoshizora Maid & Observatorio**: Descubre los minijuegos y la tienda astronómica.
-2. **Nuevos Emotes & Stickers**: Ya disponibles en los chats de gremio.
-3. **Eventos comunitarios**: Participa en las salas en vivo todos los fines de semana.
-
-Visita la sección de [VTubers](/vtubers) para enviarles tu apoyo.`,
-      coverImage: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80',
-      category: 'VTUBER',
+#### 🚀 Cambios Incluidos:
+- **Hub Unificado de Noticias y Novedades**: Centralizamos todas las actualizaciones en una sola sección accesible desde [/news](/news) y [/novedades](/novedades).
+- **Lector de Cristal Modal**: Abre y lee cualquier anuncio completo sin salir de la página con contador de vistas y tiempo de lectura.
+- **Optimización Global de Formularios**: Corregimos el contraste en campos de selección desplegables, añadimos soporte de modo oscuro nativo (\`color-scheme: dark\`) para calendarios e indicadores de validación claros.
+- **Directorio VTuber Restaurado**: Visibilidad garantizada para los perfiles VTuber activos de la comunidad en el directorio.`,
+      coverImage: 'https://i.pinimg.com/originals/ce/70/ff/ce70fff209ec669dea8e0eeb119f4534.gif',
+      category: 'PATCH_NOTES',
       isPinned: false,
       isPublished: true,
     },
     {
-      title: 'Notas del Parche v1.8: Optimización Global y Sistema de Noticias',
-      summary: 'Resumen completo de las mejoras del sistema, velocidad de carga y nuevo Hub de Novedades.',
-      content: `### 🛠️ Notas del Parche 1.8
+      title: '🌸 Directorio Oficial de VTubers y Comunidad Gremio Estelar',
+      summary: 'Conoce los perfiles oficiales de nuestros creadores de contenido, streaming en vivo, redes sociales y mascotas interactivas.',
+      content: `### 🎙️ ¡Conoce a las VTubers de Gremio Estelar!
 
-Hemos desplegado una serie de mejoras técnicas para garantizar la máxima fluidez en toda la plataforma.
+Te invitamos a explorar el **Directorio Oficial de VTubers** ([visitar VTubers](/vtubers)):
 
-#### 🚀 Novedades:
-- **Hub de Noticias y Novedades**: Centralización de comunicados, parches y noticias en un solo lugar.
-- **Rendimiento UI**: Optimización de componentes Next.js con carga previa de imágenes y soporte SWC.
-- **Panel de Administración**: Mejoras en el panel de gestión para moderadores y administradores.
-
-¡Gracias por formar parte de la comunidad!`,
-      coverImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80',
-      category: 'PATCH_NOTES',
+#### 🌟 Novedades para la Comunidad:
+- **Perfiles VTuber Verificados**: Explora a streamers de la comunidad como *AleshaWeasleyVT*, *Guren VT*, *Yusuki*, *hoshi*, *CHOCO* y más.
+- **Indicadores En Vivo**: Entérate al instante cuando una VTuber esté transmitiendo en vivo en Twitch o YouTube.
+- **Redes & Horarios de Stream**: Consulta enlaces oficiales a Twitch, YouTube, X/Twitter, Kick y horarios semanales.
+- **Mascotas y Personalización**: Configura tu avatar con mascotas animadas, títulos exclusivos y música en tu perfil.`,
+      coverImage: 'https://i.pinimg.com/originals/06/e0/0a/06e00aebdd4a2a57c135e1ddd6d7e052.gif',
+      category: 'VTUBER',
       isPinned: false,
       isPublished: true,
     },
   ];
 
-  for (const item of sampleArticles) {
+  for (const item of realArticles) {
     await createNews(authorId, item).catch(() => {});
   }
 };
