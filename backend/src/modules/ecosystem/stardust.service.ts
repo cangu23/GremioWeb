@@ -159,23 +159,27 @@ export const transferStardust = async (
   if (!targetUser || !targetUser.trim()) {
     throw new AppError('Debes ingresar el nombre de usuario o correo del destinatario', 400);
   }
-  if (!amount || amount <= 0) {
-    throw new AppError('La cantidad de Polvo Estelar a enviar debe ser mayor a 0', 400);
+  if (!amount || amount <= 0 || !Number.isInteger(amount)) {
+    throw new AppError('La cantidad de Polvo Estelar a enviar debe ser un número entero mayor a 0', 400);
   }
 
   const sender = await prisma.user.findUnique({
     where: { id: senderId },
-    select: { id: true, username: true, stardust: true },
+    select: { id: true, username: true, stardust: true, role: true },
   });
   if (!sender) throw new AppError('Usuario remitente no encontrado', 404);
 
   const cleanTarget = targetUser.trim().replace(/^@/, '');
+  if (!cleanTarget) {
+    throw new AppError('Debes ingresar un nombre de usuario o correo válido', 400);
+  }
+
   const recipient = await prisma.user.findFirst({
     where: {
       OR: [
         { id: cleanTarget },
-        { username: { equals: cleanTarget, mode: 'insensitive' } },
-        { email: { equals: cleanTarget, mode: 'insensitive' } },
+        { username: { equals: cleanTarget, mode: 'insensitive' as any } },
+        { email: { equals: cleanTarget, mode: 'insensitive' as any } },
       ],
     },
     select: { id: true, username: true, email: true },
@@ -189,11 +193,53 @@ export const transferStardust = async (
     throw new AppError('No puedes transferirte Polvo Estelar a ti mismo', 400);
   }
 
-  const transferReasonSender = `Transferencia enviada a @${recipient.username}${message ? `: "${message}"` : ''}`;
-  const spendResult = await spendStardust(sender.id, amount, transferReasonSender);
+  const isSenderAdmin = hasAnyRole(sender.role, ['ADMIN']);
 
+  // Check sender balance (unless admin)
+  if (!isSenderAdmin && sender.stardust < amount) {
+    throw new AppError(`No tienes suficiente Polvo Estelar. Tienes ⭐ ${sender.stardust.toLocaleString()} pero necesitas ⭐ ${amount.toLocaleString()}.`, 400);
+  }
+
+  const transferReasonSender = `Transferencia enviada a @${recipient.username}${message ? `: "${message}"` : ''}`;
   const transferReasonRecipient = `Regalo recibido de @${sender.username}${message ? `: "${message}"` : ''}`;
-  await addStardust(recipient.id, amount, transferReasonRecipient);
+
+  const result = await prisma.$transaction(async (tx) => {
+    let newSenderBalance = 999999999;
+
+    if (!isSenderAdmin) {
+      const updatedSender = await tx.user.update({
+        where: { id: sender.id },
+        data: { stardust: { decrement: amount } },
+      });
+      newSenderBalance = updatedSender.stardust;
+
+      await tx.stardustTransaction.create({
+        data: {
+          userId: sender.id,
+          amount: -amount,
+          reason: transferReasonSender,
+        },
+      });
+    }
+
+    const updatedRecipient = await tx.user.update({
+      where: { id: recipient.id },
+      data: { stardust: { increment: amount } },
+    });
+
+    await tx.stardustTransaction.create({
+      data: {
+        userId: recipient.id,
+        amount: amount,
+        reason: transferReasonRecipient,
+      },
+    });
+
+    return {
+      newSenderBalance,
+      newRecipientBalance: updatedRecipient.stardust,
+    };
+  });
 
   // Send real-time notification to recipient
   await createNotification({
@@ -207,7 +253,7 @@ export const transferStardust = async (
   return {
     success: true,
     message: `¡Has transferido ⭐ ${amount.toLocaleString()} Polvo Estelar a @${recipient.username} con éxito!`,
-    newBalance: spendResult.newBalance,
+    newBalance: result.newSenderBalance,
     recipient: recipient.username,
   };
 };

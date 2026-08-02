@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, notifyStardustChanged } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
 import { X, Search, Sparkles, Send, Gift, Check, ArrowRight, UserCheck, AlertCircle, RefreshCw } from '@/components/ui/Icons';
@@ -207,6 +207,7 @@ export default function SendStardustModal({
       });
 
       if (onSuccess) onSuccess(newBal);
+      notifyStardustChanged();
     } catch (err: any) {
       showToast(err?.message || 'Error al enviar Stardust', 'error');
     } finally {

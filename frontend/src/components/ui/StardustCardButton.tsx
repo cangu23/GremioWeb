@@ -35,7 +35,11 @@ export default function StardustCardButton({ onClick, isMobile = false }: Stardu
     fetchStardust();
     const handleUpdate = () => fetchStardust();
     window.addEventListener('stardust-updated', handleUpdate);
-    return () => window.removeEventListener('stardust-updated', handleUpdate);
+    window.addEventListener('stardust:updated', handleUpdate);
+    return () => {
+      window.removeEventListener('stardust-updated', handleUpdate);
+      window.removeEventListener('stardust:updated', handleUpdate);
+    };
   }, [fetchStardust]);
 
   if (!user) return null;

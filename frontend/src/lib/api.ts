@@ -55,13 +55,15 @@ export async function performRefresh(): Promise<string | null> {
 export const notifyStardustChanged = () => {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('stardust:updated'));
+    window.dispatchEvent(new Event('stardust-updated'));
+    window.dispatchEvent(new CustomEvent('user-refetched'));
   }
 };
 
 export const notifyMissionsChanged = () => {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('missions:updated'));
-    window.dispatchEvent(new CustomEvent('stardust:updated'));
+    notifyStardustChanged();
   }
 };
 

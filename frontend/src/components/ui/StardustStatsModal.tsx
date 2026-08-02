@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, notifyStardustChanged } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/lib/ToastContext';
 import UserAvatar from '@/components/ui/UserAvatar';
@@ -174,6 +174,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
       setTransferAmount('');
       setTransferMessage('');
       fetchStardustData();
+      notifyStardustChanged();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error en la transferencia', 'error');
     } finally {
@@ -201,6 +202,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
       showToast(res.message || '¡Suscripción Premium regalada con éxito!', 'success');
       setGiftTarget('');
       fetchStardustData();
+      notifyStardustChanged();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error al regalar el plan', 'error');
     } finally {

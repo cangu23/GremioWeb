@@ -106,8 +106,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const handleRefetchUser = async () => {
       try {
-        const res = await apiFetch('/auth/me');
-        const fresh = res?.user || res?.data?.user || res?.data;
+        const res = await apiFetch('/users/me');
+        const fresh = res?.user || res?.data?.user || res?.data || res;
         if (fresh && fresh.id) {
           setUser(fresh);
           setCachedUser(fresh);
@@ -115,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
     };
     window.addEventListener('stardust-updated', handleRefetchUser);
+    window.addEventListener('stardust:updated', handleRefetchUser);
     window.addEventListener('user-refetched', handleRefetchUser);
 
     // ── 2. BFCache — browser back/forward cache  ───────────────────────

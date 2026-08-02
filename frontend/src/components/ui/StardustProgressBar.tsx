@@ -82,9 +82,11 @@ export default function StardustProgressBar() {
     };
 
     window.addEventListener('stardust:updated', handleUpdate);
+    window.addEventListener('stardust-updated', handleUpdate);
     window.addEventListener('missions:updated', handleUpdate);
     return () => {
       window.removeEventListener('stardust:updated', handleUpdate);
+      window.removeEventListener('stardust-updated', handleUpdate);
       window.removeEventListener('missions:updated', handleUpdate);
     };
   }, [user]);
