@@ -47,6 +47,7 @@ export const unfollow = async (followerId: string, followingId: string) => {
   };
 };
 
+import { hasAnyRole } from '@gremio-estelar/shared';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 
 export const getSocialProfile = async (userId: string, currentUserId?: string) => {
@@ -56,7 +57,7 @@ export const getSocialProfile = async (userId: string, currentUserId?: string) =
   }
 
   if (currentUserId && currentUserId !== userId) {
-    if (userProfile.role === 'VTUBER' || userProfile.vtuberProfile) {
+    if (hasAnyRole(userProfile.role, ['VTUBER']) || userProfile.vtuberProfile) {
       trackMissionProgress(currentUserId, 'VTUBER_VISIT').catch(() => {});
     }
   }

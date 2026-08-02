@@ -90,6 +90,17 @@ export const PLATFORM_PLANS: Record<string, PlanBenefitInfo> = {
   },
 };
 
+function userHasRole(roleStr: string | null | undefined, targetRole: string): boolean {
+  if (!roleStr) return false;
+  return roleStr.split(',').map((r) => r.trim()).includes(targetRole);
+}
+
+function userHasAnyRole(roleStr: string | null | undefined, rolesList: string[]): boolean {
+  if (!roleStr) return false;
+  const userRoles = roleStr.split(',').map((r) => r.trim());
+  return rolesList.some((r) => userRoles.includes(r));
+}
+
 export const getMyPlatformPlan = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -97,6 +108,16 @@ export const getMyPlatformPlan = async (userId: string) => {
   });
 
   if (!user) throw new AppError('Usuario no encontrado', 404);
+
+  const isSpecialUser = userHasAnyRole(user.role, [
+    'ADMIN',
+    'MODERATOR',
+    'STAFF',
+    'VTUBER',
+    'MAID',
+    'VIP_STELLAR',
+    'BETA_TESTER',
+  ]);
 
   let activeSub = await prisma.platformSubscription.findUnique({
     where: { userId },
@@ -109,7 +130,7 @@ export const getMyPlatformPlan = async (userId: string) => {
       data: { status: 'EXPIRED' },
     });
 
-    if (user.role !== 'VTUBER' && user.role !== 'MAID' && user.role !== 'ADMIN') {
+    if (!isSpecialUser) {
       await prisma.user.update({
         where: { id: userId },
         data: { plan: 'FREE' },
@@ -118,13 +139,13 @@ export const getMyPlatformPlan = async (userId: string) => {
     }
   }
 
-  // VTUBER, MAID, STAFF, BETA_TESTER, MODERATOR, ADMIN & VIP roles receive effective plans automatically
+  // Special roles (ADMIN, STAFF, MODERATOR, VTUBER, MAID, etc.) always receive STELLAR benefits
   let effectivePlan = user.plan || 'FREE';
-  if (['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN'].includes(user.role)) {
+  if (isSpecialUser) {
     effectivePlan = 'STELLAR';
-  } else if (user.role === 'VIP_NOVA') {
+  } else if (userHasRole(user.role, 'VIP_NOVA')) {
     effectivePlan = 'NOVA';
-  } else if (user.role === 'VIP_ASTRO') {
+  } else if (userHasRole(user.role, 'VIP_ASTRO')) {
     effectivePlan = 'ASTRO';
   }
 

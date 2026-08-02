@@ -97,6 +97,8 @@ export const seedPassLevels = async (seasonId: string) => {
   }
 };
 
+import { hasAnyRole } from '@gremio-estelar/shared';
+
 export const getUserSeasonPass = async (userId: string) => {
   const season = await getOrCreateActiveSeason();
   const user = await prisma.user.findUnique({
@@ -104,7 +106,7 @@ export const getUserSeasonPass = async (userId: string) => {
     select: { plan: true, role: true, level: true },
   });
 
-  const isVip = user?.role === 'VTUBER' || user?.role === 'MAID' || user?.role === 'ADMIN';
+  const isVip = hasAnyRole(user?.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF']);
   const isPremiumUser = isVip || (user?.plan && user.plan !== 'FREE');
   const userLevel = Math.max(1, user?.level || 1);
 

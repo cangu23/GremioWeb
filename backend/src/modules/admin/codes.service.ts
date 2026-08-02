@@ -4,6 +4,7 @@ import { prisma } from '../../database';
 import * as CodesRepository from './codes.repository';
 import * as AdminRepository from './admin.repository';
 import AppError from '../../errors/AppError';
+import { hasAnyRole, parseUserRoles } from '@gremio-estelar/shared';
 
 const CODE_EXPIRY_DAYS = 30;
 
@@ -144,7 +145,7 @@ export const redeemCode = async (rawCode: string, userId: string) => {
 
   // Check if user already has this role
   const currentUser = await AdminRepository.findUserById(userId);
-  if (currentUser && currentUser.role === matchedCode.role) {
+  if (currentUser && hasAnyRole(currentUser.role, [matchedCode.role])) {
     throw new AppError(`Ya tienes el rol ${matchedCode.role}`, 400);
   }
 
@@ -164,9 +165,15 @@ export const redeemCode = async (rawCode: string, userId: string) => {
     },
   });
 
-  // Update user's role
+  // Append new role to existing user roles so Admin/Staff roles are never wiped out
+  const currentRolesList = parseUserRoles(currentUser?.role);
+  if (!currentRolesList.includes(matchedCode.role)) {
+    currentRolesList.push(matchedCode.role);
+  }
+  const newRoleStr = currentRolesList.join(',');
+
   const updatedUser = await AdminRepository.updateUser(userId, {
-    role: matchedCode.role,
+    role: newRoleStr,
   });
 
   // If redeemed role is VTUBER, ensure vTuberProfile is created and approved automatically

@@ -5,6 +5,7 @@ import env from '../config/env';
 import prisma from '../database/prisma';
 import * as NotificationsService from '../modules/notifications/notifications.service';
 import { sanitizeMessage, isValidCuid, createSocketRateLimiter } from '../utils/sanitize';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -313,7 +314,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
         }
 
         const adminUser = await prisma.user.findUnique({ where: { id: userId } });
-        const isAdmin = adminUser?.role === 'ADMIN';
+        const isAdmin = hasAnyRole(adminUser?.role, ['ADMIN', 'MODERATOR', 'STAFF']);
 
         if (message.userId !== userId && !isAdmin) {
           socket.emit('chat:error', { message: 'No tienes permiso para eliminar este mensaje' });
@@ -342,7 +343,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
         }
         
         const adminUser = await prisma.user.findUnique({ where: { id: userId } });
-        const isAdmin = adminUser?.role === 'ADMIN';
+        const isAdmin = hasAnyRole(adminUser?.role, ['ADMIN', 'MODERATOR', 'STAFF']);
         
         // Allow if user owns the message OR is admin
         if (message.userId !== userId && !isAdmin) {
@@ -371,7 +372,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
         }
         
         const adminUser = await prisma.user.findUnique({ where: { id: userId } });
-        const isAdmin = adminUser?.role === 'ADMIN';
+        const isAdmin = hasAnyRole(adminUser?.role, ['ADMIN', 'MODERATOR', 'STAFF']);
         
         // Allow if user is sender/receiver OR admin
         if (message.senderId !== userId && message.receiverId !== userId && !isAdmin) {

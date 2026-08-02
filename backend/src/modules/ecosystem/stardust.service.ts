@@ -2,6 +2,7 @@ import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
 import { activatePlatformPlan } from '../subscriptions/platform-subscriptions.service';
 import { createNotification } from '../notifications/notifications.repository';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 // Multipliers by plan/role
 export const PLAN_STARDUST_MULTIPLIERS: Record<string, number> = {
@@ -18,13 +19,13 @@ export const GIFT_PLAN_STARDUST_COSTS: Record<string, number> = {
 };
 
 export const getStardustMultiplier = (userPlan: string, userRole: string): number => {
-  if (['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN'].includes(userRole)) {
+  if (hasAnyRole(userRole, ['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN'])) {
     return 2.0; // Automatically equivalent to STELLAR (×2.0)
   }
-  if (userRole === 'VIP_NOVA') {
+  if (hasAnyRole(userRole, ['VIP_NOVA'])) {
     return 1.5; // Nova (×1.5)
   }
-  if (userRole === 'VIP_ASTRO') {
+  if (hasAnyRole(userRole, ['VIP_ASTRO'])) {
     return 1.2; // Astro (×1.2)
   }
   return PLAN_STARDUST_MULTIPLIERS[userPlan] || 1.0;
@@ -85,7 +86,7 @@ export const spendStardust = async (userId: string, amount: number, reason: stri
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
   // ADMINS HAVE INFINITE STARDUST - NEVER CONSUME OR BLOCK ADMINS
-  if (user.role === 'ADMIN') {
+  if (hasAnyRole(user.role, ['ADMIN'])) {
     return {
       stardustSpent: 0,
       newBalance: 999999999,
@@ -124,7 +125,7 @@ export const getStardustBalance = async (userId: string) => {
 
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
-  const isAdmin = user.role === 'ADMIN';
+  const isAdmin = hasAnyRole(user.role, ['ADMIN']);
 
   return {
     stardust: isAdmin ? 999999999 : user.stardust,
@@ -232,9 +233,7 @@ export const giftPlatformPlanWithStardust = async (
     sender.plan === 'ASTRO' ||
     sender.plan === 'NOVA' ||
     sender.plan === 'STELLAR' ||
-    sender.role === 'VTUBER' ||
-    sender.role === 'MAID' ||
-    sender.role === 'ADMIN';
+    hasAnyRole(sender.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF']);
 
   if (!isEligible) {
     throw new AppError(

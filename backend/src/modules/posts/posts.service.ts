@@ -1,7 +1,7 @@
 import AppError from '../../errors/AppError';
 import * as PostsRepository from './posts.repository';
 import * as NotificationsService from '../notifications/notifications.service';
-import { CreatePostPayload, CreateCommentPayload } from '@gremio-estelar/shared';
+import { CreatePostPayload, CreateCommentPayload, hasAnyRole } from '@gremio-estelar/shared';
 import * as UserRepository from '../users/user.repository';
 import * as SocialRepository from '../social/social.repository';
 import * as AdminRepository from '../admin/admin.repository';
@@ -106,11 +106,11 @@ export const getAlgorithmicFeed = async (currentUserId?: string, page = 1, limit
     // Feature bonuses
     const isPinnedBonus = post.isPinned ? 50 : 0;
     const mediaBonus = post.mediaUrl || post.pollData ? 6 : 0;
-
     // Creator status bonus
-    const isVtuber = post.user?.role === 'VTUBER' || post.user?.vtuberProfile?.isApproved;
+    const isVtuber = hasAnyRole(post.user?.role, ['VTUBER']) || !!post.user?.vtuberProfile?.isApproved;
     const isVerified = post.user?.vtuberProfile?.isVerified;
-    const creatorBonus = isVerified ? 12 : isVtuber ? 8 : (post.user?.role === 'MAID' ? 6 : 0);
+    const isMaid = hasAnyRole(post.user?.role, ['MAID']);
+    const creatorBonus = isVerified ? 12 : isVtuber ? 8 : (isMaid ? 6 : 0);
 
     // Follow affinity bonus
     const followBonus = currentUserId && followingSet.has(post.userId) ? 15 : 0;

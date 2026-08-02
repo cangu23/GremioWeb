@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { optimizeImage } from '../../lib/media-engine';
 import { ioContext } from '../../websocket/socket.server';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 // Allowed MIME types
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -120,10 +121,11 @@ async function handleUpload(
 
     const user = (req as any).user;
     const isGif = req.file.mimetype === 'image/gif';
+    const isPrivileged = user?.plan && user.plan !== 'FREE' || hasAnyRole(user?.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR', 'BETA_TESTER']);
 
-    // Restringir GIFs a roles premium/VTUBER (permitido para mascotas y stickers)
-    if (isGif && user?.role === 'USER' && folder !== 'pets' && folder !== 'stickers') {
-      res.status(403).json({ status: 'error', message: 'Usar GIFs es una función exclusiva para VTubers y premium.' });
+    // Restringir GIFs a usuarios sin plan o rol premium
+    if (isGif && !isPrivileged && folder !== 'pets' && folder !== 'stickers') {
+      res.status(403).json({ status: 'error', message: 'Usar GIFs es una función exclusiva para VTubers y miembros Premium.' });
       return;
     }
 
