@@ -111,7 +111,7 @@ export const join = async (guildId: string, userId: string) => {
 
   const existing = await GuildsRepository.findMember(guildId, userId);
   if (existing) {
-    throw new AppError('Ya eres miembro de este gremio.', 409);
+    return { message: 'Ya eres miembro de este gremio.', guildId, isAlreadyMember: true };
   }
 
   await GuildsRepository.addMember(guildId, userId);
@@ -232,7 +232,7 @@ export const requestJoin = async (guildId: string, userId: string, message?: str
 
   const existingMember = await GuildsRepository.findMember(guildId, userId);
   if (existingMember) {
-    throw new AppError('Ya eres miembro de este gremio.', 400);
+    return { message: 'Ya eres miembro de este gremio.', guildId, isAlreadyMember: true };
   }
 
   const existingRequest = await GuildsRepository.findJoinRequestByUser(guildId, userId);

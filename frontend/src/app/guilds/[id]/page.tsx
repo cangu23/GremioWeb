@@ -481,8 +481,8 @@ function GuildDetailContent() {
     try {
       await apiFetch(`/guilds/${id}/join`, { method: 'POST' });
       await fetchGuild();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al unirse al gremio');
+    } catch {
+      await fetchGuild();
     } finally {
       setActionLoading(false);
     }
@@ -687,11 +687,18 @@ function GuildDetailContent() {
     );
   }
 
-  if (error) {
+  if (error && !guild) {
     return (
       <div style={{ display: 'flex', height: 'calc(100vh - 80px)', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
-        <p style={{ color: 'var(--error)' }}>Error: {error}</p>
-        <Link href="/guilds" className="btn" style={{ padding: '10px 20px', borderRadius: '10px' }}>← Volver</Link>
+        <p style={{ color: 'var(--error)' }}>{error}</p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={() => { setError(''); fetchGuild(); }} className="btn btn--primary" style={{ padding: '10px 20px', borderRadius: '10px' }}>
+            🔄 Reintentar
+          </button>
+          <Link href="/guilds" className="btn" style={{ padding: '10px 20px', borderRadius: '10px' }}>
+            ← Volver a Gremios
+          </Link>
+        </div>
       </div>
     );
   }
