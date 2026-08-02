@@ -81,7 +81,7 @@ export default function StardustCardButton({ onClick, isMobile = false }: Stardu
           <UserAvatar src={avatarUrl} alt={displayName} size={30} user={user} />
           <div style={{ textAlign: 'left' }}>
             <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>⭐ {stardust.toLocaleString()}</span>
+              <span>⭐ {user?.role?.includes('ADMIN') || stardust >= 99999990 ? '♾️ Infinito' : stardust.toLocaleString()}</span>
               {multiplier > 1 && (
                 <span style={{ fontSize: '0.65rem', background: '#f59e0b', color: '#000', padding: '1px 5px', borderRadius: '6px', fontWeight: 900 }}>
                   ×{multiplier.toFixed(1)}
@@ -100,45 +100,32 @@ export default function StardustCardButton({ onClick, isMobile = false }: Stardu
   return (
     <button
       onClick={onClick}
-      title="Ver estadísticas, misiones y transferencias de Stardust"
+      className="btn"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
         gap: '8px',
-        padding: '4px 12px 4px 5px',
-        borderRadius: '20px',
-        background: 'linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(139,92,246,0.14) 100%)',
-        border: '1px solid rgba(245,158,11,0.38)',
-        backdropFilter: 'blur(12px)',
+        padding: '6px 14px',
+        borderRadius: '999px',
+        background: 'linear-gradient(135deg, rgba(245,158,11,0.18), rgba(217,119,6,0.12))',
+        border: '1px solid rgba(245,158,11,0.4)',
+        color: '#fff',
         cursor: 'pointer',
+        boxShadow: '0 0 16px rgba(245,158,11,0.15)',
+        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 4px 14px rgba(245,158,11,0.12), inset 0 1px 0 rgba(255,255,255,0.15)',
-        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-1px) scale(1.03)';
-        e.currentTarget.style.borderColor = 'rgba(245,158,11,0.7)';
-        e.currentTarget.style.boxShadow = '0 6px 20px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.25)';
+        e.currentTarget.style.transform = 'scale(1.04)';
+        e.currentTarget.style.boxShadow = '0 0 24px rgba(245,158,11,0.35)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'none';
-        e.currentTarget.style.borderColor = 'rgba(245,158,11,0.38)';
-        e.currentTarget.style.boxShadow = '0 4px 14px rgba(245,158,11,0.12), inset 0 1px 0 rgba(255,255,255,0.15)';
+        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.boxShadow = '0 0 16px rgba(245,158,11,0.15)';
       }}
     >
-      {/* Background ambient glow pulse */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'radial-gradient(circle at 30% 50%, rgba(245,158,11,0.25), transparent 70%)',
-          pointerEvents: 'none',
-          animation: 'stardustPulse 3s ease-in-out infinite alternate',
-        }}
-      />
-
-      {/* Shimmer light bar overlay */}
+      {/* Shimmer sweep effect */}
       <div
         style={{
           position: 'absolute',
@@ -146,7 +133,7 @@ export default function StardustCardButton({ onClick, isMobile = false }: Stardu
           left: '-100%',
           width: '100%',
           height: '100%',
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)',
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
           animation: 'stardustShimmer 4s infinite',
           pointerEvents: 'none',
         }}
@@ -171,7 +158,7 @@ export default function StardustCardButton({ onClick, isMobile = false }: Stardu
         </span>
 
         <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fff', letterSpacing: '0.01em' }}>
-          {loading ? '...' : stardust.toLocaleString()}
+          {loading ? '...' : (user?.role?.includes('ADMIN') || stardust >= 99999990 ? '♾️ Infinito' : stardust.toLocaleString())}
         </span>
 
         <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#f59e0b' }}>

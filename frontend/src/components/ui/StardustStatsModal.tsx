@@ -515,7 +515,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                     <div style={{ zIndex: 1, paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '2rem', animation: 'stardustFloat 3s ease-in-out infinite alternate', filter: 'drop-shadow(0 0 10px #fbbf24)' }}>⭐</span>
-                        {user?.role === 'ADMIN' ? (
+                        {user?.role?.includes('ADMIN') || balance >= 99999990 ? (
                           <div>
                             <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fbbf24', letterSpacing: '-0.02em', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
                               ♾️ Stardust Infinito

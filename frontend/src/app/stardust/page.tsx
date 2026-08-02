@@ -192,7 +192,7 @@ function StardustContent() {
             </span>
             <div style={{ fontSize: '2.6rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '10px', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
               <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block', filter: 'drop-shadow(0 0 10px #fbbf24)' }}>⭐</span>
-              {balance.toLocaleString()}
+              {balance >= 99999990 || user?.role?.includes('ADMIN') ? '♾️ Infinito' : balance.toLocaleString()}
               <span style={{ fontSize: '1.05rem', color: '#fbbf24', fontWeight: 800, marginLeft: '2px' }}>Stardust</span>
             </div>
           </div>

@@ -162,8 +162,8 @@ export default function StardustProgressBar() {
             flexShrink: 0,
           }}>
             <StarIcon size={13} color="#fbbf24" />
-            <span>{user?.role === 'ADMIN' ? '♾️ Infinito (ADMIN)' : `${stardust} Stardust`}</span>
-            {multiplier > 1 && user?.role !== 'ADMIN' && (
+            <span>{user?.role?.includes('ADMIN') || stardust >= 99999990 ? '♾️ Infinito' : `${stardust.toLocaleString()} Stardust`}</span>
+            {multiplier > 1 && !user?.role?.includes('ADMIN') && (
               <span style={{ fontSize: '0.65rem', background: '#fbbf24', color: '#000', padding: '0 4px', borderRadius: '4px' }}>
                 ×{multiplier}
               </span>
