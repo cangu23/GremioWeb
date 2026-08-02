@@ -21,8 +21,12 @@ import KofiWidget from '@/components/ui/KofiWidget';
 import { SkeletonProfile } from '@/components/ui/Skeleton';
 import { getNoteBubbleStyle } from '@/components/ui/UserAvatar';
 import PetWidget from '@/components/ui/PetWidget';
+import ProfileMusicPlayer from '@/components/ui/ProfileMusicPlayer';
 import RoleBadge from '@/components/ui/RoleBadge';
 import { parseUserRoles, getPrimaryRole } from '@gremio-estelar/shared';
+
+// ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
+const PROFILE_MUSIC_ENABLED = false;
 
 interface SocialUser {
   id: string;
@@ -57,6 +61,7 @@ interface SocialProfile {
   avatarUrl?: string | null;
   bio?: string | null;
   bannerColor?: string | null;
+  profileMusic?: string | null;
   profilePet?: string | null;
   petName?: string | null;
   petImage2?: string | null;
@@ -1569,6 +1574,9 @@ function ProfileContent() {
             : null
         }
       />
+
+      {/* ===== PROFILE MUSIC PLAYER WIDGET (DISABLED — PROFILE_MUSIC_ENABLED = false) ===== */}
+      {PROFILE_MUSIC_ENABLED && <ProfileMusicPlayer musicUrl={profile?.profileMusic} displayName={displayName} />}
     </>
   );
 }

@@ -27,6 +27,7 @@ import rouletteRoutes from './modules/roulette/roulette.routes';
 import warningsRoutes from './modules/warnings/warnings.routes';
 import ecosystemRoutes from './modules/ecosystem/ecosystem.routes';
 import searchRoutes from './modules/search/search.routes';
+import newsRoutes from './modules/news/news.routes';
 import * as StickersController from './modules/admin/stickers.controller';
 import { searchRateLimiter, uploadRateLimiter } from './middleware/rateLimiters';
 import { createLogger } from './utils/logger';
@@ -62,6 +63,7 @@ router.use('/roulette', rouletteRoutes);
 router.use('/warnings', warningsRoutes);
 router.use('/ecosystem', ecosystemRoutes);
 router.use('/search', searchRateLimiter, searchRoutes);
+router.use('/news', newsRoutes);
 
 // ─── Standalone Routes ────────────────────────────────────────────
 

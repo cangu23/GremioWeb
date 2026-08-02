@@ -16,6 +16,8 @@ export interface User {
   avatarUrl?: string | null;
   bio?: string | null;
   bannerColor?: string | null;
+  plan?: string;
+  profileMusic?: string | null;
 }
 
 export interface UserProfile extends User {
@@ -60,4 +62,6 @@ export interface UpdateUserPayload {
   themeColor?: string;
   hashtags?: string[];
   isLive?: boolean;
+  // Profile music (Spotify link) — premium feature
+  profileMusic?: string | null;
 }

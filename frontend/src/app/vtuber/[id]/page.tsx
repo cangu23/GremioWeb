@@ -13,7 +13,11 @@ import Image from 'next/image';
 import { useToast } from '@/lib/ToastContext';
 import FriendButton from '@/components/social/FriendButton';
 import KofiWidget from '@/components/ui/KofiWidget';
+import ProfileMusicPlayer from '@/components/ui/ProfileMusicPlayer';
 import { Star, Users, Heart, MessageCircle, Image as IconImage, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, Sparkles, Telescope, Info, ZoomIn, Gamepad, Palette, Mic, Headphones, MessageSquare } from '@/components/ui/Icons';
+
+// ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
+const PROFILE_MUSIC_ENABLED = false;
 
 /* ─────────── Types ─────────── */
 
@@ -71,6 +75,7 @@ interface ProfileData {
   level: number;
   displayName?: string | null;
   avatarUrl?: string | null;
+  profileMusic?: string | null;
   vtuberProfile: VTuberProfileData | null;
   _count: { followers: number; following: number };
   isFollowedByMe: boolean;
@@ -1642,6 +1647,8 @@ function VtuberPublicProfile() {
           50% { box-shadow: 0 0 40px rgba(233,30,99,0.5); }
         }
       `}</style>
+      {/* ===== PROFILE MUSIC PLAYER WIDGET (DISABLED — PROFILE_MUSIC_ENABLED = false) ===== */}
+      {PROFILE_MUSIC_ENABLED && <ProfileMusicPlayer musicUrl={profile?.profileMusic} displayName={displayName} />}
     </>
   );
 }

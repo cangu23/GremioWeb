@@ -3,6 +3,8 @@ export * from './account-status';
 export * from './auth-provider';
 export * from './role';
 
+export * from './profile-music';
+
 export * from './user';
 export * from './vtuber';
 

@@ -13,8 +13,11 @@ import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import Link from 'next/link';
 
 import RoleBadge from '@/components/ui/RoleBadge';
-import { parseUserRoles, getPrimaryRole } from '@gremio-estelar/shared';
+import { parseUserRoles, getPrimaryRole, isSpotifyUrl, canUseProfileMusic, toSpotifyEmbedUrl, getSpotifyEmbedHeight } from '@gremio-estelar/shared';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
+
+// ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
+const PROFILE_MUSIC_ENABLED = false;
 
 function UserSettings() {
   const { user, isLoading } = useAuth();
@@ -26,6 +29,8 @@ function UserSettings() {
   const [bio, setBio] = useState('');
   const [bannerColor, setBannerColor] = useState('#1a1040');
   const [displayedRole, setDisplayedRole] = useState('');
+  const [profileMusic, setProfileMusic] = useState('');
+  const originalProfileMusic = useRef('');
   const [saving, setSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -77,8 +82,28 @@ function UserSettings() {
       setBio(user.bio || '');
       setBannerColor(user.bannerColor || '#1a1040');
       setDisplayedRole(user.displayedRole || '');
+      setProfileMusic(user.profileMusic || '');
+      originalProfileMusic.current = user.profileMusic || '';
     }
   }, [user, isLoading, router]);
+
+  const handleRemoveMusic = async () => {
+    setSaving(true);
+    try {
+      await apiFetch('/users/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ profileMusic: null }),
+      });
+      setProfileMusic('');
+      originalProfileMusic.current = '';
+      showToast('Música de perfil eliminada', 'success');
+      setTimeout(() => window.location.reload(), 800);
+    } catch (err: unknown) {
+      showToast(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +117,7 @@ function UserSettings() {
           bio: bio.trim() || undefined,
           bannerColor: bannerColor || undefined,
           displayedRole: displayedRole || undefined,
+          profileMusic: profileMusic.trim() || null,
         }),
       });
       showToast('Perfil actualizado correctamente', 'success');
@@ -306,6 +332,113 @@ function UserSettings() {
             </div>
           </div>
         )}
+
+        {/* Profile Background Music (Spotify — NOVA & STELLAR Premium Feature) — DISABLED (PROFILE_MUSIC_ENABLED = false) */}
+        {PROFILE_MUSIC_ENABLED && (() => {
+          const isEligibleForMusic = canUseProfileMusic(user?.plan, user?.role);
+          const musicTrimmed = profileMusic.trim();
+          const musicIsSpotify = !musicTrimmed || isSpotifyUrl(musicTrimmed);
+          const musicChanged = musicTrimmed !== originalProfileMusic.current;
+          const isLegacyKeep = !!musicTrimmed && !musicIsSpotify && !musicChanged;
+          const musicEmbed = musicTrimmed && isSpotifyUrl(musicTrimmed) ? toSpotifyEmbedUrl(musicTrimmed) : null;
+          return (
+            <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px', border: '1px solid rgba(29, 185, 84, 0.25)' }}>
+              <h3 style={{
+                fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px',
+                display: 'flex', alignItems: 'center', gap: '8px', color: '#1db954'
+              }}>
+                🎵 Música de Fondo para tu Perfil (Beneficio Premium NOVA / STELLAR)
+              </h3>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                Pega el enlace de una <strong style={{ color: '#4ade80' }}>canción, álbum o playlist de Spotify</strong>.
+                Quienes visiten tu perfil podrán escucharla con el reproductor oficial de Spotify embebido.
+              </p>
+
+              {isEligibleForMusic ? (
+                <div className="form-group">
+                  <label className="form-label" style={{ color: '#e9d5ff', fontWeight: 700 }}>Enlace de Spotify</label>
+                  <input
+                    className="input"
+                    value={profileMusic}
+                    onChange={e => setProfileMusic(e.target.value)}
+                    placeholder="https://open.spotify.com/track/..."
+                    style={musicTrimmed && !musicIsSpotify ? { borderColor: '#ef4444' } : undefined}
+                  />
+                  {musicTrimmed && !musicIsSpotify && isLegacyKeep && (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px', fontWeight: 600 }}>
+                      ℹ️ Formato anterior (MP3/directo): se conservará tal cual. Para cambiarla usa un enlace de Spotify.
+                    </p>
+                  )}
+                  {musicTrimmed && !musicIsSpotify && !isLegacyKeep && (
+                    <p style={{ fontSize: '0.75rem', color: '#f87171', marginTop: '6px', fontWeight: 600 }}>
+                      ⚠️ Solo se permiten enlaces de Spotify (canción, álbum o playlist).
+                    </p>
+                  )}
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
+                    Cómo obtenerlo: en Spotify toca ⋯ → Compartir → Copiar enlace de la canción/álbum/playlist.
+                    Dejar en blanco para desactivar.
+                  </p>
+
+                  {/* Live preview */}
+                  {musicEmbed && (
+                    <div style={{
+                      marginTop: '14px', borderRadius: '14px', overflow: 'hidden',
+                      border: '1px solid rgba(29, 185, 84, 0.35)', background: '#121212',
+                    }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '8px 12px', fontSize: '0.72rem', color: '#4ade80', fontWeight: 700,
+                        background: 'rgba(29, 185, 84, 0.1)',
+                      }}>
+                        <span>🟢 Vista previa del reproductor</span>
+                      </div>
+                      <iframe
+                        src={musicEmbed}
+                        width="100%"
+                        height={getSpotifyEmbedHeight(musicEmbed)}
+                        frameBorder="0"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                        title="Vista previa de música de perfil"
+                        style={{ border: 'none', display: 'block' }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{
+                  padding: '14px 18px', borderRadius: '14px', background: 'rgba(147, 51, 234, 0.1)',
+                  border: '1px solid rgba(147, 51, 234, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap'
+                }}>
+                  <span style={{ fontSize: '0.85rem', color: '#e9d5ff', fontWeight: 600 }}>
+                    🔒 La Música en el Perfil es exclusiva de los Planes Premium NOVA y STELLAR.
+                  </span>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {originalProfileMusic.current && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveMusic}
+                        disabled={saving}
+                        style={{
+                          padding: '8px 16px', fontSize: '0.82rem',
+                          background: 'rgba(239, 68, 68, 0.15)', color: '#f87171',
+                          fontWeight: 700, borderRadius: '10px', cursor: 'pointer',
+                          border: '1px solid rgba(239, 68, 68, 0.4)', textDecoration: 'none',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        🗑️ Quitar mi música
+                      </button>
+                    )}
+                    <Link href="/premium" className="btn" style={{ padding: '8px 16px', fontSize: '0.82rem', background: 'linear-gradient(135deg, #9333ea, #c084fc)', color: '#fff', fontWeight: 700, borderRadius: '10px', textDecoration: 'none' }}>
+                      Obtener Plan NOVA →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Basic info */}
         <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>

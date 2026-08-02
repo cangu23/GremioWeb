@@ -1,6 +1,6 @@
 import AppError from '../../errors/AppError';
 import * as UserRepository from './user.repository';
-import { UpdateUserPayload, PublicUser, UserProfile } from '@gremio-estelar/shared';
+import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl } from '@gremio-estelar/shared';
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
@@ -35,6 +35,24 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
   if (payload.bio) payload.bio = sanitizeString(payload.bio);
   if (payload.displayName) payload.displayName = sanitizeString(payload.displayName);
   if ((payload as any).note) (payload as any).note = sanitizeString((payload as any).note);
+
+  // Profile music: Spotify-only + premium enforcement (server-side).
+  // Unchanged values (whether legacy MP3/stream OR Spotify saved while the user
+  // had a plan) are always kept, so a user who lost their plan can still save
+  // the rest of their profile. Only NEW values are validated against format
+  // (Spotify-only) and eligibility (NOVA/STELLAR).
+  if (payload.profileMusic !== undefined && payload.profileMusic) {
+    const me = await UserRepository.findById(userId);
+    const value = payload.profileMusic;
+    const isSpotify = isSpotifyUrl(value);
+    const isKeep = !!me && me.profileMusic === value;
+    if (!isSpotify && !isKeep) {
+      throw new AppError('Solo se permiten enlaces de Spotify (canción, álbum o playlist).', 400);
+    }
+    if (!isKeep && (!me || !canUseProfileMusic(me.plan, me.role))) {
+      throw new AppError('La música en el perfil es exclusiva de los Planes Premium NOVA y STELLAR.', 403);
+    }
+  }
 
   if (payload.username) {
     const existingUser = await UserRepository.findByUsername(payload.username);

@@ -4,11 +4,10 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, notifyStardustChanged } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
-import Link from 'next/link';
 
 interface Prize {
   id: string;
@@ -163,8 +162,12 @@ function RouletteContent() {
   const [showHistory, setShowHistory] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [ledPhase, setLedPhase] = useState(0);
+  const [pointerFlick, setPointerFlick] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const angleRef = useRef<number>(0);
+  const lastTickSegmentRef = useRef<number>(-1);
 
   const getAudioContext = useCallback(() => {
     if (!audioCtxRef.current && typeof window !== 'undefined') {
@@ -187,16 +190,21 @@ function RouletteContent() {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(320, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.04);
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      osc.frequency.setValueAtTime(380, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.035);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.04);
+      osc.stop(ctx.currentTime + 0.035);
     } catch {}
   }, [soundEnabled, getAudioContext]);
+
+  const triggerPointerFlick = useCallback(() => {
+    setPointerFlick(true);
+    setTimeout(() => setPointerFlick(false), 70);
+  }, []);
 
   const playWinSound = useCallback(() => {
     if (!soundEnabled) return;
@@ -209,12 +217,12 @@ function RouletteContent() {
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.3);
+        gain.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.32);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(ctx.currentTime + i * 0.08);
-        osc.stop(ctx.currentTime + i * 0.08 + 0.3);
+        osc.stop(ctx.currentTime + i * 0.08 + 0.32);
       });
     } catch {}
   }, [soundEnabled, getAudioContext]);
@@ -256,11 +264,11 @@ function RouletteContent() {
   useEffect(() => {
     const interval = setInterval(() => {
       setLedPhase((prev) => (prev + 1) % 2);
-    }, spinning ? 120 : 800);
+    }, spinning ? 100 : 800);
     return () => clearInterval(interval);
   }, [spinning]);
 
-  // Countdown timer
+  // Countdown timer for next free spin
   useEffect(() => {
     if (!status?.nextSpinAt) return;
     const interval = setInterval(() => {
@@ -279,55 +287,127 @@ function RouletteContent() {
     return () => clearInterval(interval);
   }, [status?.nextSpinAt, fetchStatus]);
 
-  const executeSpinAnimation = (res: SpinResult) => {
-    setSpinResult(res);
+  // Clean up animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, []);
+
+  // RequestAnimationFrame physics engine for smooth zero-lag roulette spin
+  const startSpinPhysics = (apiPromise: Promise<SpinResult>) => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
 
     const prizes = status?.prizes || [];
-    const prizeIndex = prizes.findIndex((p) => p.id === res.prize.id);
-    const targetIndex = prizeIndex >= 0 ? prizeIndex : 0;
     const numSegments = prizes.length || 8;
     const segmentAngle = 360 / numSegments;
 
-    // Formula: align target segment mid-angle to top center
-    const targetSegmentAngle = 360 - (targetIndex * segmentAngle + segmentAngle / 2);
-    const fullRotations = 360 * 6;
-    const currentModulo = rotationAngle % 360;
-    const deltaAngle = (targetSegmentAngle - currentModulo + 360) % 360;
-    const finalAngle = rotationAngle + fullRotations + deltaAngle;
+    let state: 'accelerating' | 'decelerating' = 'accelerating';
+    let speed = 0; // degrees per second
+    const maxSpeed = 1260; // ~3.5 rotations/sec
+    let lastTime = performance.now();
 
-    let ticks = 0;
-    const maxTicks = 22;
-    const tickInterval = setInterval(() => {
-      playTickSound();
-      ticks++;
-      if (ticks >= maxTicks) clearInterval(tickInterval);
-    }, 180);
+    let decelStartTime = 0;
+    const decelDuration = 4000; // 4 seconds deceleration
+    let decelStartAngle = 0;
+    let targetTotalAngle = 0;
 
-    setRotationAngle(finalAngle);
+    let apiResult: SpinResult | null = null;
+    let apiError: Error | null = null;
 
-    setTimeout(() => {
-      clearInterval(tickInterval);
-      setSpinning(false);
-      setModalOpen(true);
-      playWinSound();
-      fetchStatus();
-      fetchStats();
-      fetchHistory();
-    }, 4500);
+    apiPromise
+      .then((res) => {
+        apiResult = res;
+        setSpinResult(res);
+      })
+      .catch((err) => {
+        apiError = err instanceof Error ? err : new Error('Error al girar');
+      });
+
+    const loop = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.05); // cap frame step
+      lastTime = now;
+
+      // Handle segment boundary crossing for tick sound & pointer flick
+      const currentSegment = Math.floor((angleRef.current + segmentAngle / 2) / segmentAngle);
+      if (currentSegment !== lastTickSegmentRef.current) {
+        lastTickSegmentRef.current = currentSegment;
+        playTickSound();
+        triggerPointerFlick();
+      }
+
+      if (state === 'accelerating') {
+        // Ramp up speed
+        speed = Math.min(maxSpeed, speed + 2400 * dt);
+        angleRef.current += speed * dt;
+        setRotationAngle(angleRef.current);
+
+        // Check if API result has arrived and we reached max speed
+        if (apiResult && speed >= maxSpeed * 0.85) {
+          state = 'decelerating';
+          decelStartTime = now;
+          decelStartAngle = angleRef.current;
+
+          const prizeIndex = prizes.findIndex((p) => p.id === apiResult!.prize.id);
+          const targetIndex = prizeIndex >= 0 ? prizeIndex : 0;
+
+          // Target mid-angle in unrotated SVG space (0 index is top center at -90deg)
+          const targetMidAngle = 360 - (targetIndex * segmentAngle + segmentAngle / 2);
+          // Add a natural random offset within segment bounds (+/- 35% of segment)
+          const randomOffset = (Math.random() - 0.5) * segmentAngle * 0.7;
+          const targetMod = (targetMidAngle + randomOffset + 360) % 360;
+
+          const currentMod = decelStartAngle % 360;
+          let delta = (targetMod - currentMod + 360) % 360;
+          if (delta < 180) delta += 360; // ensure sufficient travel
+
+          const extraRotations = 360 * 4; // 4 full decelerating rotations
+          targetTotalAngle = decelStartAngle + extraRotations + delta;
+        } else if (apiError) {
+          // Handle API failure gracefully
+          setSpinning(false);
+          showToast(apiError.message, 'error');
+          return;
+        }
+      } else if (state === 'decelerating') {
+        const elapsed = now - decelStartTime;
+        const progress = Math.min(1, elapsed / decelDuration);
+
+        // Cubic ease-out deceleration curve
+        const easeOut = 1 - Math.pow(1 - progress, 3.2);
+
+        angleRef.current = decelStartAngle + (targetTotalAngle - decelStartAngle) * easeOut;
+        setRotationAngle(angleRef.current);
+
+        if (progress >= 1) {
+          // Wheel spin complete!
+          angleRef.current = targetTotalAngle;
+          setRotationAngle(targetTotalAngle);
+          setSpinning(false);
+          setModalOpen(true);
+          playWinSound();
+          notifyStardustChanged();
+          fetchStatus();
+          fetchStats();
+          fetchHistory();
+          return;
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(loop);
+    };
+
+    animFrameRef.current = requestAnimationFrame(loop);
   };
 
   const handleFreeSpin = async () => {
     if (spinning || !status?.canSpin) return;
     setSpinning(true);
     setSpinResult(null);
+    getAudioContext();
 
-    try {
-      const res: SpinResult = await apiFetch('/roulette/spin', { method: 'POST' });
-      executeSpinAnimation(res);
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Error al girar', 'error');
-      setSpinning(false);
-    }
+    const spinPromise = apiFetch('/roulette/spin', { method: 'POST' });
+    startSpinPhysics(spinPromise);
   };
 
   const handleStardustSpin = async () => {
@@ -340,14 +420,10 @@ function RouletteContent() {
 
     setSpinning(true);
     setSpinResult(null);
+    getAudioContext();
 
-    try {
-      const res: SpinResult = await apiFetch('/roulette/spin-stardust', { method: 'POST' });
-      executeSpinAnimation(res);
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Error al girar con Polvo Estelar', 'error');
-      setSpinning(false);
-    }
+    const spinPromise = apiFetch('/roulette/spin-stardust', { method: 'POST' });
+    startSpinPhysics(spinPromise);
   };
 
   if (isLoading || !user) {
@@ -448,13 +524,15 @@ function RouletteContent() {
           overflow: 'hidden',
           background: 'radial-gradient(circle at center, rgba(139,92,246,0.08) 0%, rgba(15,23,42,0.6) 100%)',
         }}>
-          {/* Pointer Arrow */}
+          {/* Pointer Arrow with Physics Flick */}
           <div style={{
             position: 'relative',
             zIndex: 20,
             marginBottom: '-18px',
             filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.6))',
-            animation: spinning ? 'pointer-tick 0.15s ease-in-out infinite alternate' : 'none',
+            transform: pointerFlick ? 'translateY(2px) rotate(-12deg)' : 'translateY(0) rotate(0deg)',
+            transition: 'transform 0.06s ease-out',
+            transformOrigin: 'top center',
           }}>
             <svg width="36" height="42" viewBox="0 0 36 42" fill="none">
               <path d="M18 42L0 6C0 2.68629 8.05887 0 18 0C27.9411 0 36 2.68629 36 6L18 42Z" fill="url(#pointer-grad)" />
@@ -481,7 +559,6 @@ function RouletteContent() {
               viewBox={`0 0 ${size} ${size}`}
               style={{
                 transform: `rotate(${rotationAngle}deg)`,
-                transition: spinning ? 'transform 4.5s cubic-bezier(0.15, 0.85, 0.35, 1.0)' : 'none',
                 transformOrigin: 'center center',
                 filter: 'drop-shadow(0 12px 30px rgba(0,0,0,0.5))',
               }}
@@ -530,6 +607,7 @@ function RouletteContent() {
 
                 const radStart = (startAngle * Math.PI) / 180;
                 const radEnd = (endAngle * Math.PI) / 180;
+                const radMid = (midAngle * Math.PI) / 180;
 
                 const x1 = cx + radius * Math.cos(radStart);
                 const y1 = cy + radius * Math.sin(radStart);
@@ -538,15 +616,24 @@ function RouletteContent() {
 
                 const pathData = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
 
-                const normMid = ((midAngle % 360) + 360) % 360;
-                const isFlipped = normMid > 90 && normMid < 270;
+                // Calculate center positions for icon & text labels along mid-angle bisector
+                const iconRadius = radius * 0.74;
+                const textRadius = radius * 0.44;
 
-                const rot = isFlipped ? midAngle + 180 : midAngle;
-                const iconX = cx + (isFlipped ? -radius * 0.72 : radius * 0.72);
-                const textX = cx + (isFlipped ? -radius * 0.44 : radius * 0.44);
+                const iconX = cx + iconRadius * Math.cos(radMid);
+                const iconY = cy + iconRadius * Math.sin(radMid);
+                const textX = cx + textRadius * Math.cos(radMid);
+                const textY = cy + textRadius * Math.sin(radMid);
 
                 const meta = PRIZE_META[prize.id] || { icon: '🎁' };
                 const labelLines = getWheelLabelLines(prize.label);
+
+                // Tangent rotation for text label so it stays readable & non-inverted
+                let rotText = midAngle + 90;
+                const normRot = ((rotText % 360) + 360) % 360;
+                if (normRot > 90 && normRot < 270) {
+                  rotText += 180;
+                }
 
                 return (
                   <g key={prize.id}>
@@ -557,22 +644,26 @@ function RouletteContent() {
                       strokeWidth="1.5"
                     />
 
-                    <g transform={`rotate(${rot}, ${cx}, ${cy})`}>
+                    {/* Icon */}
+                    <g transform={`rotate(${midAngle + 90}, ${iconX}, ${iconY})`}>
                       <text
                         x={iconX}
-                        y={cy}
+                        y={iconY}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize="19"
+                        fontSize="18"
                         style={{ userSelect: 'none', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}
                       >
                         {meta.icon}
                       </text>
+                    </g>
 
+                    {/* Text Label */}
+                    <g transform={`rotate(${rotText}, ${textX}, ${textY})`}>
                       {labelLines.length === 1 ? (
                         <text
                           x={textX}
-                          y={cy}
+                          y={textY}
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill="#FFFFFF"
@@ -589,7 +680,7 @@ function RouletteContent() {
                       ) : (
                         <text
                           x={textX}
-                          y={cy - 5}
+                          y={textY - 5}
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill="#FFFFFF"
@@ -923,10 +1014,6 @@ function RouletteContent() {
         @keyframes roulette-pulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); }
           50% { box-shadow: 0 0 0 16px rgba(139,92,246,0); }
-        }
-        @keyframes pointer-tick {
-          0% { transform: translateY(0) rotate(0deg); }
-          100% { transform: translateY(3px) rotate(-4deg); }
         }
         @keyframes scaleUp {
           from { opacity: 0; transform: scale(0.8); }
