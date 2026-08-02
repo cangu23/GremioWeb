@@ -217,14 +217,14 @@ function HomeContent() {
   // LEFT SIDEBAR
   // ==========================================================================
   const sidebarLinks = [
-    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>, label: 'Noticias & Novedades 📰', href: '/news', color: '#c084fc' },
+    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>, label: 'Noticias & Novedades', href: '/news', color: '#c084fc' },
     { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="#38bdf8" stroke="#38bdf8" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, label: 'Pase Estelar', href: '/pass', color: '#38bdf8' },
     { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>, label: 'Planes Premium', href: '/premium', color: '#fbbf24' },
     { icon: NavIcons.events, label: 'Eventos', href: '/events' },
     { icon: NavIcons.guilds, label: 'Gremios', href: '/guilds' },
     { icon: NavIcons.vtubers, label: 'VTubers', href: '/vtubers' },
     { icon: NavIcons.chat, label: 'Chat', href: '/chat' },
-    { icon: NavIcons.shop, label: 'Observatorio Estelar ⭐', href: '/shop', color: 'var(--warm)' },
+    { icon: NavIcons.shop, label: 'Observatorio Estelar', href: '/shop', color: 'var(--warm)' },
     { icon: NavIcons.leaderboard, label: 'Ranking', href: '/leaderboard' },
     { icon: NavIcons.dashboard, label: 'Dashboard', href: '/dashboard' },
   ];
