@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface PlanBadgeProps {
   plan?: string | null;
@@ -25,7 +26,7 @@ function SparkleSvg({ color = 'currentColor', size = 12 }: { color?: string; siz
 }
 
 export default function PlanBadge({ plan, role, showIconOnly = false }: PlanBadgeProps) {
-  const isVipRole = role === 'VTUBER' || role === 'MAID' || role === 'ADMIN';
+  const isVipRole = hasAnyRole(role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'VIP_STELLAR', 'VIP_NOVA', 'VIP_ASTRO']);
   const activePlan = isVipRole ? 'STELLAR' : (plan || 'FREE');
 
   if (activePlan === 'FREE' && !isVipRole) return null;

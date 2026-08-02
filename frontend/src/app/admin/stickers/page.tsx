@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import { refreshStickersCache } from '@/lib/content-renderer';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface Sticker {
   id: string;
@@ -70,7 +71,7 @@ export default function StickersAdminPage() {
       router.push('/login');
       return;
     }
-    if (!isLoading && user?.role !== 'ADMIN') {
+    if (!isLoading && !hasAnyRole(user?.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) {
       router.push('/');
       return;
     }
@@ -94,7 +95,7 @@ export default function StickersAdminPage() {
   };
 
   useEffect(() => {
-    if (user?.role === 'ADMIN') loadStickers();
+    if (hasAnyRole(user?.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) loadStickers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, categoryFilter, user]);
 
@@ -149,7 +150,7 @@ export default function StickersAdminPage() {
   });
 
   if (isLoading) return <div className="container" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Cargando...</div>;
-  if (!user || user.role !== 'ADMIN') return null;
+  if (!user || !hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) return null;
 
   return (
     <div>

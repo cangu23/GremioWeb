@@ -6,8 +6,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
-import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import Link from 'next/link';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 const NAV_ICONS: Record<string, React.ReactNode> = {
   dashboard: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
@@ -107,7 +108,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    if (mounted && (user?.role === 'ADMIN' || user?.role === 'MODERATOR')) {
+    if (mounted && hasAnyRole(user?.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) {
       apiFetch('/admin/dashboard/stats').then((data) => {
         if (data?.pendingVtuberRequests !== undefined) {
           setPendingRequests(data.pendingVtuberRequests);
@@ -142,7 +143,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  const isStaff = user.role === 'ADMIN' || user.role === 'MODERATOR';
+  const isStaff = hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']);
   if (!isStaff) {
     if (typeof window !== 'undefined') router.push('/');
     return null;
@@ -272,11 +273,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>@{user.username}</span>
               <span style={{
                 fontSize: '0.65rem', fontWeight: 800,
-                color: user.role === 'ADMIN' ? '#d4af37' : '#2196f3',
-                background: user.role === 'ADMIN' ? 'rgba(212,175,55,0.1)' : 'rgba(33,150,243,0.1)',
+                color: hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? '#d4af37' : '#2196f3',
+                background: hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? 'rgba(212,175,55,0.1)' : 'rgba(33,150,243,0.1)',
                 padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em'
               }}>
-                {user.role === 'ADMIN' ? 'SYSADMIN' : 'MODERATOR'}
+                {hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? 'SYSADMIN' : 'MODERATOR'}
               </span>
             </div>
             <div style={{ width: '36px', height: '36px', border: '1px solid #d4af37', borderRadius: '4px', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 800, color: '#d4af37' }}>

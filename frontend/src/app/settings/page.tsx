@@ -11,6 +11,7 @@ import { useToast } from '@/lib/ToastContext';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import Link from 'next/link';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 import RoleBadge from '@/components/ui/RoleBadge';
 import { parseUserRoles, getPrimaryRole, isSpotifyUrl, canUseProfileMusic, toSpotifyEmbedUrl, getSpotifyEmbedHeight } from '@gremio-estelar/shared';
@@ -158,7 +159,7 @@ function UserSettings() {
         </p>
       </div>
 
-      {user.role === 'VTUBER' && (
+      {hasAnyRole(user.role, ['VTUBER', 'MAID']) && (
         <div style={{
           padding: '14px 18px', borderRadius: '14px', marginBottom: '24px',
           background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)',
@@ -250,14 +251,14 @@ function UserSettings() {
                 <input
                   ref={avatarInputRef}
                   type="file"
-                  accept={user.role === 'USER' ? "image/jpeg,image/png,image/webp" : "image/jpeg,image/png,image/webp,image/gif"}
+                  accept={(hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR', 'BETA_TESTER']) || user.plan !== 'FREE') ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
                   style={{ display: 'none' }}
                   onChange={handleFileSelect}
                 />
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-                Formatos: JPEG, PNG, WebP{user.role !== 'USER' && ' o GIF'}. Se recomienda 400x400px o superior.
-                {user.role === 'USER' && <span style={{ display: 'block', color: 'var(--accent)', marginTop: '4px' }}>✨ Subir GIFs animados es exclusivo de VTubers y Premium.</span>}
+                Formatos: JPEG, PNG, WebP{(hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR', 'BETA_TESTER']) || user.plan !== 'FREE') && ' o GIF'}. Se recomienda 400x400px o superior.
+                {(!hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR', 'BETA_TESTER']) && user.plan === 'FREE') && <span style={{ display: 'block', color: 'var(--accent)', marginTop: '4px' }}>✨ Subir GIFs animados es exclusivo de VTubers y Premium.</span>}
               </p>
             </div>
           </div>

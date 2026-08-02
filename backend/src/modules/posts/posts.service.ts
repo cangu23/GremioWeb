@@ -1,7 +1,7 @@
 import AppError from '../../errors/AppError';
 import * as PostsRepository from './posts.repository';
 import * as NotificationsService from '../notifications/notifications.service';
-import { CreatePostPayload, CreateCommentPayload, hasAnyRole } from '@gremio-estelar/shared';
+import { CreatePostPayload, CreateCommentPayload, hasAnyRole, isStaffRole } from '@gremio-estelar/shared';
 import * as UserRepository from '../users/user.repository';
 import * as SocialRepository from '../social/social.repository';
 import * as AdminRepository from '../admin/admin.repository';
@@ -233,7 +233,7 @@ export const deletePost = async (postId: string, userId: string, moderationNote?
   let staffUser = null;
   if (isStaffAction) {
     staffUser = await UserRepository.findById(userId);
-    if (!staffUser || (staffUser.role !== 'ADMIN' && staffUser.role !== 'MODERATOR')) {
+    if (!staffUser || !isStaffRole(staffUser.role)) {
       throw new AppError('No tienes permiso para eliminar esta publicación', 403);
     }
   }
@@ -368,7 +368,7 @@ export const deleteComment = async (commentId: string, userId: string, moderatio
 
   if (isStaffAction) {
     staffUser = await UserRepository.findById(userId);
-    if (!staffUser || (staffUser.role !== 'ADMIN' && staffUser.role !== 'MODERATOR')) {
+    if (!staffUser || !isStaffRole(staffUser.role)) {
       throw new AppError('No tienes permiso para eliminar este comentario', 403);
     }
   }

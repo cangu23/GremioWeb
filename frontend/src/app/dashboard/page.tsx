@@ -12,6 +12,7 @@ import { useToast } from '@/lib/ToastContext';
 import RecentActivity from '@/components/landing/RecentActivity';
 import UserAvatar from '@/components/ui/UserAvatar';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface GamificationData {
   xp: number;
@@ -89,7 +90,7 @@ function DashboardContent() {
   const [showVtuberWelcome, setShowVtuberWelcome] = useState(false);
 
   const xpThresholds = [0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 4000, 5200, 6600, 8200, 10000, 12000];
-  const isVtuber = user?.role === 'VTUBER' || user?.vtuberProfile?.isApproved === true;
+  const isVtuber = hasAnyRole(user?.role, ['VTUBER', 'MAID']) || user?.vtuberProfile?.isApproved === true;
 
   useEffect(() => {
     if (user) {

@@ -690,7 +690,7 @@ function CreateDropdown({ closeMenu }: { closeMenu?: () => void }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const canCreate = user?.role === 'VTUBER' || user?.role === 'ADMIN' || user?.role === 'MODERATOR';
+  const canCreate = hasAnyRole(user?.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']);
 
   const actions = [
     { icon: Icons.write, label: 'Nueva Publicación', href: '/', color: 'var(--primary)' },
@@ -1053,10 +1053,10 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
 
           <div style={{ height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />
 
-          {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
+          {hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']) && (
             <Link href="/admin" onClick={closeMenu} style={{ ...mobileLink, color: 'var(--primary)', fontWeight: 600 }}>
               <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}><Settings size={18} color="var(--primary)" /></span>
-              <span>{user.role === 'ADMIN' ? 'Panel Admin' : 'Panel Moderación'}</span>
+              <span>{hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? '👑 Panel Admin' : '🛡️ Panel Moderación'}</span>
             </Link>
           )}
 

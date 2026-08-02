@@ -13,7 +13,7 @@ import { useStickersCache } from '@/lib/content-renderer';
 import MediaLightbox from './MediaLightbox';
 import SendStardustModal from '@/components/ui/SendStardustModal';
 import RoleBadge from '@/components/ui/RoleBadge';
-import { getPrimaryRole } from '@gremio-estelar/shared';
+import { getPrimaryRole, isStaffRole, hasAnyRole } from '@gremio-estelar/shared';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 interface PostCardProps {
@@ -190,7 +190,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
   }, [contextMenu]);
 
   const isOwner = currentUserId === post.userId;
-  const isStaff = currentUserRole === 'ADMIN' || currentUserRole === 'MODERATOR';
+  const isStaff = isStaffRole(currentUserRole);
 
   const handleEdit = async () => {
     if (!editContent.trim()) return;
@@ -861,7 +861,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                       )}
 
                       {/* Staff badge */}
-                      {(comment.user?.role === 'ADMIN' || comment.user?.role === 'MODERATOR') && (
+                      {isStaffRole(comment.user?.role) && (
                         <span style={{
                           padding: '1px 6px', borderRadius: '4px',
                           background: 'rgba(255,77,106,0.15)', border: '1px solid rgba(255,77,106,0.3)',

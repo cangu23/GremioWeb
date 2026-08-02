@@ -10,7 +10,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers } from '@gremio-estelar/shared';
+import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers, hasAnyRole } from '@gremio-estelar/shared';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -222,7 +222,7 @@ function VtuberProfileEditor() {
   // Un usuario normal (role USER) que llegó aquí porque tenía un
   // VTuberProfile creado automáticamente por Discord/Google antes del
   // fix no debe ver el editor. Solo ve la pantalla de solicitud.
-  const isOfficialVtuber = user.role === 'VTUBER' || user.role === 'ADMIN' || user.vtuberProfile?.isApproved === true;
+  const isOfficialVtuber = hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']) || user.vtuberProfile?.isApproved === true;
 
   return (
     <>

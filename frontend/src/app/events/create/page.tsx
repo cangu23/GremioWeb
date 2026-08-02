@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 function CreateEventForm() {
   const { user, isLoading } = useAuth();
@@ -41,7 +42,7 @@ function CreateEventForm() {
   }
 
   // Solo VTUBER, MAID y ADMIN pueden crear eventos
-  if (user.role !== 'VTUBER' && user.role !== 'MAID' && user.role !== 'ADMIN') {
+  if (!hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) {
     router.push('/events');
     return null;
   }

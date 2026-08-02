@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface NewsArticle {
   id: string;
@@ -67,7 +68,7 @@ function AdminNewsContent() {
   }, [showToast]);
 
   useEffect(() => {
-    if (!isLoading && (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR'))) {
+    if (!isLoading && (!user || !hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']))) {
       router.push('/dashboard');
       return;
     }

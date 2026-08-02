@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 function CreateGuildForm() {
   const { user, isLoading } = useAuth();
@@ -36,7 +37,7 @@ function CreateGuildForm() {
   if (!user) { router.push('/login'); return null; }
 
   // Solo VTUBER, ADMIN y MODERATOR pueden crear gremios
-  if (user.role !== 'VTUBER' && user.role !== 'ADMIN' && user.role !== 'MODERATOR') {
+  if (!hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) {
     router.push('/guilds');
     return null;
   }
