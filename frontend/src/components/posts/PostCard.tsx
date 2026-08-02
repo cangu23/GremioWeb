@@ -5,16 +5,19 @@ import { apiFetch } from '@/lib/api';
 import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { useToast } from '@/lib/ToastContext';
-import ModerateModal from './ModerateModal';
-import ReportModal from './ReportModal';
+import dynamic from 'next/dynamic';
 import MentionInput, { renderContentWithMentions } from './MentionInput';
-import StickerPicker from '@/components/ui/StickerPicker';
 import { useStickersCache } from '@/lib/content-renderer';
-import MediaLightbox from './MediaLightbox';
-import SendStardustModal from '@/components/ui/SendStardustModal';
 import RoleBadge from '@/components/ui/RoleBadge';
 import { getPrimaryRole, isStaffRole, hasAnyRole } from '@gremio-estelar/shared';
 import type { PostCardData, CommentData } from '../../../../shared/types';
+
+// Lazy-loaded modals to shrink initial bundle & boost rendering speed
+const ModerateModal = dynamic(() => import('./ModerateModal'), { ssr: false });
+const ReportModal = dynamic(() => import('./ReportModal'), { ssr: false });
+const SendStardustModal = dynamic(() => import('@/components/ui/SendStardustModal'), { ssr: false });
+const MediaLightbox = dynamic(() => import('./MediaLightbox'), { ssr: false });
+const StickerPicker = dynamic(() => import('@/components/ui/StickerPicker'), { ssr: false });
 
 interface PostCardProps {
   post: PostCardData;

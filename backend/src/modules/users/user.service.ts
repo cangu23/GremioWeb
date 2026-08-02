@@ -6,9 +6,16 @@ import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 import { getMyPlatformPlan } from '../subscriptions/platform-subscriptions.service';
 
+const planCheckCache = new Map<string, number>();
+const PLAN_CHECK_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export const getMe = async (userId: string): Promise<UserProfile & { dailyRewardClaimed?: any }> => {
-  // Automatically check subscription expiration and update user plan status
-  await getMyPlatformPlan(userId).catch(() => {});
+  // Automatically check subscription expiration (cached for 5 minutes)
+  const lastCheck = planCheckCache.get(userId) || 0;
+  if (Date.now() - lastCheck > PLAN_CHECK_TTL_MS) {
+    planCheckCache.set(userId, Date.now());
+    getMyPlatformPlan(userId).catch(() => {});
+  }
 
   let userProfile = await UserRepository.getUserProfileById(userId);
   if (!userProfile) {

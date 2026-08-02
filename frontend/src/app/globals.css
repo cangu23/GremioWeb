@@ -80,6 +80,146 @@
 }
 
 /* ==========================================================================
+   LIGHT MODE DESIGN SYSTEM — High Contrast & Premium Visibility
+   ========================================================================== */
+
+[data-theme='light'] {
+  --bg-deep: #f1f3f9;
+  --bg-mid: #e2e7f0;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-disabled: rgba(15, 23, 42, 0.3);
+
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-glow: rgba(124, 58, 237, 0.25);
+  --primary-subtle: rgba(124, 58, 237, 0.1);
+  --primary-muted: rgba(124, 58, 237, 0.05);
+
+  --secondary: #6366f1;
+  --secondary-hover: #4f46e5;
+  --secondary-subtle: rgba(99, 102, 241, 0.1);
+
+  --accent: #2563eb;
+  --accent-subtle: rgba(37, 99, 235, 0.1);
+
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(203, 213, 225, 0.8);
+  --glass-border-hover: rgba(124, 58, 237, 0.4);
+  --glass-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+
+  --cafe-bg: #fffbf7;
+  --cafe-bg-light: #f5ebe0;
+  --cafe-card: #ffffff;
+  --cafe-card-hover: #fffdfa;
+  --cafe-cream: #2b1e16;
+  --cafe-cream-light: #1f140e;
+  --cafe-cream-dark: #4a382a;
+  --cafe-text: #1c130d;
+  --cafe-text-muted: #5e4c3e;
+  --cafe-border: rgba(139, 105, 20, 0.25);
+}
+
+[data-theme='light'] body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+}
+
+/* Light Mode Overrides for Form Controls */
+[data-theme='light'] input,
+[data-theme='light'] textarea,
+[data-theme='light'] select,
+[data-theme='light'] .input {
+  color-scheme: light !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='light'] input::placeholder,
+[data-theme='light'] textarea::placeholder,
+[data-theme='light'] .input::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme='light'] input:focus,
+[data-theme='light'] textarea:focus,
+[data-theme='light'] select:focus,
+[data-theme='light'] .input:focus {
+  border-color: var(--primary) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important;
+}
+
+[data-theme='light'] select option,
+[data-theme='light'] .select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Light Mode Overrides for Cards, Panels & Modals */
+[data-theme='light'] .glass,
+[data-theme='light'] .glass-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06) !important;
+}
+
+[data-theme='light'] .glass:hover,
+[data-theme='light'] .glass-card:hover {
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.12) !important;
+}
+
+/* Light Mode Overrides for Buttons */
+[data-theme='light'] .btn--outline {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme='light'] .btn--outline:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: var(--primary) !important;
+}
+
+[data-theme='light'] .btn--ghost {
+  color: #334155 !important;
+}
+
+[data-theme='light'] .btn--ghost:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Light Mode High-Contrast Text Overrides */
+[data-theme='light'] h1,
+[data-theme='light'] h2,
+[data-theme='light'] h3,
+[data-theme='light'] h4,
+[data-theme='light'] h5,
+[data-theme='light'] h6,
+[data-theme='light'] p,
+[data-theme='light'] label {
+  color: var(--text-primary);
+}
+
+[data-theme='light'] .text-muted {
+  color: var(--text-muted) !important;
+}
+
+[data-theme='light'] .text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+/* ==========================================================================
    Reset & Base
    ========================================================================== */
 

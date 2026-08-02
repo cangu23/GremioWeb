@@ -93,8 +93,12 @@ export default function ParticlesBackground() {
     window.addEventListener('resize', handleResize);
 
     // ── Generate Stars & Constellation Nodes ──
-    const starColors = ['#FFFFFF', '#A78BFA', '#8B5CF6', '#6CB4EE', '#F59E0B', '#E2E8F0'];
-    const starCount = Math.floor(Math.min(width, height) * 0.15);
+    const isLightTheme = document.documentElement.getAttribute('data-theme') === 'light';
+    const starColors = isLightTheme
+      ? ['#7C3AED', '#6D28D9', '#2563EB', '#D97706', '#475569', '#8B5CF6']
+      : ['#FFFFFF', '#A78BFA', '#8B5CF6', '#6CB4EE', '#F59E0B', '#E2E8F0'];
+    const isMobile = width < 768;
+    const starCount = isMobile ? 40 : Math.min(120, Math.floor(Math.min(width, height) * 0.12));
 
     const stars: Star[] = Array.from({ length: starCount }, (_, i) => {
       const isSpecial = i % 7 === 0;
@@ -117,7 +121,9 @@ export default function ParticlesBackground() {
     let meteors: Meteor[] = [];
     let time = 0;
 
-    const meteorColors = ['#8B5CF6', '#A78BFA', '#6CB4EE', '#F59E0B', '#FFFFFF'];
+    const meteorColors = isLightTheme
+      ? ['#7C3AED', '#6D28D9', '#2563EB', '#D97706', '#475569']
+      : ['#8B5CF6', '#A78BFA', '#6CB4EE', '#F59E0B', '#FFFFFF'];
 
     const createMeteor = (isSuper = false) => {
       const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.3; // 45 deg angle
@@ -276,14 +282,18 @@ export default function ParticlesBackground() {
         }
         ctx.globalAlpha = 1;
 
-        // Connect nearby stars to form constellations
+        // Connect nearby stars to form constellations (squared distance optimization)
+        const maxConnectDistanceSq = maxConnectDistance * maxConnectDistance;
         for (let j = i + 1; j < stars.length; j++) {
           const other = stars[j];
           const sdx = other.x - star.x;
+          if (Math.abs(sdx) > maxConnectDistance) continue;
           const sdy = other.y - star.y;
-          const sdist = Math.sqrt(sdx * sdx + sdy * sdy);
-
-          if (sdist < maxConnectDistance) {
+          if (Math.abs(sdy) > maxConnectDistance) continue;
+          
+          const sdistSq = sdx * sdx + sdy * sdy;
+          if (sdistSq < maxConnectDistanceSq) {
+            const sdist = Math.sqrt(sdistSq);
             const lineAlpha = (1 - sdist / maxConnectDistance) * 0.12 * activeAlpha;
             ctx.beginPath();
             ctx.moveTo(star.x, star.y);

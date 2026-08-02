@@ -91,59 +91,50 @@ function HomeContent() {
     if (!user) return;
 
     const fetchSidebarData = async () => {
-      // Guilds
-      try {
-        const guilds = await apiFetch('/guilds', {});
-        if (Array.isArray(guilds)) setMyGuilds(guilds.filter((g: GuildItem) => g.isMember));
-      } catch {}
+      // Parallelize all 7 sidebar queries simultaneously
+      const [guildsRes, tagsRes, notifsRes, liveRes, followingRes, eventsRes, maidsRes] = await Promise.allSettled([
+        apiFetch('/guilds', {}),
+        apiFetch('/posts/hashtags/trending?limit=8', {}),
+        apiFetch('/notifications/unread-count', {}),
+        apiFetch('/vtubers/live', {}),
+        apiFetch(`/social/following/${user.id}`, {}),
+        apiFetch('/events?status=UPCOMING&limit=5', {}),
+        apiFetch('/users/role/MAID', {}),
+      ]);
 
-      // Hashtags
-      try {
-        const tags = await apiFetch('/posts/hashtags/trending?limit=8', {});
-        setTrendingHashtags(Array.isArray(tags) ? tags : []);
-      } catch {}
-
-      // Notifications
-      try {
-        const data = await apiFetch('/notifications/unread-count', {});
-        setUnreadNotifs(data.count || 0);
-      } catch {}
-
-      // Live VTubers
-      try {
-        const data = await apiFetch('/vtubers/live', {});
-        if (Array.isArray(data)) setLiveVtubers(data.slice(0, 5));
-      } catch {}
-
-      // Following users (amigos)
-      try {
-        const data = await apiFetch(`/social/following/${user.id}`, {});
-        if (Array.isArray(data)) setFollowingUsers(data.slice(0, 8));
-      } catch {}
-
-      // Upcoming events
-      try {
-        const events = await apiFetch('/events?status=UPCOMING&limit=5', {});
-        setUpcomingEvents(Array.isArray(events) ? events.slice(0, 4) : []);
-      } catch {}
-
-      // Hoshizora Maids
-      try {
-        const data = await apiFetch('/users/role/MAID', {});
-        if (Array.isArray(data)) setMaidsData(data);
-      } catch {}
+      if (guildsRes.status === 'fulfilled' && Array.isArray(guildsRes.value)) {
+        setMyGuilds(guildsRes.value.filter((g: GuildItem) => g.isMember));
+      }
+      if (tagsRes.status === 'fulfilled' && Array.isArray(tagsRes.value)) {
+        setTrendingHashtags(tagsRes.value);
+      }
+      if (notifsRes.status === 'fulfilled' && notifsRes.value) {
+        setUnreadNotifs(notifsRes.value.count || 0);
+      }
+      if (liveRes.status === 'fulfilled' && Array.isArray(liveRes.value)) {
+        setLiveVtubers(liveRes.value.slice(0, 5));
+      }
+      if (followingRes.status === 'fulfilled' && Array.isArray(followingRes.value)) {
+        setFollowingUsers(followingRes.value.slice(0, 8));
+      }
+      if (eventsRes.status === 'fulfilled' && Array.isArray(eventsRes.value)) {
+        setUpcomingEvents(eventsRes.value.slice(0, 4));
+      }
+      if (maidsRes.status === 'fulfilled' && Array.isArray(maidsRes.value)) {
+        setMaidsData(maidsRes.value);
+      }
       setMaidsLoading(false);
     };
 
     fetchSidebarData();
 
-    // Poll live VTubers every 45s for real-time updates
+    // Poll live VTubers every 60s for real-time updates (efficient background refresh)
     const livePollInterval = setInterval(async () => {
       try {
         const data = await apiFetch('/vtubers/live', {});
         if (Array.isArray(data)) setLiveVtubers(data.slice(0, 5));
       } catch {}
-    }, 12000);
+    }, 60000);
 
     return () => {
       clearInterval(livePollInterval);

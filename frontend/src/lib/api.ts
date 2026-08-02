@@ -65,9 +65,27 @@ export const notifyMissionsChanged = () => {
   }
 };
 
+// In-memory cache for GET requests
+const apiCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL_MS = 15000; // 15 seconds cache
+
+export const clearApiCache = () => {
+  apiCache.clear();
+};
+
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  const method = (options.method || 'GET').toUpperCase();
   const url = `${API_BASE_URL}${endpoint}`;
   
+  // Return cached response for GET requests if fresh
+  if (method === 'GET' && apiCache.has(endpoint)) {
+    const cached = apiCache.get(endpoint)!;
+    if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data;
+    }
+    apiCache.delete(endpoint);
+  }
+
   const headers = new Headers(options.headers || {});
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
@@ -108,6 +126,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
   // Handle empty responses (like 204 No Content for logout)
   if (response.status === 204) {
+    if (method !== 'GET') clearApiCache();
     return null;
   }
 
@@ -117,8 +136,16 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     throw new Error(data?.message || 'Something went wrong');
   }
 
+  // Cache GET responses
+  if (method === 'GET') {
+    apiCache.set(endpoint, { data, timestamp: Date.now() });
+  } else {
+    // Clear GET cache on mutations
+    clearApiCache();
+  }
+
   // Auto-dispatch real-time updates for score/reward modifying routes
-  if (options.method && ['POST', 'PUT', 'DELETE'].includes(options.method.toUpperCase())) {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
     if (endpoint.includes('/claim') || endpoint.includes('/missions') || endpoint.includes('/like') || endpoint.includes('/comment') || endpoint.includes('/feed') || endpoint.includes('/stardust') || endpoint.includes('/buy') || endpoint.includes('/equip')) {
       notifyMissionsChanged();
     }

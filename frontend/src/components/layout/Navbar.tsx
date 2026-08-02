@@ -7,15 +7,18 @@ import Image from 'next/image';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { connectSocket, NOTIFICATION_EVENTS, DM_EVENTS } from '@/lib/socket-client';
+import dynamic from 'next/dynamic';
 import { useToast } from '@/lib/ToastContext';
 import ClientOnly from '@/lib/ClientOnly';
 import UserAvatar from '@/components/ui/UserAvatar';
-import StardustStatsModal from '@/components/ui/StardustStatsModal';
 import StardustCardButton from '@/components/ui/StardustCardButton';
-import GiftEnvelopeModal, { GiftData } from '@/components/ui/GiftEnvelopeModal';
+import type { GiftData } from '@/components/ui/GiftEnvelopeModal';
 import { hasAnyRole } from '@gremio-estelar/shared';
 import styles from './Navbar.module.css';
 import { Users, Calendar, Shield, FileText, MessageCircle, ShoppingBag, Award, BarChart, Bell, Backpack, Sparkles, Settings, LogOut, Key, Plus, Grid, TrendingUp, User, HelpCircle } from '@/components/ui/Icons';
+
+const StardustStatsModal = dynamic(() => import('@/components/ui/StardustStatsModal'), { ssr: false });
+const GiftEnvelopeModal = dynamic(() => import('@/components/ui/GiftEnvelopeModal'), { ssr: false });
 
 // ==========================================================================
 // SVG Icon components (unique to header)
