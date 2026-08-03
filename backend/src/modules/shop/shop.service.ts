@@ -56,7 +56,7 @@ export const buyItem = async (userId: string, itemId: string) => {
     try {
       const parsed = JSON.parse(item.data);
       if (parsed.discountPercent && parsed.discountPercent > 0) {
-        effectivePrice = Math.max(1, Math.round(item.price * (1 - parsed.discountPercent / 100)));
+        effectivePrice = Math.max(0, Math.round(item.price * (1 - parsed.discountPercent / 100)));
       }
     } catch {}
   }
@@ -173,7 +173,7 @@ export const refundItem = async (userId: string, itemId: string) => {
     try {
       const parsed = JSON.parse(item.data);
       if (parsed.discountPercent && parsed.discountPercent > 0) {
-        refundPrice = Math.max(1, Math.round(item.price * (1 - parsed.discountPercent / 100)));
+        refundPrice = Math.max(0, Math.round(item.price * (1 - parsed.discountPercent / 100)));
       }
     } catch {}
   }
@@ -211,7 +211,7 @@ export const seedDefaultItems = async () => {
     { name: 'Dragón Legendario', description: 'La insignia más rara. Solo los más dedicados la tienen.', type: 'BADGE', price: 15000, data: JSON.stringify({ icon: '🐉', color: '#8b0000', label: 'Legendario' }), sortOrder: 6 },
 
     // ── Títulos ──
-    { name: 'Nuevo en la Escena', description: 'Para los que acaban de llegar a Gremio Estelar', type: 'TITLE', price: 300, data: JSON.stringify({ text: '✨ Nuevo en la Escena', color: '#00d4ff', gradient: 'linear-gradient(90deg, #00d4ff, #a78bfa)' }), sortOrder: 10 },
+    { name: 'Nuevo en la Escena', description: 'Título de bienvenida gratuito para los recién llegados a Gremio Estelar', type: 'TITLE', price: 0, data: JSON.stringify({ text: '✨ Nuevo en la Escena', color: '#00d4ff', gradient: 'linear-gradient(90deg, #00d4ff, #a78bfa)' }), sortOrder: 10 },
     { name: 'Fan Oficial', description: 'Eres un fan dedicado de la comunidad VTuber', type: 'TITLE', price: 800, data: JSON.stringify({ text: '💜 Fan Oficial', color: '#a78bfa', gradient: 'linear-gradient(90deg, #a78bfa, #ec4899)' }), sortOrder: 11 },
     { name: 'Cazador de Estrellas', description: 'Siempre al acecho de contenido nuevo', type: 'TITLE', price: 2500, data: JSON.stringify({ text: '⭐ Cazador de Estrellas', color: '#ffd700', gradient: 'linear-gradient(90deg, #ffd700, #ff6b35)' }), sortOrder: 12 },
     { name: 'VTuber Aprendiz', description: 'El inicio de un gran viaje', type: 'TITLE', price: 4500, data: JSON.stringify({ text: '🌟 VTuber Aprendiz', color: '#8b5cf6', gradient: 'linear-gradient(90deg, #8b5cf6, #ec4899)' }), sortOrder: 13 },
@@ -232,28 +232,6 @@ export const seedDefaultItems = async () => {
     { name: 'Oro Puro', description: 'Un elegante color dorado', type: 'COLOR', price: 1500, data: JSON.stringify({ color: '#ffd700' }), sortOrder: 34 },
     { name: 'Verde Neon', description: 'Intenso verde fosforescente', type: 'COLOR', price: 1000, data: JSON.stringify({ color: '#00ff88' }), sortOrder: 35 },
 
-    // ── Banners ──
-    { name: 'Atardecer Pixelado', description: 'Un banner estilo pixel art de un atardecer', type: 'BANNER', price: 1200, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80' }), sortOrder: 40 },
-    { name: 'Galaxia Estelar', description: 'Un banner con una galaxia llena de estrellas', type: 'BANNER', price: 2500, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&q=80' }), sortOrder: 41 },
-    { name: 'Aurora Boreal', description: 'Las luces del norte iluminan tu perfil', type: 'BANNER', price: 4000, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80' }), sortOrder: 42 },
-    { name: 'Ciudad Cyberpunk', description: 'Neon lights en la ciudad del futuro', type: 'BANNER', price: 7500, data: JSON.stringify({ bannerUrl: 'https://images.unsplash.com/photo-1519608825926-d7b8c4c91dea?w=800&q=80' }), sortOrder: 43 },
-
-    // ── Efectos de hover ──
-    { name: 'Brillo Mágico', description: 'Un brillo suave alrededor de tu avatar', type: 'HOVER', price: 1000, data: JSON.stringify({ effect: 'glow' }), sortOrder: 50 },
-    { name: 'Aura de Fuego', description: 'Llamas sutiles alrededor de tu avatar', type: 'HOVER', price: 2500, data: JSON.stringify({ effect: 'fire' }), sortOrder: 51 },
-    { name: 'Destellos Estelares', description: 'Destellos de estrellas al pasar el mouse', type: 'HOVER', price: 5000, data: JSON.stringify({ effect: 'sparkle' }), sortOrder: 52 },
-
-    // ── Consumibles ──
-    { name: 'Cambio de Nombre', description: 'Permite cambiar tu nombre de usuario una vez', type: 'NAME_CHANGE', price: 2500, data: JSON.stringify({}), sortOrder: 60 },
-    { name: 'Post Destacado', description: 'Fija un post en tu perfil por 24 horas (3 usos)', type: 'PIN_POST', price: 800, data: JSON.stringify({ uses: 3 }), sortOrder: 61 },
-    { name: 'Multiplicador 2x (24h)', description: 'Duplica todo el Polvo Estelar que ganes durante 24 horas', type: 'BOOSTER_2X', price: 1000, data: JSON.stringify({ hours: 24 }), sortOrder: 62 },
-    { name: 'Ficha de Ruleta Extra', description: 'Otorga un tiro extra instantáneo en la Ruleta Estelar', type: 'ROULETTE_TOKEN', price: 350, data: JSON.stringify({ uses: 1 }), sortOrder: 63 },
-    { name: 'Escudo de Racha Diaria', description: 'Protege tu racha de días consecutivos si olvidas entrar un día', type: 'STREAK_SAVER', price: 600, data: JSON.stringify({ uses: 1 }), sortOrder: 64 },
-    { name: 'Cristal de EXP de Gremio', description: 'Otorga +1,000 de Experiencia instantánea a tu Gremio', type: 'GUILD_XP_CRYSTAL', price: 2000, data: JSON.stringify({ xp: 1000 }), sortOrder: 65 },
-    { name: 'Megáfono Estelar', description: 'Fija tu mensaje resplandeciente en el Chat Global por 5 min', type: 'GLOBAL_MEGAPHONE', price: 1500, data: JSON.stringify({ uses: 1 }), sortOrder: 66 },
-    { name: 'Super Boost de Publicación', description: 'Otorga un aura dorada resplandeciente a tu publicación', type: 'SUPER_BOOST_POST', price: 500, data: JSON.stringify({ uses: 1 }), sortOrder: 67 },
-  ];
-
   for (const item of defaults) {
     const existing = await ShopRepository.findItemByName(item.name);
     if (!existing) {
@@ -266,5 +244,12 @@ export const seedDefaultItems = async () => {
     }
   }
 
+  // Deactivate removed banner items
+  await prisma.shopItem.updateMany({
+    where: { name: { in: ['Atardecer Pixelado', 'Galaxia Estelar', 'Aurora Boreal', 'Ciudad Cyberpunk'] } },
+    data: { active: false },
+  }).catch(() => {});
+
+  shopItemsCache = null;
   return defaults.length;
 };

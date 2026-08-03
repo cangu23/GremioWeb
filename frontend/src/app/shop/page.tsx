@@ -66,7 +66,6 @@ const CATEGORIES = [
   { key: 'TITLE', label: '👑 Títulos' },
   { key: 'FRAME', label: '⭕ Marcos' },
   { key: 'COLOR', label: '🎨 Colores' },
-  { key: 'BANNER', label: '🖼️ Banners' },
   { key: 'HOVER', label: '✨ Efectos' },
   { key: 'consumable', label: '📦 Consumibles' },
 ];
@@ -485,7 +484,7 @@ export default function ShopPage() {
               const CONSUMABLE_TYPES = ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'];
               const isConsumable = CONSUMABLE_TYPES.includes(item.type);
               const discountPercent = itemData.discountPercent || 0;
-              const effectivePrice = discountPercent > 0 ? Math.max(1, Math.round(item.price * (1 - discountPercent / 100))) : item.price;
+              const effectivePrice = discountPercent > 0 ? Math.max(0, Math.round(item.price * (1 - discountPercent / 100))) : item.price;
               const canAfford = stardust >= effectivePrice;
               const isBusy = purchasing === item.id || equipping === item.id;
 
@@ -580,10 +579,16 @@ export default function ShopPage() {
                       <div style={{
                         display: 'flex', alignItems: 'center', gap: '5px',
                         fontWeight: 800, fontSize: '1.05rem',
-                        color: owned ? 'var(--text-muted)' : canAfford ? '#ffd700' : '#ef4444',
+                        color: owned ? 'var(--text-muted)' : effectivePrice === 0 ? '#10b981' : canAfford ? '#ffd700' : '#ef4444',
                       }}>
-                        <span>⭐</span>
-                        <span>{effectivePrice.toLocaleString()}</span>
+                        {effectivePrice === 0 ? (
+                          <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>🎁 GRATIS</span>
+                        ) : (
+                          <>
+                            <span>⭐</span>
+                            <span>{effectivePrice.toLocaleString()}</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -650,7 +655,7 @@ export default function ShopPage() {
                           boxShadow: canAfford ? '0 4px 14px rgba(139,92,246,0.3)' : 'none',
                         }}
                       >
-                        {purchasing === item.id ? 'Comprando...' : canAfford ? 'Comprar' : 'Sin Stardust'}
+                        {purchasing === item.id ? 'Obteniendo...' : effectivePrice === 0 ? '🎁 Obtener Gratis' : canAfford ? 'Comprar' : 'Sin Stardust'}
                       </button>
                     )}
                   </div>

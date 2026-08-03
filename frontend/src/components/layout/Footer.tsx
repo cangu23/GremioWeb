@@ -2,10 +2,16 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Footer() {
+  const pathname = usePathname();
   const { user, isLoading } = useAuth();
+
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/chat')) {
+    return null;
+  }
 
   // IMPORTANTE (fix de hidratación): `isLoading` es `true` tanto en el SSR
   // como en el primer render de hidratación del cliente. Ramificar contenido

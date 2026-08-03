@@ -37,25 +37,6 @@ export default function ImageCropperModal({
   // Avatar: 1:1, Banner: 3:1 (e.g. 1200x400)
   const targetAspect = cropType === 'avatar' ? 1 : cropType === 'banner' ? 3 : 1.5;
 
-  // Reset transforms when imageSrc or cropType changes
-  useEffect(() => {
-    if (imageSrc) {
-      setZoom(1);
-      setRotation(0);
-      setFlipH(false);
-      setFlipV(false);
-      setPan({ x: 0, y: 0 });
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = imageSrc;
-      img.onload = () => {
-        imageRef.current = img;
-        drawCanvas();
-      };
-    }
-  }, [imageSrc, cropType]);
-
   // Redraw canvas whenever transforms change
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -102,6 +83,39 @@ export default function ImageCropperModal({
 
     ctx.restore();
   }, [zoom, rotation, flipH, flipV, pan, targetAspect]);
+
+  // Reset transforms when imageSrc or cropType changes
+  useEffect(() => {
+    imageRef.current = null;
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
+    if (imageSrc) {
+      setZoom(1);
+      setRotation(0);
+      setFlipH(false);
+      setFlipV(false);
+      setPan({ x: 0, y: 0 });
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        imageRef.current = img;
+        drawCanvas();
+      };
+      img.onerror = () => {
+        // Fallback without crossOrigin if CORS blocks anonymous load
+        const fallbackImg = new Image();
+        fallbackImg.onload = () => {
+          imageRef.current = fallbackImg;
+          drawCanvas();
+        };
+        fallbackImg.src = imageSrc;
+      };
+      img.src = imageSrc;
+    }
+  }, [imageSrc, cropType, drawCanvas]);
 
   useEffect(() => {
     drawCanvas();

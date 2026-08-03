@@ -596,7 +596,15 @@ function VtuberProfileEditor() {
                 {bannerUrl && (
                   <button
                     type="button"
-                    onClick={() => { setCropperSrc(bannerUrl); setCropperType('banner'); setCropperOpen(true); }}
+                    onClick={() => {
+                      if (bannerUrl === avatarUrl) {
+                        bannerInputRef.current?.click();
+                      } else {
+                        setCropperSrc(bannerUrl);
+                        setCropperType('banner');
+                        setCropperOpen(true);
+                      }
+                    }}
                     style={{
                       padding: '10px 14px', borderRadius: '8px',
                       border: '1px solid rgba(139,92,246,0.3)',

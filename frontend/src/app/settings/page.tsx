@@ -29,6 +29,7 @@ function UserSettings() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
   const [bannerColor, setBannerColor] = useState('#1a1040');
+  const [bannerUrl, setBannerUrl] = useState('');
   const [displayedRole, setDisplayedRole] = useState('');
   const [profileMusic, setProfileMusic] = useState('');
   const originalProfileMusic = useRef('');
@@ -40,35 +41,44 @@ function UserSettings() {
   // Cropper states
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState<string | null>(null);
+  const [cropperType, setCropperType] = useState<'avatar' | 'banner'>('avatar');
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner' = 'avatar') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const tempUrl = URL.createObjectURL(file);
     setCropperSrc(tempUrl);
+    setCropperType(type);
     setCropperOpen(true);
     if (e.target) e.target.value = '';
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
     setCropperOpen(false);
-    setUploadingAvatar(true);
+    const type = cropperType;
+    const setUploading = type === 'avatar' ? setUploadingAvatar : setUploadingBanner;
+    const setUrl = type === 'avatar' ? setAvatarUrl : setBannerUrl;
+
+    setUploading(true);
     try {
-      const croppedFile = new File([croppedBlob], `avatar_${Date.now()}.webp`, { type: 'image/webp' });
-      const url = await uploadAndWait(croppedFile, '/uploads/avatar');
-      setAvatarUrl(url);
-      showToast('Foto de perfil recortada y actualizada', 'success');
+      const croppedFile = new File([croppedBlob], `${type}_${Date.now()}.webp`, { type: 'image/webp' });
+      const url = await uploadAndWait(croppedFile, `/uploads/${type}`);
+      setUrl(url);
+      showToast(`${type === 'avatar' ? 'Foto de perfil' : 'Banner'} recortado y actualizado`, 'success');
     } catch (err: unknown) {
       showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir la imagen recortada'}`, 'error');
     } finally {
-      setUploadingAvatar(false);
+      setUploading(false);
     }
   };
 
   const handleCropExisting = () => {
     if (!avatarUrl) return;
     setCropperSrc(avatarUrl);
+    setCropperType('avatar');
     setCropperOpen(true);
   };
 
@@ -82,6 +92,7 @@ function UserSettings() {
       setAvatarUrl(user.avatarUrl || '');
       setBio(user.bio || '');
       setBannerColor(user.bannerColor || '#1a1040');
+      setBannerUrl((user as any).bannerUrl || '');
       setDisplayedRole(user.displayedRole || '');
       setProfileMusic(user.profileMusic || '');
       originalProfileMusic.current = user.profileMusic || '';
@@ -117,6 +128,7 @@ function UserSettings() {
           avatarUrl: avatarUrl.trim() || undefined,
           bio: bio.trim() || undefined,
           bannerColor: bannerColor || undefined,
+          bannerUrl: bannerUrl.trim() || undefined,
           displayedRole: displayedRole || undefined,
           profileMusic: profileMusic.trim() || null,
         }),
@@ -264,14 +276,78 @@ function UserSettings() {
           </div>
         </div>
 
-        {/* Banner Color */}
+        {/* Banner Image & Color */}
         <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>
           <h3 style={{
             fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            Color del Banner
+            Imagen y Color del Banner
           </h3>
+
+          {/* Banner image preview */}
+          {bannerUrl && (
+            <div style={{
+              width: '100%', height: '120px', borderRadius: '12px', marginBottom: '14px',
+              background: `url(${bannerUrl}) center/cover`,
+              border: '1px solid rgba(255,255,255,0.1)',
+            }} />
+          )}
+
+          <div className="form-group" style={{ marginBottom: '16px' }}>
+            <label className="form-label">Imagen de Banner (URL o Subir)</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                className="input"
+                value={bannerUrl}
+                onChange={e => setBannerUrl(e.target.value)}
+                placeholder="URL de imagen de banner"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={() => bannerInputRef.current?.click()}
+                disabled={uploadingBanner}
+                style={{
+                  padding: '10px 14px', borderRadius: '8px',
+                  border: '1px solid var(--glass-border)',
+                  background: 'rgba(255,255,255,0.05)', color: 'var(--text)',
+                  cursor: uploadingBanner ? 'wait' : 'pointer',
+                  fontSize: '0.85rem', whiteSpace: 'nowrap',
+                  opacity: uploadingBanner ? 0.6 : 1,
+                }}
+              >
+                {uploadingBanner ? '...' : 'Subir'}
+              </button>
+              {bannerUrl && bannerUrl !== avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCropperSrc(bannerUrl);
+                    setCropperType('banner');
+                    setCropperOpen(true);
+                  }}
+                  style={{
+                    padding: '10px 14px', borderRadius: '8px',
+                    border: '1px solid rgba(139,92,246,0.3)',
+                    background: 'rgba(139,92,246,0.12)', color: 'var(--primary)',
+                    cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap',
+                    fontWeight: 600,
+                  }}
+                >
+                  ✂️ Recortar
+                </button>
+              )}
+              <input
+                ref={bannerInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                style={{ display: 'none' }}
+                onChange={e => handleFileSelect(e, 'banner')}
+              />
+            </div>
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <input
               type="color"
@@ -284,9 +360,9 @@ function UserSettings() {
               }}
             />
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text)' }}>Elige un color sólido para tu banner</p>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text)' }}>Color de fondo alternativo para tu banner</p>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Se mostrará en la parte superior de tu perfil.
+                Se mostrará en la parte superior de tu perfil si no hay imagen de banner.
               </p>
             </div>
           </div>
@@ -588,8 +664,8 @@ function UserSettings() {
       <ImageCropperModal
         isOpen={cropperOpen}
         imageSrc={cropperSrc}
-        cropType="avatar"
-        title="Editar Foto de Perfil"
+        cropType={cropperType}
+        title={cropperType === 'avatar' ? 'Editar Foto de Perfil' : 'Editar Banner de Perfil'}
         onCropComplete={handleCropComplete}
         onClose={() => setCropperOpen(false)}
       />
