@@ -131,7 +131,7 @@ npm run prisma:generate:sqlite     # Generar Prisma client con SQLite
 
 | Campo | Valor |
 |---|---|
-| **Name** | `gremio-backend` |
+| **Name** | `gremioweb` (API en `https://gremioweb.onrender.com`) |
 | **Region** | La más cercana a tus usuarios |
 | **Branch** | `main` (o `master`) |
 | **Runtime** | `Docker` |
@@ -155,7 +155,7 @@ JWT_REFRESH_EXPIRES_IN=7d
 
 6. 💡 En **Advanced** → **Build Arguments**, agrega:
 ```
-NEXT_PUBLIC_API_BASE_URL=https://gremio-backend.onrender.com/api
+NEXT_PUBLIC_API_BASE_URL=https://gremioweb.onrender.com/api
 ```
 
 7. Haz clic en **Create Web Service**
@@ -166,7 +166,11 @@ cd backend && npx prisma db push --schema prisma/schema.prisma
 ```
    Esto crea las tablas en la base de datos. Luego haz click en **Manual Deploy** → **Deploy latest commit** para ejecutarlo.
 
-10. ✅ **Verifica que el backend funciona:** visita `https://gremio-backend.onrender.com/api/health`
+10. ✅ **Verifica que el backend funciona:** visita `https://gremioweb.onrender.com/api/health`
+
+> ⚠️ **Nota:** el servicio del backend en producción se llama `gremioweb` (no `gremio-backend`).
+> Si aparece un servicio viejo llamado `gremio-backend` (suspendido/503), ya no se usa — el frontend
+> apunta a `gremioweb.onrender.com`. Puedes borrarlo o ignorarlo.
 
 ---
 
@@ -190,7 +194,7 @@ cd backend && npx prisma db push --schema prisma/schema.prisma
 4. En **Environment Variables**, agrega:
 
 ```
-NEXT_PUBLIC_API_BASE_URL=https://gremio-backend.onrender.com/api
+NEXT_PUBLIC_API_BASE_URL=https://gremioweb.onrender.com/api
 ```
 
 5. Haz clic en **Create Web Service**
@@ -209,7 +213,7 @@ NEXT_PUBLIC_API_BASE_URL=https://gremio-backend.onrender.com/api
 Para el backend, puedes agregar un subdominio como `api.gremioestelar.com`:
 1. Ve al servicio **backend** → **Settings** → **Custom Domain**
 2. Agrega `api.gremioestelar.com`
-3. Crea un registro CNAME en tu DNS apuntando a `gremio-backend.onrender.com`
+3. Crea un registro CNAME en tu DNS apuntando a `gremioweb.onrender.com`
 
 ---
 
