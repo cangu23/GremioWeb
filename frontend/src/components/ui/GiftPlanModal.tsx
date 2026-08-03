@@ -62,6 +62,11 @@ export default function GiftPlanModal({
   const [message, setMessage] = useState<string>('');
   const [anonymous, setAnonymous] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (recipientId && recipientName) {
@@ -133,9 +138,6 @@ export default function GiftPlanModal({
       setLoading(false);
     }
   };
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
   if (!isOpen || !mounted || typeof document === 'undefined') return null;
 

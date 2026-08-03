@@ -54,7 +54,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   //   - comprobar `isLoading` antes de usar `user` (p. ej. `!isLoading && !!user`)
   // De lo contrario produce mismatches de hidratación (React #418/#425/#423).
   // Ver Footer.tsx (arreglado) como referencia del patrón correcto.
-  const [user, setUser] = useState<UserProfile | null>(() => getCachedUser());
+  // IMPORTANTE (fix hidratación): NO leer el cache aquí. Si `user` se
+  // inicializa desde localStorage en el primer render del cliente, difiere
+  // del SSR (donde no hay window y user=null) y CUALQUIER componente que
+  // ramifique por `user` falla la hidratación (React #418/#425/#423).
+  // El cache se restaura en el primer useEffect, justo después de hidratar.
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const initialCheckDone = useRef(false);
   const isRefreshing = useRef(false);
@@ -90,6 +95,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Guard: only run once even if React StrictMode double-invokes effects
     if (initialCheckDone.current) return;
     initialCheckDone.current = true;
+
+    // Restaurar el usuario cacheado inmediatamente tras la hidratación,
+    // para que el navbar/UI logueados aparezcan sin esperar a refreshAuth.
+    const cached = getCachedUser();
+    if (cached) setUser(cached);
 
     const loadUser = async () => {
       const ok = await refreshAuth();

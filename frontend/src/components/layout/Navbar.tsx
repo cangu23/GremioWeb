@@ -483,6 +483,11 @@ function NotificationsDropdown({ unreadCount }: { unreadCount: number }) {
                   key={n.id}
                   onClick={() => {
                     setOpen(false);
+                    if (!n.read) {
+                      setNotifs(prev => prev.map(item => item.id === n.id ? { ...item, read: true } : item));
+                      apiFetch(`/notifications/${n.id}/read`, { method: 'PUT' }).catch(() => {});
+                      window.dispatchEvent(new Event('notifications-read'));
+                    }
                     const isGift = n.type === 'STARDUST_RECEIVED' || n.type === 'GIFT_PLAN_RECEIVED' || n.title?.includes('Regalo') || n.title?.includes('Polvo Estelar');
                     if (isGift) {
                       window.dispatchEvent(new CustomEvent('open-gift-envelope', { detail: n }));

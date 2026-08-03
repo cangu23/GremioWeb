@@ -111,7 +111,7 @@ export default function GiftEnvelopeModal({
         if (typeof window !== 'undefined') {
           localStorage.setItem(`gift_claimed_${giftData.id}`, 'true');
         }
-        await apiFetch(`/notifications/${giftData.id}/read`, { method: 'PATCH' }).catch(() => {});
+        await apiFetch(`/notifications/${giftData.id}/read`, { method: 'PUT' }).catch(() => {});
         window.dispatchEvent(new Event('notifications-read'));
         window.dispatchEvent(new Event('stardust-updated'));
         window.dispatchEvent(new Event('user-refetched'));

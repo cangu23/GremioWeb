@@ -81,8 +81,8 @@ describe('RouletteService', () => {
       mockPrisma.rouletteSpin.findMany.mockResolvedValue([]);
 
       const status = await RouletteService.getStatus('user-1');
-      expect(status.prizes).toHaveLength(8);
-      expect(status.prizes[0].label).toBe('10 XP');
+      expect(status.prizes).toHaveLength(10);
+      expect(status.prizes[0].label).toBe('50 XP');
     });
   });
 
