@@ -5,7 +5,15 @@ import Image from 'next/image';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Footer() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  // IMPORTANTE (fix de hidratación): `isLoading` es `true` tanto en el SSR
+  // como en el primer render de hidratación del cliente. Ramificar contenido
+  // por `user` antes de que `isLoading` sea `false` provoca mismatch de
+  // hidratación (React errors #418/#425/#423) en CADA página para usuarios
+  // con sesión, porque el cliente restaura el user cacheado (localStorage)
+  // durante el primer render mientras que el servidor renderizó con user=null.
+  const isAuthed = !isLoading && !!user;
 
   const footerLinks = {
     Plataforma: [
@@ -21,10 +29,10 @@ export default function Footer() {
       { href: '/achievements', label: 'Logros' },
       { href: '/support', label: 'Apoyar' },
     ],
-    Cuenta: user
+    Cuenta: isAuthed
       ? [
           { href: '/dashboard', label: 'Dashboard' },
-          { href: '/profile/' + user.id, label: 'Mi Perfil' },
+          { href: '/profile/' + user?.id, label: 'Mi Perfil' },
         ]
       : [
           { href: '/login', label: 'Iniciar Sesión' },

@@ -46,6 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { showToast } = useToast();
   // Restore cached user optimistically so we never flash a blank / landing
   // state when the component remounts after a client-side navigation.
+  //
+  // ⚠️ CONVENCIÓN DE HIDRATACIÓN: este cache se lee durante el PRIMER render
+  // del cliente (hidratación), pero en el SSR siempre es null (sin window).
+  // Por eso, CUALQUIER componente que ramifique su render por `user` DEBE:
+  //   - estar envuelto en <ClientOnly>, o
+  //   - comprobar `isLoading` antes de usar `user` (p. ej. `!isLoading && !!user`)
+  // De lo contrario produce mismatches de hidratación (React #418/#425/#423).
+  // Ver Footer.tsx (arreglado) como referencia del patrón correcto.
   const [user, setUser] = useState<UserProfile | null>(() => getCachedUser());
   const [isLoading, setIsLoading] = useState(true);
   const initialCheckDone = useRef(false);

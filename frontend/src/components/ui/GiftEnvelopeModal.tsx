@@ -29,6 +29,11 @@ export default function GiftEnvelopeModal({
   const [isOpenState, setIsOpenState] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
   const [fetchedAvatar, setFetchedAvatar] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen && giftData) {
@@ -117,9 +122,6 @@ export default function GiftEnvelopeModal({
     }
     onClose();
   };
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
   if (!isOpen || !mounted || typeof document === 'undefined') return null;
 
