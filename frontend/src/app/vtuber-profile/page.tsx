@@ -71,10 +71,13 @@ function VtuberProfileEditor() {
 
     setUploading(true);
     try {
-      const croppedFile = new File([croppedBlob], `${type}_${Date.now()}.webp`, { type: 'image/webp' });
+      const isGif = croppedBlob.type === 'image/gif';
+      const ext = isGif ? 'gif' : 'webp';
+      const mimeType = isGif ? 'image/gif' : 'image/webp';
+      const croppedFile = new File([croppedBlob], `${type}_${Date.now()}.${ext}`, { type: mimeType });
       const url = await uploadAndWait(croppedFile, `/uploads/${type}`);
       setUrl(url);
-      showToast(`${type === 'avatar' ? 'Foto de perfil' : 'Banner'} recortado y actualizado`, 'success');
+      showToast(`${type === 'avatar' ? 'Foto de perfil' : 'Banner'} ${isGif ? 'actualizado (GIF animado conservado)' : 'recortado y actualizado'}`, 'success');
     } catch (err: unknown) {
       showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir la imagen recortada'}`, 'error');
     } finally {

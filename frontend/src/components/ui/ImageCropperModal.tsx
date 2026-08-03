@@ -6,6 +6,7 @@ interface ImageCropperModalProps {
   imageSrc: string | null;
   cropType: 'avatar' | 'banner' | 'free';
   title?: string;
+  isGif?: boolean;
   onCropComplete: (croppedBlob: Blob) => void;
   onClose: () => void;
 }
@@ -15,6 +16,7 @@ export default function ImageCropperModal({
   imageSrc,
   cropType,
   title = 'Editar Imagen',
+  isGif: isGifProp,
   onCropComplete,
   onClose,
 }: ImageCropperModalProps) {
@@ -33,12 +35,21 @@ export default function ImageCropperModal({
   const dragStartRef = useRef({ x: 0, y: 0 });
   const panStartRef = useRef({ x: 0, y: 0 });
 
+  // Detect GIF
+  const isGif = isGifProp || Boolean(
+    imageSrc && (
+      imageSrc.toLowerCase().includes('.gif') ||
+      imageSrc.startsWith('data:image/gif')
+    )
+  );
+
   // Aspect ratios
   // Avatar: 1:1, Banner: 3:1 (e.g. 1200x400)
   const targetAspect = cropType === 'avatar' ? 1 : cropType === 'banner' ? 3 : 1.5;
 
   // Redraw canvas whenever transforms change
   const drawCanvas = useCallback(() => {
+    if (isGif) return; // Skip canvas redrawing for GIFs to prevent flickering
     const canvas = canvasRef.current;
     const img = imageRef.current;
     if (!canvas || !img) return;
@@ -82,7 +93,7 @@ export default function ImageCropperModal({
     ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
 
     ctx.restore();
-  }, [zoom, rotation, flipH, flipV, pan, targetAspect]);
+  }, [zoom, rotation, flipH, flipV, pan, targetAspect, isGif]);
 
   // Reset transforms when imageSrc or cropType changes
   useEffect(() => {
@@ -156,10 +167,31 @@ export default function ImageCropperModal({
     }
   };
 
-  // Export cropped image
+  // Keep raw animated GIF without destroying animation
+  const handleKeepOriginalGif = async () => {
+    if (!imageSrc) return;
+    setProcessing(true);
+    try {
+      const res = await fetch(imageSrc);
+      const blob = await res.blob();
+      const gifBlob = new Blob([blob], { type: 'image/gif' });
+      setProcessing(false);
+      onCropComplete(gifBlob);
+    } catch {
+      setProcessing(false);
+    }
+  };
+
+  // Export cropped static image
   const handleExport = async () => {
     const img = imageRef.current;
-    if (!img) return;
+    if (!img) {
+      if (isGif) {
+        handleKeepOriginalGif();
+        return;
+      }
+      return;
+    }
     setProcessing(true);
 
     try {
@@ -294,7 +326,25 @@ export default function ImageCropperModal({
           </button>
         </div>
 
-        {/* CANVAS EDITOR viewport */}
+        {/* GIF NOTICE BANNER */}
+        {isGif && (
+          <div style={{
+            padding: '10px 20px',
+            background: 'rgba(236,72,153,0.12)',
+            borderBottom: '1px solid rgba(236,72,153,0.25)',
+            color: '#f472b6',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <span>✨</span>
+            <span><strong>GIF Animado detectado:</strong> Puedes conservarlo animado o recortarlo como imagen fija.</span>
+          </div>
+        )}
+
+        {/* CANVAS / IMG VIEWPORT */}
         <div
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -334,19 +384,37 @@ export default function ImageCropperModal({
             }}
           />
 
-          {/* Actual Canvas */}
-          <canvas
-            ref={canvasRef}
-            width={frameWidth}
-            height={frameHeight}
-            style={{
-              position: 'absolute',
-              width: `${frameWidth}px`,
-              height: `${frameHeight}px`,
-              borderRadius: cropType === 'avatar' ? '50%' : '12px',
-              zIndex: 1,
-            }}
-          />
+          {/* Smooth GIF preview vs Canvas static preview */}
+          {isGif ? (
+            <img
+              src={imageSrc}
+              alt="GIF Preview"
+              style={{
+                position: 'absolute',
+                width: `${frameWidth}px`,
+                height: `${frameHeight}px`,
+                objectFit: 'cover',
+                borderRadius: cropType === 'avatar' ? '50%' : '12px',
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`,
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+                zIndex: 1,
+                pointerEvents: 'none',
+              }}
+            />
+          ) : (
+            <canvas
+              ref={canvasRef}
+              width={frameWidth}
+              height={frameHeight}
+              style={{
+                position: 'absolute',
+                width: `${frameWidth}px`,
+                height: `${frameHeight}px`,
+                borderRadius: cropType === 'avatar' ? '50%' : '12px',
+                zIndex: 1,
+              }}
+            />
+          )}
         </div>
 
         {/* CONTROLS */}
@@ -405,12 +473,12 @@ export default function ImageCropperModal({
           </div>
 
           {/* FOOTER ACTIONS */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={onClose}
               style={{
-                padding: '10px 20px',
+                padding: '10px 18px',
                 borderRadius: '10px',
                 border: '1px solid rgba(255,255,255,0.15)',
                 background: 'transparent',
@@ -421,19 +489,44 @@ export default function ImageCropperModal({
             >
               Cancelar
             </button>
+
+            {isGif && (
+              <button
+                type="button"
+                onClick={handleKeepOriginalGif}
+                disabled={processing}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 14px rgba(236,72,153,0.35)',
+                }}
+              >
+                {processing ? 'Procesando...' : '✨ Conservar GIF Animado'}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleExport}
               disabled={processing}
               className="btn"
               style={{
-                padding: '10px 24px',
+                padding: '10px 22px',
                 borderRadius: '10px',
                 fontSize: '0.88rem',
                 fontWeight: 600,
+                background: isGif ? 'rgba(255,255,255,0.08)' : undefined,
+                color: isGif ? 'var(--text)' : undefined,
+                border: isGif ? '1px solid rgba(255,255,255,0.2)' : undefined,
               }}
             >
-              {processing ? 'Recortando...' : 'Guardar y Aplicar'}
+              {processing ? 'Guardando...' : isGif ? 'Guardar (Fijo)' : 'Guardar y Aplicar'}
             </button>
           </div>
         </div>
