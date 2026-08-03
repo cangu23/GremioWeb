@@ -43,7 +43,7 @@ interface StardustData {
 }
 
 function getTransactionMeta(reason: string) {
-  const r = reason.toLowerCase();
+  const r = (reason || '').toLowerCase();
   if (r.includes('ruleta') || r.includes('giro')) {
     return { icon: '🎰', bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)', color: '#c084fc', label: 'Ruleta' };
   }

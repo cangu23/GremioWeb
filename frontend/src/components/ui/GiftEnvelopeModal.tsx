@@ -50,8 +50,8 @@ export default function GiftEnvelopeModal({
               const list = Array.isArray(data) ? data : data?.data || [];
               const match = list.find(
                 (u: any) =>
-                  u.username.toLowerCase() === cleanName.toLowerCase() ||
-                  (u.displayName && u.displayName.toLowerCase() === cleanName.toLowerCase())
+                  (u?.username && u.username.toLowerCase() === cleanName.toLowerCase()) ||
+                  (u?.displayName && u.displayName.toLowerCase() === cleanName.toLowerCase())
               );
               if (match) {
                 const foundAvatar = match.avatarUrl || match.vtuberProfile?.avatarUrl;
@@ -301,9 +301,9 @@ export default function GiftEnvelopeModal({
                   }}
                 >
                   {displayAvatar ? (
-                    <img src={displayAvatar} alt={giftData.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={displayAvatar} alt={giftData.senderName || 'Sender'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    giftData.senderName[0]?.toUpperCase()
+                    (giftData.senderName?.[0] || 'A').toUpperCase()
                   )}
                 </div>
                 <div style={{ textAlign: 'left' }}>
@@ -398,9 +398,9 @@ export default function GiftEnvelopeModal({
                 }}
               >
                 {displayAvatar ? (
-                  <img src={displayAvatar} alt={giftData.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={displayAvatar} alt={giftData.senderName || 'Sender'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  giftData.senderName[0]?.toUpperCase()
+                  (giftData.senderName?.[0] || 'A').toUpperCase()
                 )}
               </div>
               <div style={{ fontSize: '0.85rem', color: '#9ca3af' }}>Regalo de</div>
@@ -422,10 +422,14 @@ export default function GiftEnvelopeModal({
               </div>
               <div style={{ fontSize: '1.6rem', fontWeight: 900, color: isPremium ? '#c084fc' : '#fbbf24' }}>
                 {giftData.amount
-                  ? `⭐ ${Number(giftData.amount).toLocaleString()} Polvo Estelar`
+                  ? `⭐ ${(() => {
+                      const cleaned = String(giftData.amount).replace(/,/g, '');
+                      const num = Number(cleaned);
+                      return isNaN(num) ? giftData.amount : num.toLocaleString();
+                    })()} Polvo Estelar`
                   : giftData.planName
                   ? `👑 Plan ${giftData.planName} (10 Días Premium)`
-                  : giftData.title}
+                  : giftData.title || 'Regalo Estelar'}
               </div>
             </div>
 

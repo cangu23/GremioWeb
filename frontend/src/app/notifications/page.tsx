@@ -333,15 +333,15 @@ function NotificationsContent() {
             const link = getNotificationLink(n);
             const { icon, color } = getTypeIcon(n.type);
 
-            const isGift = n.type === 'STARDUST_RECEIVED' || n.type === 'GIFT_PLAN_RECEIVED' || n.title.includes('Regalo') || n.title.includes('Polvo Estelar');
+            const isGift = n.type === 'STARDUST_RECEIVED' || n.type === 'GIFT_PLAN_RECEIVED' || Boolean(n.title?.includes('Regalo')) || Boolean(n.title?.includes('Polvo Estelar'));
 
             const handleClick = () => {
               if (!n.read) handleMarkAsRead(n.id);
               if (isGift) {
-                const senderMatch = n.message.match(/@([a-zA-Z0-9_.-]+)/);
+                const senderMatch = n.message?.match(/@([a-zA-Z0-9_.-]+)/);
                 const senderName = senderMatch ? senderMatch[1] : 'Amigo Estelar';
-                const msgMatch = n.message.match(/:\s*"([^"]+)"/);
-                const amountMatch = n.message.match(/⭐\s*([\d,.]+)/);
+                const msgMatch = n.message?.match(/:\s*"([^"]+)"/);
+                const amountMatch = n.message?.match(/⭐\s*([\d,.]+)/);
 
                 setGiftEnvelopeData({
                   id: n.id,
