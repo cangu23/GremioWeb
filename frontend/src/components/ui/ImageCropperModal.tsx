@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ImageCropperModalProps {
@@ -47,61 +47,10 @@ export default function ImageCropperModal({
   // Avatar: 1:1, Banner: 3:1 (e.g. 1200x400)
   const targetAspect = cropType === 'avatar' ? 1 : cropType === 'banner' ? 3 : 1.5;
 
-  // Redraw canvas whenever transforms change
-  const drawCanvas = useCallback(() => {
-    if (isGif) return; // Skip canvas redrawing for GIFs to prevent flickering
-    const canvas = canvasRef.current;
-    const img = imageRef.current;
-    if (!canvas || !img) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-
-    // Clear
-    ctx.clearRect(0, 0, width, height);
-
-    ctx.save();
-
-    // Center origin
-    ctx.translate(width / 2 + pan.x, height / 2 + pan.y);
-
-    // Apply rotation
-    ctx.rotate((rotation * Math.PI) / 180);
-
-    // Apply flips
-    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-
-    // Calculate base fit scale
-    const imgAspect = img.naturalWidth / img.naturalHeight;
-    let drawW: number;
-    let drawH: number;
-
-    if (imgAspect > targetAspect) {
-      // Image is wider
-      drawH = height * zoom;
-      drawW = drawH * imgAspect;
-    } else {
-      // Image is taller
-      drawW = width * zoom;
-      drawH = drawW / imgAspect;
-    }
-
-    // Draw centered
-    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-
-    ctx.restore();
-  }, [zoom, rotation, flipH, flipV, pan, targetAspect, isGif]);
 
   // Reset transforms when imageSrc or cropType changes
   useEffect(() => {
-    imageRef.current = null;
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext('2d');
-      if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    }
     if (imageSrc) {
       setZoom(1);
       setRotation(0);
@@ -113,24 +62,17 @@ export default function ImageCropperModal({
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         imageRef.current = img;
-        drawCanvas();
       };
       img.onerror = () => {
-        // Fallback without crossOrigin if CORS blocks anonymous load
         const fallbackImg = new Image();
         fallbackImg.onload = () => {
           imageRef.current = fallbackImg;
-          drawCanvas();
         };
         fallbackImg.src = imageSrc;
       };
       img.src = imageSrc;
     }
-  }, [imageSrc, cropType, drawCanvas]);
-
-  useEffect(() => {
-    drawCanvas();
-  }, [drawCanvas]);
+  }, [imageSrc, cropType]);
 
   // Dragging / Pan handling
   const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
@@ -184,12 +126,8 @@ export default function ImageCropperModal({
 
   // Export cropped static image
   const handleExport = async () => {
-    const img = imageRef.current;
-    if (!img) {
-      if (isGif) {
-        handleKeepOriginalGif();
-        return;
-      }
+    if (isGif && !imageRef.current) {
+      handleKeepOriginalGif();
       return;
     }
     setProcessing(true);
@@ -198,6 +136,9 @@ export default function ImageCropperModal({
       // Output dimensions
       const outW = cropType === 'banner' ? 1200 : 500;
       const outH = cropType === 'banner' ? 400 : 500;
+
+      const img = imageRef.current || new Image();
+      if (!img.src && imageSrc) img.src = imageSrc;
 
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = outW;
@@ -217,15 +158,17 @@ export default function ImageCropperModal({
       ctx.save();
       ctx.translate(outW / 2, outH / 2);
 
-      // Scale pan according to export resolution vs canvas display resolution
-      const displayCanvas = canvasRef.current;
-      const scaleFactor = displayCanvas ? outW / displayCanvas.width : 1;
+      // Scale pan according to export resolution vs crop frame display resolution
+      const displayFrameW = cropType === 'banner' ? 480 : 300;
+      const scaleFactor = outW / displayFrameW;
 
       ctx.translate(pan.x * scaleFactor, pan.y * scaleFactor);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
 
-      const imgAspect = img.naturalWidth / img.naturalHeight;
+      const naturalW = img.naturalWidth || outW;
+      const naturalH = img.naturalHeight || outH;
+      const imgAspect = naturalW / naturalH;
       let drawW: number;
       let drawH: number;
 
@@ -344,7 +287,7 @@ export default function ImageCropperModal({
           </div>
         )}
 
-        {/* CANVAS / IMG VIEWPORT */}
+        {/* INTERACTIVE PREVIEW VIEWPORT */}
         <div
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -364,6 +307,7 @@ export default function ImageCropperModal({
             cursor: isDragging ? 'grabbing' : 'grab',
             userSelect: 'none',
             minHeight: '320px',
+            overflow: 'hidden',
           }}
         >
           {/* Crop Frame Box */}
@@ -382,39 +326,24 @@ export default function ImageCropperModal({
               pointerEvents: 'none',
               zIndex: 2,
             }}
-          />
-
-          {/* Smooth GIF preview vs Canvas static preview */}
-          {isGif ? (
+          >
+            {/* Smooth 60fps image element preview with zero flickering */}
             <img
               src={imageSrc}
-              alt="GIF Preview"
+              alt="Cropper Preview"
+              draggable={false}
               style={{
-                position: 'absolute',
-                width: `${frameWidth}px`,
-                height: `${frameHeight}px`,
+                width: '100%',
+                height: '100%',
                 objectFit: 'cover',
                 borderRadius: cropType === 'avatar' ? '50%' : '12px',
                 transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`,
                 transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-                zIndex: 1,
                 pointerEvents: 'none',
+                userSelect: 'none',
               }}
             />
-          ) : (
-            <canvas
-              ref={canvasRef}
-              width={frameWidth}
-              height={frameHeight}
-              style={{
-                position: 'absolute',
-                width: `${frameWidth}px`,
-                height: `${frameHeight}px`,
-                borderRadius: cropType === 'avatar' ? '50%' : '12px',
-                zIndex: 1,
-              }}
-            />
-          )}
+          </div>
         </div>
 
         {/* CONTROLS */}
