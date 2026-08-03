@@ -231,6 +231,7 @@ export const seedDefaultItems = async () => {
     { name: 'Rosa Neón', description: 'Un vibrante rosa neón para destacar', type: 'COLOR', price: 800, data: JSON.stringify({ color: '#ff006e' }), sortOrder: 33 },
     { name: 'Oro Puro', description: 'Un elegante color dorado', type: 'COLOR', price: 1500, data: JSON.stringify({ color: '#ffd700' }), sortOrder: 34 },
     { name: 'Verde Neon', description: 'Intenso verde fosforescente', type: 'COLOR', price: 1000, data: JSON.stringify({ color: '#00ff88' }), sortOrder: 35 },
+  ];
 
   for (const item of defaults) {
     const existing = await ShopRepository.findItemByName(item.name);
