@@ -9,6 +9,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
 import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
 import DiscordLoginButton from '@/components/auth/DiscordLoginButton';
+import AuthLayout from '@/components/auth/AuthLayout';
 
 function RegisterForm() {
   const { register } = useAuth();
@@ -54,41 +55,15 @@ function RegisterForm() {
 
   return (
     <>
-      {/* Decorative glows */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '-100px',
-          left: '-80px',
-          width: '280px',
-          height: '280px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0,212,255,0.1), transparent)',
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '-80px',
-          right: '-60px',
-          width: '200px',
-          height: '200px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,0,127,0.08), transparent)',
-          pointerEvents: 'none',
-        }}
-      />
-
       {error && (
         <div
           style={{
-            background: 'rgba(255,77,79,0.1)',
-            border: '1px solid rgba(255,77,79,0.2)',
-            color: 'var(--error)',
-            padding: '14px 16px',
-            borderRadius: '12px',
-            marginBottom: '24px',
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#FCA5A5',
+            padding: '14px 18px',
+            borderRadius: '14px',
+            marginBottom: '20px',
             fontSize: '0.9rem',
             display: 'flex',
             alignItems: 'center',
@@ -96,17 +71,27 @@ function RegisterForm() {
             animation: 'fadeIn 0.3s ease',
           }}
         >
-          <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>!</span>
+          <span style={{ fontSize: '1.2rem', fontWeight: 700 }}>⚠️</span>
           <span>{error}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="form-label">Nombre de Usuario</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: 'rgba(255, 255, 255, 0.8)',
+              marginBottom: '8px',
+            }}
+          >
+            Nombre de Usuario
+          </label>
           <input
             type="text"
-            className="input"
+            className="auth-input"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Tu nombre VTuber"
@@ -115,53 +100,74 @@ function RegisterForm() {
           />
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Correo Electrónico</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: 'rgba(255, 255, 255, 0.8)',
+              marginBottom: '8px',
+            }}
+          >
+            Correo Electrónico
+          </label>
           <input
             type="email"
-            className="input"
+            className="auth-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
+            placeholder="tu.usuario@ejemplo.com"
             required
           />
         </div>
 
-        <div className="form-group" style={{ marginBottom: '12px' }}>
-          <label className="form-label">Contraseña</label>
+        <div style={{ marginBottom: '14px' }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: 'rgba(255, 255, 255, 0.8)',
+              marginBottom: '8px',
+            }}
+          >
+            Contraseña
+          </label>
           <input
             type="password"
-            className="input"
+            className="auth-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="••••••••••••"
             required
             minLength={8}
           />
         </div>
 
-        {/* Password requirements */}
+        {/* Password requirements widget */}
         <div
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            borderRadius: '10px',
+            background: 'rgba(0, 0, 0, 0.25)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '14px',
             padding: '12px 16px',
-            marginBottom: '28px',
+            marginBottom: '20px',
           }}
         >
           <p
             style={{
-              fontSize: '0.8rem',
-              color: 'var(--text-muted)',
+              fontSize: '0.78rem',
+              color: 'rgba(255, 255, 255, 0.6)',
               marginBottom: '8px',
-              fontWeight: 500,
+              fontWeight: 600,
             }}
           >
             Requisitos de seguridad:
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
             {[
-              { key: 'length', label: 'Mínimo 8 caracteres' },
+              { key: 'length', label: 'Min. 8 caracteres' },
               { key: 'upper', label: 'Una mayúscula' },
               { key: 'lower', label: 'Una minúscula' },
               { key: 'number', label: 'Un número' },
@@ -173,19 +179,14 @@ function RegisterForm() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '0.8rem',
-                    color: passed ? 'var(--success)' : 'var(--text-muted)',
+                    gap: '6px',
+                    fontSize: '0.78rem',
+                    color: passed ? '#34D399' : 'rgba(255, 255, 255, 0.4)',
                     transition: 'color 0.2s',
                   }}
                 >
-                  <span style={{ fontSize: '0.8rem', display: 'inline-flex' }}>
-                    {passed
-                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
-                    }
-                  </span>
-                  {label}
+                  <span>{passed ? '✓' : '○'}</span>
+                  <span>{label}</span>
                 </div>
               );
             })}
@@ -194,48 +195,26 @@ function RegisterForm() {
 
         <p
           style={{
-            fontSize: '0.8rem',
-            color: 'var(--text-muted)',
+            fontSize: '0.78rem',
+            color: 'rgba(255, 255, 255, 0.5)',
             marginBottom: '20px',
             lineHeight: 1.5,
           }}
         >
           Al registrarte, aceptas nuestros{' '}
-          <Link href="/support" style={{ color: 'var(--primary)' }}>
-            Términos y Condiciones
+          <Link href="/support" style={{ color: '#A78BFA', textDecoration: 'none' }}>
+            Términos
           </Link>{' '}
           y{' '}
-          <Link href="/support" style={{ color: 'var(--primary)' }}>
-            Política de Privacidad
+          <Link href="/support" style={{ color: '#A78BFA', textDecoration: 'none' }}>
+            Privacidad
           </Link>
           .
         </p>
 
-        <button
-          type="submit"
-          className="btn"
-          style={{
-            width: '100%',
-            padding: '14px',
-            fontSize: '1rem',
-            fontWeight: 700,
-            borderRadius: '12px',
-            background:
-              'linear-gradient(135deg, var(--primary), var(--secondary))',
-            opacity: loading ? 0.8 : 1,
-            cursor: loading ? 'not-allowed' : 'pointer',
-          }}
-          disabled={loading}
-        >
+        <button type="submit" className="auth-btn-primary" disabled={loading}>
           {loading ? (
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-              }}
-            >
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
               <span
                 style={{
                   width: '18px',
@@ -260,127 +239,58 @@ function RegisterForm() {
           display: 'flex',
           alignItems: 'center',
           gap: '16px',
-          margin: '28px 0',
+          margin: '24px 0',
         }}
       >
-        <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }} />
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>o continúa con</span>
-        <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }} />
+        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
+        <span style={{ fontSize: '0.82rem', color: 'rgba(255, 255, 255, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          o regístrate con
+        </span>
+        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
       </div>
 
-      {/* Google Login Button */}
-      <div style={{ marginBottom: '8px' }}>
+      {/* Social Login Buttons */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <GoogleLoginButton />
-      </div>
-
-      {/* Discord Login Button */}
-      <div>
         <DiscordLoginButton />
       </div>
-
-      <p
-        style={{
-          textAlign: 'center',
-          marginTop: '24px',
-          color: 'var(--text-muted)',
-          fontSize: '0.9rem',
-        }}
-      >
-        ¿Ya tienes cuenta?{' '}
-        <Link
-          href="/login"
-          style={{ color: 'var(--primary)', fontWeight: 600 }}
-        >
-          Inicia Sesión
-        </Link>
-      </p>
     </>
   );
 }
 
 export default function RegisterPage() {
   return (
-    <div
-      className="container"
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: 'calc(100vh - 80px)',
-        padding: '20px',
-      }}
+    <AuthLayout
+      title="Únete al Gremio"
+      subtitle="Crea tu cuenta estelar y forma parte de la comunidad"
     >
-      <div
-        className="glass"
-        style={{
-          padding: '48px 40px',
-          width: '100%',
-          maxWidth: '440px',
-          borderRadius: '24px',
-          position: 'relative',
-          overflow: 'hidden',
-          animation: 'fadeInUp 0.6s ease',
-        }}
-      >
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+      <ClientOnly
+        fallback={
           <div
             style={{
-              fontSize: '2.5rem',
-              marginBottom: '8px',
-            }}
-            className="animate-float"
-          >
-
-          </div>
-          <h2
-            className="gradient-text"
-            style={{
-              fontSize: '2rem',
-              fontWeight: 800,
-              marginBottom: '8px',
+              textAlign: 'center',
+              padding: '40px 0',
+              color: 'rgba(255,255,255,0.5)',
             }}
           >
-            Únete al Gremio
-          </h2>
-          <p
-            style={{
-              color: 'var(--text-muted)',
-              fontSize: '0.95rem',
-            }}
-          >
-            Crea tu cuenta y empieza tu viaje
-          </p>
-        </div>
-
-        <ClientOnly
-          fallback={
-            <div
+            <span
               style={{
-                textAlign: 'center',
-                padding: '40px 0',
-                color: 'var(--text-muted)',
+                display: 'inline-block',
+                width: '24px',
+                height: '24px',
+                border: '2px solid rgba(255,255,255,0.2)',
+                borderTopColor: '#8B5CF6',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+                marginBottom: '12px',
               }}
-            >
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: '24px',
-                  height: '24px',
-                  border: '2px solid rgba(255,255,255,0.2)',
-                  borderTopColor: 'var(--primary)',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                  marginBottom: '12px',
-                }}
-              />
-              <p>Cargando...</p>
-            </div>
-          }
-        >
-          <RegisterForm />
-        </ClientOnly>
-      </div>
-    </div>
+            />
+            <p>Cargando interfaz...</p>
+          </div>
+        }
+      >
+        <RegisterForm />
+      </ClientOnly>
+    </AuthLayout>
   );
 }
