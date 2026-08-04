@@ -27,8 +27,8 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const { innerWidth, innerHeight } = window;
-      const x = (e.clientX / innerWidth - 0.5) * 16; // -8px to +8px
-      const y = (e.clientY / innerHeight - 0.5) * 16; // -8px to +8px
+      const x = (e.clientX / innerWidth - 0.5) * 16;
+      const y = (e.clientY / innerHeight - 0.5) * 16;
       setMouseOffset({ x, y });
     };
 
@@ -92,7 +92,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         />
       )}
 
-      {/* Atmospheric Soft Lighting Beams */}
+      {/* Ambient Lighting Beams */}
       <div
         className="auth-glow-pulse"
         style={{
@@ -125,12 +125,12 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         }}
       />
 
-      {/* Stardust Mesh Grid */}
+      {/* Stardust Grid Overlay */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px)`,
+          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)`,
           backgroundSize: '36px 36px',
           pointerEvents: 'none',
           opacity: 0.45,
@@ -148,7 +148,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           overflow: 'hidden',
         }}
       >
-        {[...Array(14)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <div
             key={i}
             style={{
@@ -167,14 +167,13 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         ))}
       </div>
 
-      {/* 👑 TOP HEADER BAR */}
+      {/* 👑 CLEAN TOP HEADER BAR (BRAND LOGO ONLY - NO FLOATING OVERLAPPING BUTTONS) */}
       <header
         style={{
           position: 'relative',
           zIndex: 30,
           width: '100%',
-          height: '68px',
-          padding: '0 44px',
+          padding: '24px 44px 0 44px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -222,40 +221,6 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             GREMIO ESTELAR
           </span>
         </Link>
-
-        {/* Top Right Action Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <span style={{ fontSize: '0.86rem', color: 'rgba(255, 255, 255, 0.75)' }}>
-            {isLogin ? '¿Aún no tienes cuenta?' : '¿Ya tienes una cuenta?'}
-          </span>
-          <button
-            onClick={() => handleTabSwitch(isLogin ? '/register' : '/login')}
-            style={{
-              background: 'rgba(255, 255, 255, 0.09)',
-              border: '1px solid rgba(255, 255, 255, 0.22)',
-              color: '#ffffff',
-              padding: '9px 20px',
-              borderRadius: '22px',
-              fontWeight: 600,
-              fontSize: '0.86rem',
-              cursor: 'pointer',
-              transition: 'all 0.25s ease',
-              backdropFilter: 'blur(14px)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(99, 102, 241, 0.35)';
-              e.currentTarget.style.borderColor = '#818CF8';
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(99, 102, 241, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.09)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.22)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            {isLogin ? '✦ Regístrate' : '✨ Iniciar Sesión'}
-          </button>
-        </div>
       </header>
 
       {/* 🚀 MAIN CONTENT SPLIT AREA */}
@@ -265,7 +230,6 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           zIndex: 10,
           flex: 1,
           width: '100%',
-          height: 'calc(100vh - 68px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -273,7 +237,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           boxSizing: 'border-box',
         }}
       >
-        {/* LEFT PANEL: HERO CHARACTER SHOWCASE (CLEAN ARTWORK, ANIMATED ONLY) */}
+        {/* LEFT PANEL: HERO CHARACTER SHOWCASE (CLEAN, PROMINENT, ANIMATED ONLY) */}
         <div
           style={{
             flex: 1,
@@ -287,7 +251,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           }}
           className="auth-hero-column"
         >
-          {/* Character Image - Clean Artwork, No Neon Glow, Natural Float Animation */}
+          {/* Character Image - Large (90vh), Natural Float & Parallax Animation */}
           <div
             className="auth-character-anim"
             style={{
@@ -332,67 +296,10 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                 }}
               />
             )}
-
-            {/* Floating Glass Community Badge Pill */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '18px',
-                left: '20px',
-                background: 'rgba(10, 14, 28, 0.86)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(147, 197, 253, 0.25)',
-                borderRadius: '22px',
-                padding: '12px 20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                boxShadow: '0 15px 35px rgba(0,0,0,0.6), 0 0 30px rgba(99, 102, 241, 0.35)',
-              }}
-            >
-              <div
-                style={{
-                  position: 'relative',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #38BDF8, #818CF8)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  color: '#fff',
-                }}
-              >
-                ✦
-                {/* Live pulsing online green dot */}
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '-2px',
-                    right: '-2px',
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: '#10B981',
-                    boxShadow: '0 0 8px #10B981',
-                  }}
-                />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', letterSpacing: '0.02em' }}>
-                  Universo VTuber Estelar
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'rgba(226, 232, 240, 0.75)' }}>
-                  Gana experiencia, medallas y recompensas diarias
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL: GLASS FORM CARD (WITH MOUSE PARALLAX RESPONSE) */}
+        {/* RIGHT PANEL: GLASS FORM CARD */}
         <div
           style={{
             width: '430px',
@@ -409,14 +316,14 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             className="auth-glass-card"
             style={{
               borderRadius: '26px',
-              padding: '30px 26px',
+              padding: '32px 28px',
               position: 'relative',
-              boxShadow: '0 30px 70px rgba(0, 0, 0, 0.7), 0 0 45px rgba(99, 102, 241, 0.28)',
+              boxShadow: '0 30px 70px rgba(0, 0, 0, 0.7), 0 0 45px rgba(99, 102, 241, 0.25)',
               background: 'rgba(10, 14, 28, 0.8)',
               borderColor: 'rgba(147, 197, 253, 0.22)',
             }}
           >
-            {/* Shimmer Accent Bar */}
+            {/* Top Shimmer Edge */}
             <div
               style={{
                 position: 'absolute',
