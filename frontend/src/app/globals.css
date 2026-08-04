@@ -1228,27 +1228,27 @@ img, svg {
   animation: authFormFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Auth Specific Glass Card & Input Enhancements */
+/* Auth Specific Glass Card & Input Enhancements — Genshin-style gold theme */
 .auth-glass-card {
-  background: rgba(10, 14, 28, 0.82);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid rgba(147, 197, 253, 0.22);
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 50px rgba(99, 102, 241, 0.25);
+  background: linear-gradient(160deg, rgba(13, 17, 32, 0.92) 0%, rgba(9, 12, 24, 0.9) 100%);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 50px rgba(212, 175, 55, 0.12), inset 0 1px 0 rgba(255, 244, 210, 0.08);
   transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .auth-glass-card:hover {
-  border-color: rgba(165, 180, 252, 0.45);
-  box-shadow: 0 35px 80px rgba(0, 0, 0, 0.8), 0 0 60px rgba(99, 102, 241, 0.35);
+  border-color: rgba(232, 199, 122, 0.55);
+  box-shadow: 0 35px 80px rgba(0, 0, 0, 0.8), 0 0 70px rgba(212, 175, 55, 0.2);
 }
 
 .auth-input {
   width: 100%;
   padding: 11px 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(232, 199, 122, 0.18);
+  border-radius: 10px;
   color: var(--text-primary);
   font-size: 0.9rem;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1256,35 +1256,37 @@ img, svg {
 }
 
 .auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .auth-input:focus {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #818CF8;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.28), 0 0 28px rgba(99, 102, 241, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #E8C77A;
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.22), 0 0 28px rgba(212, 175, 55, 0.28);
   transform: translateY(-1px);
 }
 
 .auth-btn-primary {
   width: 100%;
-  padding: 12px 20px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 700;
+  padding: 13px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 240, 200, 0.4);
+  font-weight: 800;
   font-size: 0.95rem;
-  color: #ffffff;
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #C084FC 100%);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2b1e05;
+  background: linear-gradient(135deg, #F5E7B0 0%, #E8C77A 30%, #D4AF37 65%, #B8860B 100%);
   background-size: 200% 200%;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .auth-btn-primary:hover {
   background-position: 100% 0%;
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 12px 35px rgba(168, 85, 247, 0.55);
+  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .auth-btn-primary:active {
@@ -1294,11 +1296,11 @@ img, svg {
 .auth-tab-container {
   position: relative;
   display: flex;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   padding: 4px;
-  border-radius: 14px;
+  border-radius: 12px;
   margin-bottom: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.22);
 }
 
 .auth-tab-slider {
@@ -1306,11 +1308,11 @@ img, svg {
   top: 4px;
   bottom: 4px;
   width: calc(50% - 4px);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.7), rgba(168, 85, 247, 0.7));
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(232, 199, 122, 0.9), rgba(212, 175, 55, 0.9));
+  border: 1px solid rgba(255, 244, 210, 0.45);
+  border-radius: 8px;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.45);
 }
 
 .auth-tab-btn {
@@ -1319,10 +1321,12 @@ img, svg {
   flex: 1;
   padding: 9px 14px;
   text-align: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  border-radius: 10px;
-  color: rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  color: rgba(245, 239, 220, 0.55);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -1330,7 +1334,7 @@ img, svg {
 }
 
 .auth-tab-btn.active {
-  color: #ffffff;
+  color: #2b1e05;
 }
 
 /* Character Idle & Aura Animations */
@@ -1338,12 +1342,56 @@ img, svg {
   animation: authCharacterFloat 6s ease-in-out infinite;
 }
 
-.auth-glow-pulse {
-  animation: authPulseGlow 4s ease-in-out infinite;
+/* ==========================================================================
+   GENSHIN-STYLE AUTH ADDITIONS (gold constellations, star twinkle, rays)
+   ========================================================================== */
+
+@keyframes authGoldAuraSpin {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1); }
 }
 
-.auth-aura-rotate {
-  animation: authAuraSpin 14s linear infinite;
+@keyframes authStarTwinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.6); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+@keyframes authRaySway {
+  0%, 100% { opacity: 0.35; transform: translateY(0) rotate(0deg); }
+  50%      { opacity: 0.7;  transform: translateY(-14px) rotate(2deg); }
+}
+
+@keyframes authConstellationDrift {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-12px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes authGoldShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.auth-gold-aura {
+  animation: authGoldAuraSpin 16s linear infinite;
+}
+
+.auth-star-twinkle {
+  animation: authStarTwinkle 3.2s ease-in-out infinite;
+}
+
+.auth-constellation {
+  animation: authConstellationDrift 9s ease-in-out infinite;
+}
+
+.auth-gold-shimmer {
+  background: linear-gradient(90deg, #B8860B 0%, #F5E7B0 25%, #fff6d8 50%, #F5E7B0 75%, #B8860B 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: authGoldShimmer 5s linear infinite;
 }
 
 
