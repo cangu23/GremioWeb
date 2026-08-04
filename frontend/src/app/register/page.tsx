@@ -83,14 +83,14 @@ function RegisterForm() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '10px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '8px',
+              marginBottom: '4px',
             }}
           >
             Nombre de Usuario
@@ -106,14 +106,14 @@ function RegisterForm() {
           />
         </div>
 
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '10px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '8px',
+              marginBottom: '4px',
             }}
           >
             Correo Electrónico
@@ -128,14 +128,14 @@ function RegisterForm() {
           />
         </div>
 
-        <div style={{ marginBottom: '14px' }}>
+        <div style={{ marginBottom: '10px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '8px',
+              marginBottom: '4px',
             }}
           >
             Contraseña
@@ -156,22 +156,22 @@ function RegisterForm() {
           style={{
             background: 'rgba(0, 0, 0, 0.25)',
             border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '14px',
-            padding: '12px 16px',
-            marginBottom: '20px',
+            borderRadius: '12px',
+            padding: '10px 14px',
+            marginBottom: '12px',
           }}
         >
           <p
             style={{
-              fontSize: '0.78rem',
+              fontSize: '0.75rem',
               color: 'rgba(255, 255, 255, 0.6)',
-              marginBottom: '8px',
+              marginBottom: '6px',
               fontWeight: 600,
             }}
           >
             Requisitos de seguridad:
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
             {[
               { key: 'length', label: 'Min. 8 caracteres' },
               { key: 'upper', label: 'Una mayúscula' },
@@ -186,7 +186,7 @@ function RegisterForm() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    fontSize: '0.78rem',
+                    fontSize: '0.75rem',
                     color: passed ? '#34D399' : 'rgba(255, 255, 255, 0.4)',
                     transition: 'color 0.2s',
                   }}
@@ -201,10 +201,10 @@ function RegisterForm() {
 
         <p
           style={{
-            fontSize: '0.78rem',
+            fontSize: '0.75rem',
             color: 'rgba(255, 255, 255, 0.5)',
-            marginBottom: '20px',
-            lineHeight: 1.5,
+            marginBottom: '14px',
+            lineHeight: 1.4,
           }}
         >
           Al registrarte, aceptas nuestros{' '}
@@ -244,19 +244,19 @@ function RegisterForm() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '16px',
-          margin: '24px 0',
+          gap: '14px',
+          margin: '14px 0',
         }}
       >
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
-        <span style={{ fontSize: '0.82rem', color: 'rgba(255, 255, 255, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: '0.78rem', color: 'rgba(255, 255, 255, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           o regístrate con
         </span>
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
       </div>
 
       {/* Social Login Buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <GoogleLoginButton />
         <DiscordLoginButton />
       </div>

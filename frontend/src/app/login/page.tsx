@@ -63,14 +63,14 @@ function LoginForm() {
       )}
 
       <form onSubmit={handleSubmit} suppressHydrationWarning>
-        <div style={{ marginBottom: '18px' }}>
+        <div style={{ marginBottom: '14px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.85rem',
+              fontSize: '0.83rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '8px',
+              marginBottom: '6px',
             }}
           >
             Correo Electrónico
@@ -85,14 +85,14 @@ function LoginForm() {
           />
         </div>
 
-        <div style={{ marginBottom: '10px' }}>
+        <div style={{ marginBottom: '6px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.85rem',
+              fontSize: '0.83rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '8px',
+              marginBottom: '6px',
             }}
           >
             Contraseña
@@ -107,11 +107,11 @@ function LoginForm() {
           />
         </div>
 
-        <div style={{ textAlign: 'right', marginBottom: '24px' }}>
+        <div style={{ textAlign: 'right', marginBottom: '16px' }}>
           <Link
             href="/support"
             style={{
-              fontSize: '0.83rem',
+              fontSize: '0.8rem',
               color: 'rgba(255, 255, 255, 0.5)',
               textDecoration: 'none',
               transition: 'color 0.2s',
@@ -149,19 +149,19 @@ function LoginForm() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '16px',
-          margin: '26px 0',
+          gap: '14px',
+          margin: '16px 0',
         }}
       >
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
-        <span style={{ fontSize: '0.82rem', color: 'rgba(255, 255, 255, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: '0.78rem', color: 'rgba(255, 255, 255, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           o ingresa con
         </span>
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
       </div>
 
       {/* Social Login Buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <GoogleLoginButton />
         <DiscordLoginButton />
       </div>

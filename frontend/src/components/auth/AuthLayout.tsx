@@ -167,17 +167,15 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         ))}
       </div>
 
-      {/* 👑 CLEAN TOP HEADER BAR (BRAND LOGO ONLY - NO FLOATING OVERLAPPING BUTTONS) */}
+      {/* 👑 CLEAN TOP HEADER BAR */}
       <header
         style={{
-          position: 'relative',
+          position: 'absolute',
+          top: '20px',
+          left: '40px',
           zIndex: 30,
-          width: '100%',
-          padding: '24px 44px 0 44px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          boxSizing: 'border-box',
         }}
       >
         {/* Brand Logo */}
@@ -192,15 +190,15 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         >
           <div
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '12px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '11px',
               background: 'linear-gradient(135deg, #6366F1, #A855F7)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 0 20px rgba(99, 102, 241, 0.65)',
-              fontSize: '1.2rem',
+              fontSize: '1.1rem',
               fontWeight: 900,
               color: '#fff',
             }}
@@ -209,7 +207,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           </div>
           <span
             style={{
-              fontSize: '1.4rem',
+              fontSize: '1.3rem',
               fontWeight: 900,
               letterSpacing: '0.08em',
               background: 'linear-gradient(135deg, #ffffff 40%, #A5B4FC 100%)',
@@ -228,16 +226,16 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         style={{
           position: 'relative',
           zIndex: 10,
-          flex: 1,
           width: '100%',
+          height: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 48px 24px 48px',
+          padding: '0 40px',
           boxSizing: 'border-box',
         }}
       >
-        {/* LEFT PANEL: HERO CHARACTER SHOWCASE (CLEAN, PROMINENT, ANIMATED ONLY) */}
+        {/* LEFT PANEL: HERO CHARACTER SHOWCASE (CHARACTER HAND TOUCHES/OVERLAPS LOGIN CARD) */}
         <div
           style={{
             flex: 1,
@@ -245,22 +243,25 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
+            justifyContent: 'flex-end',
+            overflow: 'visible',
+            zIndex: 25,
             animation: 'authSlideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
           className="auth-hero-column"
         >
-          {/* Character Image - Large (90vh), Natural Float & Parallax Animation */}
+          {/* Character Image - Large, Natural Float & Hand overlapping Card */}
           <div
             className="auth-character-anim"
             style={{
               position: 'relative',
-              height: '88vh',
-              maxHeight: '830px',
+              height: '84vh',
+              maxHeight: '780px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'flex-end',
+              marginRight: '-55px',
+              zIndex: 25,
               transform: `translate3d(${mouseOffset.x * 0.6}px, ${mouseOffset.y * 0.6}px, 0)`,
               transition: 'transform 0.2s cubic-bezier(0.1, 1, 0.1, 1)',
             }}
@@ -275,7 +276,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                 style={{
                   height: '100%',
                   width: 'auto',
-                  maxHeight: '88vh',
+                  maxHeight: '84vh',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 15px 35px rgba(0, 0, 0, 0.45))',
                   transition: 'all 0.5s ease',
@@ -290,7 +291,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                 style={{
                   height: '100%',
                   width: 'auto',
-                  maxHeight: '88vh',
+                  maxHeight: '84vh',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 15px 35px rgba(0, 0, 0, 0.45))',
                 }}
@@ -302,7 +303,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         {/* RIGHT PANEL: GLASS FORM CARD */}
         <div
           style={{
-            width: '430px',
+            width: '420px',
             maxWidth: '90vw',
             flexShrink: 0,
             zIndex: 15,
@@ -315,11 +316,11 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           <div
             className="auth-glass-card"
             style={{
-              borderRadius: '26px',
-              padding: '32px 28px',
+              borderRadius: '22px',
+              padding: '24px 26px',
               position: 'relative',
-              boxShadow: '0 30px 70px rgba(0, 0, 0, 0.7), 0 0 45px rgba(99, 102, 241, 0.25)',
-              background: 'rgba(10, 14, 28, 0.8)',
+              boxShadow: '0 25px 65px rgba(0, 0, 0, 0.75), 0 0 45px rgba(99, 102, 241, 0.25)',
+              background: 'rgba(10, 14, 28, 0.82)',
               borderColor: 'rgba(147, 197, 253, 0.22)',
             }}
           >
@@ -336,7 +337,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             />
 
             {/* TAB TOGGLE WITH SLIDING PILL */}
-            <div className="auth-tab-container" style={{ marginBottom: '20px' }}>
+            <div className="auth-tab-container" style={{ marginBottom: '14px' }}>
               <div
                 className="auth-tab-slider"
                 style={{
@@ -363,9 +364,9 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             {/* Form Subtitle Header */}
             <p
               style={{
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 color: 'rgba(226, 232, 240, 0.75)',
-                marginBottom: '20px',
+                marginBottom: '14px',
                 textAlign: 'center',
               }}
             >
