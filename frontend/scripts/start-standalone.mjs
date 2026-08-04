@@ -18,7 +18,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
 const standaloneRoot = join(projectRoot, '.next', 'standalone');
 
-/** Find server.js recursively inside the standalone output (max depth 4). */
+/** Find server.js inside the standalone output, skipping node_modules. */
 function findServerJs(dir, depth = 0) {
   if (depth > 4) return null;
   let entries;
@@ -28,6 +28,7 @@ function findServerJs(dir, depth = 0) {
     return null;
   }
   for (const entry of entries) {
+    if (entry.name === 'node_modules') continue; // avoid matching package server.js
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
       const found = findServerJs(full, depth + 1);
@@ -70,9 +71,20 @@ if (existsSync(publicSrc) && !existsSync(publicDest)) {
 }
 
 console.log(`[START] Iniciando Next.js standalone: ${serverJs}`);
+
+// ── Env ─────────────────────────────────────────────────────────────────────
+// Render/Docker definen HOSTNAME (hostname de la instancia), y el standalone
+// server hace `server.listen(port, process.env.HOSTNAME || '0.0.0.0')`.
+// Si HOSTNAME no resuelve a una interfaz, el bind falla → crash → HTTP 502.
+// Forzamos 0.0.0.0 para que Render/CasaOS puedan enrutar al contenedor.
+const childEnv = {
+  ...process.env,
+  HOSTNAME: '0.0.0.0',
+};
+
 const child = spawn(process.execPath, [serverJs], {
   stdio: 'inherit',
-  env: process.env,
+  env: childEnv,
 });
 
 // Forward termination signals (Render/CasaOS send SIGTERM/SIGINT on stop)
