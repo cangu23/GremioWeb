@@ -60,14 +60,14 @@ export default function LoginForm() {
       )}
 
       <form onSubmit={handleSubmit} suppressHydrationWarning>
-        <div style={{ marginBottom: '10px' }}>
+        <div style={{ marginBottom: '14px' }}>
           <label
             style={{
               display: 'block',
               fontSize: '0.8rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '4px',
+              marginBottom: '5px',
             }}
           >
             Correo Electrónico
@@ -82,14 +82,14 @@ export default function LoginForm() {
           />
         </div>
 
-        <div style={{ marginBottom: '4px' }}>
+        <div style={{ marginBottom: '6px' }}>
           <label
             style={{
               display: 'block',
               fontSize: '0.8rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '4px',
+              marginBottom: '5px',
             }}
           >
             Contraseña
@@ -104,7 +104,7 @@ export default function LoginForm() {
           />
         </div>
 
-        <div style={{ textAlign: 'right', marginBottom: '14px' }}>
+        <div style={{ textAlign: 'right', marginBottom: '18px' }}>
           <Link
             href="/support"
             style={{
@@ -147,7 +147,7 @@ export default function LoginForm() {
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          margin: '14px 0',
+          margin: '18px 0',
         }}
       >
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />

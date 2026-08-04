@@ -25,14 +25,14 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
   const [bgFailed, setBgFailed] = useState(false);
   const [charFailed, setCharFailed] = useState(false);
 
-  // Subtle 3D Mouse Parallax Tracking
+  // Gentle 3D mouse parallax (background + character only, NOT the form card)
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const { innerWidth, innerHeight } = window;
-      const x = (e.clientX / innerWidth - 0.5) * 14;
-      const y = (e.clientY / innerHeight - 0.5) * 14;
+      const x = (e.clientX / innerWidth - 0.5) * 10;
+      const y = (e.clientY / innerHeight - 0.5) * 10;
       setMouseOffset({ x, y });
     };
 
@@ -45,6 +45,12 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
       router.push(targetPath, { scroll: false });
     }
   };
+
+  const heading = isLogin ? 'Bienvenido de vuelta' : 'Únete al Gremio';
+  const headingAccent = isLogin ? '✨' : '🚀';
+  const subtitle = isLogin
+    ? 'Accede a tu cuenta y continúa tu aventura VTuber'
+    : 'Crea tu cuenta estelar y forma parte de la comunidad';
 
   return (
     <div
@@ -65,12 +71,12 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         justifyContent: 'center',
       }}
     >
-      {/* 🌌 FULLSCREEN FIXED BACKGROUND (With subtle 3D parallax drift) */}
+      {/* 🌌 FULLSCREEN FIXED BACKGROUND (subtle parallax drift) */}
       {!bgFailed ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={bgImage}
-          alt="Auth Background"
+          alt=""
           onError={() => setBgFailed(true)}
           style={{
             position: 'absolute',
@@ -79,9 +85,9 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             height: 'calc(100% + 20px)',
             objectFit: 'cover',
             objectPosition: 'center center',
-            filter: 'brightness(0.65) contrast(1.08) saturate(1.15)',
-            transform: `translate3d(${mouseOffset.x * -0.4}px, ${mouseOffset.y * -0.4}px, 0) scale(1.02)`,
-            transition: 'transform 0.2s cubic-bezier(0.1, 1, 0.1, 1)',
+            filter: 'brightness(0.55) contrast(1.05) saturate(1.1)',
+            transform: `translate3d(${mouseOffset.x * -0.25}px, ${mouseOffset.y * -0.25}px, 0) scale(1.02)`,
+            transition: 'transform 0.25s cubic-bezier(0.1, 1, 0.1, 1)',
             zIndex: 0,
           }}
         />
@@ -97,64 +103,57 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         />
       )}
 
-      {/* Ambient Lighting Beams */}
-      <div
-        className="auth-glow-pulse"
-        style={{
-          position: 'absolute',
-          top: '-15%',
-          left: '15%',
-          width: '550px',
-          height: '550px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.32) 0%, transparent 70%)',
-          transform: `translate3d(${mouseOffset.x * 0.7}px, ${mouseOffset.y * 0.7}px, 0)`,
-          pointerEvents: 'none',
-          zIndex: 1,
-        }}
-      />
-      <div
-        className="auth-glow-pulse"
-        style={{
-          position: 'absolute',
-          bottom: '-15%',
-          right: '10%',
-          width: '600px',
-          height: '600px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%)',
-          transform: `translate3d(${mouseOffset.x * -0.7}px, ${mouseOffset.y * -0.7}px, 0)`,
-          pointerEvents: 'none',
-          zIndex: 1,
-          animationDelay: '-2.5s',
-        }}
-      />
-
-      {/* Stardust Grid Overlay */}
+      {/* Soft vignette to focus attention on the card */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)`,
-          backgroundSize: '36px 36px',
+          background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%)',
           pointerEvents: 'none',
-          opacity: 0.4,
           zIndex: 1,
         }}
       />
 
-      {/* 👑 CLEAN TOP HEADER BAR */}
+      {/* Subtle stardust grid */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)`,
+          backgroundSize: '38px 38px',
+          pointerEvents: 'none',
+          opacity: 0.35,
+          zIndex: 1,
+        }}
+      />
+
+      {/* Single ambient glow (top-right) */}
+      <div
+        className="auth-glow-pulse"
+        style={{
+          position: 'absolute',
+          top: '-12%',
+          right: '8%',
+          width: '520px',
+          height: '520px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
+
+      {/* 👑 BRAND HEADER (real logo) */}
       <header
         style={{
           position: 'absolute',
-          top: '20px',
-          left: '32px',
+          top: '24px',
+          left: '36px',
           zIndex: 30,
           display: 'flex',
           alignItems: 'center',
         }}
       >
-        {/* Brand Logo */}
         <Link
           href="/"
           style={{
@@ -164,55 +163,49 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             textDecoration: 'none',
           }}
         >
-          <div
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="Gremio Estelar"
             style={{
-              width: '34px',
               height: '34px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #6366F1, #A855F7)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 18px rgba(99, 102, 241, 0.6)',
-              fontSize: '1.05rem',
-              fontWeight: 900,
-              color: '#fff',
+              width: 'auto',
+              filter: 'drop-shadow(0 0 12px rgba(139, 92, 246, 0.5))',
             }}
-          >
-            ❖
-          </div>
+          />
           <span
             style={{
-              fontSize: '1.25rem',
-              fontWeight: 900,
-              letterSpacing: '0.08em',
+              fontSize: '1.15rem',
+              fontWeight: 800,
+              letterSpacing: '0.06em',
               background: 'linear-gradient(135deg, #ffffff 40%, #A5B4FC 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
               textTransform: 'uppercase',
             }}
           >
-            GREMIO ESTELAR
+            Gremio Estelar
           </span>
         </Link>
       </header>
 
-      {/* 🚀 CENTERED MAX-WIDTH WORKSPACE (PREVENTS MIGRATION DISPLACEMENT ACROSS SCREEN RESOLUTIONS) */}
+      {/* 🚀 CENTERED MAX-WIDTH WORKSPACE */}
       <main
         style={{
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: '1180px',
+          maxWidth: '1120px',
           height: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 32px',
+          padding: '0 40px',
           boxSizing: 'border-box',
         }}
       >
-        {/* LEFT PANEL: HERO CHARACTER SHOWCASE */}
+        {/* LEFT PANEL: CHARACTER SHOWCASE (smaller, aura-lit, no overlap) */}
         <div
           style={{
             flex: 1,
@@ -220,82 +213,104 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'flex-end',
             overflow: 'visible',
-            zIndex: 25,
-            animation: 'authSlideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+            zIndex: 20,
           }}
           className="auth-hero-column"
         >
-          {/* Character Image - Natural Float & Hand touching Card Frame */}
           <div
-            className="auth-character-anim"
             style={{
               position: 'relative',
-              height: '76vh',
-              maxHeight: '690px',
+              height: '62vh',
+              maxHeight: '560px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: '-18px',
-              zIndex: 25,
-              transform: `translate3d(${mouseOffset.x * 0.5}px, ${mouseOffset.y * 0.5}px, 0)`,
-              transition: 'transform 0.2s cubic-bezier(0.1, 1, 0.1, 1)',
+              // Deliberate, clean overlap with the card's left edge so the
+              // character reads as part of the same composition (standing
+              // beside the card). pointerEvents: none keeps every click on
+              // the card working.
+              marginRight: '-30px',
+              pointerEvents: 'none',
+              transform: `translate3d(${mouseOffset.x * 0.4}px, ${mouseOffset.y * 0.4}px, 0)`,
+              transition: 'transform 0.25s cubic-bezier(0.1, 1, 0.1, 1)',
             }}
           >
-            {!charFailed ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={charImage}
-                alt="Character Showcase"
-                onError={() => setCharFailed(true)}
-                style={{
-                  height: '100%',
-                  width: 'auto',
-                  maxHeight: '76vh',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 12px 30px rgba(0, 0, 0, 0.45))',
-                  transition: 'all 0.5s ease',
-                }}
-              />
-            ) : (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src="/hoshi.png"
-                alt="VTuber Mascot Showcase"
-                style={{
-                  height: '100%',
-                  width: 'auto',
-                  maxHeight: '76vh',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 12px 30px rgba(0, 0, 0, 0.45))',
-                }}
-              />
-            )}
+            {/* Rotating cosmic aura behind the character */}
+            <div
+              className="auth-aura-rotate"
+              style={{
+                position: 'absolute',
+                width: '130%',
+                height: '130%',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, rgba(124, 58, 237, 0.08) 45%, transparent 70%)',
+                filter: 'blur(10px)',
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              className="auth-character-anim"
+              style={{
+                position: 'relative',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {!charFailed ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={charImage}
+                  alt="Mascota de Gremio Estelar"
+                  onError={() => setCharFailed(true)}
+                  style={{
+                    height: '100%',
+                    width: 'auto',
+                    maxHeight: '60vh',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55))',
+                    transition: 'all 0.5s ease',
+                  }}
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src="/hoshi.png"
+                  alt="Mascota de Gremio Estelar"
+                  style={{
+                    height: '100%',
+                    width: 'auto',
+                    maxHeight: '60vh',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55))',
+                  }}
+                />
+              )}
+            </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL: GLASS FORM CARD WIDGET */}
+        {/* RIGHT PANEL: GLASS FORM CARD (stable, no parallax) */}
         <div
           style={{
-            width: '390px',
+            width: '420px',
             maxWidth: '92vw',
             flexShrink: 0,
             zIndex: 15,
-            transform: `translate3d(${mouseOffset.x * -0.3}px, ${mouseOffset.y * -0.3}px, 0)`,
-            transition: 'transform 0.2s cubic-bezier(0.1, 1, 0.1, 1)',
             animation: 'authSlideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          {/* GLASS CARD CONTAINER */}
           <div
             className="auth-glass-card"
             style={{
-              borderRadius: '20px',
-              padding: '20px 22px',
+              borderRadius: '22px',
+              padding: '26px 28px',
               position: 'relative',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(99, 102, 241, 0.22)',
-              background: 'rgba(10, 14, 28, 0.85)',
+              boxShadow: '0 30px 70px rgba(0, 0, 0, 0.7), 0 0 45px rgba(99, 102, 241, 0.2)',
+              background: 'rgba(10, 14, 28, 0.86)',
               borderColor: 'rgba(147, 197, 253, 0.2)',
               overflow: 'hidden',
             }}
@@ -313,7 +328,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             />
 
             {/* TAB TOGGLE WITH SLIDING PILL */}
-            <div className="auth-tab-container" style={{ marginBottom: '12px' }}>
+            <div className="auth-tab-container" style={{ marginBottom: '18px' }}>
               <div
                 className="auth-tab-slider"
                 style={{
@@ -326,28 +341,45 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                 onClick={() => handleTabSwitch('/login')}
                 className={`auth-tab-btn ${isLogin ? 'active' : ''}`}
               >
-                ✨ Iniciar Sesión
+                Iniciar Sesión
               </button>
               <button
                 type="button"
                 onClick={() => handleTabSwitch('/register')}
                 className={`auth-tab-btn ${!isLogin ? 'active' : ''}`}
               >
-                ✦ Registrarse
+                Registrarse
               </button>
             </div>
 
-            {/* Form Subtitle Header */}
-            <p
-              style={{
-                fontSize: '0.8rem',
-                color: 'rgba(226, 232, 240, 0.75)',
-                marginBottom: '12px',
-                textAlign: 'center',
-              }}
-            >
-              {isLogin ? 'Accede a tu cuenta y continúa tu aventura VTuber' : 'Crea tu cuenta estelar y forma parte de la comunidad'}
-            </p>
+            {/* Heading — clear hierarchy */}
+            <div style={{ textAlign: 'center', marginBottom: '18px' }}>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: '1.5rem',
+                  fontWeight: 800,
+                  letterSpacing: '-0.01em',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                {heading} <span aria-hidden="true">{headingAccent}</span>
+              </h1>
+              <p
+                style={{
+                  margin: '6px 0 0',
+                  fontSize: '0.84rem',
+                  color: 'rgba(226, 232, 240, 0.65)',
+                  lineHeight: 1.5,
+                }}
+              >
+                {subtitle}
+              </p>
+            </div>
 
             {/* 🎛️ SMOOTH HORIZONTAL SLIDING FORM PANEL TRACK */}
             <ClientOnly
@@ -392,4 +424,3 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
     </div>
   );
 }
-

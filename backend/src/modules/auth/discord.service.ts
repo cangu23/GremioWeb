@@ -57,13 +57,43 @@ const fetchDiscordUser = async (accessToken: string) => {
 
   return {
     discordId: user.id,
-    username: user.global_name || user.username,
+    // Keep the raw @username AND the display name separate:
+    // the display name is the friendly one we prefer for the account username.
+    username: user.username,
+    displayName: user.global_name,
     email: user.email || `${user.id}@discord.local`,
     avatarUrl: user.avatar
       ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
       : '',
   };
 };
+
+/**
+ * Build a safe, readable username from a Discord profile.
+ * - Prefers the display name (global_name), falls back to the raw @username.
+ * - Strips diacritics (á → a), replaces unsafe chars with `_`, collapses
+ *   repeated underscores and trims them.
+ * - If nothing usable remains (e.g. emoji-only or non-Latin @username),
+ *   returns a generic `usuarioXXXX` so accounts never end up with a wall
+ *   of underscores like "____________________".
+ */
+function buildUsernameFromDiscord(discordUser: { username: string; displayName?: string | null }): string {
+  const raw = (discordUser.displayName || discordUser.username || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '') // strip diacritics
+    .trim();
+
+  const clean = raw
+    .replace(/[^a-zA-Z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .substring(0, 20);
+
+  if (!clean || /^_+$/.test(clean)) {
+    return `usuario${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+  return clean;
+}
 
 /**
  * Authenticate or register a user with Discord
@@ -100,11 +130,14 @@ export const authenticateWithDiscord = async (code: string, redirectUri: string)
     return { accessToken, refreshToken, user: sessionUser };
   }
 
-  // 4. Create new user
-  let username = discordUser.username.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 20);
-  const existingUsername = await UserRepository.findByUsername(username);
-  if (existingUsername) {
-    username = `${username}${Math.floor(Math.random() * 10000)}`;
+  // 4. Create new user — build a readable username from the Discord profile.
+  let username = buildUsernameFromDiscord(discordUser);
+  const baseUsername = username;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const existingUsername = await UserRepository.findByUsername(username);
+    if (!existingUsername) break;
+    // Base name taken → retry with a random 4-digit suffix (max 20 chars).
+    username = `${baseUsername.slice(0, 16)}${Math.floor(1000 + Math.random() * 9000)}`;
   }
 
   const newUser = await UserRepository.createUser({
