@@ -47,6 +47,11 @@ def upload(buffer: bytes, folder: str, content_type: str = "image/webp") -> str:
         raise RuntimeError(
             "Cloudflare R2 is not configured. Set R2_ENDPOINT, R2_ACCESS_KEY, and R2_SECRET_KEY."
         )
+    if not settings.R2_PUBLIC_URL:
+        raise RuntimeError(
+            "R2_PUBLIC_URL is not configured. Set it to the public URL of the R2 bucket "
+            "(e.g. https://pub-xxxxxxxxxxxxxxxxxxxx.r2.dev)."
+        )
 
     client = _get_client()
     key = _generate_key(folder)
@@ -71,6 +76,11 @@ def upload_with_metadata(buffer: bytes, folder: str, content_type: str = "image/
     """
     if not is_configured():
         raise RuntimeError("Cloudflare R2 is not configured.")
+    if not settings.R2_PUBLIC_URL:
+        raise RuntimeError(
+            "R2_PUBLIC_URL is not configured. Set it to the public URL of the R2 bucket "
+            "(e.g. https://pub-xxxxxxxxxxxxxxxxxxxx.r2.dev)."
+        )
 
     client = _get_client()
     key = _generate_key(folder)

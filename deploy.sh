@@ -69,6 +69,10 @@ log_success "Variables de entorno cargadas correctamente sin exponer credenciale
 MISSING_VARS=()
 if [ -z "${TUNNEL_TOKEN:-}" ]; then MISSING_VARS+=("TUNNEL_TOKEN"); fi
 if [ -z "${POSTGRES_PASSWORD:-}" ]; then MISSING_VARS+=("POSTGRES_PASSWORD"); fi
+if [ -z "${JWT_ACCESS_SECRET:-}" ]; then MISSING_VARS+=("JWT_ACCESS_SECRET"); fi
+if [ -z "${JWT_REFRESH_SECRET:-}" ]; then MISSING_VARS+=("JWT_REFRESH_SECRET"); fi
+if [ -z "${FRONTEND_URL:-}" ]; then MISSING_VARS+=("FRONTEND_URL"); fi
+if [ -z "${MEDIA_ENGINE_TOKEN:-}" ]; then MISSING_VARS+=("MEDIA_ENGINE_TOKEN"); fi
 
 if [ ${#MISSING_VARS[@]} -ne 0 ]; then
     log_error "Faltan las siguientes variables obligatorias en el archivo .env: ${MISSING_VARS[*]}"

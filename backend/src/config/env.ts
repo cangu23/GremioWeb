@@ -58,6 +58,30 @@ if (!parseResult.success) {
 
 const rawEnv = parseResult.data;
 
+// ── Production security guard ────────────────────────────────────
+// Never boot in production with default/dev JWT secrets: tokens
+// signed with a known secret can be forged by anyone.
+const INSECURE_JWT_SECRETS = [
+  'dev-secret-access-token-key-12345',
+  'dev-secret-refresh-token-key-12345',
+  'change-this-jwt-access-secret-prod',
+  'change-this-jwt-refresh-secret-prod',
+  'dev-access-secret-change-me',
+  'dev-refresh-secret-change-me',
+];
+
+if (rawEnv.NODE_ENV === 'production') {
+  const accessSecret = rawEnv.JWT_ACCESS_SECRET || '';
+  const refreshSecret = rawEnv.JWT_REFRESH_SECRET || '';
+
+  if (accessSecret.length < 32 || INSECURE_JWT_SECRETS.includes(accessSecret)) {
+    throw new Error('❌ JWT_ACCESS_SECRET must be set to a strong, unique random value (min 32 chars) in production');
+  }
+  if (refreshSecret.length < 32 || INSECURE_JWT_SECRETS.includes(refreshSecret)) {
+    throw new Error('❌ JWT_REFRESH_SECRET must be set to a strong, unique random value (min 32 chars) in production');
+  }
+}
+
 const env = {
   ...rawEnv,
   ALLOWED_ORIGINS: buildAllowedOrigins(),

@@ -4,6 +4,10 @@ import cloudinary from '../lib/cloudinary.js';
 
 const MEDIA_ENGINE_URL = process.env.MEDIA_ENGINE_URL || 'http://localhost:8001';
 
+// Shared internal token (optional). When set, it must match the
+// MEDIA_ENGINE_TOKEN configured on the media-engine service.
+const MEDIA_ENGINE_TOKEN = process.env.MEDIA_ENGINE_TOKEN || '';
+
 export interface OptimizeResult {
   status: 'ok' | 'error';
   url?: string;
@@ -71,9 +75,15 @@ export async function optimizeImage(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
+    const headers: Record<string, string> = {};
+    if (MEDIA_ENGINE_TOKEN) {
+      headers['X-Internal-Token'] = MEDIA_ENGINE_TOKEN;
+    }
+
     const res = await fetch(`${MEDIA_ENGINE_URL}/internal/optimize`, {
       method: 'POST',
       body: formData,
+      headers,
       signal: controller.signal,
     });
 

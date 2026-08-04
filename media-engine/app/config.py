@@ -17,8 +17,13 @@ class Settings(BaseSettings):
     R2_SECRET_KEY: str = os.getenv("R2_SECRET_KEY", "")
     R2_BUCKET: str = os.getenv("R2_BUCKET", "gremio-estelar-media")
 
-    # Public URL for serving objects (enable Public Development URL in R2 Dashboard)
-    R2_PUBLIC_URL: str = os.getenv("R2_PUBLIC_URL", "https://pub-300debc7f6914a58a1b69e1c8f5015a0.r2.dev")
+    # Public URL for serving objects (enable Public Development URL in R2 Dashboard).
+    # Required for uploads to work — the engine fails fast with a clear error if missing.
+    R2_PUBLIC_URL: str = os.getenv("R2_PUBLIC_URL", "")
+
+    # Shared internal token. When set, /internal/* endpoints require
+    # it via the X-Internal-Token header (sent by the Express backend).
+    MEDIA_ENGINE_TOKEN: str = os.getenv("MEDIA_ENGINE_TOKEN", "")
 
     # Processing limits
     MAX_IMAGE_SIZE: int = 5 * 1024 * 1024  # 5MB

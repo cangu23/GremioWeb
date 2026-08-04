@@ -1,9 +1,10 @@
 import io
 import logging
 import time
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Header
 from typing import Optional
 
+from app.config import settings
 from app.models import OptimizeResponse
 from app.services.detector import get_image_info, is_animated
 from app.services.image import optimize as process_image
@@ -13,6 +14,12 @@ logger = logging.getLogger("media-engine")
 router = APIRouter()
 
 
+def _require_internal_token(x_internal_token: str) -> None:
+    """Guard for internal endpoints. Only enforced when a token is configured."""
+    if settings.MEDIA_ENGINE_TOKEN and x_internal_token != settings.MEDIA_ENGINE_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
 @router.post("/internal/optimize", response_model=OptimizeResponse)
 async def optimize(
     image: UploadFile = File(...),
@@ -20,6 +27,7 @@ async def optimize(
     max_width: int = Form(1200),
     quality: int = Form(80),
     keep_animation: bool = Form(True),
+    x_internal_token: str = Header(default=""),
 ):
     """
     Optimize an image and upload it to R2.
@@ -31,6 +39,9 @@ async def optimize(
     - Returns public URL
     """
     start = time.time()
+
+    # Internal auth guard (only when a token is configured)
+    _require_internal_token(x_internal_token)
 
     # Validate MIME type
     if image.content_type not in (
@@ -100,8 +111,9 @@ async def optimize(
 
 
 @router.get("/internal/optimize/health")
-async def optimize_health():
+async def optimize_health(x_internal_token: str = Header(default="")):
     """Health check with R2 status."""
+    _require_internal_token(x_internal_token)
     return {
         "status": "ok",
         "r2_configured": r2_configured(),

@@ -1,10 +1,21 @@
 import prisma from '../database/prisma';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 async function main() {
-  const email = 'admin@gremioestelar.com';
-  const username = 'admin_master';
-  const passwordPlain = 'Admin123!';
+  const email = process.env.SEED_ADMIN_EMAIL || 'admin@gremioestelar.com';
+  const username = process.env.SEED_ADMIN_USERNAME || 'admin_master';
+
+  // Never use a well-known default password. If SEED_ADMIN_PASSWORD is not
+  // provided, generate a random one and print it once (dev/bootstrap only).
+  let passwordPlain = process.env.SEED_ADMIN_PASSWORD || '';
+  if (!passwordPlain) {
+    passwordPlain = crypto.randomBytes(12).toString('base64url');
+    console.warn('[DB] SEED_ADMIN_PASSWORD no definido — se generó una contraseña aleatoria.');
+  } else if (passwordPlain === 'Admin123!' || passwordPlain.length < 12) {
+    throw new Error('[DB] SEED_ADMIN_PASSWORD debe tener al menos 12 caracteres y no usar la contraseña por defecto.');
+  }
+
   const hashedPassword = await bcrypt.hash(passwordPlain, 10);
 
   let user = await prisma.user.findFirst({

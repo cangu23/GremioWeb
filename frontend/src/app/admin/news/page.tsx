@@ -203,7 +203,7 @@ function AdminNewsContent() {
         </div>
       ) : articles.length === 0 ? (
         <div className="glass" style={{ padding: '40px', textAlign: 'center', borderRadius: '16px' }}>
-          <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>Aún no hay noticias registradas. Haz clic en "Redactar Nueva Noticia".</p>
+          <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>Aún no hay noticias registradas. Haz clic en &quot;Redactar Nueva Noticia&quot;.</p>
         </div>
       ) : (
         <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden' }}>

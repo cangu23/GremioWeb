@@ -43,3 +43,9 @@ nul
 # Next.js auto-generated
 frontend/next-env.d.ts
 .aider*
+
+# Python (media-engine)
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/

@@ -19,10 +19,19 @@ const app = express();
 console.log(`${BOOT} Express app instance created`);
 
 // ========== TRUST PROXY ==========
-// Render and other cloud hosts use a proxy/load balancer.
-// This ensures req.protocol detects HTTPS via x-forwarded-proto header.
-app.set('trust proxy', 1);
-console.log(`${BOOT} Trust proxy enabled`);
+// Render/Cloudflare Tunnel sit in front of the app in production, so we trust
+// one proxy hop to read the real client IP (req.ip) and detect HTTPS via
+// x-forwarded-proto. This also powers rate limiting by IP.
+//
+// ⚠️  Only enable this behind a real proxy. If the port is directly reachable
+// on the internet, trusting X-Forwarded-For lets attackers spoof their IP and
+// bypass rate limits. Set TRUST_PROXY=0 in that case (see .env.example).
+const trustProxyEnabled =
+  process.env.TRUST_PROXY === undefined
+    ? process.env.NODE_ENV === 'production'
+    : process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true';
+app.set('trust proxy', trustProxyEnabled ? 1 : false);
+console.log(`${BOOT} Trust proxy: ${trustProxyEnabled ? 'enabled (1 hop)' : 'disabled'}`);
 
 // ========== REQUEST LOGGING (first middleware) ==========
 app.use((req: Request, res: Response, next: NextFunction) => {

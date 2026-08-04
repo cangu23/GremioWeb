@@ -56,6 +56,7 @@ model User {
   lastFedAt     DateTime?
   profileParticles String?
   profileTheme  String?
+  profileFrame  String?
 
   // Relations
   vtuberProfile VTuberProfile?

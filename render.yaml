@@ -23,6 +23,11 @@ services:
         value: "4000"
       - key: FRONTEND_PORT
         value: "3001"
+      # Dominio público de tu app (CORS/WebSocket). Ej: https://gremio-web.onrender.com
+      - key: FRONTEND_URL
+        sync: false
+      - key: TRUST_PROXY
+        value: "1"
       - key: DATABASE_URL
         sync: false  # User fills this in the Render Dashboard
       - key: JWT_ACCESS_SECRET
@@ -47,11 +52,21 @@ services:
         sync: false
       - key: DISCORD_CLIENT_SECRET
         sync: false
+      # NEXT_PUBLIC_API_BASE_URL: deja vacío para usar rutas relativas (/api)
+      # que Next.js reescribe al Express interno (funciona en el contenedor).
+      # Alternativa: tu dominio público real, ej: https://gremio-web.onrender.com/api
       - key: NEXT_PUBLIC_API_BASE_URL
-        value: https://gremio-web.onrender.com/api
+        value: ""
+      # Google OAuth Client ID (público). En Render debe configurarse como
+      # BUILD ARG del servicio (Docker) para que Next.js lo inline en el build.
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        sync: false
       # URL of the Media Engine service (set after deploying it)
       - key: MEDIA_ENGINE_URL
         value: https://gremio-media-engine.onrender.com
+      # Shared secret used to authenticate internal calls to the Media Engine
+      - key: MEDIA_ENGINE_TOKEN
+        sync: false
 
   # ===== MEDIA ENGINE (Python/FastAPI) =====
   - type: web
@@ -75,4 +90,6 @@ services:
       - key: R2_BUCKET
         value: gremio-estelar-media
       - key: R2_PUBLIC_URL
+        sync: false
+      - key: MEDIA_ENGINE_TOKEN
         sync: false

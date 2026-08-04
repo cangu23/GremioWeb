@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-gremioweb}
       POSTGRES_USER: ${POSTGRES_USER:-gremio_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD is required in .env}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD is required in .env}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -41,6 +41,7 @@ services:
       - R2_SECRET_KEY=${R2_SECRET_KEY:-}
       - R2_BUCKET=${R2_BUCKET:-gremio-estelar-media}
       - R2_PUBLIC_URL=${R2_PUBLIC_URL:-}
+      - MEDIA_ENGINE_TOKEN=${MEDIA_ENGINE_TOKEN:-}
     networks:
       - gremio-network
     deploy:
@@ -62,22 +63,40 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runner
+      # Deja NEXT_PUBLIC_API_BASE_URL vacío para que el frontend use rutas
+      # relativas (/api) que Next.js reescribe al Express interno (puerto 4001).
+      # Esto funciona para usuarios remotos vía Cloudflare Tunnel. Si lo defines,
+      # usa tu dominio público (ej: https://gremio.tudominio.com).
       args:
-        - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000/api}
+        - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-}
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
     container_name: gremio-web-app
     restart: unless-stopped
     ports:
       - "4000:4000"
+      # 4001 = Express interno (API + WebSockets directos). Expónlo si tu
+      # Cloudflare Tunnel rutea /socket.io directo al backend (WS real).
+      # Si NO lo necesitas, elimina esta línea para no exponer la API en el host.
+      - "4001:4001"
+    volumes:
+      # Persistencia del fallback local de uploads (cuando R2/Cloudinary fallan).
+      # Sin este volumen los archivos se pierden al recrear el contenedor.
+      - web_uploads:/app/backend/uploads
     environment:
       - NODE_ENV=production
       - PORT=4000
       - DATABASE_URL=postgresql://${POSTGRES_USER:-gremio_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gremioweb}?schema=public
-      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-change-this-jwt-access-secret-prod}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-change-this-jwt-refresh-secret-prod}
+      - JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required in .env}"
+      - JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required in .env}"
       - JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN:-15m}
       - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-7d}
       - MEDIA_ENGINE_URL=http://media-engine:8001
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - MEDIA_ENGINE_TOKEN=${MEDIA_ENGINE_TOKEN:-}
+      # FRONTEND_URL debe ser tu dominio público (CORS/WebSocket)
+      - FRONTEND_URL="${FRONTEND_URL:?FRONTEND_URL is required in .env}"
+      # TRUST_PROXY=1 (default en prod): estás detrás de Cloudflare Tunnel.
+      # Pon TRUST_PROXY=0 si expones el puerto directo a internet.
+      - TRUST_PROXY=${TRUST_PROXY:-1}
     depends_on:
       postgres:
         condition: service_healthy
@@ -105,7 +124,7 @@ services:
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN:?Error: TUNNEL_TOKEN is mandatory in .env}
+      - TUNNEL_TOKEN="${TUNNEL_TOKEN:?Error: TUNNEL_TOKEN is mandatory in .env}"
     networks:
       - gremio-network
     depends_on:
@@ -120,6 +139,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  web_uploads:
     driver: local
 
 networks:

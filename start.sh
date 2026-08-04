@@ -28,7 +28,12 @@ if [ -f /app/backend/prisma/schema.prisma ]; then
     fi
   done
   if [ "$db_synced" != "true" ]; then
-    echo "[BOOT] ⚠️  Database sync failed after 5 attempts — starting anyway"
+    if [ "${NODE_ENV:-}" = "production" ]; then
+      echo "[BOOT] ❌ Database sync failed after 5 attempts — refusing to start in production"
+      echo "[BOOT]    Check DATABASE_URL and that the database is reachable, then restart."
+      exit 1
+    fi
+    echo "[BOOT] ⚠️  Database sync failed after 5 attempts — starting anyway (dev mode)"
   fi
 fi
 
