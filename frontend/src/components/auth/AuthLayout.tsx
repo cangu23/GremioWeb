@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import LoginForm from '@/components/auth/LoginForm';
 import RegisterForm from '@/components/auth/RegisterForm';
+import AuthMusicPlayer from '@/components/auth/AuthMusicPlayer';
 import ClientOnly from '@/lib/ClientOnly';
 
 interface AuthLayoutProps {
@@ -18,6 +19,15 @@ const STARS = Array.from({ length: 46 }, (_, i) => ({
   top: (i * 53 + 7) % 100,
   size: 1 + ((i * 13) % 3),
   delay: (i % 8) * 0.4,
+}));
+
+/* Rising golden embers / stardust particles */
+const EMBERS = Array.from({ length: 18 }, (_, i) => ({
+  id: i,
+  left: (i * 61 + 5) % 96,
+  size: 2 + ((i * 7) % 3),
+  duration: 9 + ((i * 3) % 8),
+  delay: (i % 9) * 1.3,
 }));
 
 export default function AuthLayout({ activeTab }: AuthLayoutProps) {
@@ -44,6 +54,48 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Embers scatter away from the cursor (star dust reacting to the visitor)
+  const emberDotsRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const emberWrapsRef = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    let raf = 0;
+    const handleEmberScatter = (e: MouseEvent) => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const { clientX, clientY } = e;
+        const radius = 150;
+        const maxPush = 46;
+        EMBERS.forEach((_, i) => {
+          const dot = emberDotsRef.current[i];
+          const wrap = emberWrapsRef.current[i];
+          if (!dot || !wrap) return;
+          const rect = wrap.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const dx = cx - clientX;
+          const dy = cy - clientY;
+          const dist = Math.hypot(dx, dy);
+          if (dist < radius && dist > 0.01) {
+            const falloff = 1 - dist / radius;
+            const push = falloff * maxPush;
+            const nx = dx / dist;
+            const ny = dy / dist;
+            dot.style.transform = `translate3d(${(nx * push).toFixed(1)}px, ${(ny * push).toFixed(1)}px, 0)`;
+          } else {
+            dot.style.transform = 'translate3d(0px, 0px, 0)';
+          }
+        });
+      });
+    };
+
+    window.addEventListener('mousemove', handleEmberScatter);
+    return () => {
+      window.removeEventListener('mousemove', handleEmberScatter);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   const handleTabSwitch = (targetPath: string) => {
@@ -131,24 +183,33 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
     >
       {/* 🌌 FULLSCREEN FIXED BACKGROUND (Genshin-style deep dusk) */}
       {!bgFailed ? (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
-          src={bgImage}
-          alt=""
-          onError={() => setBgFailed(true)}
+        /* Drift lives on the wrapper; parallax stays on the img so they compose */
+        <div
+          className="auth-bg-drift"
           style={{
             position: 'absolute',
-            inset: '-10px',
-            width: 'calc(100% + 20px)',
-            height: 'calc(100% + 20px)',
-            objectFit: 'cover',
-            objectPosition: 'center center',
-            filter: 'brightness(0.5) contrast(1.08) saturate(1.25)',
-            transform: `translate3d(${mouseOffset.x * -0.25}px, ${mouseOffset.y * -0.25}px, 0) scale(1.02)`,
-            transition: 'transform 0.25s cubic-bezier(0.1, 1, 0.1, 1)',
+            inset: '-12px',
+            width: 'calc(100% + 24px)',
+            height: 'calc(100% + 24px)',
             zIndex: 0,
           }}
-        />
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={bgImage}
+            alt=""
+            onError={() => setBgFailed(true)}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center center',
+              filter: 'brightness(0.5) contrast(1.08) saturate(1.25)',
+              transform: `translate3d(${mouseOffset.x * -0.25}px, ${mouseOffset.y * -0.25}px, 0) scale(1.06)`,
+              transition: 'transform 0.25s cubic-bezier(0.1, 1, 0.1, 1)',
+            }}
+          />
+        </div>
       ) : (
         /* Fallback Genshin dusk gradient */
         <div
@@ -173,7 +234,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         }}
       />
 
-      {/* Golden horizon glow (character side) */}
+      {/* Golden horizon glow (character side) — breathing */}
       <div
         style={{
           position: 'absolute',
@@ -185,8 +246,41 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
           background: 'radial-gradient(circle, rgba(212,175,55,0.16) 0%, transparent 65%)',
           pointerEvents: 'none',
           zIndex: 1,
+          animation: 'authPulseGlow 7s ease-in-out infinite',
         }}
       />
+
+      {/* Rising golden embers / stardust — they scatter away from the cursor */}
+      {EMBERS.map((e) => (
+        <div
+          key={e.id}
+          ref={(el) => {
+            emberWrapsRef.current[e.id] = el;
+          }}
+          className="auth-ember"
+          style={{
+            left: `${e.left}%`,
+            animationDuration: `${e.duration}s`,
+            animationDelay: `${e.delay}s`,
+            opacity: 0,
+          }}
+        >
+          <span
+            ref={(el) => {
+              emberDotsRef.current[e.id] = el;
+            }}
+            className="auth-ember-dot"
+            style={{
+              width: `${e.size}px`,
+              height: `${e.size}px`,
+              background: e.size > 3 ? '#F5E7B0' : '#E8C77A',
+              boxShadow: e.size > 3
+                ? '0 0 8px rgba(245,231,176,0.9), 0 0 16px rgba(212,175,55,0.5)'
+                : '0 0 6px rgba(232,199,122,0.8)',
+            }}
+          />
+        </div>
+      ))}
 
       {/* Twinkling starfield */}
       {STARS.map((s) => (
@@ -265,6 +359,9 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         </Link>
       </header>
 
+      {/* 🎵 BACKGROUND MUSIC TOGGLE (stelar.mp3 in frontend/public/audio) */}
+      <AuthMusicPlayer />
+
       {/* 🚀 CENTERED MAX-WIDTH WORKSPACE — character + card as one balanced unit */}
       <main
         style={{
@@ -298,25 +395,26 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
           className="auth-hero-column"
         >
           <div
+            className="auth-character-stage"
             style={{
               position: 'relative',
-              height: '66vh',
-              maxHeight: '590px',
+              height: '74vh',
+              maxHeight: '660px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               // Stronger Genshin-style overlap: the character leans onto the
               // card. pointerEvents: none keeps every click on the card working.
-              marginRight: '-58px',
+              marginRight: '-62px',
               pointerEvents: 'none',
-              transform: `translate3d(${mouseOffset.x * 0.4}px, ${mouseOffset.y * 0.4}px, 0)`,
+              transform: `translate3d(${mouseOffset.x * 0.45}px, ${mouseOffset.y * 0.45}px, 0)`,
               transition: 'transform 0.25s cubic-bezier(0.1, 1, 0.1, 1)',
             }}
           >
             {/* Constellation map behind the character */}
             {constellation}
 
-            {/* Rotating golden aura */}
+            {/* Rotating golden aura (also gently breathes) */}
             <div
               className="auth-gold-aura"
               style={{
@@ -328,6 +426,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                   'conic-gradient(from 0deg, rgba(212,175,55,0.14) 0%, transparent 18%, rgba(245,231,176,0.1) 40%, transparent 60%, rgba(212,175,55,0.14) 100%)',
                 filter: 'blur(12px)',
                 pointerEvents: 'none',
+                animation: 'authGoldAuraSpin 16s linear infinite, authPulseGlow 8s ease-in-out infinite',
               }}
             />
             {/* Warm light rays */}
@@ -403,8 +502,10 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                   style={{
                     height: '100%',
                     width: 'auto',
-                    maxHeight: '64vh',
+                    maxHeight: '72vh',
                     objectFit: 'contain',
+                    // Tilted, dynamic pose (leans toward the card)
+                    transform: 'rotate(3deg)',
                     filter: 'drop-shadow(0 18px 44px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 30px rgba(212,175,55,0.18))',
                     transition: 'all 0.5s ease',
                   }}
@@ -417,8 +518,9 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                   style={{
                     height: '100%',
                     width: 'auto',
-                    maxHeight: '64vh',
+                    maxHeight: '72vh',
                     objectFit: 'contain',
+                    transform: 'rotate(3deg)',
                     filter: 'drop-shadow(0 18px 44px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 30px rgba(212,175,55,0.18))',
                   }}
                 />
@@ -451,6 +553,18 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
               flexDirection: 'column',
             }}
           >
+            {/* Breathing golden glow overlay (keeps :hover working) */}
+            <div
+              className="auth-card-breath"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: 'inherit',
+                background: 'radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.1) 0%, transparent 55%)',
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            />
             {/* Ornamental gold corners */}
             <div
               style={{
@@ -543,6 +657,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                 }}
               />
               <span
+                className="auth-kicker-star"
                 style={{
                   fontSize: '0.85rem',
                   color: '#E8C77A',
@@ -695,8 +810,23 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         </span>
       </footer>
 
-      {/* Responsive styling */}
+      {/* Responsive styling — the scene adapts to every screen size */}
       <style jsx global>{`
+        /* Force the Google GSI button to fill its grid cell like Discord */
+        .google-login-wrap {
+          width: 100% !important;
+          max-width: none !important;
+        }
+        .google-login-wrap > div {
+          width: 100% !important;
+          max-width: none !important;
+        }
+        .google-login-wrap iframe {
+          width: 100% !important;
+          max-width: none !important;
+          border-radius: 10px;
+        }
+
         .auth-form-scroll {
           scrollbar-width: none;
           -ms-overflow-style: none;
@@ -706,12 +836,47 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
           width: 0;
           height: 0;
         }
+
+        /* Tall desktop: character shines at full size */
+        @media (min-width: 1021px) and (max-height: 820px) {
+          .auth-character-stage {
+            height: 70vh !important;
+            max-height: 600px !important;
+          }
+        }
+
+        /* Compact desktop / small laptop: scale the character down */
+        @media (min-width: 1021px) and (max-width: 1180px) {
+          .auth-character-stage {
+            height: 62vh !important;
+            max-height: 540px !important;
+            margin-right: -46px !important;
+          }
+        }
+
+        /* Very tall screens: never let the character look tiny */
+        @media (min-height: 1000px) and (min-width: 1021px) {
+          .auth-character-stage {
+            height: 68vh !important;
+            max-height: 760px !important;
+          }
+        }
+
+        /* Below this width there's no room for the hero — card takes over */
         @media (max-width: 1020px) {
           .auth-hero-column {
             display: none !important;
           }
           .auth-footer {
             display: none !important;
+          }
+        }
+
+        /* Small phones: tighter card padding */
+        @media (max-width: 480px) {
+          .auth-glass-card {
+            padding-left: 20px !important;
+            padding-right: 20px !important;
           }
         }
       `}</style>

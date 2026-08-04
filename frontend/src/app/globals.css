@@ -1128,15 +1128,22 @@ img, svg {
    OTAKORE / ESTELAR AUTH SYSTEM ANIMATIONS & UTILITIES
    ========================================================================== */
 
+/* Lively float with sway & tilt — the character feels alive, not stiff */
 @keyframes authCharacterFloat {
   0% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translateY(0px) rotate(-2deg);
+  }
+  25% {
+    transform: translateY(-18px) rotate(0.5deg);
   }
   50% {
-    transform: translateY(-16px) rotate(1.2deg);
+    transform: translateY(-6px) rotate(3deg);
+  }
+  75% {
+    transform: translateY(-22px) rotate(1.2deg);
   }
   100% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translateY(0px) rotate(-2deg);
   }
 }
 
@@ -1163,6 +1170,48 @@ img, svg {
   50% {
     opacity: 0.9;
     transform: translateY(-10px) scale(1.2);
+  }
+}
+
+/* Rising golden embers / stardust (Genshin-style particles) */
+@keyframes authEmberRise {
+  0% {
+    opacity: 0;
+    transform: translateY(0px) translateX(0px) scale(0.6);
+  }
+  15% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-42vh) translateX(12px) scale(1);
+  }
+  85% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-84vh) translateX(-8px) scale(0.5);
+  }
+}
+
+/* Slow breathing for the card glow overlay (opacity only — cheap, keeps hover) */
+@keyframes authCardBreath {
+  0%, 100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Gentle horizontal drift for the background so the whole scene moves */
+@keyframes authBgDrift {
+  0%, 100% {
+    transform: translate3d(0px, 0px, 0) scale(1.04);
+  }
+  50% {
+    transform: translate3d(14px, -8px, 0) scale(1.06);
   }
 }
 
@@ -1392,6 +1441,46 @@ img, svg {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: authGoldShimmer 5s linear infinite;
+}
+
+.auth-card-breath {
+  animation: authCardBreath 6s ease-in-out infinite;
+}
+
+.auth-bg-drift {
+  animation: authBgDrift 26s ease-in-out infinite;
+}
+
+.auth-ember {
+  position: absolute;
+  bottom: -2vh;
+  pointer-events: none;
+  animation: authEmberRise linear infinite;
+}
+
+/* Inner dot — JS drives its transform so embers scatter away from the cursor */
+.auth-ember-dot {
+  display: block;
+  border-radius: 50%;
+  will-change: transform;
+  transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* Kicker star gently pulses */
+@keyframes authKickerPulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.35) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+.auth-kicker-star {
+  display: inline-block;
+  animation: authKickerPulse 3.2s ease-in-out infinite;
 }
 
 
