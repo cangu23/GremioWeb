@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface Star {
   x: number;
@@ -43,8 +44,11 @@ interface Spark {
 
 export default function ParticlesBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/register';
 
   useEffect(() => {
+    if (isAuthPage) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -392,6 +396,8 @@ export default function ParticlesBackground() {
     };
   }, []);
 
+  if (isAuthPage) return null;
+
   return (
     <canvas
       ref={canvasRef}
@@ -403,8 +409,8 @@ export default function ParticlesBackground() {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 0,
+        opacity: 0.8,
       }}
-      aria-hidden="true"
     />
   );
 }

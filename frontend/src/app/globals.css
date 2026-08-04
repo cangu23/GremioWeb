@@ -1222,8 +1222,8 @@ img, svg {
 .auth-input {
   width: 100%;
   padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
   color: var(--text-primary);
   font-size: 0.95rem;
@@ -1232,13 +1232,13 @@ img, svg {
 }
 
 .auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .auth-input:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.22), 0 0 22px rgba(139, 92, 246, 0.3);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: #818CF8;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25), 0 0 24px rgba(99, 102, 241, 0.35);
 }
 
 .auth-btn-primary {
@@ -1249,17 +1249,17 @@ img, svg {
   font-weight: 700;
   font-size: 1rem;
   color: #ffffff;
-  background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #C084FC 100%);
   background-size: 200% 200%;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.4);
 }
 
 .auth-btn-primary:hover {
   background-position: 100% 0%;
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(236, 72, 153, 0.45);
+  box-shadow: 0 10px 32px rgba(168, 85, 247, 0.5);
 }
 
 .auth-btn-primary:active {

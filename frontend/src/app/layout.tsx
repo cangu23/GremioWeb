@@ -5,8 +5,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import { AuthProvider } from '@/lib/AuthContext';
 import { ToastProvider } from '@/lib/ToastContext';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import ClientLayoutShell from '@/components/layout/ClientLayoutShell';
 import PageTransition from '@/components/layout/PageTransition';
 import ClientOnly from '@/lib/ClientOnly';
 import ParticlesBackground from '@/components/landing/ParticlesBackground';
@@ -21,9 +20,7 @@ export const metadata: Metadata = {
   keywords: ['VTuber', 'comunidad', 'streaming', 'gremio', 'creadores de contenido'],
   icons: {
     icon: [
-      // SVG adaptable: cambia automáticamente entre negro (claro) y blanco (oscuro)
       { url: '/favicon.svg', type: 'image/svg+xml' },
-      // PNG de respaldo para navegadores que no soporten SVG como favicon
       { url: '/logo.png', type: 'image/png' },
     ],
   },
@@ -44,24 +41,20 @@ export default function RootLayout({
           <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
             <ToastProvider>
               <AuthProvider>
-                <Navbar />
-                <main className="page">
+                <ClientLayoutShell>
                   <PageTransition>
                     {children}
                   </PageTransition>
-                </main>
-                <Footer />
+                </ClientLayoutShell>
               </AuthProvider>
             </ToastProvider>
           </GoogleOAuthProvider>
         ) : (
           <ToastProvider>
             <AuthProvider>
-              <Navbar />
-              <main className="page">
+              <ClientLayoutShell>
                 {children}
-              </main>
-              <Footer />
+              </ClientLayoutShell>
             </AuthProvider>
           </ToastProvider>
         )}

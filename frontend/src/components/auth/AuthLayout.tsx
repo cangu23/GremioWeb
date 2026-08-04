@@ -37,15 +37,15 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         bottom: 0,
         width: '100vw',
         height: '100vh',
-        zIndex: 99999,
+        zIndex: 999999,
         overflow: 'hidden',
-        background: '#070510',
+        background: '#080a16',
         fontFamily: 'var(--font-sans)',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      {/* 🌌 FULLSCREEN FIXED BACKGROUND (1:1 Aspect ratio, zero zoom stretch) */}
+      {/* 🌌 FULLSCREEN FIXED BACKGROUND (Clean, no zooming or stretching) */}
       {!bgFailed ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
@@ -59,33 +59,33 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             height: '100%',
             objectFit: 'cover',
             objectPosition: 'center center',
-            filter: 'brightness(0.55) contrast(1.1)',
+            filter: 'brightness(0.65) contrast(1.08) saturate(1.1)',
             zIndex: 0,
           }}
         />
       ) : (
-        /* Fallback cosmic gradient background */
+        /* Fallback cosmic gradient matching the blue/violet stardust aesthetic */
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'radial-gradient(circle at 75% 35%, rgba(139, 92, 246, 0.35) 0%, rgba(236, 72, 153, 0.2) 40%, #070510 85%)',
+            background: 'radial-gradient(circle at 75% 35%, rgba(99, 102, 241, 0.35) 0%, rgba(168, 85, 247, 0.2) 45%, #080a16 85%)',
             zIndex: 0,
           }}
         />
       )}
 
-      {/* Glow Beams */}
+      {/* Atmospheric Soft Lighting Beams matching background palette */}
       <div
         className="auth-glow-pulse"
         style={{
           position: 'absolute',
-          top: '-15%',
-          left: '15%',
-          width: '500px',
-          height: '500px',
+          top: '-10%',
+          left: '10%',
+          width: '550px',
+          height: '550px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.28) 0%, transparent 70%)',
           pointerEvents: 'none',
           zIndex: 1,
         }}
@@ -94,19 +94,19 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         className="auth-glow-pulse"
         style={{
           position: 'absolute',
-          bottom: '-15%',
-          right: '25%',
-          width: '550px',
-          height: '550px',
+          bottom: '-10%',
+          right: '20%',
+          width: '600px',
+          height: '600px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.28) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.22) 0%, transparent 70%)',
           pointerEvents: 'none',
           zIndex: 1,
           animationDelay: '-2.5s',
         }}
       />
 
-      {/* Grid Pattern Overlay */}
+      {/* Subtle Stardust Mesh Grid */}
       <div
         style={{
           position: 'absolute',
@@ -114,12 +114,12 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)`,
           backgroundSize: '36px 36px',
           pointerEvents: 'none',
-          opacity: 0.5,
+          opacity: 0.45,
           zIndex: 1,
         }}
       />
 
-      {/* Floating Stardust Sparkles */}
+      {/* Floating Sparkles */}
       <div
         style={{
           position: 'absolute',
@@ -129,26 +129,26 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           overflow: 'hidden',
         }}
       >
-        {[...Array(10)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <div
             key={i}
             style={{
               position: 'absolute',
-              top: `${(i * 19) % 85 + 7}%`,
-              left: `${(i * 27) % 85 + 7}%`,
+              top: `${(i * 17) % 85 + 7}%`,
+              left: `${(i * 23) % 85 + 7}%`,
               width: `${(i % 3) * 3 + 4}px`,
               height: `${(i % 3) * 3 + 4}px`,
               borderRadius: '50%',
-              background: i % 2 === 0 ? '#A78BFA' : '#F472B6',
-              boxShadow: i % 2 === 0 ? '0 0 12px #A78BFA' : '0 0 12px #F472B6',
+              background: i % 2 === 0 ? '#818CF8' : '#C084FC',
+              boxShadow: i % 2 === 0 ? '0 0 12px #818CF8' : '0 0 12px #C084FC',
               animation: `authParticleTwinkle ${3.5 + (i % 3)}s ease-in-out infinite`,
-              animationDelay: `${i * 0.5}s`,
+              animationDelay: `${i * 0.4}s`,
             }}
           />
         ))}
       </div>
 
-      {/* 👑 TOP BAR (OTAKORE STYLE: LOGO ON LEFT, TOGGLE/CLOSE ON RIGHT) */}
+      {/* 👑 TOP HEADER BAR */}
       <header
         style={{
           position: 'relative',
@@ -158,6 +158,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          boxSizing: 'border-box',
         }}
       >
         {/* Brand Logo */}
@@ -172,15 +173,15 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         >
           <div
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '13px',
+              background: 'linear-gradient(135deg, #6366F1, #A855F7)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(139, 92, 246, 0.6)',
-              fontSize: '1.2rem',
+              boxShadow: '0 0 20px rgba(99, 102, 241, 0.6)',
+              fontSize: '1.25rem',
               fontWeight: 900,
               color: '#fff',
             }}
@@ -189,10 +190,10 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           </div>
           <span
             style={{
-              fontSize: '1.4rem',
+              fontSize: '1.45rem',
               fontWeight: 900,
               letterSpacing: '0.08em',
-              background: 'linear-gradient(135deg, #ffffff 40%, #A78BFA 100%)',
+              background: 'linear-gradient(135deg, #ffffff 40%, #A5B4FC 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               textTransform: 'uppercase',
@@ -202,32 +203,32 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           </span>
         </Link>
 
-        {/* Top Right Quick Link */}
+        {/* Top Right Quick Action Pill */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+          <span style={{ fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
             {isLogin ? '¿Aún no tienes cuenta?' : '¿Ya tienes una cuenta?'}
           </span>
           <button
             onClick={() => handleTabSwitch(isLogin ? '/register' : '/login')}
             style={{
               background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.18)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               color: '#ffffff',
-              padding: '8px 18px',
-              borderRadius: '20px',
+              padding: '9px 20px',
+              borderRadius: '22px',
               fontWeight: 600,
               fontSize: '0.88rem',
               cursor: 'pointer',
               transition: 'all 0.25s ease',
-              backdropFilter: 'blur(10px)',
+              backdropFilter: 'blur(12px)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
-              e.currentTarget.style.borderColor = '#A78BFA';
+              e.currentTarget.style.background = 'rgba(99, 102, 241, 0.35)';
+              e.currentTarget.style.borderColor = '#818CF8';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
             }}
           >
             {isLogin ? 'Regístrate' : 'Iniciar Sesión'}
@@ -235,41 +236,43 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         </div>
       </header>
 
-      {/* 🚀 MAIN SPLIT CONTENT AREA */}
+      {/* 🚀 MAIN CONTENT SPLIT AREA */}
       <main
         style={{
           position: 'relative',
           zIndex: 10,
           flex: 1,
           width: '100%',
-          height: 'calc(100vh - 86px)',
+          height: 'calc(100vh - 88px)',
           display: 'flex',
           alignItems: 'center',
-          padding: '0 48px 32px 48px',
+          padding: '0 54px 36px 54px',
           boxSizing: 'border-box',
         }}
       >
-        {/* LEFT PANEL: AUTH FORM CARD */}
+        {/* LEFT PANEL: GLASS FORM CARD */}
         <div
           style={{
-            width: '440px',
+            width: '450px',
             maxWidth: '90vw',
             flexShrink: 0,
             zIndex: 15,
             animation: 'authSlideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          {/* GLASS CARD FORM CONTAINER */}
+          {/* GLASS CARD CONTAINER */}
           <div
             className="auth-glass-card"
             style={{
-              borderRadius: '24px',
-              padding: '32px 28px',
+              borderRadius: '26px',
+              padding: '34px 30px',
               position: 'relative',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(139, 92, 246, 0.2)',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(99, 102, 241, 0.25)',
+              background: 'rgba(10, 14, 28, 0.76)',
+              borderColor: 'rgba(147, 197, 253, 0.18)',
             }}
           >
-            {/* Top Glowing Edge */}
+            {/* Top Light Accent Line */}
             <div
               style={{
                 position: 'absolute',
@@ -277,16 +280,17 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                 left: 0,
                 right: 0,
                 height: '2px',
-                background: 'linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.8), transparent)',
+                background: 'linear-gradient(90deg, transparent, #818CF8, #C084FC, transparent)',
               }}
             />
 
-            {/* TAB TOGGLE: SMOOTH SLIDING PILL */}
+            {/* TAB TOGGLE WITH SLIDING PILL */}
             <div className="auth-tab-container">
               <div
                 className="auth-tab-slider"
                 style={{
                   transform: isLogin ? 'translateX(0)' : 'translateX(100%)',
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(168, 85, 247, 0.6))',
                 }}
               />
               <button
@@ -309,22 +313,22 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             <p
               style={{
                 fontSize: '0.88rem',
-                color: 'rgba(255, 255, 255, 0.65)',
-                marginBottom: '20px',
+                color: 'rgba(226, 232, 240, 0.7)',
+                marginBottom: '22px',
                 textAlign: 'center',
               }}
             >
               {subtitle}
             </p>
 
-            {/* FORM BODY WITH SMOOTH ANIMATION */}
+            {/* SMOOTH ANIMATED FORM BODY */}
             <div key={pathname} className="auth-form-anim">
               {children}
             </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL: FULL HEIGHT PROMINENT CHARACTER OVERLAY */}
+        {/* RIGHT PANEL: CHARACTER SHOWCASE (FACING INWARDS TOWARDS FORM) */}
         <div
           style={{
             flex: 1,
@@ -342,16 +346,16 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             className="auth-glow-pulse"
             style={{
               position: 'absolute',
-              width: '520px',
-              height: '520px',
+              width: '540px',
+              height: '540px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(236, 72, 153, 0.15) 50%, transparent 75%)',
-              filter: 'blur(30px)',
+              background: 'radial-gradient(circle, rgba(99, 102, 241, 0.32) 0%, rgba(168, 85, 247, 0.18) 50%, transparent 75%)',
+              filter: 'blur(32px)',
               pointerEvents: 'none',
             }}
           />
 
-          {/* Character Container - Large, Eye level, Floating */}
+          {/* Character Image - Scaled & Flipped Horizontally to Look Inwards towards Form */}
           <div
             className="auth-character-anim"
             style={{
@@ -375,12 +379,12 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                   width: 'auto',
                   maxHeight: '82vh',
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 35px rgba(139, 92, 246, 0.4))',
+                  filter: 'drop-shadow(0 20px 45px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 35px rgba(99, 102, 241, 0.45))',
                   transition: 'all 0.5s ease',
                 }}
               />
             ) : (
-              /* Fallback character showcase illustration if image not placed yet */
+              /* Fallback character showcase - Flipped horizontally (scaleX(-1)) so she faces the login card */
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src="/hoshi.png"
@@ -390,7 +394,8 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                   width: 'auto',
                   maxHeight: '82vh',
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0 20px 40px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 35px rgba(139, 92, 246, 0.4))',
+                  transform: 'scaleX(-1)', // Flip so her hands and gaze point towards the left form card!
+                  filter: 'drop-shadow(0 20px 45px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 35px rgba(99, 102, 241, 0.45))',
                 }}
               />
             )}
@@ -400,16 +405,16 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
               style={{
                 position: 'absolute',
                 bottom: '24px',
-                right: '20px',
-                background: 'rgba(12, 8, 22, 0.85)',
+                right: '24px',
+                background: 'rgba(10, 14, 28, 0.85)',
                 backdropFilter: 'blur(18px)',
-                border: '1px solid rgba(255, 255, 255, 0.16)',
+                border: '1px solid rgba(147, 197, 253, 0.2)',
                 borderRadius: '20px',
                 padding: '12px 20px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '14px',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.5), 0 0 25px rgba(139, 92, 246, 0.3)',
+                boxShadow: '0 12px 30px rgba(0,0,0,0.55), 0 0 25px rgba(99, 102, 241, 0.3)',
               }}
             >
               <div
@@ -417,7 +422,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #10B981, #3B82F6)',
+                  background: 'linear-gradient(135deg, #38BDF8, #818CF8)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -432,7 +437,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff' }}>
                   Universo VTuber Estelar
                 </div>
-                <div style={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.65)' }}>
+                <div style={{ fontSize: '0.76rem', color: 'rgba(226, 232, 240, 0.7)' }}>
                   Gana experiencia, medallas y recompensas diarias
                 </div>
               </div>
