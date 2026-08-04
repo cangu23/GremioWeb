@@ -1200,30 +1200,54 @@ img, svg {
   }
 }
 
+@keyframes authBorderShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes authAuraSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
 .auth-form-anim {
   animation: authFormFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Auth Specific Glass Card & Input Enhancements */
 .auth-glass-card {
-  background: rgba(16, 12, 26, 0.72);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55), 0 0 35px rgba(139, 92, 246, 0.18);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: rgba(10, 14, 28, 0.78);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 50px rgba(99, 102, 241, 0.25);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .auth-glass-card:hover {
-  border-color: rgba(167, 139, 250, 0.35);
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), 0 0 45px rgba(139, 92, 246, 0.28);
+  border-color: rgba(165, 180, 252, 0.45);
+  box-shadow: 0 35px 80px rgba(0, 0, 0, 0.8), 0 0 60px rgba(99, 102, 241, 0.35);
 }
 
 .auth-input {
   width: 100%;
   padding: 14px 18px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 14px;
   color: var(--text-primary);
   font-size: 0.95rem;
@@ -1236,9 +1260,10 @@ img, svg {
 }
 
 .auth-input:focus {
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.1);
   border-color: #818CF8;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25), 0 0 24px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.28), 0 0 28px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
 }
 
 .auth-btn-primary {
@@ -1253,27 +1278,27 @@ img, svg {
   background-size: 200% 200%;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
 }
 
 .auth-btn-primary:hover {
   background-position: 100% 0%;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(168, 85, 247, 0.5);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 12px 35px rgba(168, 85, 247, 0.55);
 }
 
 .auth-btn-primary:active {
-  transform: translateY(0);
+  transform: translateY(-1px) scale(0.99);
 }
 
 .auth-tab-container {
   position: relative;
   display: flex;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.4);
   padding: 4px;
   border-radius: 16px;
-  margin-bottom: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .auth-tab-slider {
@@ -1281,11 +1306,11 @@ img, svg {
   top: 4px;
   bottom: 4px;
   width: calc(50% - 4px);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.45), rgba(236, 72, 153, 0.45));
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.7), rgba(168, 85, 247, 0.7));
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 12px;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
 }
 
 .auth-tab-btn {
@@ -1297,7 +1322,7 @@ img, svg {
   font-weight: 600;
   font-size: 0.95rem;
   border-radius: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.6);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -1308,7 +1333,7 @@ img, svg {
   color: #ffffff;
 }
 
-/* Character Idle Animation Class */
+/* Character Idle & Aura Animations */
 .auth-character-anim {
   animation: authCharacterFloat 6s ease-in-out infinite;
 }
@@ -1316,6 +1341,11 @@ img, svg {
 .auth-glow-pulse {
   animation: authPulseGlow 4s ease-in-out infinite;
 }
+
+.auth-aura-rotate {
+  animation: authAuraSpin 14s linear infinite;
+}
+
 
 
 
