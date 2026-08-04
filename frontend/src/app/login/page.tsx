@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
@@ -10,8 +10,14 @@ import DiscordLoginButton from '@/components/auth/DiscordLoginButton';
 import AuthLayout from '@/components/auth/AuthLayout';
 
 function LoginForm() {
-  const { login } = useAuth();
+  const { user, isLoading, login } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isLoading, router]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

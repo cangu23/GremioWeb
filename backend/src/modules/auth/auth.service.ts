@@ -17,7 +17,12 @@ import { addStardust } from '../ecosystem/stardust.service';
 export const register = async (input: RegisterInput) => {
   const existingUser = await UserRepository.findByEmail(input.email);
   if (existingUser) {
-    throw new AppError('An account with this email already exists.', 409);
+    throw new AppError('Ya existe una cuenta con este correo electrónico.', 409);
+  }
+
+  const existingUsername = await UserRepository.findByUsername(input.username);
+  if (existingUsername) {
+    throw new AppError('El nombre de usuario ya está en uso.', 409);
   }
 
   const hashedPassword = await bcrypt.hash(input.password, 10);
@@ -85,16 +90,16 @@ export const register = async (input: RegisterInput) => {
 export const login = async (input: LoginInput) => {
   const user = await UserRepository.findByEmail(input.email);
   if (!user || !user.password) {
-    throw new AppError('Invalid email or password.', 401);
+    throw new AppError('Correo electrónico o contraseña incorrectos.', 401);
   }
 
   const isPasswordValid = await bcrypt.compare(input.password, user.password);
   if (!isPasswordValid) {
-    throw new AppError('Invalid email or password.', 401);
+    throw new AppError('Correo electrónico o contraseña incorrectos.', 401);
   }
 
   if (user.status !== 'ACTIVE') {
-    throw new AppError(`Account is ${user.status.toLowerCase()}. Please contact support.`, 403);
+    throw new AppError(`La cuenta está ${user.status.toLowerCase()}. Por favor contacta a soporte.`, 403);
   }
 
   const { accessToken, refreshToken } = generateTokens(user.id, user.username);

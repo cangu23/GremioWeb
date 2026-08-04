@@ -5,22 +5,22 @@ import { z } from 'zod';
 
 export const loginSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email format'),
+    email: z.string().email('Formato de correo electrónico inválido'),
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters long'),
+      .min(8, 'La contraseña debe tener al menos 8 caracteres'),
   }),
 });
 
 export const registerSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email format'),
+    email: z.string().email('Formato de correo electrónico inválido'),
     username: z
       .string()
-      .min(3, 'Username must be at least 3 characters long'),
+      .min(3, 'El nombre de usuario debe tener al menos 3 caracteres'),
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters long'),
+      .min(8, 'La contraseña debe tener al menos 8 caracteres'),
     ref: z.string().optional(),
   }),
 });

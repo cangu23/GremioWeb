@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
@@ -12,10 +12,16 @@ import DiscordLoginButton from '@/components/auth/DiscordLoginButton';
 import AuthLayout from '@/components/auth/AuthLayout';
 
 function RegisterForm() {
-  const { register } = useAuth();
+  const { user, isLoading, register } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const refParam = searchParams ? (searchParams.get('ref') || undefined) : undefined;
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isLoading, router]);
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');

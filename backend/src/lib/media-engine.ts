@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import type { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
-import cloudinary from '../lib/cloudinary.js';
+import cloudinary from '../lib/cloudinary';
 
 const MEDIA_ENGINE_URL = process.env.MEDIA_ENGINE_URL || 'http://localhost:8001';
 

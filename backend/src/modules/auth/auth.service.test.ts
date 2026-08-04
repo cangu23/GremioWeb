@@ -3,6 +3,7 @@ import { Role, AuthProvider } from '@gremio-estelar/shared';
 
 const mockUserRepository = vi.hoisted(() => ({
   findByEmail: vi.fn(),
+  findByUsername: vi.fn(),
   createUser: vi.fn(),
   findById: vi.fn(),
 }));
@@ -42,11 +43,21 @@ describe('AuthService', () => {
 
       await expect(
         AuthService.register({ email: 'test@example.com', username: 'testuser', password: 'password123' })
-      ).rejects.toThrow('An account with this email already exists.');
+      ).rejects.toThrow('Ya existe una cuenta con este correo electrónico.');
+    });
+
+    it('throws 409 error if username already exists', async () => {
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByUsername.mockResolvedValue({ id: 'user-2', username: 'testuser' });
+
+      await expect(
+        AuthService.register({ email: 'test@example.com', username: 'testuser', password: 'password123' })
+      ).rejects.toThrow('El nombre de usuario ya está en uso.');
     });
 
     it('hashes password and creates user', async () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
+      mockUserRepository.findByUsername.mockResolvedValue(null);
       mockUserRepository.createUser.mockResolvedValue({
         id: 'user-1',
         email: 'test@example.com',
@@ -80,7 +91,7 @@ describe('AuthService', () => {
 
       await expect(
         AuthService.login({ email: 'unknown@example.com', password: 'password123' })
-      ).rejects.toThrow('Invalid email or password.');
+      ).rejects.toThrow('Correo electrónico o contraseña incorrectos.');
     });
 
     it('throws 401 for incorrect password', async () => {
@@ -94,7 +105,7 @@ describe('AuthService', () => {
 
       await expect(
         AuthService.login({ email: 'test@example.com', password: 'wrongpassword' })
-      ).rejects.toThrow('Invalid email or password.');
+      ).rejects.toThrow('Correo electrónico o contraseña incorrectos.');
     });
 
     it('returns tokens and user for valid credentials', async () => {
