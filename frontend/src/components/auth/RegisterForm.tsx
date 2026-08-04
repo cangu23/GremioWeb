@@ -78,11 +78,11 @@ export default function RegisterForm() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '8px' }}>
+        <div style={{ marginBottom: '7px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.78rem',
+              fontSize: '0.76rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
               marginBottom: '3px',
@@ -101,11 +101,11 @@ export default function RegisterForm() {
           />
         </div>
 
-        <div style={{ marginBottom: '8px' }}>
+        <div style={{ marginBottom: '7px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.78rem',
+              fontSize: '0.76rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
               marginBottom: '3px',
@@ -123,11 +123,11 @@ export default function RegisterForm() {
           />
         </div>
 
-        <div style={{ marginBottom: '8px' }}>
+        <div style={{ marginBottom: '6px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.78rem',
+              fontSize: '0.76rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
               marginBottom: '3px',
@@ -147,7 +147,7 @@ export default function RegisterForm() {
         </div>
 
         {/* 🛡️ CYBER SECURITY WIDGET BADGES */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginBottom: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '8px' }}>
           {[
             { key: 'length', label: '8+ Caracteres' },
             { key: 'upper', label: 'Mayúscula' },
@@ -182,18 +182,18 @@ export default function RegisterForm() {
 
         <p
           style={{
-            fontSize: '0.73rem',
+            fontSize: '0.72rem',
             color: 'rgba(255, 255, 255, 0.45)',
-            marginBottom: '10px',
+            marginBottom: '8px',
             lineHeight: 1.3,
           }}
         >
           Al registrarte, aceptas nuestros{' '}
-          <Link href="/support" style={{ color: '#A78BFA', textDecoration: 'none' }}>
+          <Link href="/support" style={{ color: '#E8C77A', textDecoration: 'none' }}>
             Términos
           </Link>{' '}
           y{' '}
-          <Link href="/support" style={{ color: '#A78BFA', textDecoration: 'none' }}>
+          <Link href="/support" style={{ color: '#E8C77A', textDecoration: 'none' }}>
             Privacidad
           </Link>
           .
@@ -226,7 +226,7 @@ export default function RegisterForm() {
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          margin: '12px 0',
+          margin: '10px 0',
         }}
       >
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />

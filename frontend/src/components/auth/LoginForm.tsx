@@ -60,14 +60,14 @@ export default function LoginForm() {
       )}
 
       <form onSubmit={handleSubmit} suppressHydrationWarning>
-        <div style={{ marginBottom: '14px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.8rem',
+              fontSize: '0.78rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '5px',
+              marginBottom: '4px',
             }}
           >
             Correo Electrónico
@@ -82,14 +82,14 @@ export default function LoginForm() {
           />
         </div>
 
-        <div style={{ marginBottom: '6px' }}>
+        <div style={{ marginBottom: '4px' }}>
           <label
             style={{
               display: 'block',
-              fontSize: '0.8rem',
+              fontSize: '0.78rem',
               fontWeight: 600,
               color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '5px',
+              marginBottom: '4px',
             }}
           >
             Contraseña
@@ -104,7 +104,7 @@ export default function LoginForm() {
           />
         </div>
 
-        <div style={{ textAlign: 'right', marginBottom: '18px' }}>
+        <div style={{ textAlign: 'right', marginBottom: '12px' }}>
           <Link
             href="/support"
             style={{
@@ -113,7 +113,7 @@ export default function LoginForm() {
               textDecoration: 'none',
               transition: 'color 0.2s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#A78BFA')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#E8C77A')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)')}
           >
             ¿Olvidaste tu contraseña?
@@ -147,7 +147,7 @@ export default function LoginForm() {
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          margin: '18px 0',
+          margin: '12px 0',
         }}
       >
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />

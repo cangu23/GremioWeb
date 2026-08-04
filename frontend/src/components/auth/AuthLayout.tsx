@@ -265,17 +265,18 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         </Link>
       </header>
 
-      {/* 🚀 CENTERED MAX-WIDTH WORKSPACE */}
+      {/* 🚀 CENTERED MAX-WIDTH WORKSPACE — character + card as one balanced unit */}
       <main
         style={{
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: '1140px',
+          maxWidth: '1180px',
           height: '100vh',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
+          gap: '24px',
           padding: '0 40px',
           boxSizing: 'border-box',
         }}
@@ -283,7 +284,9 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         {/* LEFT PANEL: CHARACTER SHOWCASE (gold constellation aura) */}
         <div
           style={{
-            flex: 1,
+            // Content-sized (character's real width), so the whole
+            // character+card unit centers truly on screen.
+            flex: '0 0 auto',
             height: '100%',
             position: 'relative',
             display: 'flex',
@@ -297,12 +300,14 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
           <div
             style={{
               position: 'relative',
-              height: '64vh',
-              maxHeight: '570px',
+              height: '66vh',
+              maxHeight: '590px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: '-26px',
+              // Stronger Genshin-style overlap: the character leans onto the
+              // card. pointerEvents: none keeps every click on the card working.
+              marginRight: '-58px',
               pointerEvents: 'none',
               transform: `translate3d(${mouseOffset.x * 0.4}px, ${mouseOffset.y * 0.4}px, 0)`,
               transition: 'transform 0.25s cubic-bezier(0.1, 1, 0.1, 1)',
@@ -337,6 +342,48 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                 pointerEvents: 'none',
               }}
             />
+
+            {/* Soft shadow cast ONTO the card (character overlaps the panel) */}
+            <div
+              style={{
+                position: 'absolute',
+                right: '-76px',
+                top: '6%',
+                bottom: '2%',
+                width: '110px',
+                background: 'linear-gradient(to left, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.22) 45%, transparent 100%)',
+                filter: 'blur(7px)',
+                pointerEvents: 'none',
+              }}
+            />
+            {/* Golden rim-light where the character meets the card */}
+            <div
+              style={{
+                position: 'absolute',
+                right: '-46px',
+                top: '8%',
+                bottom: '6%',
+                width: '26px',
+                background: 'linear-gradient(to left, rgba(245,231,176,0.16) 0%, transparent 100%)',
+                filter: 'blur(4px)',
+                pointerEvents: 'none',
+              }}
+            />
+            {/* Contact shadow grounding the character */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '-4%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '72%',
+                height: '30px',
+                background: 'radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, transparent 70%)',
+                filter: 'blur(9px)',
+                pointerEvents: 'none',
+              }}
+            />
+
             <div
               className="auth-character-anim"
               style={{
@@ -356,7 +403,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                   style={{
                     height: '100%',
                     width: 'auto',
-                    maxHeight: '62vh',
+                    maxHeight: '64vh',
                     objectFit: 'contain',
                     filter: 'drop-shadow(0 18px 44px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 30px rgba(212,175,55,0.18))',
                     transition: 'all 0.5s ease',
@@ -370,7 +417,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                   style={{
                     height: '100%',
                     width: 'auto',
-                    maxHeight: '62vh',
+                    maxHeight: '64vh',
                     objectFit: 'contain',
                     filter: 'drop-shadow(0 18px 44px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 30px rgba(212,175,55,0.18))',
                   }}
@@ -394,9 +441,14 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             className="auth-glass-card"
             style={{
               borderRadius: '20px',
-              padding: '30px 30px 26px',
+              padding: '22px 30px 18px',
               position: 'relative',
               overflow: 'hidden',
+              // Fit the viewport: card never exceeds the screen; the form
+              // area scrolls internally if needed, tabs/heading stay pinned.
+              maxHeight: 'calc(100vh - 120px)',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {/* Ornamental gold corners */}
@@ -478,7 +530,8 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '12px',
-                marginBottom: '6px',
+                marginBottom: '2px',
+                flexShrink: 0,
               }}
             >
               <div
@@ -511,7 +564,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             </div>
 
             {/* TAB TOGGLE WITH SLIDING GOLD PILL */}
-            <div className="auth-tab-container" style={{ marginBottom: '20px' }}>
+            <div className="auth-tab-container" style={{ marginBottom: '14px', flexShrink: 0 }}>
               <div
                 className="auth-tab-slider"
                 style={{
@@ -535,11 +588,11 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             </div>
 
             {/* Heading — elegant Genshin-style hierarchy */}
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '12px', flexShrink: 0 }}>
               <h1
                 style={{
                   margin: 0,
-                  fontSize: '1.72rem',
+                  fontSize: '1.55rem',
                   fontWeight: 700,
                   letterSpacing: '0.04em',
                   color: '#F5EFDF',
@@ -551,44 +604,55 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
               </h1>
               <p
                 style={{
-                  margin: '7px 0 0',
-                  fontSize: '0.83rem',
+                  margin: '5px 0 0',
+                  fontSize: '0.8rem',
                   color: 'rgba(245, 239, 223, 0.55)',
-                  lineHeight: 1.5,
+                  lineHeight: 1.45,
                 }}
               >
                 {subtitle}
               </p>
             </div>
 
-            {/* 🎛️ SMOOTH HORIZONTAL SLIDING FORM PANEL TRACK */}
-            <ClientOnly
-              fallback={
-                <div style={{ textAlign: 'center', padding: '30px 0', color: 'rgba(255,255,255,0.4)' }}>
-                  <p style={{ fontSize: '0.85rem' }}>Cargando interfaz...</p>
-                </div>
-              }
+            {/* 🎛️ SMOOTH HORIZONTAL SLIDING FORM PANEL TRACK (scrolls internally if short viewport) */}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                overscrollBehavior: 'contain',
+                paddingRight: '2px',
+              }}
+              className="auth-form-scroll"
             >
-              <div style={{ width: '100%', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    width: '200%',
-                    transform: isLogin ? 'translateX(0%)' : 'translateX(-50%)',
-                    transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                >
-                  {/* Panel 1: Login */}
-                  <div style={{ width: '50%', paddingRight: '6px', boxSizing: 'border-box' }}>
-                    <LoginForm />
+              <ClientOnly
+                fallback={
+                  <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgba(255,255,255,0.4)' }}>
+                    <p style={{ fontSize: '0.85rem' }}>Cargando interfaz...</p>
                   </div>
-                  {/* Panel 2: Register */}
-                  <div style={{ width: '50%', paddingLeft: '6px', boxSizing: 'border-box' }}>
-                    <RegisterForm />
+                }
+              >
+                <div style={{ width: '100%', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: '200%',
+                      transform: isLogin ? 'translateX(0%)' : 'translateX(-50%)',
+                      transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  >
+                    {/* Panel 1: Login */}
+                    <div style={{ width: '50%', paddingRight: '6px', boxSizing: 'border-box' }}>
+                      <LoginForm />
+                    </div>
+                    {/* Panel 2: Register */}
+                    <div style={{ width: '50%', paddingLeft: '6px', boxSizing: 'border-box' }}>
+                      <RegisterForm />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </ClientOnly>
+              </ClientOnly>
+            </div>
           </div>
         </div>
       </main>
@@ -633,7 +697,16 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
 
       {/* Responsive styling */}
       <style jsx global>{`
-        @media (max-width: 900px) {
+        .auth-form-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .auth-form-scroll::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
+        }
+        @media (max-width: 1020px) {
           .auth-hero-column {
             display: none !important;
           }
