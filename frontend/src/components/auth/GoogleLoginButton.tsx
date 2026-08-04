@@ -21,23 +21,22 @@ export default function GoogleLoginButton() {
         disabled
         style={{
           width: '100%',
-          padding: '12px',
-          fontSize: '0.9rem',
+          padding: '9px 12px',
+          fontSize: '0.82rem',
           borderRadius: '10px',
-          border: '1px solid var(--glass-border)',
-          background: 'rgba(255,255,255,0.03)',
-          color: 'var(--text-muted)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          background: 'rgba(255, 255, 255, 0.04)',
+          color: 'rgba(255, 255, 255, 0.5)',
           cursor: 'not-allowed',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '8px',
+          gap: '6px',
           fontWeight: 600,
-          opacity: 0.5,
         }}
       >
-        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#4285F4' }}>G</span>
-        Google (no configurado)
+        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4285F4' }}>G</span>
+        Google
       </button>
     );
   }
@@ -49,8 +48,8 @@ export default function GoogleLoginButton() {
         onClick={() => setError(false)}
         style={{
           width: '100%',
-          padding: '12px',
-          fontSize: '0.9rem',
+          padding: '9px 12px',
+          fontSize: '0.8rem',
           borderRadius: '10px',
           border: '1px solid rgba(255,77,79,0.3)',
           background: 'rgba(255,77,79,0.08)',
@@ -59,15 +58,15 @@ export default function GoogleLoginButton() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '8px',
+          gap: '6px',
           fontWeight: 600,
           transition: 'all 0.2s ease',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,77,79,0.15)'; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,77,79,0.08)'; }}
       >
-        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#ff4d4f' }}>!</span>
-        Error al cargar Google — Reintentar
+        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ff4d4f' }}>!</span>
+        Reintentar
       </button>
     );
   }
@@ -94,14 +93,16 @@ export default function GoogleLoginButton() {
         setError(true);
       }}
       theme="filled_black"
-      size="large"
-      text="signin_with"
+      size="medium"
+      text="signin"
       shape="rectangular"
       containerProps={{
         style: {
           width: '100%',
           display: 'flex',
           justifyContent: 'center',
+          overflow: 'hidden',
+          borderRadius: '10px',
         },
       }}
     />

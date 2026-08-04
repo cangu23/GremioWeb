@@ -106,8 +106,8 @@ export default function DiscordLoginButton() {
       disabled={loading}
       style={{
         width: '100%',
-        padding: '12px',
-        fontSize: '0.9rem',
+        padding: '9px 12px',
+        fontSize: '0.84rem',
         borderRadius: '10px',
         border: '1px solid rgba(88, 101, 242, 0.3)',
         background: loading ? 'rgba(88, 101, 242, 0.3)' : 'rgba(88, 101, 242, 0.15)',
@@ -116,7 +116,7 @@ export default function DiscordLoginButton() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '8px',
+        gap: '6px',
         fontWeight: 600,
         transition: 'all 0.2s ease',
       }}
@@ -134,22 +134,22 @@ export default function DiscordLoginButton() {
       }}
     >
       {loading ? (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span
             style={{
-              width: '16px',
-              height: '16px',
+              width: '14px',
+              height: '14px',
               border: '2px solid rgba(255,255,255,0.2)',
               borderTopColor: '#fff',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
             }}
           />
-          Redirigiendo a Discord...
+          Discord...
         </span>
       ) : (
         <>
-          <span style={{ fontSize: '1.2rem' }}>🎮</span>
+          <span style={{ fontSize: '1.1rem' }}>🎮</span>
           Discord
         </>
       )}

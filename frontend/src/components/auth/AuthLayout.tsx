@@ -3,17 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import LoginForm from '@/components/auth/LoginForm';
+import RegisterForm from '@/components/auth/RegisterForm';
+import ClientOnly from '@/lib/ClientOnly';
 
 interface AuthLayoutProps {
-  children: React.ReactNode;
-  title: string;
-  subtitle: string;
+  children?: React.ReactNode;
+  title?: string;
+  subtitle?: string;
+  activeTab?: 'login' | 'register';
 }
 
-export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
+export default function AuthLayout({ activeTab }: AuthLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const isLogin = pathname === '/login';
+  const isLogin = activeTab ? activeTab === 'login' : pathname === '/login';
 
   // State to handle custom image fallbacks gracefully
   const [bgImage] = useState('/images/auth/bg.jpg');
@@ -27,8 +31,8 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const { innerWidth, innerHeight } = window;
-      const x = (e.clientX / innerWidth - 0.5) * 16;
-      const y = (e.clientY / innerHeight - 0.5) * 16;
+      const x = (e.clientX / innerWidth - 0.5) * 14;
+      const y = (e.clientY / innerHeight - 0.5) * 14;
       setMouseOffset({ x, y });
     };
 
@@ -57,7 +61,8 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         background: '#070814',
         fontFamily: 'var(--font-sans)',
         display: 'flex',
-        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       {/* 🌌 FULLSCREEN FIXED BACKGROUND (With subtle 3D parallax drift) */}
@@ -75,7 +80,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             objectFit: 'cover',
             objectPosition: 'center center',
             filter: 'brightness(0.65) contrast(1.08) saturate(1.15)',
-            transform: `translate3d(${mouseOffset.x * -0.5}px, ${mouseOffset.y * -0.5}px, 0) scale(1.02)`,
+            transform: `translate3d(${mouseOffset.x * -0.4}px, ${mouseOffset.y * -0.4}px, 0) scale(1.02)`,
             transition: 'transform 0.2s cubic-bezier(0.1, 1, 0.1, 1)',
             zIndex: 0,
           }}
@@ -99,11 +104,11 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           position: 'absolute',
           top: '-15%',
           left: '15%',
-          width: '600px',
-          height: '600px',
+          width: '550px',
+          height: '550px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, transparent 70%)',
-          transform: `translate3d(${mouseOffset.x * 0.8}px, ${mouseOffset.y * 0.8}px, 0)`,
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.32) 0%, transparent 70%)',
+          transform: `translate3d(${mouseOffset.x * 0.7}px, ${mouseOffset.y * 0.7}px, 0)`,
           pointerEvents: 'none',
           zIndex: 1,
         }}
@@ -114,11 +119,11 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           position: 'absolute',
           bottom: '-15%',
           right: '10%',
-          width: '650px',
-          height: '650px',
+          width: '600px',
+          height: '600px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, transparent 70%)',
-          transform: `translate3d(${mouseOffset.x * -0.8}px, ${mouseOffset.y * -0.8}px, 0)`,
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%)',
+          transform: `translate3d(${mouseOffset.x * -0.7}px, ${mouseOffset.y * -0.7}px, 0)`,
           pointerEvents: 'none',
           zIndex: 1,
           animationDelay: '-2.5s',
@@ -133,46 +138,17 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)`,
           backgroundSize: '36px 36px',
           pointerEvents: 'none',
-          opacity: 0.45,
+          opacity: 0.4,
           zIndex: 1,
         }}
       />
-
-      {/* Floating Sparkles */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          zIndex: 1,
-          overflow: 'hidden',
-        }}
-      >
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              top: `${(i * 17) % 85 + 7}%`,
-              left: `${(i * 23) % 85 + 7}%`,
-              width: `${(i % 3) * 3 + 4}px`,
-              height: `${(i % 3) * 3 + 4}px`,
-              borderRadius: '50%',
-              background: i % 2 === 0 ? '#818CF8' : '#C084FC',
-              boxShadow: i % 2 === 0 ? '0 0 14px #818CF8' : '0 0 14px #C084FC',
-              animation: `authParticleTwinkle ${3 + (i % 3)}s ease-in-out infinite`,
-              animationDelay: `${i * 0.4}s`,
-            }}
-          />
-        ))}
-      </div>
 
       {/* 👑 CLEAN TOP HEADER BAR */}
       <header
         style={{
           position: 'absolute',
           top: '20px',
-          left: '40px',
+          left: '32px',
           zIndex: 30,
           display: 'flex',
           alignItems: 'center',
@@ -190,15 +166,15 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         >
           <div
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '11px',
+              width: '34px',
+              height: '34px',
+              borderRadius: '10px',
               background: 'linear-gradient(135deg, #6366F1, #A855F7)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(99, 102, 241, 0.65)',
-              fontSize: '1.1rem',
+              boxShadow: '0 0 18px rgba(99, 102, 241, 0.6)',
+              fontSize: '1.05rem',
               fontWeight: 900,
               color: '#fff',
             }}
@@ -207,7 +183,7 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           </div>
           <span
             style={{
-              fontSize: '1.3rem',
+              fontSize: '1.25rem',
               fontWeight: 900,
               letterSpacing: '0.08em',
               background: 'linear-gradient(135deg, #ffffff 40%, #A5B4FC 100%)',
@@ -221,21 +197,22 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
         </Link>
       </header>
 
-      {/* 🚀 MAIN CONTENT SPLIT AREA */}
+      {/* 🚀 CENTERED MAX-WIDTH WORKSPACE (PREVENTS MIGRATION DISPLACEMENT ACROSS SCREEN RESOLUTIONS) */}
       <main
         style={{
           position: 'relative',
           zIndex: 10,
           width: '100%',
+          maxWidth: '1180px',
           height: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 40px',
+          padding: '0 32px',
           boxSizing: 'border-box',
         }}
       >
-        {/* LEFT PANEL: HERO CHARACTER SHOWCASE (CHARACTER HAND TOUCHES/OVERLAPS LOGIN CARD) */}
+        {/* LEFT PANEL: HERO CHARACTER SHOWCASE */}
         <div
           style={{
             flex: 1,
@@ -243,31 +220,30 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'center',
             overflow: 'visible',
             zIndex: 25,
             animation: 'authSlideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
           className="auth-hero-column"
         >
-          {/* Character Image - Large, Natural Float & Hand overlapping Card */}
+          {/* Character Image - Natural Float & Hand touching Card Frame */}
           <div
             className="auth-character-anim"
             style={{
               position: 'relative',
-              height: '84vh',
-              maxHeight: '780px',
+              height: '76vh',
+              maxHeight: '690px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'flex-end',
-              marginRight: '-55px',
+              justifyContent: 'center',
+              marginRight: '-18px',
               zIndex: 25,
-              transform: `translate3d(${mouseOffset.x * 0.6}px, ${mouseOffset.y * 0.6}px, 0)`,
+              transform: `translate3d(${mouseOffset.x * 0.5}px, ${mouseOffset.y * 0.5}px, 0)`,
               transition: 'transform 0.2s cubic-bezier(0.1, 1, 0.1, 1)',
             }}
           >
             {!charFailed ? (
-              /* User custom character image */
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={charImage}
@@ -276,14 +252,13 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                 style={{
                   height: '100%',
                   width: 'auto',
-                  maxHeight: '84vh',
+                  maxHeight: '76vh',
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0 15px 35px rgba(0, 0, 0, 0.45))',
+                  filter: 'drop-shadow(0 12px 30px rgba(0, 0, 0, 0.45))',
                   transition: 'all 0.5s ease',
                 }}
               />
             ) : (
-              /* Fallback character showcase */
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src="/hoshi.png"
@@ -291,23 +266,23 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
                 style={{
                   height: '100%',
                   width: 'auto',
-                  maxHeight: '84vh',
+                  maxHeight: '76vh',
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0 15px 35px rgba(0, 0, 0, 0.45))',
+                  filter: 'drop-shadow(0 12px 30px rgba(0, 0, 0, 0.45))',
                 }}
               />
             )}
           </div>
         </div>
 
-        {/* RIGHT PANEL: GLASS FORM CARD */}
+        {/* RIGHT PANEL: GLASS FORM CARD WIDGET */}
         <div
           style={{
-            width: '420px',
-            maxWidth: '90vw',
+            width: '390px',
+            maxWidth: '92vw',
             flexShrink: 0,
             zIndex: 15,
-            transform: `translate3d(${mouseOffset.x * -0.4}px, ${mouseOffset.y * -0.4}px, 0)`,
+            transform: `translate3d(${mouseOffset.x * -0.3}px, ${mouseOffset.y * -0.3}px, 0)`,
             transition: 'transform 0.2s cubic-bezier(0.1, 1, 0.1, 1)',
             animation: 'authSlideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
@@ -316,12 +291,13 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
           <div
             className="auth-glass-card"
             style={{
-              borderRadius: '22px',
-              padding: '24px 26px',
+              borderRadius: '20px',
+              padding: '20px 22px',
               position: 'relative',
-              boxShadow: '0 25px 65px rgba(0, 0, 0, 0.75), 0 0 45px rgba(99, 102, 241, 0.25)',
-              background: 'rgba(10, 14, 28, 0.82)',
-              borderColor: 'rgba(147, 197, 253, 0.22)',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(99, 102, 241, 0.22)',
+              background: 'rgba(10, 14, 28, 0.85)',
+              borderColor: 'rgba(147, 197, 253, 0.2)',
+              overflow: 'hidden',
             }}
           >
             {/* Top Shimmer Edge */}
@@ -337,12 +313,12 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             />
 
             {/* TAB TOGGLE WITH SLIDING PILL */}
-            <div className="auth-tab-container" style={{ marginBottom: '14px' }}>
+            <div className="auth-tab-container" style={{ marginBottom: '12px' }}>
               <div
                 className="auth-tab-slider"
                 style={{
                   transform: isLogin ? 'translateX(0)' : 'translateX(100%)',
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.7), rgba(168, 85, 247, 0.7))',
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.75), rgba(168, 85, 247, 0.75))',
                 }}
               />
               <button
@@ -364,19 +340,43 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
             {/* Form Subtitle Header */}
             <p
               style={{
-                fontSize: '0.82rem',
+                fontSize: '0.8rem',
                 color: 'rgba(226, 232, 240, 0.75)',
-                marginBottom: '14px',
+                marginBottom: '12px',
                 textAlign: 'center',
               }}
             >
-              {subtitle}
+              {isLogin ? 'Accede a tu cuenta y continúa tu aventura VTuber' : 'Crea tu cuenta estelar y forma parte de la comunidad'}
             </p>
 
-            {/* SMOOTH ANIMATED FORM BODY */}
-            <div key={pathname} className="auth-form-anim">
-              {children}
-            </div>
+            {/* 🎛️ SMOOTH HORIZONTAL SLIDING FORM PANEL TRACK */}
+            <ClientOnly
+              fallback={
+                <div style={{ textAlign: 'center', padding: '30px 0', color: 'rgba(255,255,255,0.4)' }}>
+                  <p style={{ fontSize: '0.85rem' }}>Cargando interfaz...</p>
+                </div>
+              }
+            >
+              <div style={{ width: '100%', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '200%',
+                    transform: isLogin ? 'translateX(0%)' : 'translateX(-50%)',
+                    transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                >
+                  {/* Panel 1: Login */}
+                  <div style={{ width: '50%', paddingRight: '6px', boxSizing: 'border-box' }}>
+                    <LoginForm />
+                  </div>
+                  {/* Panel 2: Register */}
+                  <div style={{ width: '50%', paddingLeft: '6px', boxSizing: 'border-box' }}>
+                    <RegisterForm />
+                  </div>
+                </div>
+              </div>
+            </ClientOnly>
           </div>
         </div>
       </main>
@@ -392,3 +392,4 @@ export default function AuthLayout({ children, subtitle }: AuthLayoutProps) {
     </div>
   );
 }
+
