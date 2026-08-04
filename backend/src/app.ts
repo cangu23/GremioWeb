@@ -59,14 +59,24 @@ console.log(`${BOOT} CORS allowed origins:`, env.ALLOWED_ORIGINS);
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (isOriginAllowed(origin)) {
-      callback(null, true);
-    } else {
-      console.warn(`${REQ} [CORS Blocked] origin: ${origin}`);
-      callback(null, false);
+    try {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`${REQ} [CORS Blocked] origin: ${origin}`);
+        callback(null, false);
+      }
+    } catch (err) {
+      console.error(`${REQ} [CORS Error]`, err);
+      if (origin && origin.includes('.onrender.com')) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
     }
   },
   credentials: true,
+  optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
 }));
@@ -94,8 +104,8 @@ const limiter = rateLimit({
   max: 500, // limit each IP to 500 requests per windowMs (~33/min)
   standardHeaders: true,
   legacyHeaders: false,
-  // Exempt notification polling from rate limiting
-  skip: (req) => req.path.startsWith('/notifications'),
+  // Exempt preflight OPTIONS & notification polling from rate limiting
+  skip: (req) => req.method === 'OPTIONS' || req.path.startsWith('/notifications'),
   message: {
     status: 'error',
     message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',
@@ -112,6 +122,7 @@ const authLimiter = rateLimit({
   max: 50, // 50 login/register attempts per 10 minutes
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
   message: {
     status: 'error',
     message: 'Demasiados intentos de autenticación. Intenta de nuevo en 10 minutos.',
