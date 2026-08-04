@@ -69,6 +69,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
+# Force 0.0.0.0: the standalone server binds to process.env.HOSTNAME || '0.0.0.0',
+# and Render/Docker set HOSTNAME to the instance hostname (unroutable → 502).
+ENV HOSTNAME=0.0.0.0
 
 # Copy standalone output (self-contained Next.js server).
 # En monorepo, el standalone genera una subcarpeta frontend/ (standalone/frontend/server.js)

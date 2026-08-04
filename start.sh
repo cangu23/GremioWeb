@@ -56,6 +56,15 @@ if [ -f /app/frontend/server.js ]; then
     sleep 3
   done
 
+  # ⚠️  CRITICAL: force HOSTNAME=0.0.0.0 before starting the Next.js standalone
+  # server. Render/Docker set HOSTNAME to the instance hostname, and the
+  # standalone server does `server.listen(port, process.env.HOSTNAME || '0.0.0.0')`.
+  # If HOSTNAME doesn't resolve to a routable interface (or resolves to the
+  # container's ephemeral private IP), the bind happens on the wrong interface
+  # and Render returns HTTP 502 to every external request. Same fix as
+  # frontend/scripts/start-standalone.mjs.
+  export HOSTNAME=0.0.0.0
+
   # Start Next.js on Render's PORT (foreground)
   echo "[BOOT] Starting Next.js frontend..."
   exec node /app/frontend/server.js
