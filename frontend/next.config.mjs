@@ -17,12 +17,12 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:4001/api/:path*',
+        destination: 'http://127.0.0.1:4001/api/:path*',
       },
       // WebSocket upgrade requests also go through the same host
       {
         source: '/socket.io/:path*',
-        destination: 'http://localhost:4001/socket.io/:path*',
+        destination: 'http://127.0.0.1:4001/socket.io/:path*',
       },
     ];
   },

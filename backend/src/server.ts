@@ -37,8 +37,8 @@ startStreamMonitor();
 // Seed achievements in DB
 seedAchievements().catch((err) => log.error({ err }, 'Error seeding achievements'));
 
-server.listen(env.PORT, () => {
-  log.info(`Server running on port ${env.PORT} — http://localhost:${env.PORT}/api/health`);
+server.listen(env.PORT, '0.0.0.0', () => {
+  log.info(`Server running on port ${env.PORT} — http://127.0.0.1:${env.PORT}/api/health`);
 });
 
 server.on('error', (err) => {
