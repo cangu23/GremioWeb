@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import LoginForm from '@/components/auth/LoginForm';
 import RegisterForm from '@/components/auth/RegisterForm';
 import AuthMusicPlayer from '@/components/auth/AuthMusicPlayer';
@@ -32,8 +32,12 @@ const EMBERS = Array.from({ length: 18 }, (_, i) => ({
 
 export default function AuthLayout({ activeTab }: AuthLayoutProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const isLogin = activeTab ? activeTab === 'login' : pathname === '/login';
+
+  // Client-side tab state: switching tabs NEVER navigates (no remount, no
+  // flicker, music keeps playing). The URL is kept in sync via replaceState.
+  const [isLogin, setIsLogin] = useState(
+    activeTab ? activeTab === 'login' : pathname === '/login'
+  );
 
   // State to handle custom image fallbacks gracefully
   const [bgImage] = useState('/images/auth/bg.jpg');
@@ -98,11 +102,19 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
     };
   }, []);
 
-  const handleTabSwitch = (targetPath: string) => {
-    if (pathname !== targetPath) {
-      router.push(targetPath, { scroll: false });
-    }
+  const handleTabSwitch = (target: 'login' | 'register') => {
+    setIsLogin(target === 'login');
   };
+
+  // Keep the URL truthful (/login vs /register) without triggering a route
+  // change — replaceState never unmounts the page, so animations and the
+  // music player keep running seamlessly.
+  useEffect(() => {
+    const target = isLogin ? '/login' : '/register';
+    if (window.location.pathname !== target) {
+      window.history.replaceState(null, '', target + window.location.search);
+    }
+  }, [isLogin]);
 
   const heading = isLogin ? 'Bienvenido de vuelta' : 'Únete al Gremio';
   const subtitle = isLogin
@@ -398,8 +410,8 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             className="auth-character-stage"
             style={{
               position: 'relative',
-              height: '74vh',
-              maxHeight: '660px',
+              height: '88vh',
+              maxHeight: '780px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -502,10 +514,10 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                   style={{
                     height: '100%',
                     width: 'auto',
-                    maxHeight: '72vh',
+                    maxHeight: '86vh',
                     objectFit: 'contain',
                     // Tilted, dynamic pose (leans toward the card)
-                    transform: 'rotate(3deg)',
+                    transform: 'rotate(3deg) scale(1.05)',
                     filter: 'drop-shadow(0 18px 44px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 30px rgba(212,175,55,0.18))',
                     transition: 'all 0.5s ease',
                   }}
@@ -518,9 +530,9 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                   style={{
                     height: '100%',
                     width: 'auto',
-                    maxHeight: '72vh',
+                    maxHeight: '86vh',
                     objectFit: 'contain',
-                    transform: 'rotate(3deg)',
+                    transform: 'rotate(3deg) scale(1.05)',
                     filter: 'drop-shadow(0 18px 44px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 30px rgba(212,175,55,0.18))',
                   }}
                 />
@@ -688,45 +700,53 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
               />
               <button
                 type="button"
-                onClick={() => handleTabSwitch('/login')}
+                onClick={() => handleTabSwitch('login')}
                 className={`auth-tab-btn ${isLogin ? 'active' : ''}`}
               >
                 Iniciar Sesión
               </button>
               <button
                 type="button"
-                onClick={() => handleTabSwitch('/register')}
+                onClick={() => handleTabSwitch('register')}
                 className={`auth-tab-btn ${!isLogin ? 'active' : ''}`}
               >
                 Registrarse
               </button>
             </div>
 
-            {/* Heading — elegant Genshin-style hierarchy */}
+            {/* Heading — elegant Genshin-style hierarchy, crossfades on tab switch */}
             <div style={{ textAlign: 'center', marginBottom: '12px', flexShrink: 0 }}>
-              <h1
+              <div
+                key={isLogin ? 'login-heading' : 'register-heading'}
+                aria-live="polite"
                 style={{
-                  margin: 0,
-                  fontSize: '1.55rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.04em',
-                  color: '#F5EFDF',
-                  fontFamily: 'Georgia, "Times New Roman", serif',
-                  lineHeight: 1.25,
+                  animation: 'authFormFadeSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
-                {heading}
-              </h1>
-              <p
-                style={{
-                  margin: '5px 0 0',
-                  fontSize: '0.8rem',
-                  color: 'rgba(245, 239, 223, 0.55)',
-                  lineHeight: 1.45,
-                }}
-              >
-                {subtitle}
-              </p>
+                <h1
+                  style={{
+                    margin: 0,
+                    fontSize: '1.55rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    color: '#F5EFDF',
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                    lineHeight: 1.25,
+                  }}
+                >
+                  {heading}
+                </h1>
+                <p
+                  style={{
+                    margin: '5px 0 0',
+                    fontSize: '0.8rem',
+                    color: 'rgba(245, 239, 223, 0.55)',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {subtitle}
+                </p>
+              </div>
             </div>
 
             {/* 🎛️ SMOOTH HORIZONTAL SLIDING FORM PANEL TRACK (scrolls internally if short viewport) */}
@@ -840,25 +860,26 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         /* Tall desktop: character shines at full size */
         @media (min-width: 1021px) and (max-height: 820px) {
           .auth-character-stage {
-            height: 70vh !important;
-            max-height: 600px !important;
+            height: 86vh !important;
+            max-height: 740px !important;
           }
         }
 
         /* Compact desktop / small laptop: scale the character down */
         @media (min-width: 1021px) and (max-width: 1180px) {
           .auth-character-stage {
-            height: 62vh !important;
-            max-height: 540px !important;
-            margin-right: -46px !important;
+            height: 78vh !important;
+            max-height: 660px !important;
+            margin-right: -36px !important;
           }
         }
 
-        /* Very tall screens: never let the character look tiny */
-        @media (min-height: 1000px) and (min-width: 1021px) {
+        /* Very tall AND wide screens: never let the character look tiny.
+           Narrow-but-tall screens keep the compact size to avoid overflow. */
+        @media (min-height: 1000px) and (min-width: 1181px) {
           .auth-character-stage {
-            height: 68vh !important;
-            max-height: 760px !important;
+            height: 82vh !important;
+            max-height: 920px !important;
           }
         }
 

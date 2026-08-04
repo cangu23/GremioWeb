@@ -1237,7 +1237,7 @@ img, svg {
   }
 }
 
-/* Form switch smooth animation */
+/* Form switch smooth animation (also used for the heading crossfade) */
 @keyframes authFormFadeSlide {
   0% {
     opacity: 0;
