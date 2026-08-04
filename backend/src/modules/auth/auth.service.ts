@@ -97,7 +97,7 @@ export const login = async (input: LoginInput) => {
     throw new AppError(`Account is ${user.status.toLowerCase()}. Please contact support.`, 403);
   }
 
-  const { accessToken, refreshToken } = generateTokens(user.id);
+  const { accessToken, refreshToken } = generateTokens(user.id, user.username);
 
   // Persist the refresh token
   const hashedRefreshToken = hashToken(refreshToken);
@@ -149,6 +149,7 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
   try {
     payload = jwt.verify(input.refreshToken, env.JWT_REFRESH_SECRET) as {
       userId: string;
+      username?: string;
     };
   } catch (error) {
     throw new AppError('Invalid or expired refresh token signature.', 401);
@@ -173,9 +174,10 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
   // 5. (Security) Invalidate the used token immediately
   await AuthRepository.deleteRefreshToken(hashedToken);
 
-  // 6. Issue a new pair of tokens
+  // 6. Issue a new pair of tokens (carry username so the socket doesn't show undefined)
   const { accessToken, refreshToken: newRefreshToken } = generateTokens(
-    payload.userId
+    payload.userId,
+    payload.username
   );
 
   // 7. Persist the new refresh token

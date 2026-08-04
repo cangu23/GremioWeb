@@ -69,7 +69,7 @@ export const authenticateWithGoogle = async (credential: string) => {
     // Don't update avatar on re-login — user may have customized it
 
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(existingUser.id);
+    const { accessToken, refreshToken } = generateTokens(existingUser.id, existingUser.username);
 
     // Persist refresh token
     const hashedRefreshToken = hashToken(refreshToken);
@@ -105,7 +105,7 @@ export const authenticateWithGoogle = async (credential: string) => {
   // Solo quienes apliquen y sean aprobados recibirán un VTuberProfile.
 
   // Generate tokens
-  const { accessToken, refreshToken } = generateTokens(newUser.id);
+  const { accessToken, refreshToken } = generateTokens(newUser.id, newUser.username);
 
   // Persist refresh token
   const hashedRefreshToken = hashToken(refreshToken);

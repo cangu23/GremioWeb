@@ -67,9 +67,18 @@ export const createSocketServer = (httpServer: HttpServer) => {
     }
 
     try {
-      const decoded = jwt.verify(token as string, env.JWT_ACCESS_SECRET) as { userId: string; username: string };
+      const decoded = jwt.verify(token as string, env.JWT_ACCESS_SECRET) as { userId: string; username?: string };
       socket.userId = decoded.userId;
       socket.username = decoded.username;
+      // Tokens issued before username was added to the payload lack it —
+      // fall back to the DB so logs/typing indicators never show "undefined".
+      if (!socket.username) {
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.userId },
+          select: { username: true },
+        });
+        socket.username = user?.username;
+      }
       next();
     } catch {
       next(new Error('Invalid token'));

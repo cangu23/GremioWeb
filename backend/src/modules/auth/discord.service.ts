@@ -90,7 +90,7 @@ export const authenticateWithDiscord = async (code: string, redirectUri: string)
     }
 
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(existingUser.id);
+    const { accessToken, refreshToken } = generateTokens(existingUser.id, existingUser.username);
 
     const hashedRefreshToken = hashToken(refreshToken);
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 días
@@ -121,7 +121,7 @@ export const authenticateWithDiscord = async (code: string, redirectUri: string)
   // Solo quienes apliquen y sean aprobados recibirán un VTuberProfile.
 
   // Generate tokens
-  const { accessToken, refreshToken } = generateTokens(newUser.id);
+  const { accessToken, refreshToken } = generateTokens(newUser.id, newUser.username);
 
   const hashedRefreshToken = hashToken(refreshToken);
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 días

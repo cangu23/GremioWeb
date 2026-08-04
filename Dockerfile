@@ -70,19 +70,21 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy standalone output (self-contained Next.js server)
+# Copy standalone output (self-contained Next.js server).
+# En monorepo, el standalone genera una subcarpeta frontend/ (standalone/frontend/server.js)
+# porque el workspace vive en frontend/ dentro del tracing root.
 COPY --from=builder /app/frontend/.next/standalone ./
 
 # Copy static files (not included in standalone by default)
-COPY --from=builder /app/frontend/.next/static ./.next/static
+COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
 
 # Copy public assets
-COPY --from=builder /app/frontend/public ./public
+COPY --from=builder /app/frontend/public ./frontend/public
 
 EXPOSE 3000
 
 # Start Next.js standalone server
-CMD ["node", "server.js"]
+CMD ["node", "frontend/server.js"]
 
 # ===== PRODUCTION STAGE (Next.js foreground + Express background) =====
 # Architecture:
@@ -114,8 +116,11 @@ COPY --from=builder /app/backend/prisma ./backend/prisma
 COPY --from=builder /app/shared/dist ./shared/dist
 
 # ── Frontend (Next.js standalone) ─────────────────────
-# The standalone folder contains a self-contained server.js with bundled deps
-COPY --from=builder /app/frontend/.next/standalone ./frontend
+# En monorepo el standalone genera subcarpeta frontend/ (standalone/frontend/server.js).
+# Copiamos el CONTENIDO de standalone/frontend a /app/frontend para que
+# server.js quede en /app/frontend/server.js (como espera start.sh) y los
+# assets static/public queden junto a él.
+COPY --from=builder /app/frontend/.next/standalone/frontend ./frontend
 
 # Static files are not included in standalone by default
 COPY --from=builder /app/frontend/.next/static ./frontend/.next/static
