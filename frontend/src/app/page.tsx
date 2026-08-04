@@ -4,7 +4,6 @@ import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 
 // Landing sections (for non-authenticated users)
-import ParticlesBackground from '@/components/landing/ParticlesBackground';
 import HeroSection from '@/components/landing/HeroSection';
 import HowItWorksSection from '@/components/landing/HowItWorksSection';
 import StatsSection from '@/components/landing/StatsSection';

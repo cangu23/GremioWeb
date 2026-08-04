@@ -5,10 +5,12 @@ import type { CSSProperties } from 'react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
-/* Official Discord logo (white, fits any background) */
+/* Official Discord logo (white, fits any background). The logo's real
+   aspect is 71:55 (wider than tall) — we keep it proportional so the
+   mascot isn't squished into a square. */
 const DiscordLogo = ({ size = 20 }: { size?: number }) => (
   <svg
-    width={size}
+    width={Math.round(size * (71 / 55))}
     height={size}
     viewBox="0 0 71 55"
     fill="#fff"

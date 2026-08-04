@@ -102,7 +102,9 @@ export default function ParticlesBackground() {
       ? ['#7C3AED', '#6D28D9', '#2563EB', '#D97706', '#475569', '#8B5CF6']
       : ['#FFFFFF', '#A78BFA', '#8B5CF6', '#6CB4EE', '#F59E0B', '#E2E8F0'];
     const isMobile = width < 768;
-    const starCount = isMobile ? 40 : Math.min(120, Math.floor(Math.min(width, height) * 0.12));
+    // Denser starfield like the original: 15% of the shortest dimension,
+    // capped higher (240) so big monitors stay full of stars.
+    const starCount = isMobile ? 55 : Math.min(240, Math.floor(Math.min(width, height) * 0.15));
 
     const stars: Star[] = Array.from({ length: starCount }, (_, i) => {
       const isSpecial = i % 7 === 0;
@@ -409,7 +411,7 @@ export default function ParticlesBackground() {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 0,
-        opacity: 0.8,
+        opacity: 1,
       }}
     />
   );
