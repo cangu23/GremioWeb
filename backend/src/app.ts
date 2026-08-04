@@ -54,11 +54,18 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ========== CORS (must be early) ==========
 console.log(`${BOOT} Configuring CORS...`);
-import env from './config/env';
+import env, { isOriginAllowed } from './config/env';
 console.log(`${BOOT} CORS allowed origins:`, env.ALLOWED_ORIGINS);
 
 app.use(cors({
-  origin: env.ALLOWED_ORIGINS,
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`${REQ} [CORS Blocked] origin: ${origin}`);
+      callback(null, false);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],

@@ -12,11 +12,13 @@ function buildAllowedOrigins(): string[] {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   const origins = new Set<string>();
 
-  origins.add(frontendUrl);
+  if (frontendUrl) {
+    origins.add(frontendUrl.trim().replace(/\/+$/, ''));
+  }
 
   if (process.env.ALLOWED_ORIGINS) {
     process.env.ALLOWED_ORIGINS.split(',').forEach((o) => {
-      const trimmed = o.trim();
+      const trimmed = o.trim().replace(/\/+$/, '');
       if (trimmed) origins.add(trimmed);
     });
   }
@@ -24,6 +26,8 @@ function buildAllowedOrigins(): string[] {
   if (process.env.NODE_ENV !== 'production') {
     origins.add('http://localhost:3000');
     origins.add('http://localhost:4000');
+    origins.add('http://127.0.0.1:3000');
+    origins.add('http://127.0.0.1:4000');
   }
 
   return Array.from(origins);
@@ -87,6 +91,27 @@ const env = {
   ALLOWED_ORIGINS: buildAllowedOrigins(),
 };
 
+export function isOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return true;
+  const cleanOrigin = origin.trim().replace(/\/+$/, '').toLowerCase();
+
+  // 1. Check exact allowed origins from env
+  const allowedList = env.ALLOWED_ORIGINS.map((o) => o.trim().replace(/\/+$/, '').toLowerCase());
+  if (allowedList.includes(cleanOrigin)) return true;
+
+  // 2. Auto-allow any *.onrender.com origin (Render subdomains)
+  if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/.test(cleanOrigin)) {
+    return true;
+  }
+
+  // 3. Localhost / development origins
+  if (env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)) {
+    return true;
+  }
+
+  return false;
+}
+
 // Developer Warnings
 if (!env.GOOGLE_CLIENT_ID) {
   console.warn('⚠️  GOOGLE_CLIENT_ID not set — Google login disabled');
@@ -100,4 +125,3 @@ if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API
 
 export type EnvConfig = typeof env;
 export default env;
-

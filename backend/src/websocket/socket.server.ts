@@ -1,7 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import env from '../config/env';
+import env, { isOriginAllowed } from '../config/env';
 import prisma from '../database/prisma';
 import * as NotificationsService from '../modules/notifications/notifications.service';
 import { sanitizeMessage, isValidCuid, createSocketRateLimiter } from '../utils/sanitize';
@@ -51,7 +51,13 @@ function broadcastOnline(guildId: string) {
 export const createSocketServer = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: env.ALLOWED_ORIGINS,
+      origin: (origin, callback) => {
+        if (isOriginAllowed(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Socket CORS blocked: ${origin}`), false);
+        }
+      },
       credentials: true,
     },
   });
