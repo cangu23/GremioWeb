@@ -53,7 +53,7 @@ export default function Footer() {
       zIndex: 1,
       marginTop: 'auto',
       borderTop: '1px solid rgba(255,255,255,0.06)',
-      background: 'linear-gradient(to bottom, transparent, rgba(10, 8, 30, 0.95))',
+      background: 'linear-gradient(to bottom, transparent, rgba(10, 8, 30, 0.85))',
     }}>
       {/* Top gradient accent line */}
       <div style={{
