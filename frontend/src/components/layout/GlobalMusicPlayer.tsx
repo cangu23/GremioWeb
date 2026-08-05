@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { setSfxMuted } from '@/lib/sfx';
+import { setSfxMuted, attachMusicVisualizer, getMusicAnalyser } from '@/lib/sfx';
 
 /* Track: frontend/public/audio/stelar.mp3 */
 const AUDIO_SRC = '/audio/stelar.mp3';
@@ -20,6 +20,7 @@ export default function GlobalMusicPlayer() {
   const isAuthPage = pathname === '/login' || pathname === '/register';
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const waveformCanvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [userToggled, setUserToggled] = useState(false);
@@ -40,6 +41,9 @@ export default function GlobalMusicPlayer() {
     audio.preload = 'auto';
     audio.volume = 0;
     audioRef.current = audio;
+    // Route the music through the shared AudioContext so the ECG waveform
+    // visualizer can read its live data (sound still flows: src→analyser→out).
+    attachMusicVisualizer(audio);
 
     const handleCanPlay = () => {
       setReady(true);
@@ -129,9 +133,103 @@ export default function GlobalMusicPlayer() {
     }
   };
 
+  // ── ECG heartbeat waveform, synced to the actual music ────────────────
+  useEffect(() => {
+    if (!playing) return;
+    const canvas = waveformCanvasRef.current;
+    if (!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = 180;
+    const H = 40;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const data = new Uint8Array(256);
+    const smooth = { v: 0 };
+    let beat = 0;
+    let last = performance.now();
+    let raf = 0;
+
+    // Classic ECG beat over phase 0..1 (P wave → sharp QRS zigzag → T wave)
+    const ecgValue = (ph: number): number => {
+      if (ph < 0.04) return Math.sin((ph / 0.04) * Math.PI) * 0.18; // P
+      if (ph < 0.08) return 0; // PR segment
+      if (ph < 0.12) return -((ph - 0.08) / 0.04) * 0.85; // Q ↓
+      if (ph < 0.17) return -0.85 + ((ph - 0.12) / 0.05) * 1.7; // R ↑
+      if (ph < 0.21) return 0.85 - ((ph - 0.17) / 0.04) * 1.7; // S ↓
+      if (ph < 0.25) return -0.85 + ((ph - 0.21) / 0.04) * 0.85; // back
+      if (ph < 0.3) return 0; // ST segment
+      if (ph < 0.42) return Math.sin(((ph - 0.3) / 0.12) * Math.PI) * 0.32; // T
+      return 0;
+    };
+
+    const step = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
+
+      // Live energy of stelar.mp3 (0..~1)
+      const analyser = getMusicAnalyser();
+      let energy = 0;
+      if (analyser) {
+        analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = (data[i] - 128) / 128;
+          sum += v * v;
+        }
+        energy = Math.sqrt(sum / data.length);
+      }
+      smooth.v += (energy - smooth.v) * 0.25;
+
+      // Louder music → taller spikes & a faster heartbeat
+      const amp = 0.3 + smooth.v * 1.05;
+      const beatRate = 1.05 + smooth.v * 0.7;
+      beat = (beat + dt * beatRate) % 1;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 2) {
+        const ph = (x / W) * 1.4 + beat;
+        const phN = ph - Math.floor(ph);
+        let y = H / 2 + ecgValue(phN) * H * 0.42 * amp;
+        // Organic jitter from the real waveform riding the line
+        if (analyser) {
+          const idx = Math.min(data.length - 1, Math.floor((x / W) * data.length));
+          y += ((data[idx] - 128) / 128) * 1.5 * smooth.v;
+        }
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = 'rgba(245, 231, 176, 0.95)';
+      ctx.lineWidth = 1.6;
+      ctx.shadowColor = 'rgba(212, 175, 55, 0.85)';
+      ctx.shadowBlur = 9;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Faint mirrored echo below for a soft glow
+      ctx.save();
+      ctx.translate(0, H);
+      ctx.scale(1, -0.45);
+      ctx.globalAlpha = 0.14;
+      ctx.strokeStyle = '#F5E7B0';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [playing]);
+
   if (!ready) return null;
 
   return (
+    <>
     <button
       type="button"
       onClick={toggle}
@@ -214,5 +312,28 @@ export default function GlobalMusicPlayer() {
         />
       )}
     </button>
+
+    {/* 💗 ECG heartbeat strip — pulses in sync with stelar.mp3 */}
+    <canvas
+      ref={waveformCanvasRef}
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        // Auth pages: to the LEFT of the button (top-right). Regular pages:
+        // to the RIGHT of the button (bottom-left). Same corner logic as the
+        // music button so they always sit together.
+        top: isAuthPage ? '24px' : undefined,
+        right: isAuthPage ? '86px' : undefined,
+        left: isAuthPage ? undefined : '72px',
+        bottom: isAuthPage ? undefined : '22px',
+        width: '180px',
+        height: '40px',
+        zIndex: isAuthPage ? 1000000 : 1000,
+        opacity: playing ? 1 : 0,
+        transition: 'opacity 0.5s ease',
+        pointerEvents: 'none',
+      }}
+    />
+    </>
   );
 }

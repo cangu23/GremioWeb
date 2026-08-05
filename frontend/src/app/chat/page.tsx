@@ -13,6 +13,7 @@ import StickerPicker from '@/components/ui/StickerPicker';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { renderFormattedContent, useStickersCache } from '@/lib/content-renderer';
+import { playChime } from '@/lib/sfx';
 import type { Socket } from 'socket.io-client';
 
 /* ─────────── Types ─────────── */
@@ -195,6 +196,16 @@ function MessengerContent() {
     sock.on(DM_EVENTS.MESSAGE, (msg: DmMessageData) => {
       const otherId = msg.senderId === currentUser.id ? msg.receiverId : msg.senderId;
       const isForActiveChat = activeUserId === otherId;
+
+      // Subtle notification chime for incoming messages from OTHER users.
+      // Skipped when we're actively reading that exact conversation in a
+      // visible tab (we can see it already); plays in any other case — other
+      // chats, other pages, or a background tab. Obeys the site-wide audio
+      // mute (same button as the music).
+      if (msg.senderId !== currentUser.id) {
+        const readingItLive = document.visibilityState === 'visible' && isForActiveChat;
+        if (!readingItLive) playChime();
+      }
 
       if (isForActiveChat) {
         setMessages(prev => {

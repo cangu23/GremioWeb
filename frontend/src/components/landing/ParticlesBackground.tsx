@@ -47,6 +47,11 @@ export default function ParticlesBackground() {
   const pathname = usePathname();
   const isAuthPage = pathname === '/login' || pathname === '/register';
 
+  // IMPORTANTE: este efecto depende de `isAuthPage`, NO debe ser [] aunque
+  // solo se monte una vez. Al entrar a /login o /register el componente
+  // devuelve null (el canvas se DESMONTA); al volver a una página normal
+  // React crea un canvas NUEVO y si el efecto no se re-ejecuta, el canvas
+  // nuevo queda muerto (300x150, sin animación) hasta recargar la página.
   useEffect(() => {
     if (isAuthPage) return;
     const canvas = canvasRef.current;
@@ -436,7 +441,7 @@ export default function ParticlesBackground() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isAuthPage]);
 
   if (isAuthPage) return null;
 

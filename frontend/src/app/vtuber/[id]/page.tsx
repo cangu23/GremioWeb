@@ -710,53 +710,51 @@ function VtuberPublicProfile() {
           )}
         </div>
 
-        {/* ═══════ STATS ROW ═══════ */}
+        {/* ═══════ STATS ROW (CLEAN & FRAMELESS) ═══════ */}
         <div style={{
-          maxWidth: '600px', margin: '0 auto 28px',
+          maxWidth: '800px', margin: '0 auto 32px',
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: '16px',
-          border: '1px solid var(--glass-border)',
-          overflow: 'hidden',
+          gap: '0',
+          padding: '12px 0',
         }}>
           <button onClick={loadFollowers} style={{
-            background: 'none', border: 'none', borderRight: '1px solid var(--glass-border)',
+            background: 'none', border: 'none', borderRight: '1px solid rgba(255,255,255,0.08)',
             color: 'var(--text)', cursor: 'pointer',
-            textAlign: 'center', padding: '20px 8px',
-            transition: 'all 0.2s',
+            textAlign: 'center', padding: '12px 16px', borderRadius: '12px',
+            transition: 'all 0.2s ease',
           }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
             onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile._count.followers}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Seguidores</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Seguidores</div>
           </button>
           <button onClick={loadFollowing} style={{
-            background: 'none', border: 'none', borderRight: '1px solid var(--glass-border)',
+            background: 'none', border: 'none', borderRight: '1px solid rgba(255,255,255,0.08)',
             color: 'var(--text)', cursor: 'pointer',
-            textAlign: 'center', padding: '20px 8px',
-            transition: 'all 0.2s',
+            textAlign: 'center', padding: '12px 16px', borderRadius: '12px',
+            transition: 'all 0.2s ease',
           }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
             onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile._count.following}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Siguiendo</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Siguiendo</div>
           </button>
-          <div style={{ textAlign: 'center', padding: '20px 8px', borderRight: '1px solid var(--glass-border)' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div style={{ textAlign: 'center', padding: '12px 16px', borderRight: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile.level || 0}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Nivel</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Nivel</div>
           </div>
-          <div style={{ textAlign: 'center', padding: '20px 8px' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div style={{ textAlign: 'center', padding: '12px 16px', borderRadius: '12px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile.xp || 0}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>XP</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>XP</div>
           </div>
         </div>
 

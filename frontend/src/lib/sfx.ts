@@ -9,6 +9,7 @@
 
 let ctx: AudioContext | null = null;
 let muted = true; // silent until the user turns the music on
+let lastChime = 0; // throttle: avoid overlapping dings on message bursts
 
 /** Called by GlobalMusicPlayer whenever the music toggle changes. */
 export function setSfxMuted(m: boolean) {
@@ -93,6 +94,82 @@ export function playWhoosh(phase: 'in' | 'out') {
     filter.connect(gain);
     gain.connect(ac.destination);
     src.start(t0);
+  } catch {
+    /* audio unavailable — stay silent */
+  }
+}
+
+/**
+ * Play a soft two-note notification ding (A5 + E6) for new chat messages.
+ * Throttled to one chime per 800ms so message bursts don't overlap.
+ */
+// ── Music waveform (ECG-style heartbeat visualizer) ───────────────────
+// The site's background music is routed through the shared AudioContext so
+// the visualizer can read its LIVE waveform via an AnalyserNode, making the
+// drawn line pulse in sync with stelar.mp3. The audio keeps playing normally
+// (src → analyser → destination).
+let attachedElement: HTMLAudioElement | null = null;
+let musicAnalyser: AnalyserNode | null = null;
+
+/**
+ * Route a music <audio> element through the shared context + analyser.
+ * Safe to call again with a different element (e.g. after a StrictMode
+ * remount): each element can only be routed once.
+ */
+export function attachMusicVisualizer(audio: HTMLAudioElement): AnalyserNode | null {
+  if (attachedElement === audio) return musicAnalyser;
+  const ac = ensureCtx();
+  if (!ac) return null;
+  try {
+    const src = ac.createMediaElementSource(audio);
+    const analyser = ac.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.8;
+    src.connect(analyser);
+    analyser.connect(ac.destination);
+    attachedElement = audio;
+    musicAnalyser = analyser;
+    return analyser;
+  } catch {
+    return null;
+  }
+}
+
+/** Live analyser of the playing music (null if unavailable). */
+export function getMusicAnalyser(): AnalyserNode | null {
+  return musicAnalyser;
+}
+
+export function playChime() {
+  if (muted) return;
+  const now = performance.now();
+  if (now - lastChime < 800) return;
+  lastChime = now;
+
+  const ac = ensureCtx();
+  if (!ac) return;
+
+  try {
+    const t0 = ac.currentTime + 0.01;
+    const notes = [
+      { freq: 880, gain: 0.05, dur: 0.9 }, // A5 — warm fundamental
+      { freq: 1318.51, gain: 0.03, dur: 0.7 }, // E6 — bright fifth
+    ];
+    for (const n of notes) {
+      const osc = ac.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(n.freq, t0);
+
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(n.gain, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + n.dur);
+
+      osc.connect(g);
+      g.connect(ac.destination);
+      osc.start(t0);
+      osc.stop(t0 + n.dur + 0.1);
+    }
   } catch {
     /* audio unavailable — stay silent */
   }

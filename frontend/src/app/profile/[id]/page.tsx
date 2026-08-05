@@ -482,14 +482,14 @@ function ProfileContent() {
 
       {/* ===== PROFILE HEADER ===== */}
       <div className="container" style={{ paddingTop: '80px', paddingBottom: '40px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{ maxWidth: '850px', margin: '0 auto 28px', textAlign: 'center' }}>
           {/* Display name with badges */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '10px', flexWrap: 'wrap', marginBottom: '4px',
+            gap: '10px', flexWrap: 'wrap', marginBottom: '8px',
           }}>
             <h1 style={{
-              fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+              fontSize: 'clamp(2rem, 4.5vw, 3rem)',
               fontWeight: 800,
               letterSpacing: '-0.02em',
               display: 'flex',
@@ -554,158 +554,144 @@ function ProfileContent() {
             )}
           </div>
 
-          {/* Username */}
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginBottom: titleData?.text ? '4px' : '8px' }}>
-            @{profile.username}
-          </p>
+          {/* Handle, Title Tag, Oshi Mark, Content Type & Fan Name in horizontal meta row */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: '12px', flexWrap: 'wrap', marginBottom: '14px',
+            color: 'var(--text-muted)', fontSize: '1rem',
+          }}>
+            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>@{profile.username}</span>
 
-          {/* All Roles Showcase */}
-          {(() => {
-            const allRoles = parseUserRoles(profile.role);
-            if (allRoles.length <= 1) return null;
-            return (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                flexWrap: 'wrap',
-                marginTop: '10px',
-                marginBottom: '14px',
-              }}>
-                {allRoles.map((r, idx) => (
-                  <RoleBadge
-                    key={idx}
-                    role={r}
-                    size="sm"
-                    isVerified={r === 'VTUBER' ? !!(vtuber?.isVerified || (profile as any)?.isVerified) : false}
-                  />
-                ))}
-              </div>
-            );
-          })()}
-
-          {/* Equipped Title Tag */}
-          {titleData?.text && (
-            <div style={{ marginBottom: '8px' }}>
+            {titleData?.text && (
               <span style={{
                 fontSize: '0.82rem', fontWeight: 800,
-                padding: '4px 14px', borderRadius: '20px',
+                padding: '3px 12px', borderRadius: '20px',
                 background: titleData.gradient || 'linear-gradient(90deg, #ffd700, #ff6b35)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                 border: '1px solid rgba(255,255,255,0.15)',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-                display: 'inline-block',
               }}>
                 {titleData.text}
               </span>
-            </div>
-          )}
+            )}
 
-          {/* Botón para editar/agregar nota en perfil propio */}
-          {isOwnProfile && (
-            <button
-              onClick={() => setShowNoteModal(true)}
-              style={{
-                background: profile.note ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.06)',
-                border: profile.note ? '1px solid rgba(139,92,246,0.25)' : '1px dashed rgba(139,92,246,0.3)',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '5px 14px',
-                borderRadius: '20px',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                marginTop: '6px',
-                transition: 'all 0.2s',
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(139,92,246,0.15)';
-                e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)';
-                e.currentTarget.style.color = 'var(--primary)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = profile.note ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.06)';
-                e.currentTarget.style.borderColor = profile.note ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.3)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-              </svg>
-              {profile.note ? 'Editar nota' : 'Agregar nota'}
-            </button>
-          )}
+            {vtuber?.oshiMark && <span style={{ fontSize: '1.1rem' }}>{vtuber.oshiMark}</span>}
 
-          {/* Oshi mark & fan name */}
-          {(vtuber?.oshiMark || vtuber?.fanName) && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '8px' }}>
-              {vtuber?.oshiMark && <span style={{ marginRight: '8px' }}>{vtuber.oshiMark}</span>}
-              {vtuber?.fanName && <span>Fans: <strong style={{ color: 'var(--primary)' }}>{vtuber.fanName}</strong></span>}
-            </p>
-          )}
+            {vtuber?.fanName && (
+              <span style={{ fontSize: '0.9rem' }}>
+                Fans: <strong style={{ color: 'var(--primary)' }}>{vtuber.fanName}</strong>
+              </span>
+            )}
 
-          {/* Content type badge */}
-          {vtuber?.contentType && (
-            <span style={{
-              display: 'inline-block', padding: '4px 14px', borderRadius: '20px',
-              background: 'rgba(138,43,226,0.1)', border: '1px solid rgba(138,43,226,0.2)',
-              fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600,
-              marginBottom: '12px',
-            }}>
-              {vtuber.contentType}
-            </span>
-          )}
+            {vtuber?.contentType && (
+              <span style={{
+                padding: '3px 12px', borderRadius: '20px',
+                background: 'rgba(138,43,226,0.12)', border: '1px solid rgba(138,43,226,0.25)',
+                fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600,
+              }}>
+                {vtuber.contentType}
+              </span>
+            )}
+          </div>
+
+          {/* Roles Showcase & Note Trigger in inline flex row */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: '10px', flexWrap: 'wrap',
+          }}>
+            {(() => {
+              const allRoles = parseUserRoles(profile.role);
+              if (allRoles.length <= 1) return null;
+              return allRoles.map((r, idx) => (
+                <RoleBadge
+                  key={idx}
+                  role={r}
+                  size="sm"
+                  isVerified={r === 'VTUBER' ? !!(vtuber?.isVerified || (profile as any)?.isVerified) : false}
+                />
+              ));
+            })()}
+
+            {isOwnProfile && (
+              <button
+                onClick={() => setShowNoteModal(true)}
+                style={{
+                  background: profile.note ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.06)',
+                  border: profile.note ? '1px solid rgba(139,92,246,0.25)' : '1px dashed rgba(139,92,246,0.3)',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px 12px',
+                  borderRadius: '20px',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  transition: 'all 0.2s',
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(139,92,246,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)';
+                  e.currentTarget.style.color = 'var(--primary)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = profile.note ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.06)';
+                  e.currentTarget.style.borderColor = profile.note ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.3)';
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                {profile.note ? 'Editar nota' : 'Agregar nota'}
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* ===== STATS ROW ===== */}
+        {/* ===== STATS ROW (CLEAN & FRAMELESS) ===== */}
         <div style={{
-          maxWidth: '600px', margin: '0 auto 32px',
+          maxWidth: '800px', margin: '0 auto 36px',
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '0',
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: '16px',
-          border: '1px solid var(--glass-border)',
-          overflow: 'hidden',
+          padding: '12px 0',
         }}>
           <button onClick={loadFollowers} style={{
-            background: 'none', border: 'none', borderRight: '1px solid var(--glass-border)',
+            background: 'none', border: 'none', borderRight: '1px solid rgba(255,255,255,0.08)',
             color: 'var(--text)', cursor: 'pointer',
-            textAlign: 'center', padding: '20px 8px',
-            transition: 'all 0.2s', position: 'relative',
+            textAlign: 'center', padding: '12px 16px', borderRadius: '12px',
+            transition: 'all 0.2s ease', position: 'relative',
           }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
             onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile._count.followers}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Seguidores</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Seguidores</div>
           </button>
           <button onClick={loadFollowing} style={{
-            background: 'none', border: 'none', borderRight: '1px solid var(--glass-border)',
+            background: 'none', border: 'none', borderRight: '1px solid rgba(255,255,255,0.08)',
             color: 'var(--text)', cursor: 'pointer',
-            textAlign: 'center', padding: '20px 8px',
-            transition: 'all 0.2s',
+            textAlign: 'center', padding: '12px 16px', borderRadius: '12px',
+            transition: 'all 0.2s ease',
           }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.08)'; }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
             onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile._count.following}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Siguiendo</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Siguiendo</div>
           </button>
-          <div style={{ textAlign: 'center', padding: '20px 8px', borderRight: '1px solid var(--glass-border)' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div style={{ textAlign: 'center', padding: '12px 16px', borderRight: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile.level || 0}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Nivel</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Nivel</div>
           </div>
-          <div style={{ textAlign: 'center', padding: '20px 8px' }}>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div style={{ textAlign: 'center', padding: '12px 16px', borderRadius: '12px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {profile.xp || 0}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>XP</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>XP</div>
           </div>
         </div>
 
