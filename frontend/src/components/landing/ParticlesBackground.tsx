@@ -87,9 +87,46 @@ export default function ParticlesBackground() {
     window.addEventListener('mouseleave', handleMouseLeave);
     window.addEventListener('touchmove', handleTouchMove);
 
+    // Static cosmic nebula layer — pre-rendered once (per-frame radial
+    // gradients + full-canvas fills are expensive on modest GPUs/CPUs).
+    const nebulaCanvas = document.createElement('canvas');
+    const buildNebula = () => {
+      nebulaCanvas.width = width;
+      nebulaCanvas.height = height;
+      const nctx = nebulaCanvas.getContext('2d');
+      if (!nctx) return;
+      const g1 = nctx.createRadialGradient(
+        width * 0.2,
+        height * 0.2,
+        0,
+        width * 0.2,
+        height * 0.2,
+        width * 0.4
+      );
+      g1.addColorStop(0, 'rgba(139, 92, 246, 0.05)');
+      g1.addColorStop(1, 'transparent');
+      nctx.fillStyle = g1;
+      nctx.fillRect(0, 0, width, height);
+
+      const g2 = nctx.createRadialGradient(
+        width * 0.8,
+        height * 0.7,
+        0,
+        width * 0.8,
+        height * 0.7,
+        width * 0.45
+      );
+      g2.addColorStop(0, 'rgba(108, 180, 238, 0.04)');
+      g2.addColorStop(1, 'transparent');
+      nctx.fillStyle = g2;
+      nctx.fillRect(0, 0, width, height);
+    };
+    buildNebula();
+
     const handleResize = () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      buildNebula();
     };
     window.addEventListener('resize', handleResize);
 
@@ -98,10 +135,39 @@ export default function ParticlesBackground() {
     const starColors = isLightTheme
       ? ['#7C3AED', '#6D28D9', '#2563EB', '#D97706', '#475569', '#8B5CF6']
       : ['#FFFFFF', '#A78BFA', '#8B5CF6', '#6CB4EE', '#F59E0B', '#E2E8F0'];
-    const isMobile = width < 768;
-    // Denser starfield like the original: 15% of the shortest dimension,
-    // capped higher (240) so big monitors stay full of stars.
-    const starCount = isMobile ? 55 : Math.min(240, Math.floor(Math.min(width, height) * 0.15));
+    const isMobile = width < 768 || (navigator.maxTouchPoints > 1 && width < 900);
+
+    // ── Device capability tiering (keep modest laptops smooth) ──
+    // tier 0 = low-end / phones, tier 1 = mid laptops, tier 2 = high-end desktops
+    const getQualityTier = (w: number, h: number, mobile: boolean): number => {
+      const cores = navigator.hardwareConcurrency || 4;
+      const mem = (navigator as unknown as { deviceMemory?: number }).deviceMemory || 4;
+      const bigScreen = w >= 1440 && h >= 900;
+      if (mobile || cores <= 2 || mem <= 2) return 0;
+      // hardwareConcurrency counts logical THREADS (a 4C/8T i5 reports 8), so
+      // tier 2 strictly needs >8 threads AND 16GB+ RAM; modest laptops stay
+      // in tier 1 instead of accidentally getting the heaviest starfield.
+      if (cores <= 8 || mem <= 8 || !bigScreen) return 1;
+      return 2;
+    };
+    const tier = getQualityTier(width, height, isMobile);
+
+    // Star budget per tier (visual density vs. per-frame cost)
+    const starCount =
+      tier === 2
+        ? Math.min(200, Math.floor(Math.min(width, height) * 0.15))
+        : tier === 1
+          ? Math.min(110, Math.floor(Math.min(width, height) * 0.1))
+          : 45;
+
+    // Constellation lines: full on high, lighter on mid, light on low-end too
+    // (the O(n²) pair loop is negligible at 45 stars)
+    const maxConnectDistance = tier === 2 ? 110 : tier === 1 ? 85 : 70;
+    // Meteors: fewer & rarer on weaker devices
+    const meteorSpawnChance = tier === 2 ? 0.025 : tier === 1 ? 0.015 : 0.008;
+    const maxMeteors = tier === 2 ? 8 : tier === 1 ? 5 : 3;
+    // Mouse interaction radius (smaller on low-end saves connect-line work)
+    mouse.radius = tier === 0 ? 120 : 170;
 
     const stars: Star[] = Array.from({ length: starCount }, (_, i) => {
       const isSpecial = i % 7 === 0;
@@ -189,35 +255,10 @@ export default function ParticlesBackground() {
       time++;
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Render Atmospheric Cosmic Nebulae
-      const nebGrad1 = ctx.createRadialGradient(
-        width * 0.2,
-        height * 0.2,
-        0,
-        width * 0.2,
-        height * 0.2,
-        width * 0.4
-      );
-      nebGrad1.addColorStop(0, 'rgba(139, 92, 246, 0.05)');
-      nebGrad1.addColorStop(1, 'transparent');
-      ctx.fillStyle = nebGrad1;
-      ctx.fillRect(0, 0, width, height);
-
-      const nebGrad2 = ctx.createRadialGradient(
-        width * 0.8,
-        height * 0.7,
-        0,
-        width * 0.8,
-        height * 0.7,
-        width * 0.45
-      );
-      nebGrad2.addColorStop(0, 'rgba(108, 180, 238, 0.04)');
-      nebGrad2.addColorStop(1, 'transparent');
-      ctx.fillStyle = nebGrad2;
-      ctx.fillRect(0, 0, width, height);
+      // 1. Pre-rendered cosmic nebulae (static layer, blitted each frame)
+      ctx.drawImage(nebulaCanvas, 0, 0, width, height);
 
       // 2. Update & Draw Stars + Constellations
-      const maxConnectDistance = 110;
 
       for (let i = 0; i < stars.length; i++) {
         const star = stars[i];
@@ -285,32 +326,34 @@ export default function ParticlesBackground() {
         }
         ctx.globalAlpha = 1;
 
-        // Connect nearby stars to form constellations (squared distance optimization)
-        const maxConnectDistanceSq = maxConnectDistance * maxConnectDistance;
-        for (let j = i + 1; j < stars.length; j++) {
-          const other = stars[j];
-          const sdx = other.x - star.x;
-          if (Math.abs(sdx) > maxConnectDistance) continue;
-          const sdy = other.y - star.y;
-          if (Math.abs(sdy) > maxConnectDistance) continue;
-          
-          const sdistSq = sdx * sdx + sdy * sdy;
-          if (sdistSq < maxConnectDistanceSq) {
-            const sdist = Math.sqrt(sdistSq);
-            const lineAlpha = (1 - sdist / maxConnectDistance) * 0.12 * activeAlpha;
-            ctx.beginPath();
-            ctx.moveTo(star.x, star.y);
-            ctx.lineTo(other.x, other.y);
-            ctx.strokeStyle = `rgba(139, 92, 246, ${lineAlpha})`;
-            ctx.lineWidth = 0.8;
-            ctx.stroke();
+        // Connect nearby stars to form constellations (squared distance
+        // optimization; distance shrinks on weaker devices)
+        if (maxConnectDistance > 0) {
+          const maxConnectDistanceSq = maxConnectDistance * maxConnectDistance;
+          for (let j = i + 1; j < stars.length; j++) {
+            const other = stars[j];
+            const sdx = other.x - star.x;
+            if (Math.abs(sdx) > maxConnectDistance) continue;
+            const sdy = other.y - star.y;
+            if (Math.abs(sdy) > maxConnectDistance) continue;
+            
+            const sdistSq = sdx * sdx + sdy * sdy;
+            if (sdistSq < maxConnectDistanceSq) {
+              const sdist = Math.sqrt(sdistSq);
+              const lineAlpha = (1 - sdist / maxConnectDistance) * 0.12 * activeAlpha;
+              ctx.beginPath();
+              ctx.moveTo(star.x, star.y);
+              ctx.lineTo(other.x, other.y);
+              ctx.strokeStyle = `rgba(139, 92, 246, ${lineAlpha})`;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
           }
         }
       }
 
-      // 3. Meteor Shower Generator
-      // Spawn shooting stars periodically
-      if (Math.random() < 0.025) {
+      // 3. Meteor Shower Generator (rate + count capped by device tier)
+      if (meteors.length < maxMeteors && Math.random() < meteorSpawnChance) {
         createMeteor(Math.random() < 0.2); // 20% chance of super meteor
       }
 

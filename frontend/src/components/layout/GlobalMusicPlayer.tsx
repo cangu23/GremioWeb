@@ -1,18 +1,30 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
-/* Where the user drops their track: frontend/public/audio/stelar.mp3 */
+/* Track: frontend/public/audio/stelar.mp3 */
 const AUDIO_SRC = '/audio/stelar.mp3';
 
-export default function AuthMusicPlayer() {
+/**
+ * Site-wide background music. Mounted once in the root layout so the SAME
+ * <audio> element lives across every route (landing, feed, profiles, … and
+ * even the auth pages) — the music never restarts on navigation.
+ *
+ * Position is adaptive: top-right on /login & /register (matching the old
+ * auth-only player), bottom-right floating on every other page.
+ */
+export default function GlobalMusicPlayer() {
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/register';
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [userToggled, setUserToggled] = useState(false);
   const fadeTimer = useRef<number | null>(null);
 
-  // Create the audio element once and check availability of the file
+  // Create the audio element once and check the file is reachable
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -34,6 +46,7 @@ export default function AuthMusicPlayer() {
     audio.addEventListener('error', handleError);
 
     return () => {
+      if (fadeTimer.current) window.cancelAnimationFrame(fadeTimer.current);
       audio.pause();
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('error', handleError);
@@ -119,10 +132,17 @@ export default function AuthMusicPlayer() {
       aria-pressed={playing}
       title={playing ? 'Silenciar música' : 'Reproducir música'}
       style={{
-        position: 'absolute',
-        top: '24px',
-        right: '36px',
-        zIndex: 30,
+        position: 'fixed',
+        // Auth pages: top-right (where the old auth-only player lived).
+        // Regular pages: bottom-LEFT — the bottom-right corner is used by
+        // the toast notifications (ToastContext, zIndex 10000).
+        top: isAuthPage ? '24px' : undefined,
+        right: isAuthPage ? '36px' : undefined,
+        left: isAuthPage ? undefined : '22px',
+        bottom: isAuthPage ? undefined : '22px',
+        // Above the auth overlay (zIndex 999999) on login/register; above
+        // regular content everywhere else.
+        zIndex: isAuthPage ? 1000000 : 1000,
         width: '40px',
         height: '40px',
         borderRadius: '50%',

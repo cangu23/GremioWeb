@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LoginForm from '@/components/auth/LoginForm';
 import RegisterForm from '@/components/auth/RegisterForm';
-import AuthMusicPlayer from '@/components/auth/AuthMusicPlayer';
 import ClientOnly from '@/lib/ClientOnly';
 
 interface AuthLayoutProps {
@@ -370,9 +369,6 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
           </span>
         </Link>
       </header>
-
-      {/* 🎵 BACKGROUND MUSIC TOGGLE (stelar.mp3 in frontend/public/audio) */}
-      <AuthMusicPlayer />
 
       {/* 🚀 CENTERED MAX-WIDTH WORKSPACE — character + card as one balanced unit */}
       <main

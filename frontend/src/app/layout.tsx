@@ -6,6 +6,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from '@/lib/AuthContext';
 import { ToastProvider } from '@/lib/ToastContext';
 import ClientLayoutShell from '@/components/layout/ClientLayoutShell';
+import GlobalMusicPlayer from '@/components/layout/GlobalMusicPlayer';
 import PageTransition from '@/components/layout/PageTransition';
 import ClientOnly from '@/lib/ClientOnly';
 import ParticlesBackground from '@/components/landing/ParticlesBackground';
@@ -37,6 +38,9 @@ export default function RootLayout({
         <ClientOnly fallback={null}>
           <ParticlesBackground />
         </ClientOnly>
+        {/* One music player for the whole site — survives navigation, never
+            restarts when changing pages (stelar.mp3 in frontend/public/audio) */}
+        <GlobalMusicPlayer />
         {GOOGLE_CLIENT_ID ? (
           <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
             <ToastProvider>
