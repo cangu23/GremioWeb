@@ -50,7 +50,20 @@ export const unfollow = async (followerId: string, followingId: string) => {
 import { hasAnyRole } from '@gremio-estelar/shared';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 
-export const getSocialProfile = async (userId: string, currentUserId?: string) => {
+export const getSocialProfile = async (userIdOrUsername: string, currentUserId?: string) => {
+  // Resolve by ID first, then fall back to username — mention links use
+  // @username, so /profile/:id must accept both (e.g. /profile/miNombre).
+  const resolved =
+    (await UserRepository.findById(userIdOrUsername)) ||
+    (await UserRepository.findByUsername(userIdOrUsername)) ||
+    // Mentions may be typed with different casing than the stored username
+    // (the @autocomplete matches case-insensitively), so try a loose match.
+    (await UserRepository.findByUsernameInsensitive(userIdOrUsername));
+  if (!resolved) {
+    throw new AppError('Usuario no encontrado.', 404);
+  }
+  const userId = resolved.id;
+
   const userProfile = await UserRepository.getUserProfileById(userId);
   if (!userProfile) {
     throw new AppError('Usuario no encontrado.', 404);

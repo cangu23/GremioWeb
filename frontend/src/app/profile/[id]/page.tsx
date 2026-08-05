@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
@@ -147,59 +147,56 @@ function ProfileContent() {
     setMounted(true);
   }, []);
 
-  const fetchProfile = useCallback(async () => {
-    try {
-      const data = await apiFetch(`/social/profile/${id}`);
+  // ── Data loading ──
+  // The route param may be a user ID OR a username (mention links use
+  // @username → /profile/username). The backend resolves it to the real
+  // profile; every follow-up call must use the RESOLVED id (profile.id).
+  useEffect(() => {
+    let cancelled = false;
+    // Reset transient states so navigating between profiles never shows the
+    // previous user's error or posts while the new one loads.
+    setError('');
+    setPostsLoading(true);
+    setMediaPostsLoading(true);
+    (async () => {
+      let data: SocialProfile;
+      try {
+        data = await apiFetch(`/social/profile/${id}`);
+      } catch (err: unknown) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Error');
+        return;
+      }
+      if (cancelled) return;
       setProfile(data);
       setIsFollowed(data.isFollowedByMe);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error');
-    }
-  }, [id]);
+      const uid = data.id;
 
-  const fetchEquipped = useCallback(async () => {
-    try {
-      const data = await apiFetch(`/shop/inventory/public/${id}`);
-      setEquippedItems(data || []);
-    } catch {}
+      apiFetch(`/shop/inventory/public/${uid}`)
+        .then((d) => { if (!cancelled) setEquippedItems(d || []); })
+        .catch(() => {});
+      apiFetch(`/posts/user/${uid}?limit=5`, {})
+        .then((d) => { if (!cancelled) setPosts(d); })
+        .catch(() => {})
+        .finally(() => { if (!cancelled) setPostsLoading(false); });
+      apiFetch(`/posts/user/${uid}?limit=50`, {})
+        .then((d) => { if (!cancelled) setMediaPosts(d.filter((p: Post) => p.mediaUrl)); })
+        .catch(() => {})
+        .finally(() => { if (!cancelled) setMediaPostsLoading(false); });
+    })();
+    return () => { cancelled = true; };
   }, [id]);
-
-  const fetchPosts = useCallback(async () => {
-    try {
-      const data = await apiFetch(`/posts/user/${id}?limit=5`, {});
-      setPosts(data);
-    } catch {} finally {
-      setPostsLoading(false);
-    }
-  }, [id]);
-
-  const fetchMediaPosts = useCallback(async () => {
-    try {
-      const data = await apiFetch(`/posts/user/${id}?limit=50`, {});
-      setMediaPosts(data.filter((p: Post) => p.mediaUrl));
-    } catch {
-    } finally {
-      setMediaPostsLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    fetchProfile();
-    fetchEquipped();
-    fetchPosts();
-    fetchMediaPosts();
-  }, [fetchProfile, fetchEquipped, fetchPosts, fetchMediaPosts]);
 
   const handleFollow = async () => {
     if (!currentUser) { router.push('/login'); return; }
+    const targetId = profile?.id ?? id;
     setFollowLoading(true);
     try {
       if (isFollowed) {
-        await apiFetch(`/social/unfollow/${id}`, { method: 'POST' });
+        await apiFetch(`/social/unfollow/${targetId}`, { method: 'POST' });
         setIsFollowed(false);
         setProfile(prev => prev ? { ...prev, _count: { ...prev._count, followers: prev._count.followers - 1 } } : prev);
       } else {
-        await apiFetch(`/social/follow/${id}`, { method: 'POST' });
+        await apiFetch(`/social/follow/${targetId}`, { method: 'POST' });
         setIsFollowed(true);
         setProfile(prev => prev ? { ...prev, _count: { ...prev._count, followers: prev._count.followers + 1 } } : prev);
       }
@@ -215,7 +212,7 @@ function ProfileContent() {
       const res = await apiFetch('/payments/paypal/create-order', {
         method: 'POST',
         body: JSON.stringify({
-          recipientId: String(id),
+          recipientId: String(profile?.id ?? id),
           amount: donateAmount,
           message: donateMessage || undefined,
           type: 'DONATION',
@@ -234,11 +231,13 @@ function ProfileContent() {
 
   const loadFollowers = async () => {
     setShowFollowers(true);
-    try { const data = await apiFetch(`/social/followers/${id}`); setFollowers(data); } catch {}
+    const targetId = profile?.id ?? id;
+    try { const data = await apiFetch(`/social/followers/${targetId}`); setFollowers(data); } catch {}
   };
   const loadFollowing = async () => {
     setShowFollowing(true);
-    try { const data = await apiFetch(`/social/following/${id}`); setFollowing(data); } catch {}
+    const targetId = profile?.id ?? id;
+    try { const data = await apiFetch(`/social/following/${targetId}`); setFollowing(data); } catch {}
   };
 
   if (error) return <div className="container" style={{ padding: '40px', textAlign: 'center' }}><p style={{ color: 'var(--error)' }}>Error: {error}</p></div>;

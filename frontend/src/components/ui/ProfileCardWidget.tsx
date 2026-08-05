@@ -97,14 +97,17 @@ export default function ProfileCardWidget({ userId, onClose }: ProfileCardWidget
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    // userId may be a username (mention links); always act on the RESOLVED id.
+    const targetId = profile?.id;
+    if (!targetId) return;
     setFollowLoading(true);
     try {
       if (isFollowed) {
-        await apiFetch(`/social/unfollow/${userId}`, { method: 'POST' });
+        await apiFetch(`/social/unfollow/${targetId}`, { method: 'POST' });
         setIsFollowed(false);
         setProfile(prev => prev ? { ...prev, _count: { ...prev._count, followers: prev._count.followers - 1 } } : prev);
       } else {
-        await apiFetch(`/social/follow/${userId}`, { method: 'POST' });
+        await apiFetch(`/social/follow/${targetId}`, { method: 'POST' });
         setIsFollowed(true);
         setProfile(prev => prev ? { ...prev, _count: { ...prev._count, followers: prev._count.followers + 1 } } : prev);
       }

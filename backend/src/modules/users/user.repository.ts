@@ -16,6 +16,12 @@ export const findByUsername = async (username: string) => {
   });
 };
 
+export const findByUsernameInsensitive = async (username: string) => {
+  return prisma.user.findFirst({
+    where: { username: { equals: username, mode: 'insensitive' } },
+  });
+};
+
 export const findById = async (id: string) => {
   return prisma.user.findUnique({
     where: { id },

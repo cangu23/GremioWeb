@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import ProfileCardWidget from '@/components/ui/ProfileCardWidget';
 
 // ==========================================================================
 // Types
@@ -144,18 +145,23 @@ export function renderFormattedContent(
       );
     }
 
-    // 2. Mentions (@username)
+    // 2. Mentions (@username) — clicking opens the profile card widget (same
+    // behavior as avatars); the link still points to /profile/<username>,
+    // which the backend resolves by id or username.
     if (part.startsWith('@') && part.length > 1) {
       const username = part.slice(1);
-      return (
-        <Link
-          key={i}
-          href={options?.mentionLinkPrefix ? `${options.mentionLinkPrefix}${username}` : `/profile/${username}`}
-          style={{ color: 'var(--secondary)', fontWeight: 600, textDecoration: 'none' }}
-        >
-          {part}
-        </Link>
-      );
+      if (options?.mentionLinkPrefix) {
+        return (
+          <Link
+            key={i}
+            href={`${options.mentionLinkPrefix}${username}`}
+            style={{ color: 'var(--secondary)', fontWeight: 600, textDecoration: 'none' }}
+          >
+            {part}
+          </Link>
+        );
+      }
+      return <MentionLink key={i} username={username}>{part}</MentionLink>;
     }
 
     // 3. Shortcodes (:name:)
@@ -215,6 +221,29 @@ export function renderFormattedContent(
     // Regular text
     return part;
   });
+}
+
+// ==========================================================================
+// Mention chip: click → profile card widget (modal), like avatars do.
+// ==========================================================================
+function MentionLink({ username, children }: { username: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      {open && <ProfileCardWidget userId={username} onClose={() => setOpen(false)} />}
+      <Link
+        href={`/profile/${username}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        style={{ color: 'var(--secondary)', fontWeight: 600, textDecoration: 'none' }}
+      >
+        {children}
+      </Link>
+    </>
+  );
 }
 
 // React component wrapper to ensure reactive re-renders when stickers load

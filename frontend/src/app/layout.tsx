@@ -45,20 +45,27 @@ export default function RootLayout({
           <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
             <ToastProvider>
               <AuthProvider>
-                <ClientLayoutShell>
-                  <PageTransition>
+                {/* PageTransition must wrap ClientLayoutShell (NOT be wrapped by
+                    it): ClientLayoutShell swaps its JSX shape between auth pages
+                    (bare fragment) and normal pages (Navbar+main+Footer), which
+                    would remount PageTransition and reset its ref — breaking the
+                    veil on navigation. As a stable outer wrapper it survives. */}
+                <PageTransition>
+                  <ClientLayoutShell>
                     {children}
-                  </PageTransition>
-                </ClientLayoutShell>
+                  </ClientLayoutShell>
+                </PageTransition>
               </AuthProvider>
             </ToastProvider>
           </GoogleOAuthProvider>
         ) : (
           <ToastProvider>
             <AuthProvider>
-              <ClientLayoutShell>
-                {children}
-              </ClientLayoutShell>
+              <PageTransition>
+                <ClientLayoutShell>
+                  {children}
+                </ClientLayoutShell>
+              </PageTransition>
             </AuthProvider>
           </ToastProvider>
         )}

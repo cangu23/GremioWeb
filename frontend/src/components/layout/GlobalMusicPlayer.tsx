@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { setSfxMuted } from '@/lib/sfx';
 
 /* Track: frontend/public/audio/stelar.mp3 */
 const AUDIO_SRC = '/audio/stelar.mp3';
@@ -23,6 +24,12 @@ export default function GlobalMusicPlayer() {
   const [playing, setPlaying] = useState(false);
   const [userToggled, setUserToggled] = useState(false);
   const fadeTimer = useRef<number | null>(null);
+
+  // One audio button controls ALL site audio: SFX (transition whoosh) follow
+  // the same mute state as the background music.
+  useEffect(() => {
+    setSfxMuted(!playing);
+  }, [playing]);
 
   // Create the audio element once and check the file is reachable
   useEffect(() => {
