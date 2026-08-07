@@ -189,8 +189,6 @@ export const getLiveVtubers = async () => {
   const profiles = await prisma.vTuberProfile.findMany({
     where: {
       isLive: true,
-      isApproved: true,
-      isHidden: false,
       user: {
         role: { contains: 'VTUBER' },
       },
