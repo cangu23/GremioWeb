@@ -73,10 +73,13 @@ services:
         sync: false
       - key: PAYPAL_CLIENT_SECRET
         sync: false
+      # Producción: modo LIVE (api-m.paypal.com) y STRICT=true (rechaza pagos
+      # simulados siempre). Para pruebas usa sandbox y añade PAYPAL_MODE=sandbox
+      # como override en el dashboard (los valores manuales tienen prioridad).
       - key: PAYPAL_MODE
-        value: "sandbox"
+        value: "live"
       - key: PAYPAL_STRICT
-        value: "false"
+        value: "true"
 
   # ===== MEDIA ENGINE (Python/FastAPI) =====
   - type: web
