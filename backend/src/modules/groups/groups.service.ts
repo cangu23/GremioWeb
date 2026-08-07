@@ -52,7 +52,39 @@ export const createGroup = async (userId: string, name: string, memberIds: strin
         userId: memberId,
       })),
     });
-    return conversation;
+
+    // Devolver la MISMA forma que listMyGroups (members + lastMessage): el
+    // frontend añade el grupo recién creado a su lista y renderiza
+    // group.members.length — si esto llegara sin `members`, la página de
+    // chat revienta con "Cannot read properties of undefined (reading 'length')".
+    const full = await tx.groupConversation.findUnique({
+      where: { id: conversation.id },
+      select: {
+        id: true,
+        name: true,
+        createdById: true,
+        createdAt: true,
+        members: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarUrl: true,
+                vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      ...full,
+      members: (full?.members || []).map((mem) => mem.user),
+      lastMessage: null,
+    };
   });
 };
 

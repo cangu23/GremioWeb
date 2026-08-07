@@ -422,7 +422,15 @@ function MessengerContent() {
           memberIds: selectedGroupMembers.map(m => m.id),
         }),
       });
-      setGroups(prev => [group, ...prev]);
+      // Normalizar la respuesta: algunos entornos/versiones pueden devolver el
+      // grupo sin `members`/`lastMessage`, y la UI renderiza `group.members.length`
+      // (si llegara undefined, la página de chat crashea).
+      const groupData = {
+        ...(group || {}),
+        members: Array.isArray((group as any)?.members) ? (group as any).members : [],
+        lastMessage: (group as any)?.lastMessage ?? null,
+      };
+      setGroups(prev => [groupData, ...prev]);
       setShowCreateGroup(false);
       setGroupName('');
       setSelectedGroupMembers([]);
@@ -919,7 +927,7 @@ function MessengerContent() {
                           {group.name}
                         </div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {group.lastMessage ? `${group.lastMessage.sender.username}: ${group.lastMessage.content}` : `${group.members.length} miembros`}
+                          {group.lastMessage ? `${group.lastMessage.sender.username}: ${group.lastMessage.content}` : `${(group.members || []).length} miembros`}
                         </div>
                       </div>
                     </button>
@@ -1183,7 +1191,7 @@ function MessengerContent() {
                       {activeGroup.name}
                     </div>
                     <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                      {activeGroup.members.length} miembros
+                      {(activeGroup.members || []).length} miembros
                     </div>
                   </div>
                 </div>
@@ -1222,7 +1230,7 @@ function MessengerContent() {
                       Es el inicio del grupo <strong style={{ color: 'var(--text)' }}>{activeGroup.name}</strong>. ¡Saluda!
                     </p>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                      {activeGroup.members.slice(0, 6).map(m => (
+                      {(activeGroup.members || []).slice(0, 6).map(m => (
                         <span key={m.id} style={{ fontSize: '0.7rem', padding: '2px 10px', borderRadius: '14px', background: 'rgba(138,43,226,0.1)', border: '1px solid rgba(138,43,226,0.2)', color: 'var(--primary)', fontWeight: 600 }}>
                           {getUsername(m)}
                         </span>
