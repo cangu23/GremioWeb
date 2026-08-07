@@ -13,8 +13,18 @@ RENDER_PORT="${PORT:-4000}"
 
 # ── Database migration ─────────────────────────────────────
 # Prefer `prisma migrate deploy` (versioned, non-destructive migrations).
-# Fallback to `prisma db push` only if there is no migration history yet
-# (e.g. a DB that was previously created with db push).
+#
+# The production DB was historically managed with `prisma db push` (no
+# migration history). On those legacy DBs `migrate deploy` fails because the
+# baseline migrations describe tables that already exist. In that case we
+# BASELINE them (mark as already applied WITHOUT executing them) and retry, so
+# `migrate deploy` applies only the real new deltas (e.g.
+# 20260806_add_daily_claim_date, which backfills + dedupes data before
+# creating its unique index). `migrate resolve --applied` is idempotent, so
+# it is harmless on databases that already have a migration history.
+#
+# Last resort: `prisma db push --accept-data-loss` to force-sync a drifted
+# schema. Only reached when the versioned path cannot proceed.
 if [ -f /app/backend/prisma/schema.prisma ]; then
   SCHEMA="/app/backend/prisma/schema.prisma"
   db_synced=false
@@ -25,12 +35,24 @@ if [ -f /app/backend/prisma/schema.prisma ]; then
       db_synced=true
       break
     fi
+
+    echo "[BOOT] migrate deploy failed — baselining legacy (db-push era) migrations and retrying..."
+    npx prisma migrate resolve --applied 20260720_add_stickers_table --schema "$SCHEMA" >/dev/null 2>&1 || true
+    npx prisma migrate resolve --applied 20260803_add_profile_frame --schema "$SCHEMA" >/dev/null 2>&1 || true
+
+    if npx prisma migrate deploy --schema "$SCHEMA"; then
+      echo "[BOOT] Migrations applied after baselining legacy migrations!"
+      db_synced=true
+      break
+    fi
+
     echo "[BOOT] migrate deploy failed — trying prisma db push fallback..."
-    if npx prisma db push --schema "$SCHEMA" --skip-generate; then
+    if npx prisma db push --schema "$SCHEMA" --skip-generate --accept-data-loss; then
       echo "[BOOT] Database sync via db push successful!"
       db_synced=true
       break
     fi
+
     if [ "$i" -lt 5 ]; then
       echo "[BOOT] Attempt $i failed, waiting 5s before retry..."
       sleep 5
