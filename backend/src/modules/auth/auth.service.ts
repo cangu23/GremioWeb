@@ -176,6 +176,22 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
     throw new AppError('Refresh token has expired.', 401);
   }
 
+  // 4b. Enforce account status: suspended/banned users must not obtain new
+  // tokens forever by rotating a stolen/old refresh token (same gate as login).
+  const account = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: { status: true },
+  });
+  if (!account) {
+    await AuthRepository.deleteRefreshToken(hashedToken);
+    throw new AppError('La cuenta ya no existe.', 401);
+  }
+  if (account.status !== 'ACTIVE') {
+    // Revoke the refresh token so the user cannot keep rotating it
+    await AuthRepository.deleteRefreshToken(hashedToken);
+    throw new AppError('La cuenta está suspendida o baneada. Contacta a soporte.', 403);
+  }
+
   // 5. (Security) Invalidate the used token immediately
   await AuthRepository.deleteRefreshToken(hashedToken);
 

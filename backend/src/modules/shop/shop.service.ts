@@ -4,6 +4,15 @@ import { spendStardust, addStardust } from '../ecosystem/stardust.service';
 import prisma from '../../database/prisma';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 
+// ─── Consumable helpers (shared by buy/use/refund) ───
+
+const CONSUMABLE_TYPES = ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'];
+// PIN_POST is the only multi-use consumable (3 uses); all others are single-use.
+const MULTI_USE_TYPES = new Set(['PIN_POST']);
+
+const isConsumableType = (type: string) => CONSUMABLE_TYPES.includes(type);
+const getInitialUses = (type: string) => (MULTI_USE_TYPES.has(type) ? 3 : 1);
+
 // ─── List shop items ───
 
 let hasSeeded = false;
@@ -77,8 +86,7 @@ export const buyItem = async (userId: string, itemId: string) => {
 
   // Check if already purchased
   const type = item.type;
-  const CONSUMABLE_TYPES = ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'];
-  const isConsumable = CONSUMABLE_TYPES.includes(type);
+  const isConsumable = isConsumableType(type);
   const existing = await ShopRepository.findUserPurchase(userId, itemId);
 
   if (!isConsumable && existing) {
@@ -90,12 +98,11 @@ export const buyItem = async (userId: string, itemId: string) => {
 
   let purchase;
   if (isConsumable && existing) {
-    const usesToAdd = (type === 'NAME_CHANGE' || type === 'BOOSTER_2X' || type === 'ROULETTE_TOKEN' || type === 'STREAK_SAVER' || type === 'GUILD_XP_CRYSTAL' || type === 'GLOBAL_MEGAPHONE' || type === 'SUPER_BOOST_POST') ? 1 : 3;
+    const usesToAdd = getInitialUses(type);
     const newRemaining = (existing.remaining || 0) + usesToAdd;
     purchase = await ShopRepository.updatePurchaseRemaining(existing.id, newRemaining);
   } else if (isConsumable) {
-    const initialUses = (type === 'NAME_CHANGE' || type === 'BOOSTER_2X' || type === 'ROULETTE_TOKEN' || type === 'STREAK_SAVER' || type === 'GUILD_XP_CRYSTAL' || type === 'GLOBAL_MEGAPHONE' || type === 'SUPER_BOOST_POST') ? 1 : 3;
-    purchase = await ShopRepository.createPurchase(userId, itemId, initialUses);
+    purchase = await ShopRepository.createPurchase(userId, itemId, getInitialUses(type));
   } else {
     purchase = await ShopRepository.createPurchase(userId, itemId);
   }
@@ -113,9 +120,7 @@ export const equipItem = async (userId: string, itemId: string) => {
   if (!purchase) throw new AppError('No tienes este ítem', 404);
 
   const type = purchase.item.type;
-  const CONSUMABLE_TYPES = ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'];
-  const isConsumable = CONSUMABLE_TYPES.includes(type);
-  if (isConsumable) {
+  if (isConsumableType(type)) {
     throw new AppError('Este ítem no se puede equipar. Úsalo desde tu inventario.', 400);
   }
 
@@ -141,8 +146,7 @@ export const useConsumable = async (userId: string, itemId: string) => {
   if (!purchase) throw new AppError('No tienes este ítem', 404);
 
   const type = purchase.item.type;
-  const CONSUMABLE_TYPES = ['NAME_CHANGE', 'PIN_POST', 'BOOSTER_2X', 'ROULETTE_TOKEN', 'STREAK_SAVER', 'GUILD_XP_CRYSTAL', 'GLOBAL_MEGAPHONE', 'SUPER_BOOST_POST'];
-  if (!CONSUMABLE_TYPES.includes(type)) {
+  if (!isConsumableType(type)) {
     throw new AppError('Este ítem no es de uso único', 400);
   }
 
@@ -168,6 +172,14 @@ export const refundItem = async (userId: string, itemId: string) => {
   if (!purchase) throw new AppError('No posees este ítem en tu inventario', 404);
 
   const item = purchase.item;
+
+  // Reject refunds of consumables that have already been used, otherwise users
+  // could buy a multi-use item, consume most uses, refund it at full price and
+  // repeat forever — an infinite Stardust farm.
+  if (isConsumableType(item.type) && (purchase.remaining ?? 0) < getInitialUses(item.type)) {
+    throw new AppError('No puedes reembolsar un consumible que ya fue usado.', 400);
+  }
+
   let refundPrice = item.price;
   if (item.data) {
     try {

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../auth/authenticate';
 import { optionalAuth } from '../auth/optionalAuth';
+import { stardustRateLimiter } from '../../middleware/rateLimiters';
 import * as PaymentsController from './payments.controller';
 
 const router = Router();
@@ -22,8 +23,8 @@ router.get('/donations/sent', authenticate, PaymentsController.getDonationsSent)
 router.get('/donations/stats', authenticate, PaymentsController.getDonationStats);
 
 // Protected - PayPal Gateway
-router.post('/paypal/create-order', authenticate, PaymentsController.preparePayPal);
-router.post('/paypal/capture-order', authenticate, PaymentsController.confirmPayPal);
+router.post('/paypal/create-order', stardustRateLimiter, authenticate, PaymentsController.preparePayPal);
+router.post('/paypal/capture-order', stardustRateLimiter, authenticate, PaymentsController.confirmPayPal);
 
 // Admin
 router.post('/seed', authenticate, PaymentsController.seedTiers);

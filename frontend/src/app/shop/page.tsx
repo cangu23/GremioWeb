@@ -227,7 +227,8 @@ export default function ShopPage() {
 
   const fetchShopData = async () => {
     try {
-      apiFetch('/ecosystem/missions/track', { method: 'POST', body: JSON.stringify({ action: 'SHOP_VISIT' }) }).catch(() => {});
+      // SHOP_VISIT mission progress is tracked server-side by the shop
+      // controller (listItems/getInventory) — no client call needed.
       const [itemsData, invData, stardustData] = await Promise.all([
         apiFetch('/shop/items', {}),
         apiFetch('/shop/inventory', {}),

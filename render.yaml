@@ -67,6 +67,16 @@ services:
       # Shared secret used to authenticate internal calls to the Media Engine
       - key: MEDIA_ENGINE_TOKEN
         sync: false
+      # PayPal (pagos de suscripciones/regalos/donaciones).
+      # OBLIGATORIOS en producción: sin ellos la pasarela devuelve 503.
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_MODE
+        value: "sandbox"
+      - key: PAYPAL_STRICT
+        value: "false"
 
   # ===== MEDIA ENGINE (Python/FastAPI) =====
   - type: web

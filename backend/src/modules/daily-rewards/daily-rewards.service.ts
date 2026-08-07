@@ -102,6 +102,30 @@ export const claim = async (userId: string) => {
     throw new AppError('Ya reclamaste tu recompensa hoy. Vuelve en 24h.', 429);
   }
 
+  const reward = DAILY_REWARDS.find(r => r.day === status.currentDay) || DAILY_REWARDS[0];
+
+  // ── Atomic anti-double-claim guard ────────────────────────────────
+  // Create the claim record FIRST with a unique (userId, claimDate) key. If a
+  // parallel request already claimed today, the unique constraint rejects this
+  // one (P2002), so two concurrent /claim calls can never both be rewarded.
+  const todayStr = new Date().toISOString().split('T')[0];
+  try {
+    await prisma.dailyReward.create({
+      data: {
+        userId,
+        day: reward.day,
+        xpAwarded: reward.xp,
+        bonus: reward.bonus || false,
+        claimDate: todayStr,
+      },
+    });
+  } catch (err: any) {
+    if (err?.code === 'P2002') {
+      throw new AppError('Ya reclamaste tu recompensa hoy. Vuelve en 24h.', 429);
+    }
+    throw err;
+  }
+
   // If streak was protected by a STREAK_SAVER, consume 1 item from inventory now
   let usedStreakSaver = false;
   if (status.streakSaved) {
@@ -127,22 +151,10 @@ export const claim = async (userId: string) => {
     }
   }
 
-  const reward = DAILY_REWARDS.find(r => r.day === status.currentDay) || DAILY_REWARDS[0];
-
   // Award XP & Stardust
   await GamificationRepository.addXpToUser(userId, reward.xp);
   await addStardust(userId, Math.round(reward.xp / 2), `Recompensa Diaria Día ${reward.day}`).catch(() => {});
   await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
-
-  // Record the claim
-  await prisma.dailyReward.create({
-    data: {
-      userId,
-      day: reward.day,
-      xpAwarded: reward.xp,
-      bonus: reward.bonus || false,
-    },
-  });
 
   return {
     day: reward.day,

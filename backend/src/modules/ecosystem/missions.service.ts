@@ -278,11 +278,16 @@ export const claimMissionReward = async (userId: string, missionId: string) => {
     throw new AppError('Ya reclamaste la recompensa de esta misión', 400);
   }
 
-  // Mark as claimed
-  await prisma.userMissionProgress.update({
-    where: { id: progress.id },
+  // Atomic compare-and-set: only the request that flips claimedAt from null
+  // gets to award the reward. A parallel request will see count === 0 and be
+  // rejected instead of double-claiming.
+  const claimed = await prisma.userMissionProgress.updateMany({
+    where: { id: progress.id, claimedAt: null },
     data: { claimedAt: new Date() },
   });
+  if (claimed.count === 0) {
+    throw new AppError('Ya reclamaste la recompensa de esta misión', 400);
+  }
 
   // Award XP and Stardust
   await awardCustomXp(userId, mission.xpReward).catch(() => {});
@@ -318,10 +323,12 @@ export const claimAllMissions = async (userId: string) => {
     });
 
     if (progress && progress.completed && !progress.claimedAt) {
-      await prisma.userMissionProgress.update({
-        where: { id: progress.id },
+      // Atomic compare-and-set per mission (prevents parallel double-claim)
+      const claimed = await prisma.userMissionProgress.updateMany({
+        where: { id: progress.id, claimedAt: null },
         data: { claimedAt: new Date() },
       });
+      if (claimed.count === 0) continue;
       totalXp += m.xpReward;
       totalStardust += m.stardustReward;
     }

@@ -27,6 +27,12 @@ export const authenticate = async (
       throw new AppError('User for this token does not exist.', 401);
     }
 
+    // Suspended/banned users must not be able to keep using the API with a
+    // still-valid access token (the same gate already exists at login).
+    if (user.status !== 'ACTIVE') {
+      throw new AppError('La cuenta está suspendida o baneada. Contacta a soporte.', 403);
+    }
+
     req.user = user;
     next();
   } catch (error) {

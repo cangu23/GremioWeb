@@ -439,10 +439,12 @@ model DailyReward {
   xpAwarded Int      @default(0)
   bonus     Boolean  @default(false)                 // Whether this was a bonus reward (day 7)
   claimedAt DateTime @default(now())
+  claimDate String?                                // YYYY-MM-DD (UTC) — anti double-claim guard
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, claimedAt])
+  @@unique([userId, claimDate])
   @@index([userId])
 }
 

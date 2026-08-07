@@ -169,6 +169,7 @@ export const getUserSeasonPass = async (userId: string) => {
     userPass: {
       ...userPass,
       claimedLevels: claimed,
+      claimedLevelsRaw: userPass.claimedLevels || '[]',
     },
     tiers: PASS_TIERS.map(tier => ({
       ...tier,
@@ -234,10 +235,19 @@ export const claimPassLevel = async (userId: string, levelNumber: number) => {
   const claimedSet = new Set(userPass.claimedLevels);
   claimedSet.add(levelNumber);
 
-  await prisma.userSeasonPass.update({
-    where: { id: userPass.id },
+  // Atomic compare-and-set: only one request can add an unclaimed level to the
+  // JSON array. A parallel request re-claiming the same level sees count === 0
+  // and is rejected, so the reward can never be double-awarded.
+  const claimed = await prisma.userSeasonPass.updateMany({
+    where: {
+      id: userPass.id,
+      NOT: { claimedLevels: { contains: `"${levelNumber}"` } },
+    },
     data: { claimedLevels: JSON.stringify(Array.from(claimedSet)) },
   });
+  if (claimed.count === 0) {
+    throw new AppError('Ya reclamaste la recompensa de este nivel', 400);
+  }
 
   // Award free reward
   let summary = '';
@@ -313,10 +323,16 @@ export const claimAllPassLevels = async (userId: string) => {
     }
   }
 
-  await prisma.userSeasonPass.update({
-    where: { id: userPass.id },
+  // Atomic compare-and-set on the whole JSON: if another request already
+  // claimed some of these levels meanwhile, the update is a no-op and we abort
+  // (the caller can retry) instead of double-awarding.
+  const claimed = await prisma.userSeasonPass.updateMany({
+    where: { id: userPass.id, claimedLevels: userPass.claimedLevelsRaw },
     data: { claimedLevels: JSON.stringify(Array.from(claimedSet)) },
   });
+  if (claimed.count === 0) {
+    throw new AppError('Otra solicitud reclamó niveles del pase. Vuelve a intentarlo.', 409);
+  }
 
   if (totalStardust > 0) {
     await addStardust(userId, totalStardust, `Recompensa Pase Estelar (Reclamar Todo - ${unclaimedUnlockedLevels.length} niveles)`);
@@ -419,7 +435,42 @@ export const grantFrameToUser = async (userId: string, frameId: string) => {
   });
 };
 
+// Pass levels that grant a Mystery Chest (must match the frontend lootbox levels).
+const MYSTERY_CHEST_LEVELS = [5, 15, 25, 35, 45];
+
 export const openMysteryChest = async (userId: string) => {
+  // Anti-farm: each Mystery Chest is earned by claiming a chest level in the
+  // Stellar Pass (5/15/25/35/45). The user may open at most one chest per
+  // claimed chest level in the current season, so spamming the endpoint no
+  // longer prints Stardust. There is intentionally no daily cap: entitlement
+  // persists until used, so legit users never lose a chest.
+  const season = await getOrCreateActiveSeason();
+  const userPass = await prisma.userSeasonPass.findUnique({
+    where: { userId_seasonId: { userId, seasonId: season.id } },
+  });
+
+  let claimedChestLevels = 0;
+  if (userPass?.claimedLevels) {
+    try {
+      const claimed: number[] = JSON.parse(userPass.claimedLevels);
+      claimedChestLevels = MYSTERY_CHEST_LEVELS.filter(l => claimed.includes(l)).length;
+    } catch {
+      claimedChestLevels = 0;
+    }
+  }
+
+  const chestsOpened = await prisma.stardustTransaction.count({
+    where: {
+      userId,
+      reason: { equals: 'Cofre Estelar Misterioso' },
+      createdAt: { gte: season.startsAt },
+    },
+  });
+
+  if (chestsOpened >= claimedChestLevels) {
+    throw new AppError('No tienes Cofres Misteriosos pendientes. Reclama un nivel de cofre en el Pase Estelar 🎁', 429);
+  }
+
   const rand = Math.random();
   let rewardType = 'stardust';
   let stardustAmount = 300;

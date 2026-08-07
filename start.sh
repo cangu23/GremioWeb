@@ -12,13 +12,22 @@ BACKEND_PORT=4001
 RENDER_PORT="${PORT:-4000}"
 
 # ── Database migration ─────────────────────────────────────
+# Prefer `prisma migrate deploy` (versioned, non-destructive migrations).
+# Fallback to `prisma db push` only if there is no migration history yet
+# (e.g. a DB that was previously created with db push).
 if [ -f /app/backend/prisma/schema.prisma ]; then
   SCHEMA="/app/backend/prisma/schema.prisma"
   db_synced=false
   for i in 1 2 3 4 5; do
-    echo "[BOOT] Attempt $i: Running prisma db push..."
+    echo "[BOOT] Attempt $i: Running prisma migrate deploy..."
+    if npx prisma migrate deploy --schema "$SCHEMA"; then
+      echo "[BOOT] Database migrations applied successfully!"
+      db_synced=true
+      break
+    fi
+    echo "[BOOT] migrate deploy failed — trying prisma db push fallback..."
     if npx prisma db push --schema "$SCHEMA" --skip-generate; then
-      echo "[BOOT] Database sync successful!"
+      echo "[BOOT] Database sync via db push successful!"
       db_synced=true
       break
     fi

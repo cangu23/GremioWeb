@@ -13,7 +13,9 @@ router.get('/leaderboard', optionalAuth, GamificationController.getLeaderboard);
 
 // Protected
 router.get('/me', authenticate, GamificationController.getMyProfile);
-router.post('/xp', authenticate, GamificationController.awardXp);
+// NOTE: POST /xp was removed — it let clients award XP for arbitrary actions
+// without server-side verification (XP farm -> levels -> pass rewards). XP is
+// awarded server-side from the real action endpoints instead.
 router.post('/stream-xp', authenticate, GamificationController.awardStreamXp);
 
 // Admin - manual award & seed achievements

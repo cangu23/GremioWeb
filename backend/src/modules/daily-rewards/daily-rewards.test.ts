@@ -141,7 +141,7 @@ describe('DailyRewardsService', () => {
       );
     });
 
-    it('awards XP and records the claim', async () => {
+    it('awards XP and records the claim with the anti-double-claim claimDate', async () => {
       mockPrisma.dailyReward.findFirst.mockResolvedValue(null); // no prev claim → day 1
       mockPrisma.dailyReward.findMany.mockResolvedValue([]);
       mockPrisma.dailyReward.count.mockResolvedValue(0);
@@ -150,16 +150,35 @@ describe('DailyRewardsService', () => {
         day: 1,
         xpAwarded: 50,
         bonus: false,
+        claimDate: new Date().toISOString().split('T')[0],
       });
 
       const result = await DailyRewardsService.claim('user-1');
 
       expect(mockAddXp).toHaveBeenCalledWith('user-1', 50);
       expect(mockPrisma.dailyReward.create).toHaveBeenCalledWith({
-        data: { userId: 'user-1', day: 1, xpAwarded: 50, bonus: false },
+        data: expect.objectContaining({
+          userId: 'user-1',
+          day: 1,
+          xpAwarded: 50,
+          bonus: false,
+          claimDate: new Date().toISOString().split('T')[0],
+        }),
       });
       expect(result.xpAwarded).toBe(50);
       expect(result.day).toBe(1);
+    });
+
+    it('rejects with 429 when the unique (userId, claimDate) guard fires (P2002)', async () => {
+      mockPrisma.dailyReward.findFirst.mockResolvedValue(null);
+      mockPrisma.dailyReward.findMany.mockResolvedValue([]);
+      mockPrisma.dailyReward.count.mockResolvedValue(0);
+      mockPrisma.dailyReward.create.mockRejectedValue({ code: 'P2002' });
+
+      await expect(DailyRewardsService.claim('user-1')).rejects.toThrow(
+        'Ya reclamaste tu recompensa hoy'
+      );
+      expect(mockAddXp).not.toHaveBeenCalled();
     });
 
     it('awards bonus XP on day 7', async () => {

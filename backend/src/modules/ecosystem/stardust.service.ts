@@ -93,28 +93,40 @@ export const spendStardust = async (userId: string, amount: number, reason: stri
     };
   }
 
-  if (user.stardust < amount) {
-    throw new AppError(`No tienes suficiente Stardust. Tienes ⭐ ${user.stardust} pero necesitas ⭐ ${amount}.`, 400);
-  }
-
-  const [updatedUser] = await prisma.$transaction([
-    prisma.user.update({
-      where: { id: userId },
+  // Atomic conditional decrement + transaction log: the UPDATE only matches if
+  // the balance is still sufficient, so two parallel requests can never both
+  // spend the same Stardust (prevents negative balances / double-spend races).
+  // We abort before logging when the balance is insufficient.
+  return prisma.$transaction(async (tx) => {
+    const updateResult = await tx.user.updateMany({
+      where: { id: userId, stardust: { gte: amount } },
       data: { stardust: { decrement: amount } },
-    }),
-    prisma.stardustTransaction.create({
+    });
+
+    if (updateResult.count === 0) {
+      const fresh = await tx.user.findUnique({
+        where: { id: userId },
+        select: { stardust: true },
+      });
+      throw new AppError(
+        `No tienes suficiente Stardust. Tienes ⭐ ${fresh?.stardust ?? 0} pero necesitas ⭐ ${amount}.`,
+        400
+      );
+    }
+
+    await tx.stardustTransaction.create({
       data: {
         userId,
         amount: -amount,
         reason,
       },
-    }),
-  ]);
+    });
 
-  return {
-    stardustSpent: amount,
-    newBalance: updatedUser.stardust,
-  };
+    return {
+      stardustSpent: amount,
+      newBalance: (user.stardust || 0) - amount,
+    };
+  });
 };
 
 export const getStardustBalance = async (userId: string) => {
@@ -207,9 +219,18 @@ export const transferStardust = async (
     let newSenderBalance = 999999999;
 
     if (!isSenderAdmin) {
-      const updatedSender = await tx.user.update({
-        where: { id: sender.id },
+      // Atomic conditional decrement: only matches if the balance is still
+      // sufficient, so two parallel transfers can't both spend the same funds.
+      const debited = await tx.user.updateMany({
+        where: { id: sender.id, stardust: { gte: amount } },
         data: { stardust: { decrement: amount } },
+      });
+      if (debited.count === 0) {
+        throw new AppError(`No tienes suficiente Polvo Estelar para transferir.`, 400);
+      }
+      const updatedSender = await tx.user.findUniqueOrThrow({
+        where: { id: sender.id },
+        select: { stardust: true },
       });
       newSenderBalance = updatedSender.stardust;
 

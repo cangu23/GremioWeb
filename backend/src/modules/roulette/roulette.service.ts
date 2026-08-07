@@ -4,21 +4,26 @@ import * as GamificationRepository from '../gamification/gamification.repository
 import { addStardust, spendStardust, getStardustBalance } from '../ecosystem/stardust.service';
 
 // ── Enhanced Prize Pool (Includes Mystic Chests & Epic Rewards) ──
+// Balanced so the expected Stardust value per spin stays well BELOW the
+// EXTRA_SPIN cost (50). Previously the pool paid out ~105 ⭐ per 50 ⭐ spin
+// (and ~210 ⭐ with the ×2 plan multiplier), which let bots farm Stardust
+// infinitely via /roulette/spin-stardust. Current EV ≈ 24 ⭐ < 50 even at ×2.
 const PRIZES = [
-  { id: 'xp_50', label: '50 XP', value: 50, stardust: 5, weight: 24, color: '#8B5CF6', type: 'XP' },
-  { id: 'stardust_25', label: '⭐ 25 Stardust', value: 25, stardust: 25, weight: 20, color: '#F59E0B', type: 'STARDUST' },
-  { id: 'xp_200', label: '200 XP', value: 200, stardust: 20, weight: 15, color: '#7C3AED', type: 'XP' },
-  { id: 'chest_bronze', label: '🥉 Cofre Bronce', value: 150, stardust: 50, weight: 12, color: '#CD7F32', type: 'CHEST', chestType: 'BRONZE' },
-  { id: 'stardust_100', label: '⭐ 100 Stardust', value: 100, stardust: 100, weight: 10, color: '#3B82F6', type: 'STARDUST' },
-  { id: 'chest_silver', label: '🥈 Cofre Plata', value: 400, stardust: 150, weight: 8, color: '#C0C0C0', type: 'CHEST', chestType: 'SILVER' },
-  { id: 'xp_1000', label: '1,000 XP', value: 1000, stardust: 100, weight: 5, color: '#EC4899', type: 'XP' },
-  { id: 'chest_gold', label: '🥇 Cofre Oro', value: 1200, stardust: 350, weight: 3, color: '#FFD700', type: 'CHEST', chestType: 'GOLD' },
-  { id: 'badge_lucky', label: '🍀 Insignia Mítica', value: 500, stardust: 200, weight: 2, color: '#10B981', type: 'BADGE' },
-  { id: 'chest_cosmic', label: '🌌 Cofre Cósmico', value: 5000, stardust: 1000, weight: 1, color: '#9333EA', type: 'CHEST', chestType: 'COSMIC' },
+  { id: 'xp_50', label: '50 XP', value: 50, stardust: 3, weight: 24, color: '#8B5CF6', type: 'XP' },
+  { id: 'stardust_25', label: '⭐ 15 Stardust', value: 15, stardust: 15, weight: 20, color: '#F59E0B', type: 'STARDUST' },
+  { id: 'xp_200', label: '200 XP', value: 200, stardust: 10, weight: 15, color: '#7C3AED', type: 'XP' },
+  { id: 'chest_bronze', label: '🥉 Cofre Bronce', value: 150, stardust: 15, weight: 12, color: '#CD7F32', type: 'CHEST', chestType: 'BRONZE' },
+  { id: 'stardust_100', label: '⭐ 35 Stardust', value: 35, stardust: 35, weight: 10, color: '#3B82F6', type: 'STARDUST' },
+  { id: 'chest_silver', label: '🥈 Cofre Plata', value: 400, stardust: 25, weight: 8, color: '#C0C0C0', type: 'CHEST', chestType: 'SILVER' },
+  { id: 'xp_1000', label: '1,000 XP', value: 1000, stardust: 30, weight: 5, color: '#EC4899', type: 'XP' },
+  { id: 'chest_gold', label: '🥇 Cofre Oro', value: 1200, stardust: 50, weight: 3, color: '#FFD700', type: 'CHEST', chestType: 'GOLD' },
+  { id: 'badge_lucky', label: '🍀 Insignia Mítica', value: 500, stardust: 60, weight: 2, color: '#10B981', type: 'BADGE' },
+  { id: 'chest_cosmic', label: '🌌 Cofre Cósmico', value: 5000, stardust: 100, weight: 1, color: '#9333EA', type: 'CHEST', chestType: 'COSMIC' },
 ];
 
 const TOTAL_WEIGHT = PRIZES.reduce((sum, p) => sum + p.weight, 0);
 export const EXTRA_SPIN_STARDUST_COST = 50;
+export const MAX_PAID_SPINS_PER_DAY = 5;
 
 function pickPrize() {
   const rand = Math.random() * TOTAL_WEIGHT;
@@ -37,20 +42,20 @@ async function processChestReward(userId: string, chestType: string) {
   let itemsWon: string[] = [];
 
   if (chestType === 'BRONZE') {
-    bonusXp = Math.floor(Math.random() * 100) + 100;
-    bonusStardust = Math.floor(Math.random() * 30) + 20;
+    bonusXp = Math.floor(Math.random() * 100) + 50;
+    bonusStardust = Math.floor(Math.random() * 15) + 5;
     itemsWon.push('📦 Ficha Extra');
   } else if (chestType === 'SILVER') {
-    bonusXp = Math.floor(Math.random() * 300) + 250;
-    bonusStardust = Math.floor(Math.random() * 100) + 75;
+    bonusXp = Math.floor(Math.random() * 200) + 100;
+    bonusStardust = Math.floor(Math.random() * 25) + 15;
     itemsWon.push('⚡ Multiplicador 2x');
   } else if (chestType === 'GOLD') {
-    bonusXp = Math.floor(Math.random() * 800) + 700;
-    bonusStardust = Math.floor(Math.random() * 250) + 200;
+    bonusXp = Math.floor(Math.random() * 400) + 200;
+    bonusStardust = Math.floor(Math.random() * 35) + 25;
     itemsWon.push('👑 Título Dorado');
   } else if (chestType === 'COSMIC') {
-    bonusXp = Math.floor(Math.random() * 3000) + 3000;
-    bonusStardust = Math.floor(Math.random() * 1000) + 1000;
+    bonusXp = Math.floor(Math.random() * 1200) + 800;
+    bonusStardust = Math.floor(Math.random() * 100) + 50;
     itemsWon.push('🌌 Insignia Estelar Leyenda');
   }
 
@@ -208,6 +213,21 @@ export const spin = async (userId: string) => {
 };
 
 export const spinWithStardust = async (userId: string) => {
+  // Anti-farm: cap paid spins per day (UTC). spendStardust records a
+  // StardustTransaction with reason 'Giro extra de Ruleta', which we count.
+  const startOfDay = new Date();
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  const paidSpinsToday = await prisma.stardustTransaction.count({
+    where: {
+      userId,
+      reason: 'Giro extra de Ruleta',
+      createdAt: { gte: startOfDay },
+    },
+  });
+  if (paidSpinsToday >= MAX_PAID_SPINS_PER_DAY) {
+    throw new AppError(`Límite diario de ${MAX_PAID_SPINS_PER_DAY} giros pagados alcanzado. Vuelve mañana.`, 429);
+  }
+
   await spendStardust(userId, EXTRA_SPIN_STARDUST_COST, 'Giro extra de Ruleta');
 
   const prize = pickPrize();

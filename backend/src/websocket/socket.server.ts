@@ -75,16 +75,21 @@ export const createSocketServer = (httpServer: HttpServer) => {
     try {
       const decoded = jwt.verify(token as string, env.JWT_ACCESS_SECRET) as { userId: string; username?: string };
       socket.userId = decoded.userId;
-      socket.username = decoded.username;
-      // Tokens issued before username was added to the payload lack it —
-      // fall back to the DB so logs/typing indicators never show "undefined".
-      if (!socket.username) {
-        const user = await prisma.user.findUnique({
-          where: { id: decoded.userId },
-          select: { username: true },
-        });
-        socket.username = user?.username;
+
+      // Load the account from the DB: this enforces account status (suspended /
+      // banned users cannot connect) and provides a fresh username fallback for
+      // tokens issued before username was added to the payload.
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: { username: true, status: true },
+      });
+      if (!user) {
+        return next(new Error('Cuenta no encontrada'));
       }
+      if (user.status !== 'ACTIVE') {
+        return next(new Error('Cuenta suspendida o baneada'));
+      }
+      socket.username = user.username;
       next();
     } catch {
       next(new Error('Invalid token'));
@@ -213,10 +218,16 @@ export const createSocketServer = (httpServer: HttpServer) => {
       }
     });
 
-    // Handle room joins
+    // Handle room joins (restricted to safe rooms)
     socket.on('chat:join', (data: { room: string }) => {
-      socket.join(data.room);
-      console.log(`[Socket] ${username} joined room: ${data.room}`);
+      const room = String(data.room || '');
+      // Only the global room and the user's own private room can be joined.
+      // Joining arbitrary rooms (user:<otherId>, guild:<id>) would leak
+      // private DMs and guild channel messages to non-members.
+      if (room === 'global' || room === `user:${userId}`) {
+        socket.join(room);
+        console.log(`[Socket] ${username} joined room: ${room}`);
+      }
     });
 
     // ===== GUILD CHANNEL MESSAGING =====
@@ -224,14 +235,29 @@ export const createSocketServer = (httpServer: HttpServer) => {
     // Track which guilds this socket has joined (for disconnect cleanup)
     if (!socket.data.guilds) socket.data.guilds = new Set<string>();
 
-    // Join a guild's channels for real-time messaging
-    socket.on('guild:join', (data: { guildId: string }) => {
-      const room = `guild:${data.guildId}`;
-      socket.join(room);
-      (socket.data.guilds as Set<string>).add(data.guildId);
-      addOnlineUser(data.guildId, userId);
-      broadcastOnline(data.guildId);
-      console.log(`[Socket] ${username} joined guild room: ${room}`);
+    // Join a guild's channels for real-time messaging (members only)
+    socket.on('guild:join', async (data: { guildId: string }) => {
+      if (!data.guildId || !isValidCuid(data.guildId)) return;
+      try {
+        // Verify membership before joining — otherwise non-members could
+        // subscribe to any guild room and read its channel messages.
+        const member = await prisma.guildMember.findUnique({
+          where: { guildId_userId: { guildId: data.guildId, userId } },
+          select: { id: true },
+        });
+        if (!member) {
+          socket.emit('guild:error', { message: 'No eres miembro de este gremio.' });
+          return;
+        }
+        const room = `guild:${data.guildId}`;
+        socket.join(room);
+        (socket.data.guilds as Set<string>).add(data.guildId);
+        addOnlineUser(data.guildId, userId);
+        broadcastOnline(data.guildId);
+        console.log(`[Socket] ${username} joined guild room: ${room}`);
+      } catch (err) {
+        console.error('[Socket] Error joining guild room:', err);
+      }
     });
 
     // Leave a guild's channels
@@ -275,6 +301,16 @@ export const createSocketServer = (httpServer: HttpServer) => {
         });
         if (!member) {
           socket.emit('guild:error', { message: 'No eres miembro de este gremio.' });
+          return;
+        }
+
+        // Verify the channel actually belongs to this guild
+        const channel = await prisma.guildChannel.findUnique({
+          where: { id: data.channelId },
+          select: { guildId: true },
+        });
+        if (!channel || channel.guildId !== data.guildId) {
+          socket.emit('guild:error', { message: 'Canal inválido.' });
           return;
         }
 

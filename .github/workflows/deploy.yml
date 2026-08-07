@@ -3,7 +3,7 @@ name: Continuous Deployment (CasaOS / Home Server)
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -66,9 +66,9 @@ jobs:
 
             cd "$PROJECT_DIR"
             
-            echo "📥 [CI/CD] Descargando últimos cambios desde la rama main..."
-            git fetch origin main
-            git reset --hard origin/main
+            echo "📥 [CI/CD] Descargando últimos cambios desde la rama master..."
+            git fetch origin master
+            git reset --hard origin/master
             
             echo "⚙️ [CI/CD] Otorgando permisos a deploy.sh..."
             chmod +x deploy.sh

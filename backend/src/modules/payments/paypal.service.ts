@@ -1,7 +1,7 @@
 import AppError from '../../errors/AppError';
 import * as PaymentsRepository from './payments.repository';
 import * as UserRepository from '../users/user.repository';
-import { activatePlatformPlan } from '../subscriptions/platform-subscriptions.service';
+import { activatePlatformPlan, PLATFORM_PLANS } from '../subscriptions/platform-subscriptions.service';
 import prisma from '../../database/prisma';
 
 const PAYPAL_SANDBOX_BASE = 'https://api-m.sandbox.paypal.com';
@@ -72,6 +72,25 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
     throw new AppError('El monto debe ser mayor a 0 USD', 400);
   }
 
+  // Server-side price validation: the client must not be able to declare a
+  // different amount than the real price of the selected plan (otherwise a
+  // user could declare $0.01 for a NOVA plan and pay almost nothing).
+  if (type === 'PLAN_SUSCRIPTION' || type === 'GIFT_PLAN') {
+    const planInfo = PLATFORM_PLANS[planKey as string];
+    if (!planInfo || planInfo.price <= 0) {
+      throw new AppError('Plan no válido para pago con PayPal', 400);
+    }
+    if (Math.abs(amount - planInfo.price) > 0.01) {
+      throw new AppError('El monto no coincide con el precio del plan seleccionado', 400);
+    }
+  } else if (type === 'DONATION') {
+    if (amount < 1 || amount > 5000) {
+      throw new AppError('Las donaciones deben ser entre $1 y $5000 USD', 400);
+    }
+  } else {
+    throw new AppError('Tipo de pago no soportado', 400);
+  }
+
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   const clientTxId = `PAYPAL_${type}_${userId.slice(0, 8)}_${Date.now()}`;
 
@@ -104,12 +123,13 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
 
   const accessToken = await getPayPalAccessToken();
 
-  // Modo Demo / Desarrollo sin credenciales PayPal
+  // Modo Demo / Desarrollo sin credenciales PayPal.
+  // Demo grants paid plans for free, so it is NEVER allowed in production,
+  // regardless of PAYPAL_ALLOW_DEMO.
   if (!accessToken) {
     const isProduction = process.env.NODE_ENV === 'production' || process.env.PAYPAL_STRICT === 'true';
-    const allowDemo = process.env.PAYPAL_ALLOW_DEMO === 'true';
 
-    if (isProduction && !allowDemo) {
+    if (isProduction) {
       throw new AppError(
         'La pasarela de pago PayPal no está configurada en producción. Configura PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET en las variables de entorno del backend.',
         503
@@ -183,9 +203,18 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
 };
 
 /**
- * Captura y confirma la orden aprobada por el usuario en PayPal
+ * Captura y confirma la orden aprobada por el usuario en PayPal.
+ *
+ * Seguridad: la orden capturada se valida contra la intención de pago guardada
+ * (mismo reference_id, mismo monto y divisa USD) y solo el usuario que creó la
+ * transacción puede confirmarla. Sin estas comprobaciones un usuario podría
+ * pagar $0.01 (o nada en modo demo) para activar un plan completo.
  */
-export const capturePayPalOrder = async (orderId: string, clientTxId: string, dbTxId?: string) => {
+export const capturePayPalOrder = async (orderId: string, clientTxId: string, dbTxId?: string, callerUserId?: string) => {
+  if (!clientTxId) {
+    throw new AppError('Falta el identificador de la transacción', 400);
+  }
+
   let txLog = null;
   if (dbTxId) {
     txLog = await prisma.systemLog.findUnique({ where: { id: dbTxId } });
@@ -203,14 +232,20 @@ export const capturePayPalOrder = async (orderId: string, clientTxId: string, db
   const payload = JSON.parse(txLog.context);
   const { userId, amount, type, planKey, recipientId, message, anonymous } = payload;
 
+  // Ownership check: solo el usuario que creó la intención de pago puede
+  // confirmarla (evita usar un txId ajeno para activar un plan).
+  if (callerUserId && userId !== callerUserId) {
+    throw new AppError('No tienes permiso para confirmar esta transacción', 403);
+  }
+
   const accessToken = await getPayPalAccessToken();
   let paymentApproved = false;
 
   if (!accessToken || orderId.startsWith('SIMULATED_')) {
+    // Simulated payments grant paid plans for free — never allowed in production.
     const isProduction = process.env.NODE_ENV === 'production' || process.env.PAYPAL_STRICT === 'true';
-    const allowDemo = process.env.PAYPAL_ALLOW_DEMO === 'true';
 
-    if (isProduction && !allowDemo) {
+    if (isProduction) {
       throw new AppError('Pagos simulados no están permitidos en entorno de producción sin credenciales reales de PayPal.', 403);
     }
     paymentApproved = true;
@@ -225,11 +260,29 @@ export const capturePayPalOrder = async (orderId: string, clientTxId: string, db
       });
 
       const data = await response.json();
-      if (response.ok && (data.status === 'COMPLETED' || data.status === 'APPROVED')) {
-        paymentApproved = true;
-      } else {
+      const purchaseUnit = data.purchase_units?.[0];
+      const capture = purchaseUnit?.payments?.captures?.[0];
+      const paidAmount = Number(capture?.amount?.value);
+      const paidCurrency = capture?.amount?.currency_code;
+      const referenceId = purchaseUnit?.reference_id;
+
+      // La orden debe estar completamente capturada (status COMPLETED, no
+      // APPROVED — APPROVED significa que el dinero aún no se ha cobrado).
+      if (!response.ok || data.status !== 'COMPLETED' || capture?.status !== 'COMPLETED') {
         throw new AppError(`PayPal no completó la transacción (Estado: ${data.status || 'Fallido'})`, 400);
       }
+
+      // La orden capturada debe corresponder a esta intención de pago.
+      if (!referenceId || referenceId !== clientTxId) {
+        throw new AppError('La orden de PayPal no corresponde a esta transacción', 400);
+      }
+
+      // El monto pagado debe coincidir con el monto almacenado (misma divisa).
+      if (paidCurrency !== 'USD' || !(paidAmount > 0) || Math.abs(paidAmount - amount) > 0.01) {
+        throw new AppError('El monto pagado no coincide con el monto de la transacción', 400);
+      }
+
+      paymentApproved = true;
     } catch (err: any) {
       if (err instanceof AppError) throw err;
       throw new AppError('Error al capturar la orden en PayPal', 500);

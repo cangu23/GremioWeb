@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import * as GamificationService from './gamification.service';
+import prisma from '../../database/prisma';
 
-// Simple in-memory rate limit: user -> last claim timestamp
-const streamXpCooldowns = new Map<string, number>();
+// Rate limit for stream XP. Stored in the DB (via a SystemLog marker row) so
+// it survives restarts and works across multiple server instances. An
+// in-memory Map would reset on restart and be bypassable with multiple pods.
 const STREAM_XP_COOLDOWN_MS = 4 * 60 * 1000; // 4 minutes (slightly less than 5 to allow margin)
+const STREAM_XP_MARKER_PREFIX = 'STREAM_XP_CLAIM:';
 
 export const getMyProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -33,16 +36,6 @@ export const getAllAchievements = async (_req: Request, res: Response, next: Nex
   }
 };
 
-export const awardXp = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { action } = req.body;
-    const result = await GamificationService.awardXpForAction(req.user!.id, action);
-    res.json(result);
-  } catch (err) {
-    next(err);
-  }
-};
-
 export const awardStreamXp = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
@@ -51,10 +44,15 @@ export const awardStreamXp = async (req: Request, res: Response, next: NextFunct
     // Validate minutes (must be >= 5 and <= 60)
     const watchMinutes = Math.min(Math.max(Math.round(minutes || 0), 5), 60);
 
-    // Rate limiting: check cooldown
-    const lastClaim = streamXpCooldowns.get(userId);
-    if (lastClaim && Date.now() - lastClaim < STREAM_XP_COOLDOWN_MS) {
-      const remainingSeconds = Math.ceil((STREAM_XP_COOLDOWN_MS - (Date.now() - lastClaim)) / 1000);
+    // Rate limiting: check cooldown (DB-backed, shared across instances)
+    const markerId = `${STREAM_XP_MARKER_PREFIX}${userId}`;
+    const lastClaim = await prisma.systemLog.findFirst({
+      where: { message: markerId },
+      orderBy: { createdAt: 'desc' },
+    });
+    const lastClaimTime = lastClaim?.createdAt ? new Date(lastClaim.createdAt).getTime() : 0;
+    if (lastClaim && Date.now() - lastClaimTime < STREAM_XP_COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((STREAM_XP_COOLDOWN_MS - (Date.now() - lastClaimTime)) / 1000);
       res.status(429).json({
         message: `Debes esperar ${remainingSeconds}s antes de reclamar más XP`,
         cooldownRemaining: remainingSeconds,
@@ -74,18 +72,11 @@ export const awardStreamXp = async (req: Request, res: Response, next: NextFunct
     // Award XP: custom amount based on minutes watched
     const result = await GamificationService.awardCustomXp(userId, xpAmount);
 
-    // Set cooldown
-    streamXpCooldowns.set(userId, Date.now());
-
-    // Clean up old entries every 100 claims
-    if (streamXpCooldowns.size > 1000) {
-      const now = Date.now();
-      for (const [uid, ts] of streamXpCooldowns) {
-        if (now - ts > STREAM_XP_COOLDOWN_MS * 2) {
-          streamXpCooldowns.delete(uid);
-        }
-      }
-    }
+    // Record cooldown marker (unique per user — a second concurrent claim
+    // updates the same row via upsert instead of creating duplicates)
+    await prisma.systemLog.create({
+      data: { level: 'INFO', message: markerId, context: JSON.stringify({ userId, watchMinutes }) },
+    }).catch(() => {});
 
     res.json({
       ...result,

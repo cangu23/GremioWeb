@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Prisma mock ──
 const mockPrisma = vi.hoisted(() => ({
   rouletteSpin: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn() },
+  stardustTransaction: { count: vi.fn().mockResolvedValue(0) },
   user: { update: vi.fn() },
   $connect: vi.fn(),
   $disconnect: vi.fn(),
@@ -136,12 +137,22 @@ describe('RouletteService', () => {
       mockSpendStardust.mockResolvedValue({ stardustSpent: 50, newBalance: 450 });
       mockPrisma.rouletteSpin.findMany.mockResolvedValue([]);
       mockPrisma.rouletteSpin.create.mockResolvedValue({});
+      mockPrisma.stardustTransaction.count.mockResolvedValue(0);
 
       const result = await RouletteService.spinWithStardust('user-1');
 
       expect(mockSpendStardust).toHaveBeenCalledWith('user-1', 50, 'Giro extra de Ruleta');
       expect(result.prize).toBeDefined();
       expect(result.rotation).toBeGreaterThanOrEqual(720);
+    });
+
+    it('throws when the daily paid-spin limit is reached', async () => {
+      mockPrisma.stardustTransaction.count.mockResolvedValue(5);
+
+      await expect(RouletteService.spinWithStardust('user-1')).rejects.toThrow(
+        'Límite diario de 5 giros pagados alcanzado'
+      );
+      expect(mockSpendStardust).not.toHaveBeenCalled();
     });
   });
 

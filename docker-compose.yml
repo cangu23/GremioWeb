@@ -97,6 +97,12 @@ services:
       # TRUST_PROXY=1 (default en prod): estás detrás de Cloudflare Tunnel.
       # Pon TRUST_PROXY=0 si expones el puerto directo a internet.
       - TRUST_PROXY=${TRUST_PROXY:-1}
+      # PayPal (obligatorio para pagos reales). Sin estas credenciales, en
+      # producción la pasarela devuelve 503 (los pagos quedan desactivados).
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID:-}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET:-}
+      - PAYPAL_MODE=${PAYPAL_MODE:-sandbox}
+      - PAYPAL_STRICT=${PAYPAL_STRICT:-false}
     depends_on:
       postgres:
         condition: service_healthy

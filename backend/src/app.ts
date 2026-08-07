@@ -68,11 +68,8 @@ app.use(cors({
       }
     } catch (err) {
       console.error(`${REQ} [CORS Error]`, err);
-      if (origin && origin.includes('.onrender.com')) {
-        callback(null, true);
-      } else {
-        callback(null, false);
-      }
+      // Fail closed: never allow an origin on error.
+      callback(null, false);
     }
   },
   credentials: true,

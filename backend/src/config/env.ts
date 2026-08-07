@@ -99,12 +99,13 @@ export function isOriginAllowed(origin: string | undefined): boolean {
   const allowedList = env.ALLOWED_ORIGINS.map((o) => o.trim().replace(/\/+$/, '').toLowerCase());
   if (allowedList.includes(cleanOrigin)) return true;
 
-  // 2. Auto-allow any *.onrender.com origin (Render subdomains)
-  if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/.test(cleanOrigin)) {
-    return true;
-  }
+  // NOTE: no wildcard subdomain matching here. Auto-allowing *.onrender.com
+  // (or any other TLD wildcard) with credentials:true would let any third party
+  // host a page on Render and read authenticated API responses (token theft).
+  // If you deploy on a Render subdomain, add it explicitly to FRONTEND_URL
+  // or ALLOWED_ORIGINS (comma separated).
 
-  // 3. Localhost / development origins
+  // 2. Localhost / development origins
   if (env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)) {
     return true;
   }

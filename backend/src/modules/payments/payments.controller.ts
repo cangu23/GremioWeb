@@ -103,7 +103,12 @@ export const preparePayPal = async (req: Request, res: Response, next: NextFunct
 export const confirmPayPal = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { orderId, clientTxId, txId } = req.body;
-    const result = await PayPalService.capturePayPalOrder(String(orderId || 'SIMULATED'), String(clientTxId || ''), String(txId || ''));
+    const result = await PayPalService.capturePayPalOrder(
+      String(orderId || 'SIMULATED'),
+      String(clientTxId || ''),
+      String(txId || ''),
+      req.user!.id
+    );
     res.json({ success: true, ...result });
   } catch (err) { next(err); }
 };
