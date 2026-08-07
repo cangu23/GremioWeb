@@ -535,15 +535,26 @@ function MessengerContent() {
           <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, background: 'linear-gradient(135deg, #fff, var(--primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Mensajes Privados
           </h1>
-          <span style={{
-            fontSize: '0.72rem', padding: '3px 10px', borderRadius: '12px',
-            background: connected ? 'rgba(0,230,118,0.12)' : 'rgba(239,68,68,0.1)',
-            border: connected ? '1px solid rgba(0,230,118,0.3)' : '1px solid rgba(239,68,68,0.2)',
-            color: connected ? '#22c55e' : 'var(--error)',
-            fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px',
-          }}>
+          <span
+            onClick={() => {
+              try {
+                const s = connectSocket();
+                s.connect();
+                setConnected(s.connected);
+              } catch {}
+            }}
+            title={connected ? 'Conectado en tiempo real' : 'Clic para reintentar conexión'}
+            style={{
+              fontSize: '0.72rem', padding: '3px 10px', borderRadius: '12px',
+              background: connected ? 'rgba(0,230,118,0.12)' : 'rgba(239,68,68,0.1)',
+              border: connected ? '1px solid rgba(0,230,118,0.3)' : '1px solid rgba(239,68,68,0.2)',
+              color: connected ? '#22c55e' : 'var(--error)',
+              fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px',
+              cursor: 'pointer',
+            }}
+          >
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: connected ? '#22c55e' : 'var(--error)', boxShadow: connected ? '0 0 6px #22c55e' : 'none' }} />
-            {connected ? 'En tiempo real' : 'Desconectado'}
+            {connected ? 'En tiempo real' : 'Reconectar 🔄'}
           </span>
         </div>
       </div>

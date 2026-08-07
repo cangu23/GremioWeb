@@ -192,7 +192,7 @@ export const getLiveVtubers = async () => {
       isApproved: true,
       isHidden: false,
       user: {
-        role: 'VTUBER',
+        role: { contains: 'VTUBER' },
       },
     },
     orderBy: { updatedAt: 'desc' },
@@ -236,7 +236,7 @@ export const getFeaturedVtubers = async () => {
       isApproved: true,
       isHidden: false,
       user: {
-        role: 'VTUBER',
+        role: { contains: 'VTUBER' },
       },
     },
     orderBy: { updatedAt: 'desc' },

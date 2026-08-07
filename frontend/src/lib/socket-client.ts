@@ -12,14 +12,21 @@ let socket: Socket | null = null;
 export const getSocket = (): Socket | null => socket;
 
 export const connectSocket = (): Socket => {
+  const token = getAccessToken();
+
   if (socket) {
-    if (!socket.connected && !socket.active) {
+    if (token && (socket as any).auth?.token !== token) {
+      (socket as any).auth = { token };
+      if (socket.connected) {
+        socket.disconnect();
+      }
+      socket.connect();
+    } else if (!socket.connected) {
       socket.connect();
     }
     return socket;
   }
 
-  const token = getAccessToken();
   if (!token) throw new Error('No auth token');
 
   socket = io(SOCKET_URL, {
@@ -27,16 +34,20 @@ export const connectSocket = (): Socket => {
     transports: ['websocket', 'polling'],
   });
 
-  socket.on('connect', () => {
-    // connected
-  });
-
-  socket.on('disconnect', (reason) => {
-    // disconnected
-  });
-
-  socket.on('connect_error', (err) => {
-    console.error('[Socket] Connection error:', err.message);
+  socket.on('connect_error', async (err) => {
+    console.warn('[Socket] Connection error:', err.message);
+    if (err.message.includes('token') || err.message.includes('Authentication') || err.message.includes('cuenta')) {
+      try {
+        const { performRefresh } = await import('./api');
+        const newToken = await performRefresh();
+        if (newToken && socket) {
+          (socket as any).auth = { token: newToken };
+          socket.connect();
+        }
+      } catch {
+        // silent
+      }
+    }
   });
 
   return socket;
