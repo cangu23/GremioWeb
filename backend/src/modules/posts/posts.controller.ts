@@ -115,6 +115,22 @@ export const unlikeComment = async (req: Request, res: Response, next: NextFunct
   } catch (err) { next(err); }
 };
 
+// ========== REACTIONS ==========
+
+export const addReaction = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await PostsService.addReaction(String(req.params.id), String(req.body.emoji || ''), req.user!.id);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const getReactions = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await PostsService.getPostReactions(String(req.params.id), req.user?.id);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
 // ========== HASHTAGS ==========
 
 export const getTrendingHashtags = async (req: Request, res: Response, next: NextFunction) => {

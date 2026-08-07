@@ -1,6 +1,7 @@
 import AppError from '../../errors/AppError';
 import prisma from '../../database/prisma';
 import * as GamificationRepository from '../gamification/gamification.repository';
+import { getXpMultiplierForUser } from '../subscriptions/platform-subscriptions.service';
 import { addStardust, spendStardust, getStardustBalance } from '../ecosystem/stardust.service';
 
 // ── Enhanced Prize Pool (Includes Mystic Chests & Epic Rewards) ──
@@ -172,6 +173,12 @@ export const spin = async (userId: string) => {
     finalStardust += chestDetails.bonusStardust;
   }
 
+  // Multiplicador de XP del plan (prometido en /premium) aplicado al total.
+  const xpMultiplier = await getXpMultiplierForUser(userId);
+  if (finalXp > 0 && xpMultiplier > 1) {
+    finalXp = Math.max(1, Math.round(finalXp * xpMultiplier));
+  }
+
   // Award XP & Stardust
   if (finalXp > 0) {
     await GamificationRepository.addXpToUser(userId, finalXp);
@@ -242,6 +249,12 @@ export const spinWithStardust = async (userId: string) => {
     chestDetails = await processChestReward(userId, prize.chestType);
     finalXp += chestDetails.bonusXp;
     finalStardust += chestDetails.bonusStardust;
+  }
+
+  // Multiplicador de XP del plan (prometido en /premium) aplicado al total.
+  const xpMultiplier = await getXpMultiplierForUser(userId);
+  if (finalXp > 0 && xpMultiplier > 1) {
+    finalXp = Math.max(1, Math.round(finalXp * xpMultiplier));
   }
 
   if (finalXp > 0) {

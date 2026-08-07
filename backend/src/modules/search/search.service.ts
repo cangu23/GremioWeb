@@ -1,3 +1,4 @@
+import { attachVerified } from '@gremio-estelar/shared';
 import prisma from '../../database/prisma';
 
 export const globalSearch = async (query: string, limit = 5) => {
@@ -22,6 +23,8 @@ export const globalSearch = async (query: string, limit = 5) => {
         displayName: true,
         avatarUrl: true,
         role: true,
+        plan: true,
+        verifiedUntil: true,
         vtuberProfile: {
           select: {
             displayName: true,
@@ -94,5 +97,10 @@ export const globalSearch = async (query: string, limit = 5) => {
     }),
   ]);
 
-  return { users, guilds, posts, events };
+  return {
+    users: users.map((u) => attachVerified(u as unknown as Record<string, unknown>)),
+    guilds,
+    posts,
+    events,
+  };
 };

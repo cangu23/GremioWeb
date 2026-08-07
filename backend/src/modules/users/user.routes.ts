@@ -19,6 +19,9 @@ router.put('/note', authenticate, validateRequest(updateNoteSchema), UserControl
 // Pet interaction (Feed pet with streak points/stardust)
 router.post('/pet/feed', authenticate, PetController.feedPet);
 
+// Advanced profile stats (NOVA+) — requires auth (debe ir antes de /:id)
+router.get('/:id/stats', authenticate, UserController.getProfileStats);
+
 // Public routes
 router.get('/search', UserController.searchUsers);
 router.get('/search/mentions', UserController.searchUsersForMention);

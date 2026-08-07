@@ -27,6 +27,7 @@ interface EventDetail {
   };
   _count: { attendees: number };
   isAttending: boolean;
+  isVip?: boolean;
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -182,6 +183,22 @@ function EventDetailContent() {
                 }}>
                   {cfg.label}
                 </span>
+                {event.isVip && (
+                  <span
+                    title="Evento VIP exclusivo — Stellar Elite"
+                    style={{
+                      fontSize: '0.72rem', padding: '4px 12px', borderRadius: '20px',
+                      background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(245,158,11,0.15))',
+                      border: '1px solid rgba(255,215,0,0.45)',
+                      color: '#ffd700', fontWeight: 800,
+                      display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      boxShadow: '0 0 14px rgba(255,215,0,0.2)', flexShrink: 0,
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#ffd700"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    EVENTO VIP
+                  </span>
+                )}
               </div>
             </div>
             {isCreator && (

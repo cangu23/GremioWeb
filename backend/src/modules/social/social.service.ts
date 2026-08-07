@@ -1,4 +1,5 @@
 import AppError from '../../errors/AppError';
+import { attachVerified, isVerifiedEffective } from '@gremio-estelar/shared';
 import * as SocialRepository from './social.repository';
 import * as UserRepository from '../users/user.repository';
 import * as NotificationsService from '../notifications/notifications.service';
@@ -88,8 +89,15 @@ export const getSocialProfile = async (userIdOrUsername: string, currentUserId?:
 
   const { password, ...safeProfile } = userProfile;
 
+  // Insignia azul efectiva: admin/verificado de VTuber o verificado comprado.
+  const verified = isVerifiedEffective(userProfile as any);
+  const profile = attachVerified(safeProfile as unknown as Record<string, unknown>);
+  if (verified && profile.vtuberProfile) {
+    (profile.vtuberProfile as any).isVerified = true;
+  }
+
   return {
-    ...safeProfile,
+    ...profile,
     _count: {
       followers: followersCount,
       following: followingCount,
@@ -104,7 +112,7 @@ export const getFollowers = async (userId: string) => {
   return follows.map(f => {
     const follower = f.follower as any;
     const isExpired = follower.noteExpiresAt && new Date(follower.noteExpiresAt) < now;
-    return {
+    return attachVerified({
       ...follower,
       note: isExpired ? null : follower.note,
       noteColor: isExpired ? null : follower.noteColor,
@@ -113,7 +121,7 @@ export const getFollowers = async (userId: string) => {
         ...follower.vtuberProfile,
         isVerified: follower.vtuberProfile.isVerified ?? false,
       } : null,
-    };
+    });
   });
 };
 
@@ -123,7 +131,7 @@ export const getFollowing = async (userId: string) => {
   return follows.map(f => {
     const following = f.following as any;
     const isExpired = following.noteExpiresAt && new Date(following.noteExpiresAt) < now;
-    return {
+    return attachVerified({
       ...following,
       note: isExpired ? null : following.note,
       noteColor: isExpired ? null : following.noteColor,
@@ -132,6 +140,6 @@ export const getFollowing = async (userId: string) => {
         ...following.vtuberProfile,
         isVerified: following.vtuberProfile.isVerified ?? false,
       } : null,
-    };
+    });
   });
 };

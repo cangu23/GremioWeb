@@ -51,6 +51,7 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().default(''),
   TWITCH_CLIENT_ID: z.string().default(''),
   TWITCH_CLIENT_SECRET: z.string().default(''),
+  PAYPAL_WEBHOOK_ID: z.string().optional().default(''),
 });
 
 const parseResult = envSchema.safeParse(process.env);

@@ -1,10 +1,14 @@
 import AppError from '../../errors/AppError';
 import * as UserRepository from './user.repository';
-import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl } from '@gremio-estelar/shared';
+import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl, attachVerified, isVerifiedEffective } from '@gremio-estelar/shared';
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
-import { getMyPlatformPlan } from '../subscriptions/platform-subscriptions.service';
+import { getMyPlatformPlan, getEffectivePlan } from '../subscriptions/platform-subscriptions.service';
+
+// Plan efectivo (rol VIP puede tener plan gratis pero ser tratado como premium)
+const getEffectivePlanFromUser = (user: { plan?: string | null; role?: string | null }): string =>
+  getEffectivePlan(user.plan || 'FREE', user.role || 'USER');
 
 const planCheckCache = new Map<string, number>();
 const PLAN_CHECK_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -36,16 +40,38 @@ export const getMe = async (userId: string): Promise<UserProfile & { dailyReward
   }
   
   const { password, ...safeProfile } = userProfile;
+
+  // Insignia azul efectiva: la compra de verificación se refleja en isVerified
+  // (y en el perfil VTuber si existe) para que el frontend la pinte.
+  const profile = attachVerified(safeProfile as unknown as Record<string, unknown>);
+  if (isVerifiedEffective(userProfile as any) && (profile as any).vtuberProfile) {
+    (profile as any).vtuberProfile.isVerified = true;
+  }
+
   return {
-    ...safeProfile,
+    ...profile,
     ...(dailyRewardClaimed ? { dailyRewardClaimed } : {}),
-  } as UserProfile;
+  } as unknown as UserProfile;
 };
 
 export const updateMe = async (userId: string, payload: UpdateUserPayload): Promise<UserProfile> => {
   if (payload.bio) payload.bio = sanitizeString(payload.bio);
   if (payload.displayName) payload.displayName = sanitizeString(payload.displayName);
   if ((payload as any).note) (payload as any).note = sanitizeString((payload as any).note);
+
+  // Video banner: STELLAR only (server-side enforcement).
+  // null/'' = quitar el video (siempre permitido, cualquiera puede limpiar).
+  if ((payload as any).bannerVideoUrl !== undefined) {
+    const me = await UserRepository.getUserProfileById(userId);
+    const raw = (payload as any).bannerVideoUrl;
+    const isClear = raw === null || raw === '';
+    const value = isClear ? null : String(raw);
+    const isKeep = !!me?.vtuberProfile && me.vtuberProfile.bannerVideoUrl === raw;
+    if (!isKeep && !isClear && (!me || getEffectivePlanFromUser(me) !== 'STELLAR')) {
+      throw new AppError('Los banners en video son exclusivos del Plan Stellar Elite.', 403);
+    }
+    (payload as any).bannerVideoUrl = value;
+  }
 
   // Profile music: Spotify-only + premium enforcement (server-side).
   // Unchanged values (whether legacy MP3/stream OR Spotify saved while the user
@@ -145,6 +171,11 @@ export const getPublicUser = async (userId: string): Promise<PublicUser> => {
     throw new AppError('User not found', 404);
   }
 
+  const verified = isVerifiedEffective(userProfile as any);
+  const vtuberProfile = userProfile.vtuberProfile
+    ? ({ ...userProfile.vtuberProfile, isVerified: verified || !!userProfile.vtuberProfile.isVerified } as unknown as PublicUser['vtuberProfile'])
+    : null;
+
   return {
     id: userProfile.id,
     username: userProfile.username,
@@ -152,6 +183,7 @@ export const getPublicUser = async (userId: string): Promise<PublicUser> => {
     displayName: userProfile.displayName,
     avatarUrl: userProfile.avatarUrl,
     bio: userProfile.bio,
-    vtuberProfile: userProfile.vtuberProfile as unknown as PublicUser['vtuberProfile'],
+    isVerified: verified,
+    vtuberProfile,
   };
 };

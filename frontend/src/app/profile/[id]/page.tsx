@@ -23,7 +23,7 @@ import { getNoteBubbleStyle } from '@/components/ui/UserAvatar';
 import PetWidget from '@/components/ui/PetWidget';
 import ProfileMusicPlayer from '@/components/ui/ProfileMusicPlayer';
 import RoleBadge from '@/components/ui/RoleBadge';
-import { parseUserRoles, getPrimaryRole } from '@gremio-estelar/shared';
+import { parseUserRoles, getPrimaryRole, planMeetsOrExceeds, getEffectivePlan } from '@gremio-estelar/shared';
 
 // ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
 const PROFILE_MUSIC_ENABLED = false;
@@ -93,6 +93,7 @@ interface SocialProfile {
     twitterUrl: string | null;
     discordUrl: string | null;
     websiteUrl: string | null;
+    bannerVideoUrl?: string | null;
   } | null;
   _count: { followers: number; following: number };
   isFollowedByMe: boolean;
@@ -142,6 +143,27 @@ function ProfileContent() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [equippedItems, setEquippedItems] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
+
+  // Advanced profile stats (NOVA+)
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [statsData, setStatsData] = useState<any>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const canSeeStats = planMeetsOrExceeds((currentUser as any)?.plan, (currentUser as any)?.role, 'NOVA');
+
+  const loadProfileStats = async () => {
+    if (!currentUser) { router.push('/login'); return; }
+    setShowStatsModal(true);
+    setStatsLoading(true);
+    try {
+      const targetId = profile?.id ?? id;
+      const data = await apiFetch(`/users/${targetId}/stats`);
+      setStatsData(data);
+    } catch {
+      setStatsData(null);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -280,7 +302,19 @@ function ProfileContent() {
 
   const rawBannerUrl = bannerData?.bannerUrl || vtuber?.bannerUrl;
   const bannerUrl = rawBannerUrl ? rawBannerUrl.replace(/"/g, '\\"') : null;
+  const bannerVideoUrl = vtuber?.bannerVideoUrl || (profile as any)?.bannerVideoUrl || null;
   const themeColor = colorData?.color || vtuber?.themeColor || profile.bannerColor || 'var(--primary)';
+
+  // Partículas cósmicas flotantes: beneficio del Plan Stellar Elite.
+  const isStellarProfile = getEffectivePlan((profile as any)?.plan, profile.role) === 'STELLAR';
+  const cosmicParticles = Array.from({ length: 14 }, (_, i) => ({
+    left: `${(i * 7.3 + 4) % 100}%`,
+    top: `${(i * 13.7 + 8) % 90}%`,
+    size: 2 + (i % 3) * 1.5,
+    delay: `${(i % 7) * 0.9}s`,
+    duration: `${5 + (i % 5) * 2}s`,
+    opacity: 0.3 + (i % 4) * 0.15,
+  }));
 
   // Parse languages
   let languagesList: string[] = [];
@@ -313,6 +347,56 @@ function ProfileContent() {
               : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
           overflow: 'hidden',
         }}>
+          {/* Video banner (STELLAR) — reemplaza la imagen */}
+          {bannerVideoUrl && (
+            <video
+              src={bannerVideoUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                zIndex: 0,
+                pointerEvents: 'none',
+              }}
+            />
+          )}
+          {/* Cosmic particles (STELLAR) */}
+          {isStellarProfile && (
+            <>
+              {cosmicParticles.map((p, i) => (
+                <div
+                  key={i}
+                  style={{
+                    position: 'absolute',
+                    left: p.left, top: p.top,
+                    width: `${p.size}px`, height: `${p.size}px`,
+                    borderRadius: '50%',
+                    background: i % 3 === 0 ? '#ffd700' : i % 3 === 1 ? '#c084fc' : '#38bdf8',
+                    boxShadow: `0 0 ${p.size * 2}px ${i % 3 === 0 ? 'rgba(255,215,0,0.8)' : i % 3 === 1 ? 'rgba(192,132,252,0.8)' : 'rgba(56,189,248,0.8)'}`,
+                    opacity: p.opacity,
+                    animation: `cosmicFloat ${p.duration} ease-in-out ${p.delay} infinite`,
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                  }}
+                />
+              ))}
+              <style>{`
+                @keyframes cosmicFloat {
+                  0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+                  25% { transform: translateY(-16px) translateX(6px) scale(1.15); }
+                  50% { transform: translateY(-6px) translateX(-8px) scale(0.9); }
+                  75% { transform: translateY(-20px) translateX(4px) scale(1.05); }
+                }
+              `}</style>
+            </>
+          )}
+
           {/* Decorative rings */}
           <div style={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -694,6 +778,35 @@ function ProfileContent() {
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>XP</div>
           </div>
         </div>
+
+        {/* Advanced stats trigger (NOVA+) */}
+        {canSeeStats ? (
+          <div style={{ maxWidth: '800px', margin: '0 auto 28px', textAlign: 'center' }}>
+            <button
+              onClick={loadProfileStats}
+              style={{
+                padding: '8px 18px', borderRadius: '20px',
+                border: '1px solid rgba(192,132,252,0.35)',
+                background: 'rgba(147,51,234,0.1)',
+                color: '#c084fc', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(147,51,234,0.2)'; e.currentTarget.style.borderColor = '#c084fc'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(147,51,234,0.1)'; e.currentTarget.style.borderColor = 'rgba(192,132,252,0.35)'; }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              Estadísticas avanzadas
+            </button>
+          </div>
+        ) : (
+          <div style={{ maxWidth: '800px', margin: '0 auto 28px', textAlign: 'center' }}>
+            <Link href="/premium" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+              Estadísticas de perfil: Nova Pro o Stellar →
+            </Link>
+          </div>
+        )}
 
         {/* ===== ACTION BUTTONS ===== */}
         {donateSuccess && (
@@ -1287,6 +1400,119 @@ function ProfileContent() {
       </div>
     </div>
   )}
+
+      {/* ===== ADVANCED STATS MODAL (NOVA+) ===== */}
+      {mounted && showStatsModal && createPortal(
+        <div
+          onClick={() => setShowStatsModal(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: '520px',
+              background: '#181828', border: '1px solid rgba(192,132,252,0.25)',
+              borderRadius: '20px', padding: '26px',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              animation: 'scaleIn 0.25s ease',
+              maxHeight: '85vh', overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Estadísticas de {displayName}
+              </h3>
+              <button
+                onClick={() => setShowStatsModal(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.3rem', cursor: 'pointer', padding: '4px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {statsLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <span style={{ width: '26px', height: '26px', border: '3px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              </div>
+            ) : !statsData ? (
+              <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px', fontSize: '0.9rem' }}>
+                No se pudieron cargar las estadísticas.
+              </p>
+            ) : (
+              <>
+                {/* Views section */}
+                <div style={{ marginBottom: '22px' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    👁️ Visualizaciones de perfil
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                    {[
+                      { label: 'Hoy', value: statsData.views.today },
+                      { label: '7 días', value: statsData.views.last7Days },
+                      { label: 'Total', value: statsData.views.total },
+                      { label: 'Visitantes únicos', value: statsData.views.uniqueViewers },
+                    ].map(stat => (
+                      <div key={stat.label} style={{ padding: '12px 8px', borderRadius: '12px', background: 'rgba(147,51,234,0.08)', border: '1px solid rgba(147,51,234,0.15)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#c084fc' }}>{stat.value}</div>
+                        <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px' }}>{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Content section */}
+                <div style={{ marginBottom: '22px' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📝 Contenido
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                    {[
+                      { label: 'Publicaciones', value: statsData.content.posts },
+                      { label: 'Comentarios', value: statsData.content.comments },
+                      { label: 'Likes recibidos', value: statsData.content.likesReceived },
+                    ].map(stat => (
+                      <div key={stat.label} style={{ padding: '12px 8px', borderRadius: '12px', background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.12)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#38bdf8' }}>{stat.value}</div>
+                        <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px' }}>{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Social section */}
+                <div>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    🤝 Social
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                    {[
+                      { label: 'Seguidores', value: statsData.social.followers },
+                      { label: 'Siguiendo', value: statsData.social.following },
+                    ].map(stat => (
+                      <div key={stat.label} style={{ padding: '12px 8px', borderRadius: '12px', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.12)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fbbf24' }}>{stat.value}</div>
+                        <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px' }}>{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '20px', textAlign: 'center' }}>
+                  ✨ Beneficio de los Planes Nova Pro y Stellar Elite
+                </p>
+              </>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* ===== GALLERY LIGHTBOX ===== */}
       {mounted && galleryImage && createPortal(

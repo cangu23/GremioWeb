@@ -1,56 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import * as PaymentsService from './payments.service';
+import * as PayPalService from './paypal.service';
 
-export const getTiers = async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const tiers = await PaymentsService.getTiers();
-    res.json(tiers);
-  } catch (err) { next(err); }
-};
-
-export const getTierById = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const tier = await PaymentsService.getTierById(String(req.params.id));
-    res.json(tier);
-  } catch (err) { next(err); }
-};
-
-export const getMySubscription = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const sub = await PaymentsService.getMySubscription(req.user!.id);
-    res.json(sub);
-  } catch (err) { next(err); }
-};
-
-export const getMySubscriptions = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const subs = await PaymentsService.getMySubscriptions(req.user!.id);
-    res.json(subs);
-  } catch (err) { next(err); }
-};
-
-export const subscribe = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { tierId } = req.body;
-    const sub = await PaymentsService.subscribe(req.user!.id, tierId);
-    res.status(201).json(sub);
-  } catch (err) { next(err); }
-};
-
-export const cancelSubscription = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const result = await PaymentsService.cancelSubscription(req.user!.id);
-    res.json(result);
-  } catch (err) { next(err); }
-};
-
-export const donate = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const donation = await PaymentsService.donate(req.user!.id, req.body);
-    res.status(201).json(donation);
-  } catch (err) { next(err); }
-};
-
+// Donations (read-only — los pagos se hacen por PayPal)
 export const getDonations = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 50, 100);
@@ -74,16 +26,7 @@ export const getDonationStats = async (req: Request, res: Response, next: NextFu
   } catch (err) { next(err); }
 };
 
-export const seedTiers = async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    await PaymentsService.seedTiers();
-    res.json({ message: 'Planes seedeados correctamente' });
-  } catch (err) { next(err); }
-};
-
 // PayPal Gateway Integration
-import * as PayPalService from './paypal.service';
-
 export const preparePayPal = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { amount, type, planKey, recipientId, message, anonymous } = req.body;
@@ -113,3 +56,23 @@ export const confirmPayPal = async (req: Request, res: Response, next: NextFunct
   } catch (err) { next(err); }
 };
 
+/**
+ * Webhook público de PayPal (sin autenticación). La firma se verifica con el
+ * certificado de PayPal y el payload se correlaciona mediante custom_id.
+ * El body crudo es necesario para la verificación de firma y se captura en
+ * app.ts mediante express.json({ verify }).
+ */
+export const paypalWebhook = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const rawBody = (req as any).rawBody as Buffer | undefined;
+    if (!rawBody || rawBody.length === 0) {
+      res.status(400).json({ status: 'error', message: 'Falta el cuerpo del webhook' });
+      return;
+    }
+    const result = await PayPalService.handlePayPalWebhook(
+      req.headers,
+      rawBody.toString('utf8')
+    );
+    res.json(result);
+  } catch (err) { next(err); }
+};

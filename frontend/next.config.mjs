@@ -19,7 +19,14 @@ const nextConfig = {
         source: '/api/:path*',
         destination: 'http://127.0.0.1:4001/api/:path*',
       },
-      // WebSocket upgrade requests also go through the same host
+      // WebSocket upgrade requests also go through the same host.
+      // Dos entradas: el path raíz exacto (/socket.io sin segmentos, que es el
+      // que usa el handshake de Socket.IO con trailing-slash normalizado por
+      // Next.js) y el wildcard de subpaths.
+      {
+        source: '/socket.io',
+        destination: 'http://127.0.0.1:4001/socket.io',
+      },
       {
         source: '/socket.io/:path*',
         destination: 'http://127.0.0.1:4001/socket.io/:path*',

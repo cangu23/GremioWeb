@@ -155,7 +155,7 @@ function PayPalCallbackContent() {
               {resultData?.message || 'Tu orden ha sido procesada correctamente por PayPal.'}
             </p>
 
-            {resultData?.planKey && (
+            {(resultData?.planKey || resultData?.type === 'VERIFICATION') && (
               <div
                 style={{
                   padding: '16px',
@@ -167,11 +167,23 @@ function PayPalCallbackContent() {
                   color: 'var(--text-muted)',
                 }}
               >
-                <div>Plan: <strong style={{ color: '#fff' }}>{resultData.planKey}</strong></div>
-                {resultData.recipientUsername && (
-                  <div>Beneficiario: <strong style={{ color: '#c084fc' }}>@{resultData.recipientUsername}</strong></div>
+                {resultData?.type === 'VERIFICATION' ? (
+                  <>
+                    <div>🔵 Insignia de <strong style={{ color: '#1d9bf0' }}>Verificación</strong> activada</div>
+                    {resultData.verifiedUntil && (
+                      <div>Válida hasta: <strong style={{ color: '#fff' }}>{String(resultData.verifiedUntil).split('T')[0]}</strong></div>
+                    )}
+                    <div>Monto: <strong style={{ color: '#38bdf8' }}>${resultData.amount} USD</strong></div>
+                  </>
+                ) : (
+                  <>
+                    <div>Plan: <strong style={{ color: '#fff' }}>{resultData.planKey}</strong></div>
+                    {resultData.recipientUsername && (
+                      <div>Beneficiario: <strong style={{ color: '#c084fc' }}>@{resultData.recipientUsername}</strong></div>
+                    )}
+                    <div>Monto: <strong style={{ color: '#38bdf8' }}>${resultData.amount} USD</strong></div>
+                  </>
                 )}
-                <div>Monto: <strong style={{ color: '#38bdf8' }}>${resultData.amount} USD</strong></div>
               </div>
             )}
 

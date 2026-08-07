@@ -44,6 +44,13 @@ export const findUsers = (params: {
           isHidden: true,
         },
       },
+      platformSubscription: {
+        select: {
+          plan: true,
+          status: true,
+          currentPeriodEnd: true,
+        },
+      },
       _count: {
         select: {
           posts: true,

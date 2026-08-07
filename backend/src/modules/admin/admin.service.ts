@@ -5,6 +5,7 @@ import AppError from '../../errors/AppError';
 import { AdminQueryInput, PaginatedResponse } from './admin.types';
 import { UpdateUserAdminInput, UpdateVtuberAdminInput, UpdateEventAdminInput, UpdateGuildAdminInput, UpdatePostAdminInput, UpdateCommentAdminInput } from './admin.types';
 import { NOTIFICATION_TYPES, isStaffRole } from '@gremio-estelar/shared';
+import { activatePlatformPlan, PLATFORM_PLANS } from '../subscriptions/platform-subscriptions.service';
 
 // ========== HELPERS ==========
 
@@ -181,6 +182,148 @@ export const restoreUser = async (id: string, adminId: string, ip?: string) => {
   }, ip);
 
   return updated;
+};
+
+// ========== PREMIUM PLAN GRANT ==========
+
+/**
+ * Otorga un plan premium (ASTRO/NOVA/STELLAR) a un usuario desde el panel de
+ * administración: crea/actualiza su PlatformSubscription (con expiración),
+ * actualiza user.plan, notifica al usuario y registra la acción en el log.
+ */
+export const grantPremiumPlan = async (
+  data: { targetUser: string; plan: 'ASTRO' | 'NOVA' | 'STELLAR'; durationDays: number },
+  adminId: string,
+  ip?: string
+) => {
+  if (!PLATFORM_PLANS[data.plan]) {
+    throw new AppError('Plan no válido. Usa ASTRO, NOVA o STELLAR.', 400);
+  }
+
+  const cleanTarget = data.targetUser.trim().replace(/^@/, '');
+  const target = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { id: cleanTarget },
+        { username: { equals: cleanTarget, mode: 'insensitive' as any } },
+        { email: { equals: cleanTarget, mode: 'insensitive' as any } },
+      ],
+    },
+    select: { id: true, username: true, email: true },
+  });
+
+  if (!target) {
+    throw new AppError(`No se encontró ningún usuario con el identificador "${data.targetUser}"`, 404);
+  }
+
+  const activation = await activatePlatformPlan(target.id, data.plan, data.durationDays);
+
+  // Notificar al usuario (fire-and-forget, nunca rompe el flujo principal)
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: target.id,
+        type: NOTIFICATION_TYPES.PLAN_GRANTED,
+        title: `💎 ¡Te otorgaron el Plan ${data.plan}!`,
+        message: `El equipo de Gremio Estelar te ha activado el Plan ${data.plan} por ${data.durationDays} días (hasta el ${activation.subscription.currentPeriodEnd.toISOString().split('T')[0]}). ¡Disfruta tus beneficios!`,
+        referenceId: null,
+      },
+    });
+  } catch (notifErr) {
+    console.error('[Admin] Error notifying plan grant:', notifErr);
+  }
+
+  await logAdminAction(adminId, 'GRANT_PLAN', {
+    targetUserId: target.id,
+    targetUsername: target.username,
+    plan: data.plan,
+    durationDays: data.durationDays,
+    expiresAt: activation.subscription.currentPeriodEnd.toISOString(),
+  }, ip);
+
+  return {
+    message: `Plan ${data.plan} otorgado a @${target.username} por ${data.durationDays} días.`,
+    plan: data.plan,
+    durationDays: data.durationDays,
+    expiresAt: activation.subscription.currentPeriodEnd,
+    targetUser: target.username,
+  };
+};
+
+/**
+ * Revoca el plan premium de un usuario desde el panel: cancela su
+ * PlatformSubscription, vuelve user.plan a FREE, notifica y registra la acción.
+ */
+export const revokePremiumPlan = async (
+  data: { targetUser: string },
+  adminId: string,
+  ip?: string
+) => {
+  const cleanTarget = data.targetUser.trim().replace(/^@/, '');
+  const target = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { id: cleanTarget },
+        { username: { equals: cleanTarget, mode: 'insensitive' as any } },
+        { email: { equals: cleanTarget, mode: 'insensitive' as any } },
+      ],
+    },
+    select: { id: true, username: true, plan: true },
+  });
+
+  if (!target) {
+    throw new AppError(`No se encontró ningún usuario con el identificador "${data.targetUser}"`, 404);
+  }
+
+  const sub = await prisma.platformSubscription.findUnique({ where: { userId: target.id } });
+  const hasPremium = (sub && sub.status === 'ACTIVE') || (!!target.plan && target.plan !== 'FREE');
+
+  if (!hasPremium) {
+    return {
+      message: `@${target.username} no tiene un plan premium activo.`,
+      plan: 'FREE',
+      alreadyFree: true,
+      targetUser: target.username,
+    };
+  }
+
+  if (sub && sub.status === 'ACTIVE') {
+    await prisma.platformSubscription.update({
+      where: { userId: target.id },
+      data: { status: 'CANCELLED', cancelledAt: new Date() },
+    });
+  }
+  await prisma.user.update({
+    where: { id: target.id },
+    data: { plan: 'FREE' },
+  });
+
+  // Notificar al usuario (fire-and-forget)
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: target.id,
+        type: NOTIFICATION_TYPES.PLAN_REVOKED,
+        title: 'Tu plan premium ha finalizado',
+        message: 'El equipo de Gremio Estelar ha retirado tu plan premium. Has vuelto al plan Explorer gratuito.',
+        referenceId: null,
+      },
+    });
+  } catch (notifErr) {
+    console.error('[Admin] Error notifying plan revocation:', notifErr);
+  }
+
+  await logAdminAction(adminId, 'REVOKE_PLAN', {
+    targetUserId: target.id,
+    targetUsername: target.username,
+    previousPlan: target.plan,
+  }, ip);
+
+  return {
+    message: `Plan premium retirado de @${target.username}.`,
+    plan: 'FREE',
+    targetUser: target.username,
+  };
 };
 
 // ========== VTUBERS ==========

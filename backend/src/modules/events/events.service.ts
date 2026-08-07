@@ -3,6 +3,7 @@ import * as EventsRepository from './events.repository';
 import * as UserRepository from '../users/user.repository';
 import * as NotificationsService from '../notifications/notifications.service';
 import { CreateEventPayload, UpdateEventPayload } from '@gremio-estelar/shared';
+import { getEffectivePlan } from '../subscriptions/platform-subscriptions.service';
 import { awardXpForAction } from '../gamification/gamification.service';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 
@@ -11,6 +12,16 @@ export const create = async (payload: CreateEventPayload, creatorId: string, cre
   const canCreateEvent = ['VTUBER', 'MAID', 'MODERATOR', 'ADMIN'].includes(creatorRole);
   if (!canCreateEvent) {
     throw new AppError('Solo los VTubers y el equipo de la plataforma pueden crear eventos.', 403);
+  }
+
+  // Eventos VIP (STELLAR): "Acceso directo a Eventos VIP exclusivos" — solo
+  // el staff o usuarios con plan STELLAR pueden crearlos.
+  if (payload.isVip) {
+    const creator = await UserRepository.findById(creatorId);
+    const effectivePlan = getEffectivePlan(creator?.plan, creator?.role);
+    if (effectivePlan !== 'STELLAR') {
+      throw new AppError('Los eventos VIP son exclusivos del Plan Stellar Elite.', 403);
+    }
   }
 
   const eventDate = new Date(payload.date);
@@ -25,6 +36,7 @@ export const create = async (payload: CreateEventPayload, creatorId: string, cre
     location: payload.location,
     maxAttendees: payload.maxAttendees,
     coverUrl: payload.coverUrl,
+    isVip: payload.isVip || false,
     creatorId,
   });
 
@@ -90,6 +102,15 @@ export const attend = async (eventId: string, userId: string) => {
   const event = await EventsRepository.findEventById(eventId);
   if (!event) {
     throw new AppError('Evento no encontrado.', 404);
+  }
+
+  // Evento VIP: solo asistentes con plan STELLAR (o staff)
+  if (event.isVip) {
+    const user = await UserRepository.findById(userId);
+    const effectivePlan = getEffectivePlan(user?.plan, user?.role);
+    if (effectivePlan !== 'STELLAR') {
+      throw new AppError('Este evento VIP es exclusivo del Plan Stellar Elite. Mejora tu plan en /premium.', 403);
+    }
   }
 
   const existing = await EventsRepository.findAttendee(eventId, userId);

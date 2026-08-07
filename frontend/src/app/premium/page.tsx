@@ -26,7 +26,33 @@ export default function PremiumPage() {
   const [plans, setPlans] = useState<Record<string, PlanInfo>>({});
   const [currentPlan, setCurrentPlan] = useState<string>('FREE');
   const [loadingPlan, setLoadingPlan] = useState(false);
+  const [loadingVerified, setLoadingVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
+
+  const handleBuyVerified = async () => {
+    if (!user) {
+      showToast('Debes iniciar sesión para comprar la verificación', 'info');
+      return;
+    }
+    setLoadingVerified(true);
+    try {
+      showToast('Abriendo pasarela segura de PayPal para tu insignia de verificación...', 'info');
+      const res = await apiFetch('/payments/paypal/create-order', {
+        method: 'POST',
+        body: JSON.stringify({ amount: 1.5, type: 'VERIFICATION' }),
+      });
+      if (res?.approveUrl) {
+        window.location.href = res.approveUrl;
+      } else {
+        showToast('No se pudo generar la pasarela de PayPal.', 'error');
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error al conectar con PayPal', 'error');
+    } finally {
+      setLoadingVerified(false);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -38,6 +64,13 @@ export default function PremiumPage() {
 
         if (plansRes?.data) setPlans(plansRes.data);
         if (myPlanRes?.data?.plan) setCurrentPlan(myPlanRes.data.plan);
+        if (myPlanRes?.data?.plan === 'STELLAR') {
+          setIsVerified(true);
+        } else if (user) {
+          // Verificado comprado por separado (verifiedUntil vigente)
+          const me = await apiFetch('/users/me').catch(() => null);
+          if (me?.verifiedUntil && new Date(me.verifiedUntil).getTime() > Date.now()) setIsVerified(true);
+        }
       } catch (err) {
         console.error('Error loading plans:', err);
       }
@@ -182,6 +215,69 @@ export default function PremiumPage() {
           >
             <Gift size={18} /> Regalar Plan Premium a un Amigo
           </button>
+        </div>
+
+        {/* VERIFICATION BADGE CARD */}
+        <div style={{
+          borderRadius: '20px',
+          background: 'linear-gradient(180deg, rgba(29, 155, 240, 0.1) 0%, rgba(2, 132, 199, 0.15) 100%)',
+          border: '1px solid rgba(29, 155, 240, 0.45)',
+          boxShadow: '0 0 25px rgba(29, 155, 240, 0.15)',
+          padding: '28px 24px',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '20px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '32px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flex: '1', minWidth: '280px' }}>
+            <div style={{
+              width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0,
+              background: 'radial-gradient(circle at 30% 30%, #1d9bf0, #0b6bc0)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 20px rgba(29, 155, 240, 0.5)',
+            }}>
+              <svg width="26" height="26" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.15)"/>
+                <polyline points="7.5 12.5 10.5 15.5 16.5 8.5" stroke="#fff" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>
+                🔵 Insignia de Verificación <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1d9bf0' }}>— para cualquier usuario</span>
+              </div>
+              <div style={{ fontSize: '0.88rem', color: 'var(--text-muted, #a1a1aa)' }}>
+                Insignia azul oficial junto a tu nombre en posts, chats, perfiles y líderes. Renovable mensualmente.
+                {currentPlan === 'STELLAR' && ' ✨ Ya incluida en tu Plan Stellar Elite.'}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            {currentPlan === 'STELLAR' || isVerified ? (
+              <span style={{ color: '#00e676', fontWeight: 800, fontSize: '0.95rem' }}>✓ Verificado activo</span>
+            ) : (
+              <>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff' }}>$1.50</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/mes</div>
+                </div>
+                <button
+                  onClick={handleBuyVerified}
+                  disabled={loadingVerified}
+                  style={{
+                    padding: '12px 24px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                    fontWeight: 800, fontSize: '0.95rem', color: '#fff',
+                    background: 'linear-gradient(135deg, #1d9bf0, #0b6bc0)',
+                    boxShadow: '0 4px 14px rgba(29, 155, 240, 0.35)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {loadingVerified ? 'Abriendo PayPal...' : '🔵 Verificar mi cuenta'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* PLAN CARDS GRID */}

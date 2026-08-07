@@ -8,7 +8,12 @@
 # ======================================================
 
 services:
-  # ===== MAIN APP (Backend + Frontend) =====
+  # ===== BACKEND (API + Socket.IO) =====
+  # ⚠️  IMPORTANTE para el chat en tiempo real: este servicio debe correr en
+  # modo API-only (RUN_BACKEND_ONLY=1) para que Express + Socket.IO escuchen
+  # en el puerto público. Los rewrites de Next.js (/socket.io/* -> Express
+  # interno) NO proxean WebSocket upgrades, así que en el monolito el chat
+  # siempre sale "desconectado".
   - type: web
     name: gremio-web
     env: docker
@@ -21,10 +26,13 @@ services:
         value: production
       - key: PORT
         value: "4000"
-      - key: FRONTEND_PORT
-        value: "3001"
-      # Dominio público de tu app (CORS/WebSocket). Ej: https://gremio-web.onrender.com
+      - key: RUN_BACKEND_ONLY
+        value: "1"
+      # Dominio público del FRONTEND (CORS/WebSocket). Ej: https://gremio-frontend.onrender.com
       - key: FRONTEND_URL
+        sync: false
+      # CORS extra si hay varios dominios (separados por coma)
+      - key: ALLOWED_ORIGINS
         sync: false
       - key: TRUST_PROXY
         value: "1"
@@ -52,11 +60,18 @@ services:
         sync: false
       - key: DISCORD_CLIENT_SECRET
         sync: false
-      # NEXT_PUBLIC_API_BASE_URL: deja vacío para usar rutas relativas (/api)
-      # que Next.js reescribe al Express interno (funciona en el contenedor).
-      # Alternativa: tu dominio público real, ej: https://gremio-web.onrender.com/api
+      # NEXT_PUBLIC_API_BASE_URL: si el frontend corre en el MISMO contenedor
+      # (monolito), déjalo vacío para usar rutas relativas (/api) que Next.js
+      # reescribe al Express interno. Si el frontend es un servicio SEPARADO,
+      # apunta al backend público: https://gremio-web.onrender.com/api
       - key: NEXT_PUBLIC_API_BASE_URL
-        value: ""
+        sync: false
+      # NEXT_PUBLIC_SOCKET_URL: host del backend para Socket.IO. OBLIGATORIO si
+      # el frontend es un servicio separado del backend (chat en tiempo real).
+      # Ej: https://gremio-web.onrender.com  (sin /api, sin barra final)
+      # Se inlaya en el build, así que debe estar en los BUILD ARGS.
+      - key: NEXT_PUBLIC_SOCKET_URL
+        sync: false
       # Google OAuth Client ID (público). En Render debe configurarse como
       # BUILD ARG del servicio (Docker) para que Next.js lo inline en el build.
       - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
@@ -80,6 +95,10 @@ services:
         value: "live"
       - key: PAYPAL_STRICT
         value: "true"
+      # Webhook ID de PayPal (configura la URL https://TU_API/api/payments/paypal/webhook
+      # en el panel de PayPal). Si no se configura, el webhook rechaza eventos (503).
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
 
   # ===== MEDIA ENGINE (Python/FastAPI) =====
   - type: web

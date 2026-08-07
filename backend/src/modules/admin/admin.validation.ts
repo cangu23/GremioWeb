@@ -35,12 +35,28 @@ export const updateUserAdminSchema = z.object({
       const roles = val.split(',').map(r => r.trim().toUpperCase());
       return roles.every(r => validRoles.includes(r));
     }, { message: 'Uno o más roles seleccionados no son válidos' }).optional(),
-    plan: z.string().optional(),
+    plan: z.enum(['FREE', 'ASTRO', 'NOVA', 'STELLAR']).optional(),
     stardust: z.number().int().min(0).optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'BANNED', 'PENDING']).optional(),
     xp: z.number().int().min(0).optional(),
     isVerified: z.boolean().optional(),
     level: z.number().int().min(1).optional(),
+  }),
+});
+
+// ========== PREMIUM PLAN GRANT ==========
+
+export const grantPlanSchema = z.object({
+  body: z.object({
+    targetUser: z.string().min(1).max(120), // id, username o email
+    plan: z.enum(['ASTRO', 'NOVA', 'STELLAR']),
+    durationDays: z.coerce.number().int().min(1).max(3650).default(30),
+  }),
+});
+
+export const revokePlanSchema = z.object({
+  body: z.object({
+    targetUser: z.string().min(1).max(120), // id, username o email
   }),
 });
 

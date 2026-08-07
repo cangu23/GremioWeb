@@ -1,7 +1,8 @@
 import AppError from '../../errors/AppError';
-import { getLevelFromXp, XP_REWARDS } from '@gremio-estelar/shared';
+import { getLevelFromXp, XP_REWARDS, isVerifiedEffective } from '@gremio-estelar/shared';
 import * as GamificationRepository from './gamification.repository';
 import * as NotificationsService from '../notifications/notifications.service';
+import { getXpMultiplier } from '../subscriptions/platform-subscriptions.service';
 import prisma from '../../database/prisma';
 
 export const getMyGamificationProfile = async (userId: string) => {
@@ -34,7 +35,7 @@ export const getLeaderboard = async (limit = 50) => {
     level: u.level,
     role: u.role,
     displayedRole: u.displayedRole,
-    isVerified: !!(u.vtuberProfile?.isVerified || (u as any).isVerified),
+    isVerified: isVerifiedEffective(u as any),
     avatarUrl: u.avatarUrl || u.vtuberProfile?.avatarUrl || null,
     displayName: u.displayName || u.vtuberProfile?.displayName || u.username,
     rank: i + 1,
@@ -65,9 +66,14 @@ async function awardXpBase(userId: string, xpAmount: number) {
   const user = await GamificationRepository.getUserGamificationProfile(userId);
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
-  await GamificationRepository.addXpToUser(userId, xpAmount);
+  // Multiplicador de XP del plan efectivo (prometido en /premium:
+  // ASTRO ×1.5, NOVA ×2, STELLAR ×3). Se aplica al XP BASE.
+  const multiplier = getXpMultiplier((user as any).plan, (user as any).role);
+  const finalXp = Math.max(1, Math.round(xpAmount * multiplier));
 
-  let runningTotal = user.xp + xpAmount;
+  await GamificationRepository.addXpToUser(userId, finalXp);
+
+  let runningTotal = user.xp + finalXp;
   let runningLevel = getLevelFromXp(runningTotal);
 
   let levelUp = false;
@@ -87,7 +93,9 @@ async function awardXpBase(userId: string, xpAmount: number) {
   }
 
   return {
-    xpAwarded: xpAmount,
+    xpAwarded: finalXp,
+    baseXp: xpAmount,
+    multiplier,
     totalXp: runningTotal,
     level: runningLevel,
     levelUp,

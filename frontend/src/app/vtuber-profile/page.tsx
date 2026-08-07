@@ -4,13 +4,13 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getAccessToken } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers, hasAnyRole } from '@gremio-estelar/shared';
+import { VTuberProfile, VTUBER_SURVEY_QUESTIONS, type SurveyAnswers, hasAnyRole, getEffectivePlan } from '@gremio-estelar/shared';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -28,6 +28,7 @@ function VtuberProfileEditor() {
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
+  const [bannerVideoUrl, setBannerVideoUrl] = useState('');
   const [description, setDescription] = useState('');
   const [lore, setLore] = useState('');
   const [fanName, setFanName] = useState('');
@@ -45,6 +46,8 @@ function VtuberProfileEditor() {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const videoBannerInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingVideoBanner, setUploadingVideoBanner] = useState(false);
   const { uploadAndWait } = useSocketMedia();
 
   // Cropper states
@@ -61,6 +64,39 @@ function VtuberProfileEditor() {
     setCropperType(type);
     setCropperOpen(true);
     if (e.target) e.target.value = '';
+  };
+
+  // Video banner (STELLAR only) — raw video, no cropper.
+  const handleVideoBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVideoBanner(true);
+    try {
+      const token = getAccessToken();
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+      const formData = new FormData();
+      formData.append('video', file);
+      const res = await fetch(`${baseUrl}/uploads/banner/video`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Error al subir el video' }));
+        throw new Error(err.message || 'Error al subir el video');
+      }
+      const data = await res.json();
+      if (data?.url) {
+        setBannerVideoUrl(data.url);
+        setBannerUrl('');
+        showToast('Banner en video subido (Stellar Elite)', 'success');
+      }
+    } catch (err: unknown) {
+      showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir el video'}`, 'error');
+    } finally {
+      setUploadingVideoBanner(false);
+      if (e.target) e.target.value = '';
+    }
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
@@ -124,6 +160,7 @@ function VtuberProfileEditor() {
       setDisplayName(p.displayName || '');
       setAvatarUrl(p.avatarUrl || '');
       setBannerUrl(p.bannerUrl || '');
+      setBannerVideoUrl((p as any).bannerVideoUrl || '');
       setDescription(p.description || '');
       setLore(p.lore || '');
       setFanName(p.fanName || '');
@@ -163,7 +200,8 @@ function VtuberProfileEditor() {
         body: JSON.stringify({
           displayName: displayName || undefined,
           avatarUrl: avatarUrl || undefined,
-          bannerUrl: bannerUrl || undefined,
+          bannerUrl: bannerUrl || null,
+          bannerVideoUrl: bannerVideoUrl || null,
           description: description || undefined,
           lore: lore || undefined,
           fanName: fanName || undefined,
@@ -226,6 +264,7 @@ function VtuberProfileEditor() {
   // VTuberProfile creado automáticamente por Discord/Google antes del
   // fix no debe ver el editor. Solo ve la pantalla de solicitud.
   const isOfficialVtuber = hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']) || user.vtuberProfile?.isApproved === true;
+  const canVideoBanner = getEffectivePlan(user.plan, user.role) === 'STELLAR';
 
   return (
     <>
@@ -339,6 +378,13 @@ function VtuberProfileEditor() {
               ? `url(${bannerUrl}) center/cover`
               : 'linear-gradient(135deg, #1a1040, #302b63)',
           }}>
+            {bannerVideoUrl && (
+              <video
+                src={bannerVideoUrl}
+                autoPlay muted loop playsInline
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            )}
             <div style={{
               position: 'absolute', inset: 0,
               background: 'linear-gradient(180deg, transparent 40%, var(--background) 100%)',
@@ -487,6 +533,13 @@ function VtuberProfileEditor() {
             position: 'relative', overflow: 'hidden',
             transition: 'all 0.3s ease',
           }}>
+            {bannerVideoUrl && (
+              <video
+                src={bannerVideoUrl}
+                autoPlay muted loop playsInline
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            )}
             {/* Glow */}
             <div style={{
               position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -630,6 +683,56 @@ function VtuberProfileEditor() {
               </div>
             </div>
           </div>
+
+          {canVideoBanner && (
+            <div style={{ marginTop: '16px', padding: '14px 16px', borderRadius: '12px', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.25)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffd700' }}>🎬 Banner en Video (Stellar Elite)</span>
+                <span style={{ fontSize: '0.62rem', padding: '2px 8px', borderRadius: '10px', background: 'rgba(255,215,0,0.15)', color: '#ffd700', fontWeight: 700 }}>EXCLUSIVO</span>
+              </div>
+              {bannerVideoUrl && (
+                <video
+                  src={bannerVideoUrl}
+                  autoPlay muted loop playsInline
+                  style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '10px', marginBottom: '10px' }}
+                />
+              )}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => videoBannerInputRef.current?.click()}
+                  disabled={uploadingVideoBanner}
+                  style={{
+                    padding: '9px 16px', borderRadius: '9px',
+                    background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                    border: 'none', color: '#1a0f00', fontWeight: 700, fontSize: '0.83rem',
+                    cursor: uploadingVideoBanner ? 'wait' : 'pointer',
+                  }}
+                >
+                  {uploadingVideoBanner ? 'Subiendo...' : bannerVideoUrl ? 'Cambiar video' : 'Subir video banner'}
+                </button>
+                {bannerVideoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setBannerVideoUrl('')}
+                    style={{ padding: '9px 16px', borderRadius: '9px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#f87171', fontWeight: 600, fontSize: '0.83rem', cursor: 'pointer' }}
+                  >
+                    Quitar
+                  </button>
+                )}
+                <input
+                  ref={videoBannerInputRef}
+                  type="file"
+                  accept="video/mp4,video/webm,video/ogg"
+                  style={{ display: 'none' }}
+                  onChange={handleVideoBannerSelect}
+                />
+              </div>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                MP4, WebM u OGG · máx 25MB. El video reemplaza a la imagen del banner en tu perfil.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ===== INFORMACIÓN BÁSICA ===== */}

@@ -1,8 +1,8 @@
 import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
-import { activatePlatformPlan } from '../subscriptions/platform-subscriptions.service';
+import { activatePlatformPlan, getEffectivePlan } from '../subscriptions/platform-subscriptions.service';
 import { createNotification } from '../notifications/notifications.repository';
-import { hasAnyRole } from '@gremio-estelar/shared';
+import { hasAnyRole, isStaffRole } from '@gremio-estelar/shared';
 
 // Multipliers by plan/role
 export const PLAN_STARDUST_MULTIPLIERS: Record<string, number> = {
@@ -19,16 +19,10 @@ export const GIFT_PLAN_STARDUST_COSTS: Record<string, number> = {
 };
 
 export const getStardustMultiplier = (userPlan: string, userRole: string): number => {
-  if (hasAnyRole(userRole, ['VTUBER', 'MAID', 'VIP_STELLAR', 'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN'])) {
-    return 2.0; // Automatically equivalent to STELLAR (×2.0)
-  }
-  if (hasAnyRole(userRole, ['VIP_NOVA'])) {
-    return 1.5; // Nova (×1.5)
-  }
-  if (hasAnyRole(userRole, ['VIP_ASTRO'])) {
-    return 1.2; // Astro (×1.2)
-  }
-  return PLAN_STARDUST_MULTIPLIERS[userPlan] || 1.0;
+  // El multiplicador se deriva del plan EFECTIVO (staff real y roles VIP de
+  // pago reciben el plan superior gratis; VTUBER/MAID/BETA_TESTER usan su plan).
+  const effective = getEffectivePlan(userPlan, userRole);
+  return PLAN_STARDUST_MULTIPLIERS[effective] || 1.0;
 };
 
 export const addStardust = async (userId: string, baseAmount: number, reason: string) => {
@@ -300,11 +294,11 @@ export const giftPlatformPlanWithStardust = async (
     sender.plan === 'ASTRO' ||
     sender.plan === 'NOVA' ||
     sender.plan === 'STELLAR' ||
-    hasAnyRole(sender.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF']);
+    isStaffRole(sender.role);
 
   if (!isEligible) {
     throw new AppError(
-      'La función de regalar suscripciones Premium por Polvo Estelar es exclusiva para suscriptores con plan activo Astro ($2.99) o Nova Pro ($5.99) en adelante.',
+      'La función de regalar suscripciones Premium por Polvo Estelar es exclusiva para suscriptores con plan activo Astro ($2.99) o superior.',
       403
     );
   }

@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../../database/prisma';
+import { getEffectivePlan } from '../subscriptions/platform-subscriptions.service';
+
+// Ranking de planes para el filtro de exclusividad de stickers
+const PLAN_RANK: Record<string, number> = { FREE: 0, ASTRO: 1, NOVA: 2, STELLAR: 3 };
 
 // ========== LIST ALL STICKERS ==========
 
@@ -33,7 +37,7 @@ export const listStickers = async (req: Request, res: Response, next: NextFuncti
 
 export const createSticker = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, imageUrl, category = 'general', type = 'sticker' } = req.body;
+    const { name, imageUrl, category = 'general', type = 'sticker', minPlan = 'FREE' } = req.body;
     const addedById = req.user!.id;
 
     if (!name || !imageUrl) {
@@ -46,9 +50,14 @@ export const createSticker = async (req: Request, res: Response, next: NextFunct
       res.status(400).json({ status: 'error', message: 'type debe ser "emoji" o "sticker"' });
       return;
     }
+    // Validate minPlan
+    if (!['FREE', 'ASTRO', 'NOVA', 'STELLAR'].includes(minPlan)) {
+      res.status(400).json({ status: 'error', message: 'minPlan debe ser FREE, ASTRO, NOVA o STELLAR' });
+      return;
+    }
 
     const sticker = await prisma.sticker.create({
-      data: { name, imageUrl, category, type, addedById },
+      data: { name, imageUrl, category, type, minPlan, addedById },
     });
 
     res.status(201).json(sticker);
@@ -66,7 +75,7 @@ export const createSticker = async (req: Request, res: Response, next: NextFunct
 export const updateSticker = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id as string;
-    const { name, imageUrl, category, type } = req.body;
+    const { name, imageUrl, category, type, minPlan } = req.body;
 
     const existing = await prisma.sticker.findUnique({ where: { id } });
     if (!existing) {
@@ -78,6 +87,13 @@ export const updateSticker = async (req: Request, res: Response, next: NextFunct
     if (name !== undefined) data.name = name;
     if (imageUrl !== undefined) data.imageUrl = imageUrl;
     if (category !== undefined) data.category = category;
+    if (minPlan !== undefined) {
+      if (!['FREE', 'ASTRO', 'NOVA', 'STELLAR'].includes(minPlan)) {
+        res.status(400).json({ status: 'error', message: 'minPlan debe ser FREE, ASTRO, NOVA o STELLAR' });
+        return;
+      }
+      data.minPlan = minPlan;
+    }
     if (type !== undefined) {
       if (!['emoji', 'sticker'].includes(type)) {
         res.status(400).json({ status: 'error', message: 'type debe ser "emoji" o "sticker"' });
@@ -123,8 +139,17 @@ export const getActiveStickers = async (req: Request, res: Response, next: NextF
     if (type) where.type = String(type);
     if (category) where.category = String(category);
 
+    // Exclusividad por plan: se deriva del usuario autenticado (o anónimo =
+    // plan FREE). NUNCA del query string, que es fácil de falsear.
+    const user = (req as any).user;
+    const userRank = user
+      ? (PLAN_RANK[getEffectivePlan(user.plan, user.role)] ?? 0)
+      : 0;
+    const allowedPlans = Object.keys(PLAN_RANK).filter((p) => PLAN_RANK[p] <= userRank);
+    const wherePlan: Record<string, unknown> = { ...where, minPlan: { in: allowedPlans } };
+
     let stickers = await prisma.sticker.findMany({
-      where,
+      where: wherePlan,
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
 
@@ -145,7 +170,7 @@ export const getActiveStickers = async (req: Request, res: Response, next: NextF
           skipDuplicates: true,
         });
         stickers = await prisma.sticker.findMany({
-          where,
+          where: wherePlan,
           orderBy: [{ category: 'asc' }, { name: 'asc' }],
         });
       }

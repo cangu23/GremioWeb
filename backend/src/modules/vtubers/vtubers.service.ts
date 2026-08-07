@@ -1,4 +1,5 @@
 import { prisma } from '../../database';
+import { isVerifiedEffective } from '@gremio-estelar/shared';
 
 const featuredProfileIncludes = {
   user: {
@@ -6,6 +7,8 @@ const featuredProfileIncludes = {
       id: true,
       username: true,
       role: true,
+      plan: true,
+      verifiedUntil: true,
       _count: { select: { followers: true, following: true } },
     },
   },
@@ -31,6 +34,8 @@ const directoryIncludes = {
       id: true,
       username: true,
       role: true,
+      plan: true,
+      verifiedUntil: true,
       _count: { select: { followers: true, following: true, posts: true } },
     },
   },
@@ -45,64 +50,6 @@ export const getVtubersDirectory = async (params: {
 }) => {
   const { search, contentType, language, page, limit } = params;
   const skip = (page - 1) * limit;
-
-  // Auto-heal: Ensure all VTuberProfile records are marked isApproved: true and isHidden: false if they have valid displayNames
-  try {
-    const orphanVtubers = await prisma.user.findMany({
-      where: {
-        role: { contains: 'VTUBER' },
-        vtuberProfile: null,
-      },
-    });
-
-    for (const orphan of orphanVtubers) {
-      await prisma.vTuberProfile.create({
-        data: {
-          userId: orphan.id,
-          displayName: orphan.displayName || orphan.username,
-          avatarUrl: orphan.avatarUrl || null,
-          isApproved: true,
-          isHidden: false,
-          isVerified: true,
-        },
-      }).catch(() => {});
-    }
-
-    // Ensure Guren VT and users with VTuber profiles have VTUBER role
-    const vtubersToEnsure = await prisma.user.findMany({
-      where: {
-        OR: [
-          { username: 'canguvt' },
-          { username: 'aleshaW' },
-          { username: 'yusuki_yukihira' },
-          { username: 'hoshi' },
-        ],
-      },
-    });
-
-    for (const u of vtubersToEnsure) {
-      if (!u.role.includes('VTUBER')) {
-        await prisma.user.update({
-          where: { id: u.id },
-          data: { role: `${u.role},VTUBER` },
-        });
-      }
-    }
-
-    // Auto-approve profiles for valid VTubers
-    await prisma.vTuberProfile.updateMany({
-      where: {
-        displayName: { not: '' },
-        user: { role: { contains: 'VTUBER' } },
-      },
-      data: {
-        isApproved: true,
-        isHidden: false,
-      },
-    });
-  } catch (err) {
-    console.error('[VTuber AutoHeal] Error healing VTuber profiles:', err);
-  }
 
   const where: any = {
     isHidden: false,
@@ -149,7 +96,7 @@ export const getVtubersDirectory = async (params: {
       lore: profile.lore,
       isLive: profile.isLive,
       lastLiveAt: profile.lastLiveAt?.toISOString() || null,
-      isVerified: profile.isVerified,
+      isVerified: profile.isVerified || isVerifiedEffective({ verifiedUntil: profile.user?.verifiedUntil, role: profile.user?.role }),
       isFeatured: profile.isFeatured,
       twitchUrl: profile.twitchUrl,
       youtubeUrl: profile.youtubeUrl,
@@ -193,13 +140,14 @@ export const getLiveVtubers = async () => {
         role: { contains: 'VTUBER' },
       },
     },
-    orderBy: { updatedAt: 'desc' },
-    include: {
+    orderBy: { updatedAt: 'desc' },    include: {
       user: {
         select: {
           id: true,
           username: true,
           role: true,
+          plan: true,
+          verifiedUntil: true,
         },
       },
     },
@@ -214,15 +162,15 @@ export const getLiveVtubers = async () => {
     description: profile.description,
     isLive: profile.isLive,
     lastLiveAt: profile.lastLiveAt?.toISOString() || null,
-    isVerified: profile.isVerified,
+    isVerified: profile.isVerified || isVerifiedEffective({ verifiedUntil: profile.user?.verifiedUntil, role: profile.user?.role }),
     twitchUrl: profile.twitchUrl,
-    youtubeUrl: profile.youtubeUrl,
-    kickUrl: profile.kickUrl,
-    tiktokUrl: profile.tiktokUrl,
-    twitterUrl: profile.twitterUrl,
-    discordUrl: profile.discordUrl,
-    websiteUrl: profile.websiteUrl,
-    user: profile.user,
+      youtubeUrl: profile.youtubeUrl,
+      kickUrl: profile.kickUrl,
+      tiktokUrl: profile.tiktokUrl,
+      twitterUrl: profile.twitterUrl,
+      discordUrl: profile.discordUrl,
+      websiteUrl: profile.websiteUrl,
+      user: profile.user,
   }));
 };
 
@@ -261,11 +209,11 @@ export const getFeaturedVtubers = async () => {
         description: profile.description,
         isLive: profile.isLive,
         lastLiveAt: profile.lastLiveAt?.toISOString() || null,
-        isVerified: profile.isVerified,
-        twitchUrl: profile.twitchUrl,
-        youtubeUrl: profile.youtubeUrl,
-        twitterUrl: profile.twitterUrl,
-        user: profile.user,
+      isVerified: profile.isVerified || isVerifiedEffective({ verifiedUntil: profile.user?.verifiedUntil, role: profile.user?.role }),
+      twitchUrl: profile.twitchUrl,
+      youtubeUrl: profile.youtubeUrl,
+      twitterUrl: profile.twitterUrl,
+      user: profile.user,
         posts: posts.map((p) => ({
           id: p.id,
           content: p.content,

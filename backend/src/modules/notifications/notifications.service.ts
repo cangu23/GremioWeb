@@ -128,6 +128,26 @@ export const notifyComment = async (commenterUsername: string, postId: string, p
   });
 };
 
+export const notifyGroupMessage = async (senderName: string, groupName: string, groupId: string, memberId: string) => {
+  return NotificationsRepository.createNotification({
+    userId: memberId,
+    type: 'GROUP_DM',
+    title: `Nuevo mensaje en ${groupName}`,
+    message: `${senderName} ha enviado un mensaje al grupo`,
+    referenceId: groupId,
+  });
+};
+
+export const notifyReaction = async (reactorUsername: string, postId: string, postOwnerId: string, emoji: string) => {
+  return NotificationsRepository.createNotification({
+    userId: postOwnerId,
+    type: 'REACTION',
+    title: 'Nueva reacción',
+    message: `@${reactorUsername} reaccionó ${emoji} a tu publicación`,
+    referenceId: postId,
+  });
+};
+
 export const notifyMention = async (mentionerUsername: string, postId: string, mentionedUserId: string) => {
   return NotificationsRepository.createNotification({
     userId: mentionedUserId,

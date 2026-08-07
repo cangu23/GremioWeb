@@ -6,6 +6,8 @@ import { validateRequest } from '../auth/validateRequest';
 import {
   adminQuerySchema,
   updateUserAdminSchema,
+  grantPlanSchema,
+  revokePlanSchema,
   updateVtuberAdminSchema,
   updateEventAdminSchema,
   updateGuildAdminSchema,
@@ -41,6 +43,10 @@ router.patch('/users/:id', adminOnly, validateRequest(updateUserAdminSchema), Ad
 router.delete('/users/:id', adminOnly, AdminController.deleteUser);
 router.post('/users/:id/restore', adminOnly, AdminController.restoreUser);
 router.post('/users/cleanup-profiles', adminOnly, AdminController.cleanupUserProfiles);
+
+// ========== PREMIUM PLAN GRANT / REVOKE (Admin Only) ==========
+router.post('/grant-plan', adminOnly, validateRequest(grantPlanSchema), AdminController.grantPlan);
+router.post('/revoke-plan', adminOnly, validateRequest(revokePlanSchema), AdminController.revokePlan);
 
 // ========== VTUBERS (Staff View, Admin Edit) ==========
 router.get('/vtubers', validateRequest(adminQuerySchema), AdminController.listVtubers);

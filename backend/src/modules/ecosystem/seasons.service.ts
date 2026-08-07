@@ -97,7 +97,7 @@ export const seedPassLevels = async (seasonId: string) => {
   }
 };
 
-import { hasAnyRole } from '@gremio-estelar/shared';
+import { hasAnyRole, isStaffRole } from '@gremio-estelar/shared';
 
 export const getUserSeasonPass = async (userId: string) => {
   const season = await getOrCreateActiveSeason();
@@ -106,7 +106,8 @@ export const getUserSeasonPass = async (userId: string) => {
     select: { plan: true, role: true, level: true },
   });
 
-  const isVip = hasAnyRole(user?.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF']);
+  // El Pase Premium gratis queda solo para staff real y roles VIP de pago.
+  const isVip = isStaffRole(user?.role) || hasAnyRole(user?.role, ['VIP_STELLAR']);
   const isPremiumUser = isVip || (user?.plan && user.plan !== 'FREE');
   const userLevel = Math.max(1, user?.level || 1);
 

@@ -39,3 +39,30 @@ export const authenticate = async (
     next(new AppError('Invalid or expired token.', 401));
   }
 };
+
+/**
+ * Optional auth: attaches req.user when a valid Bearer token is present,
+ * but never blocks the request. Used by public-but-personalized endpoints
+ * (e.g. sticker picker) so the plan gate is derived from the real user
+ * instead of spoofable query params.
+ */
+export const authenticateOptional = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+      const user = await UserRepository.findById(decoded.userId);
+      if (user && user.status === 'ACTIVE') {
+        req.user = user;
+      }
+    }
+  } catch {
+    // Invalid/expired token: continue as anonymous
+  }
+  next();
+};

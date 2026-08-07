@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { attachVerified } from '@gremio-estelar/shared';
 import prisma from '../../database/prisma';
 
 export const getHistory = async (req: Request, res: Response, next: NextFunction) => {
@@ -17,6 +18,8 @@ export const getHistory = async (req: Request, res: Response, next: NextFunction
             username: true,
             role: true,
             avatarUrl: true,
+            plan: true,
+            verifiedUntil: true,
             vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
             purchases: {
               where: { equipped: true },
@@ -27,7 +30,10 @@ export const getHistory = async (req: Request, res: Response, next: NextFunction
       },
     });
 
-    res.json(messages.reverse());
+    res.json(messages.reverse().map((m) => ({
+      ...m,
+      user: attachVerified(m.user as Record<string, unknown>),
+    })));
   } catch (err) {
     next(err);
   }

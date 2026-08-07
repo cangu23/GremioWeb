@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockPrisma = vi.hoisted(() => ({
   rouletteSpin: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn() },
   stardustTransaction: { count: vi.fn().mockResolvedValue(0) },
-  user: { update: vi.fn() },
+  user: { update: vi.fn(), findUnique: vi.fn() },
   $connect: vi.fn(),
   $disconnect: vi.fn(),
 }));
@@ -40,6 +40,8 @@ function hoursAgo(hours: number): Date {
 describe('RouletteService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Free plan por defecto → multiplicador ×1 (no altera el XP esperado)
+    mockPrisma.user.findUnique.mockResolvedValue({ plan: 'FREE', role: 'USER' });
     mockGetStardustBalance.mockResolvedValue({ stardust: 500 });
     mockAddStardust.mockResolvedValue({ stardustEarned: 5, newBalance: 505 });
     mockSpendStardust.mockResolvedValue({ stardustSpent: 50, newBalance: 450 });

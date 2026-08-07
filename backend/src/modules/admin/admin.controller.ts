@@ -57,6 +57,26 @@ export const restoreUser = async (req: Request, res: Response, next: NextFunctio
   } catch (err) { next(err); }
 };
 
+export const grantPlan = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AdminService.grantPremiumPlan({
+      targetUser: String(req.body.targetUser),
+      plan: req.body.plan,
+      durationDays: Number(req.body.durationDays) || 30,
+    }, req.user!.id, req.ip);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const revokePlan = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AdminService.revokePremiumPlan({
+      targetUser: String(req.body.targetUser),
+    }, req.user!.id, req.ip);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
 // ========== VTUBERS ==========
 
 export const listVtubers = async (req: Request, res: Response, next: NextFunction) => {

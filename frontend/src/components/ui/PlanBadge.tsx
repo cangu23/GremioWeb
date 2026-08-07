@@ -26,10 +26,18 @@ function SparkleSvg({ color = 'currentColor', size = 12 }: { color?: string; siz
 }
 
 export default function PlanBadge({ plan, role, showIconOnly = false }: PlanBadgeProps) {
-  const isVipRole = hasAnyRole(role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'VIP_STELLAR', 'VIP_NOVA', 'VIP_ASTRO']);
-  const activePlan = isVipRole ? 'STELLAR' : (plan || 'FREE');
+  // Política de planes (producción): staff real y VIP_STELLAR → STELLAR;
+  // VIP_NOVA → NOVA; VIP_ASTRO → ASTRO; el resto usa su plan real.
+  let activePlan = plan || 'FREE';
+  if (hasAnyRole(role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'HELPER', 'VIP_STELLAR'])) {
+    activePlan = 'STELLAR';
+  } else if (hasAnyRole(role, ['VIP_NOVA'])) {
+    activePlan = 'NOVA';
+  } else if (hasAnyRole(role, ['VIP_ASTRO'])) {
+    activePlan = 'ASTRO';
+  }
 
-  if (activePlan === 'FREE' && !isVipRole) return null;
+  if (activePlan === 'FREE') return null;
 
   const BADGE_CONFIG: Record<string, { label: string; bg: string; border: string; color: string; glow: string; renderIcon: () => React.ReactNode }> = {
     ASTRO: {

@@ -23,6 +23,10 @@ export const NOTIFICATION_TYPES = {
   WARNING: 'warning',
   POST_DELETED: 'post_deleted',
   COMMENT_DELETED: 'comment_deleted',
+
+  // Admin grants
+  PLAN_GRANTED: 'plan_granted',
+  PLAN_REVOKED: 'plan_revoked',
 } as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];

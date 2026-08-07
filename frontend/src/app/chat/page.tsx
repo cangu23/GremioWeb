@@ -14,6 +14,8 @@ import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { renderFormattedContent, useStickersCache } from '@/lib/content-renderer';
 import { playChime } from '@/lib/sfx';
+import { useToast } from '@/lib/ToastContext';
+import { getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
 import type { Socket } from 'socket.io-client';
 
 /* ─────────── Types ─────────── */
@@ -59,6 +61,23 @@ interface ConversationData {
   receiver: UserInfo;
   isPinned?: boolean;
   unreadCount?: number;
+}
+
+interface GroupData {
+  id: string;
+  name: string;
+  createdById: string;
+  createdAt: string;
+  members: UserInfo[];
+  lastMessage: { content: string; createdAt: string; sender: { username: string } } | null;
+}
+
+interface GroupMessageData {
+  id: string;
+  content: string;
+  createdAt: string;
+  senderId: string;
+  sender: UserInfo;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -119,6 +138,7 @@ function MessengerContent() {
   const { user: currentUser, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
@@ -162,6 +182,23 @@ function MessengerContent() {
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [friendsList, setFriendsList] = useState<UserInfo[]>([]);
 
+  // Group DMs (NOVA+)
+  const [groups, setGroups] = useState<GroupData[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [activeGroup, setActiveGroup] = useState<GroupData | null>(null);
+  const [groupMessages, setGroupMessages] = useState<GroupMessageData[]>([]);
+  const [groupMessagesLoading, setGroupMessagesLoading] = useState(false);
+  const [groupInput, setGroupInput] = useState('');
+  const [groupSending, setGroupSending] = useState(false);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [groupMemberSearch, setGroupMemberSearch] = useState('');
+  const [groupSearchResults, setGroupSearchResults] = useState<UserInfo[]>([]);
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState<UserInfo[]>([]);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const canUseGroups = planMeetsOrExceeds((currentUser as any)?.plan, (currentUser as any)?.role, 'NOVA');
+
   /* ─── Fetch friends / following list ─── */
   useEffect(() => {
     if (!currentUser) return;
@@ -172,14 +209,23 @@ function MessengerContent() {
       .catch(() => {});
   }, [currentUser]);
 
-  /* ─── Handle `?user=` query param ─── */
+  /* ─── Handle `?user=` and `?group=` query params ─── */
   useEffect(() => {
     const userIdFromUrl = searchParams?.get('user');
+    const groupIdFromUrl = searchParams?.get('group');
+    if (groupIdFromUrl) {
+      const found = groups.find(g => g.id === groupIdFromUrl);
+      if (found) {
+        selectGroup(found);
+        return;
+      }
+    }
     if (userIdFromUrl && userIdFromUrl !== currentUser?.id) {
       setActiveUserId(userIdFromUrl);
       setShowList(false);
     }
-  }, [searchParams, currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, currentUser, groups]);
 
   /* ─── Socket connection ─── */
   useEffect(() => {
@@ -299,6 +345,96 @@ function MessengerContent() {
       sock.off('user:offline');
     };
   }, [currentUser]);
+
+  /* ─── Fetch groups ─── */
+  useEffect(() => {
+    if (!currentUser) return;
+    setGroupsLoading(true);
+    apiFetch('/groups', {})
+      .then((data: GroupData[]) => setGroups(data || []))
+      .catch(() => {})
+      .finally(() => setGroupsLoading(false));
+  }, [currentUser]);
+
+  /* ─── Fetch group messages ─── */
+  useEffect(() => {
+    if (!currentUser || !activeGroupId) return;
+    setGroupMessagesLoading(true);
+    apiFetch(`/groups/${activeGroupId}/messages`, {})
+      .then((data: GroupMessageData[]) => setGroupMessages(data || []))
+      .catch(() => {})
+      .finally(() => setGroupMessagesLoading(false));
+  }, [currentUser, activeGroupId]);
+
+  /* ─── Scroll to bottom on new group messages ─── */
+  const groupEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    groupEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [groupMessages]);
+
+  const selectGroup = useCallback((group: GroupData) => {
+    setActiveGroupId(group.id);
+    setActiveGroup(group);
+    setShowList(false);
+    const url = new URL(window.location.href);
+    url.searchParams.set('group', group.id);
+    window.history.replaceState({}, '', url.toString());
+  }, []);
+
+  const sendGroupMessage = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!groupInput.trim() || !activeGroupId || groupSending) return;
+    const content = groupInput.trim();
+    setGroupInput('');
+    setGroupSending(true);
+    try {
+      const msg = await apiFetch(`/groups/${activeGroupId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content }),
+      });
+      setGroupMessages(prev => [...prev, msg]);
+      setGroups(prev => prev.map(g => g.id === activeGroupId ? { ...g, lastMessage: { content, createdAt: new Date().toISOString(), sender: { username: (currentUser as any)?.username || '' } } } : g));
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al enviar mensaje', 'error');
+    } finally {
+      setGroupSending(false);
+    }
+  }, [groupInput, activeGroupId, groupSending, currentUser]);
+
+  const searchGroupMembers = useCallback(async (q: string) => {
+    setGroupMemberSearch(q);
+    if (!q.trim()) { setGroupSearchResults([]); return; }
+    try {
+      const data = await apiFetch(`/users/search?q=${encodeURIComponent(q)}&limit=6`, {});
+      setGroupSearchResults((data.users || data) as UserInfo[]);
+    } catch { setGroupSearchResults([]); }
+  }, []);
+
+  const createGroup = useCallback(async () => {
+    if (!groupName.trim()) { showToast('Ponle un nombre al grupo', 'error'); return; }
+    if (selectedGroupMembers.length === 0) { showToast('Agrega al menos un miembro', 'error'); return; }
+    setCreatingGroup(true);
+    try {
+      const group = await apiFetch('/groups', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: groupName.trim(),
+          memberIds: selectedGroupMembers.map(m => m.id),
+        }),
+      });
+      setGroups(prev => [group, ...prev]);
+      setShowCreateGroup(false);
+      setGroupName('');
+      setSelectedGroupMembers([]);
+      setGroupSearchResults([]);
+      selectGroup(group);
+      showToast('Grupo creado', 'success');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al crear el grupo', 'error');
+    } finally {
+      setCreatingGroup(false);
+    }
+  }, [groupName, selectedGroupMembers, selectGroup, showToast]);
 
   /* ─── Fetch conversations ─── */
   useEffect(() => {
@@ -712,6 +848,87 @@ function MessengerContent() {
             )}
           </div>
 
+          {/* ─── Grupos (DMs grupales — NOVA+) ─── */}
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Grupos
+              </div>
+              {canUseGroups && (
+                <button
+                  onClick={() => setShowCreateGroup(true)}
+                  title="Crear grupo"
+                  style={{
+                    width: '22px', height: '22px', borderRadius: '50%',
+                    border: '1px dashed rgba(138,43,226,0.4)', background: 'transparent',
+                    color: 'var(--primary)', cursor: 'pointer', fontSize: '0.95rem', lineHeight: 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(138,43,226,0.15)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  +
+                </button>
+              )}
+            </div>
+            {!canUseGroups ? (
+              <Link href="/premium" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                DMs grupales: Nova Pro o Stellar →
+              </Link>
+            ) : groupsLoading ? (
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', padding: '4px 0' }}>Cargando grupos...</div>
+            ) : groups.length === 0 ? (
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', padding: '4px 0' }}>
+                Sin grupos todavía. Crea uno con <span style={{ color: 'var(--primary)' }}>+</span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                {groups.map(group => {
+                  const isActive = activeGroupId === group.id;
+                  const initials = group.name.slice(0, 2).toUpperCase();
+                  return (
+                    <button
+                      key={group.id}
+                      onClick={() => selectGroup(group)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '7px 10px', borderRadius: '10px',
+                        border: 'none',
+                        background: isActive ? 'linear-gradient(90deg, rgba(138,43,226,0.2), rgba(138,43,226,0.05))' : 'transparent',
+                        borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent',
+                        color: 'var(--text)', cursor: 'pointer', width: '100%', textAlign: 'left',
+                        transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <div style={{
+                        width: '34px', height: '34px', borderRadius: '12px', flexShrink: 0,
+                        background: 'linear-gradient(135deg, #9333ea, #c084fc)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', fontSize: '0.68rem', fontWeight: 800,
+                        boxShadow: '0 2px 10px rgba(147,51,234,0.3)',
+                      }}>
+                        {initials}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {group.name}
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {group.lastMessage ? `${group.lastMessage.sender.username}: ${group.lastMessage.content}` : `${group.members.length} miembros`}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* ─── Contactos Rápidos (Amigos) ─── */}
           {friendsList.length > 0 && (
             <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.1)' }}>
@@ -942,7 +1159,149 @@ function MessengerContent() {
         <div className={`msg-pane ${!showList ? '' : 'msg-pane-hidden'}`} style={{
           flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
-          {activeUserId && activeUserInfo ? (
+          {activeGroupId && activeGroup ? (
+            <>
+              {/* Group header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '14px 20px',
+                borderBottom: '1px solid var(--glass-border)',
+                background: 'rgba(0,0,0,0.12)',
+                flexShrink: 0, justifyContent: 'space-between',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
+                    background: 'linear-gradient(135deg, #9333ea, #c084fc)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontSize: '0.8rem', fontWeight: 800,
+                  }}>
+                    {activeGroup.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 800, fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {activeGroup.name}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                      {activeGroup.members.length} miembros
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm('¿Salir de este grupo?')) {
+                      apiFetch(`/groups/${activeGroup.id}/leave`, { method: 'DELETE' }).then(() => {
+                        setGroups(prev => prev.filter(g => g.id !== activeGroup.id));
+                        setActiveGroupId(null);
+                        setActiveGroup(null);
+                        setShowList(true);
+                        showToast('Has salido del grupo', 'success');
+                      }).catch(() => {});
+                    }
+                  }}
+                  style={{
+                    padding: '6px 12px', fontSize: '0.75rem', borderRadius: '8px',
+                    border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)',
+                    color: '#f87171', cursor: 'pointer', fontWeight: 600, flexShrink: 0,
+                  }}
+                >
+                  Salir
+                </button>
+              </div>
+
+              {/* Group messages */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {groupMessagesLoading ? (
+                  <div style={{ textAlign: 'center', padding: '60px' }}>
+                    <span style={{ width: '24px', height: '24px', border: '3px solid rgba(255,255,255,0.08)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+                  </div>
+                ) : groupMessages.length === 0 ? (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '10px', textAlign: 'center', padding: '40px 20px' }}>
+                    <div style={{ fontSize: '2.2rem' }}>💬</div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0 }}>
+                      Es el inicio del grupo <strong style={{ color: 'var(--text)' }}>{activeGroup.name}</strong>. ¡Saluda!
+                    </p>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                      {activeGroup.members.slice(0, 6).map(m => (
+                        <span key={m.id} style={{ fontSize: '0.7rem', padding: '2px 10px', borderRadius: '14px', background: 'rgba(138,43,226,0.1)', border: '1px solid rgba(138,43,226,0.2)', color: 'var(--primary)', fontWeight: 600 }}>
+                          {getUsername(m)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  groupMessages.map((msg, idx) => {
+                    const isMine = msg.senderId === currentUser.id;
+                    const showAvatar = !isMine && (idx === 0 || groupMessages[idx - 1]?.senderId !== msg.senderId);
+                    return (
+                      <div
+                        key={msg.id}
+                        style={{
+                          display: 'flex', alignItems: 'flex-end', gap: '8px',
+                          flexDirection: isMine ? 'row-reverse' : 'row',
+                          maxWidth: '85%', alignSelf: isMine ? 'flex-end' : 'flex-start',
+                          marginLeft: isMine ? 'auto' : '0',
+                        }}
+                      >
+                        {showAvatar && (
+                          <UserAvatar
+                            src={msg.sender.avatarUrl || msg.sender.vtuberProfile?.avatarUrl}
+                            alt={getUsername(msg.sender)}
+                            size={28}
+                            user={msg.sender}
+                            userId={msg.sender.id}
+                          />
+                        )}
+                        {!showAvatar && !isMine && <div style={{ width: '28px', flexShrink: 0 }} />}
+                        <div style={{
+                          background: isMine ? 'linear-gradient(135deg, var(--primary), #7c6aff)' : 'rgba(255,255,255,0.06)',
+                          padding: '10px 14px',
+                          borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                          maxWidth: '100%',
+                          boxShadow: isMine ? '0 4px 16px rgba(138,43,226,0.25)' : 'none',
+                        }}>
+                          {!isMine && showAvatar && (
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '4px' }}>
+                              {getUsername(msg.sender)}
+                            </div>
+                          )}
+                          <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                            {renderFormattedContent(msg.content)}
+                          </p>
+                          <div style={{ fontSize: '0.68rem', opacity: 0.8, fontWeight: 500, marginTop: '4px', textAlign: isMine ? 'right' : 'left' }}>
+                            {formatTimeFull(msg.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={groupEndRef} />
+              </div>
+
+              {/* Group input */}
+              <form
+                onSubmit={sendGroupMessage}
+                style={{ display: 'flex', gap: '8px', padding: '14px 20px', borderTop: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.15)', flexShrink: 0 }}
+              >
+                <input
+                  className="input"
+                  value={groupInput}
+                  onChange={e => setGroupInput(e.target.value)}
+                  placeholder={`Mensaje a ${activeGroup.name}...`}
+                  style={{ flex: 1, padding: '10px 14px', fontSize: '0.88rem', borderRadius: '12px' }}
+                />
+                <button
+                  type="submit"
+                  className="btn"
+                  disabled={!groupInput.trim() || groupSending}
+                  style={{ padding: '10px 22px', fontSize: '0.88rem', borderRadius: '12px' }}
+                >
+                  {groupSending ? '...' : 'Enviar'}
+                </button>
+              </form>
+            </>
+          ) : activeUserId && activeUserInfo ? (
             <>
               {/* Conversation header */}
               <div style={{
@@ -1368,6 +1727,138 @@ function MessengerContent() {
           )}
         </div>
       </div>
+
+      {/* Create Group Modal (NOVA+) */}
+      {showCreateGroup && (
+        <div
+          onClick={() => setShowCreateGroup(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9998,
+            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: '420px',
+              background: '#181828', border: '1px solid rgba(138,43,226,0.3)',
+              borderRadius: '18px', padding: '24px',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              animation: 'fadeInUp 0.2s ease-out',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>👥</span> Crear grupo
+              </h3>
+              <button
+                onClick={() => setShowCreateGroup(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer', padding: '4px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+              Nombre del grupo
+            </label>
+            <input
+              className="input"
+              value={groupName}
+              onChange={e => setGroupName(e.target.value)}
+              placeholder="Ej: Club de lectura 📚"
+              maxLength={40}
+              style={{ width: '100%', padding: '10px 14px', fontSize: '0.88rem', borderRadius: '10px', marginBottom: '14px' }}
+              autoFocus
+            />
+
+            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+              Miembros (hasta 20)
+            </label>
+            <input
+              className="input"
+              value={groupMemberSearch}
+              onChange={e => searchGroupMembers(e.target.value)}
+              placeholder="Buscar usuarios..."
+              style={{ width: '100%', padding: '10px 14px', fontSize: '0.88rem', borderRadius: '10px' }}
+            />
+
+            {groupSearchResults.length > 0 && (
+              <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '160px', overflowY: 'auto' }}>
+                {groupSearchResults
+                  .filter(u => !selectedGroupMembers.some(m => m.id === u.id))
+                  .map(u => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        setSelectedGroupMembers(prev => [...prev, u]);
+                        setGroupSearchResults([]);
+                        setGroupMemberSearch('');
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '7px 10px', borderRadius: '8px',
+                        border: 'none', background: 'transparent', color: 'var(--text)',
+                        cursor: 'pointer', fontSize: '0.84rem', textAlign: 'left', width: '100%',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <div style={{
+                        width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                        background: u.vtuberProfile?.avatarUrl ? `url(${u.vtuberProfile.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.65rem', fontWeight: 700,
+                      }}>
+                        {!u.vtuberProfile?.avatarUrl && getInitial(u)}
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{getUsername(u)}</span>
+                      <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--primary)' }}>Agregar +</span>
+                    </button>
+                  ))}
+              </div>
+            )}
+
+            {selectedGroupMembers.length > 0 && (
+              <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {selectedGroupMembers.map(m => (
+                  <span
+                    key={m.id}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      fontSize: '0.75rem', fontWeight: 600, padding: '4px 10px',
+                      borderRadius: '16px', background: 'rgba(138,43,226,0.15)',
+                      border: '1px solid rgba(138,43,226,0.3)', color: 'var(--text)',
+                    }}
+                  >
+                    {getUsername(m)}
+                    <button
+                      onClick={() => setSelectedGroupMembers(prev => prev.filter(x => x.id !== m.id))}
+                      style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem', padding: 0, lineHeight: 1 }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={createGroup}
+              disabled={creatingGroup || !groupName.trim() || selectedGroupMembers.length === 0}
+              className="btn"
+              style={{
+                width: '100%', marginTop: '18px', padding: '12px', fontSize: '0.92rem',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #9333ea, #c084fc)',
+              }}
+            >
+              {creatingGroup ? 'Creando...' : `Crear grupo (${selectedGroupMembers.length + 1} miembros)`}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Lightbox Image View Modal */}
       {lightboxImage && (

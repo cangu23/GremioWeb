@@ -4,6 +4,7 @@ export interface VTuberProfile {
   displayName: string;
   avatarUrl?: string | null;
   bannerUrl?: string | null;
+  bannerVideoUrl?: string | null;
   description?: string | null;
   lore?: string | null;
   socialLinks?: string | null;
@@ -35,6 +36,7 @@ export interface UpdateVTuberProfilePayload {
   displayName?: string;
   avatarUrl?: string;
   bannerUrl?: string;
+  bannerVideoUrl?: string;
   description?: string;
   lore?: string;
   socialLinks?: Record<string, string>;

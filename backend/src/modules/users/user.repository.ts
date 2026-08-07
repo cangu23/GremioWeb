@@ -176,7 +176,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
     ];
     // Fields that specifically belong to VTuberProfile (excluding shared userFields)
     const vtuberSpecificFields = [
-      'bannerUrl', 'description', 'lore',
+      'bannerUrl', 'bannerVideoUrl', 'description', 'lore',
       'twitchUrl', 'youtubeUrl', 'kickUrl', 'tiktokUrl', 'twitterUrl',
       'discordUrl', 'websiteUrl', 'kofiUrl', 'streamSchedule', 'contentType',
       'live2dModel', 'model3d', 'fanName', 'oshiMark', 'themeColor', 'isLive',
@@ -188,8 +188,11 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       where: { userId },
     });
 
+    // Campos vacíos (null/'') NO deben crear un VTuberProfile de la nada:
+    // solo campos con valor real lo activan (o un perfil ya existente).
+    const hasRealVtuberValue = (v: unknown) => v !== undefined && v !== null && v !== '';
     const hasVtuberFields = existingProfile !== null ||
-      vtuberSpecificFields.some(f => dataRecord[f] !== undefined) ||
+      vtuberSpecificFields.some(f => hasRealVtuberValue(dataRecord[f])) ||
       data.socialLinks !== undefined || data.languages !== undefined || data.hashtags !== undefined;
     
     const { username, socialLinks, ...rest } = data;

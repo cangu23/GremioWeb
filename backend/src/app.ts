@@ -129,7 +129,17 @@ const authLimiter = rateLimit({
 // ========== PARSING MIDDLEWARE ==========
 
 console.log(`${BOOT} Configuring body parsers...`);
-app.use(express.json({ limit: '10mb' }));
+// `verify` captura el body crudo (req.rawBody) SOLO para el webhook de PayPal
+// (necesita el payload original para verificar la firma con el CRC32).
+// Evita retener buffers extra en el resto de peticiones JSON.
+app.use(express.json({
+  limit: '10mb',
+  verify: (req: Request, _res, buf: Buffer) => {
+    if (req.path === '/api/payments/paypal/webhook') {
+      (req as any).rawBody = buf;
+    }
+  },
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 console.log(`${BOOT} Body parsers configured`);

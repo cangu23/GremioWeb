@@ -937,7 +937,7 @@ function HomeContent() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {posts.map(post => (
-              <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user.id} currentUserRole={user.role} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
+              <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user.id} currentUserRole={user.role} currentUserPlan={(user as any).plan} onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
             ))}
             {hasMore && (
               <div ref={sentinelRef} style={{ width: '100%', padding: '8px 0' }}>

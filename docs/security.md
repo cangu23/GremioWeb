@@ -35,6 +35,22 @@ El backend **se niega a arrancar** en `NODE_ENV=production` cuando:
   (se imprime una sola vez). Ejecútalo solo en entornos de bootstrap, nunca en
   producción.
 
+## Webhook de PayPal
+
+- La entrega de beneficios (planes, Stardust, donaciones) se confirma por dos
+  vías: la captura vía callback del navegador (`POST /api/payments/paypal/capture-order`)
+  y el webhook `POST /api/payments/paypal/webhook` (evento `PAYMENT.CAPTURE.COMPLETED`).
+- El webhook es **público** pero verifica la firma de PayPal (cabeceras de
+transmisión + certificado) y correlaciona el evento con la intención de pago
+guardada mediante `resource.custom_id`. Sin `PAYPAL_WEBHOOK_ID` configurado
+devuelve 503 (PayPal reintenta) — no procesa nada en modo fail-closed.
+- Idempotencia: la intención de pago (`PAYPAL_PENDING:...`) se marca como
+  `PAYPAL_COMPLETED:...` atómicamente antes de entregar beneficios; un
+  reintento (captura duplicada o webhook repetido) se rechaza con 409 y nunca
+  entrega beneficios dos veces.
+- Configura la URL del webhook en el panel de PayPal:
+  `https://TU_DOMINIO/api/payments/paypal/webhook`
+
 ## Uploads locales
 
 - Si Cloudinary y el Media Engine fallan, las imágenes se guardan en disco local

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as UserService from './user.service';
+import * as ProfileStatsService from './profile-stats.service';
 import { hasAnyRole } from '@gremio-estelar/shared';
 
 export const getMe = async (req: Request, res: Response, next: NextFunction) => {
@@ -26,7 +27,19 @@ export const getPublicUser = async (req: Request, res: Response, next: NextFunct
   try {
     const id = req.params.id as string;
     const publicProfile = await UserService.getPublicUser(id);
+    // Estadísticas avanzadas de visualización: registrar la visita (NOVA+ puede verlas)
+    ProfileStatsService.recordProfileView(id, req.user?.id).catch(() => {});
     res.status(200).json(publicProfile);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProfileStats = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+    const stats = await ProfileStatsService.getProfileStats(req.user!.id, id);
+    res.json(stats);
   } catch (error) {
     next(error);
   }

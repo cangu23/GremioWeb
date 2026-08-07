@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { optimizeImage } from '../../lib/media-engine';
 import { ioContext } from '../../websocket/socket.server';
-import { hasAnyRole } from '@gremio-estelar/shared';
+import prisma from '../../database/prisma';
+import { PLATFORM_PLANS, getEffectivePlan, planMeetsOrExceeds } from '../subscriptions/platform-subscriptions.service';
 
 // Allowed MIME types
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -121,12 +124,46 @@ async function handleUpload(
 
     const user = (req as any).user;
     const isGif = req.file.mimetype === 'image/gif';
-    const isPrivileged = user?.plan && user.plan !== 'FREE' || hasAnyRole(user?.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR', 'BETA_TESTER']);
+    const effectivePlan = user ? getEffectivePlan(user.plan, user.role) : 'FREE';
+    const isPrivileged = effectivePlan !== 'FREE';
 
-    // Restringir GIFs a usuarios sin plan o rol premium
-    if (isGif && !isPrivileged && folder !== 'pets' && folder !== 'stickers') {
-      res.status(403).json({ status: 'error', message: 'Usar GIFs es una función exclusiva para VTubers y miembros Premium.' });
+    // Restringir GIFs según el beneficio prometido de cada plan:
+    //  - Posts/general: GIF con cualquier plan premium (ASTRO+) ✓
+    //  - Banners: GIF solo a partir de NOVA (el plan promete "Banner GIF animado")
+    const isBanner = folder === 'banners' || folder === 'banner';
+    const bannerGifAllowed = isBanner ? planMeetsOrExceeds(effectivePlan, 'NOVA') : isPrivileged;
+
+    if (isGif && !bannerGifAllowed && folder !== 'pets' && folder !== 'stickers') {
+      if (isBanner) {
+        res.status(403).json({ status: 'error', message: 'Los banners animados (GIF) son exclusivos de los Planes Nova Pro y Stellar Elite.' });
+        return;
+      }
+      res.status(403).json({ status: 'error', message: 'Usar GIFs es una función exclusiva para miembros Premium.' });
       return;
+    }
+
+    // ── Límite diario de imágenes en publicaciones (beneficio del plan) ──
+    // maxImagesPerDay: FREE=20, ASTRO/NOVA=100, STELLAR=500.
+    // Se cuentan las publicaciones con imagen creadas hoy (UTC) por el usuario.
+    const isPostImage = folder === 'posts' || folder === 'general';
+    if (isPostImage && user?.id) {
+      const planLimit = PLATFORM_PLANS[getEffectivePlan(user.plan, user.role)]?.maxImagesPerDay ?? 20;
+      const startOfUtcDay = new Date();
+      startOfUtcDay.setUTCHours(0, 0, 0, 0);
+      const usedToday = await prisma.post.count({
+        where: {
+          userId: user.id,
+          mediaUrl: { not: null },
+          createdAt: { gte: startOfUtcDay },
+        },
+      });
+      if (usedToday >= planLimit) {
+        res.status(403).json({
+          status: 'error',
+          message: `Alcanzaste el límite diario de ${planLimit} imágenes en publicaciones. Vuelve mañana o mejora tu plan en /premium.`,
+        });
+        return;
+      }
     }
 
     // Generate a unique upload ID for tracking
@@ -212,6 +249,55 @@ export const handleUploadPetImage = async (req: Request, res: Response, next: Ne
 // Upload general image handler
 export const handleUploadGeneralImage = async (req: Request, res: Response, next: NextFunction) => {
   await handleUpload(req, res, next, 'general', { maxWidth: 1200, quality: 85 });
+};
+
+// ─── VIDEO BANNER (solo STELLAR) ─────────────────────────────
+// El plan Stellar Elite promete "Banner en video animado". Los videos no pasan
+// por el Media Engine (solo imágenes): se guardan crudos en disco bajo /uploads.
+const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/webm', 'video/ogg'];
+const MAX_VIDEO_SIZE = 25 * 1024 * 1024; // 25MB
+
+const videoFileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (ALLOWED_VIDEO_MIMES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Formato de video no soportado. Usa MP4, WebM u OGG.'));
+  }
+};
+
+export const uploadVideoBanner = multer({
+  storage: memoryStorage,
+  fileFilter: videoFileFilter,
+  limits: { fileSize: MAX_VIDEO_SIZE },
+}).single('video');
+
+export const handleUploadVideoBanner = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = (req as any).user;
+    const effectivePlan = user ? getEffectivePlan(user.plan, user.role) : 'FREE';
+    if (effectivePlan !== 'STELLAR') {
+      res.status(403).json({ status: 'error', message: 'Los banners en video son exclusivos del Plan Stellar Elite.' });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ status: 'error', message: 'No se seleccionó ningún video.' });
+      return;
+    }
+
+    const extMap: Record<string, string> = { 'video/mp4': 'mp4', 'video/webm': 'webm', 'video/ogg': 'ogv' };
+    const ext = extMap[req.file.mimetype] || 'mp4';
+    const fileName = `banner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'banner-video');
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    const filePath = path.join(uploadsDir, fileName);
+    fs.writeFileSync(filePath, req.file.buffer);
+
+    const url = `/uploads/banner-video/${fileName}`;
+    res.json({ status: 'ok', url, filename: req.file.originalname, size_bytes: req.file.size });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // ─── Poll endpoint for upload status (backup if no WebSocket) ───

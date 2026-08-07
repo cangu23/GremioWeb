@@ -29,6 +29,11 @@ interface User {
     isFeatured: boolean;
     isHidden: boolean;
   } | null;
+  platformSubscription?: {
+    plan: string;
+    status: string;
+    currentPeriodEnd: string;
+  } | null;
   _count: {
     posts: number;
     comments: number;
@@ -94,6 +99,12 @@ export default function AdminUsersPage() {
   });
   const [saving, setSaving] = useState(false);
 
+  // Premium plan grant
+  const [premiumUser, setPremiumUser] = useState<User | null>(null);
+  const [grantPlan, setGrantPlan] = useState<'ASTRO' | 'NOVA' | 'STELLAR'>('ASTRO');
+  const [grantDays, setGrantDays] = useState(30);
+  const [granting, setGranting] = useState(false);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -122,10 +133,14 @@ export default function AdminUsersPage() {
     setSelectedUser(user);
     const userRolesList = parseUserRoles(user.role);
     setEditRoles(userRolesList);
+    // Normaliza planes legacy/desconocidos (p.ej. 'VIP', 'PREMIUM', 'ESTELAR'
+    // del selector roto anterior) a FREE para que el select muestre algo válido.
+    const validPlans = ['FREE', 'ASTRO', 'NOVA', 'STELLAR'];
+    const planValue = user.plan && validPlans.includes(user.plan) ? user.plan : 'FREE';
     setEditData({
       username: user.username,
       email: user.email,
-      plan: user.plan || 'FREE',
+      plan: planValue,
       stardust: user.stardust || 0,
       status: user.status,
       level: user.level || 1,
@@ -160,6 +175,41 @@ export default function AdminUsersPage() {
       showToast(err.message || 'Error al actualizar usuario', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const grantPremium = async () => {
+    if (!premiumUser) return;
+    setGranting(true);
+    try {
+      const res = await apiFetch('/admin/grant-plan', {
+        method: 'POST',
+        body: JSON.stringify({ targetUser: premiumUser.id, plan: grantPlan, durationDays: grantDays }),
+      });
+      showToast(res.message || `Plan ${grantPlan} otorgado a @${premiumUser.username}`, 'success');
+      setPremiumUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      showToast(err.message || 'Error al otorgar el plan', 'error');
+    } finally {
+      setGranting(false);
+    }
+  };
+
+  const hasPremium = (user: User) =>
+    (!!user.plan && user.plan !== 'FREE') || user.platformSubscription?.status === 'ACTIVE';
+
+  const revokePremium = async (user: User) => {
+    if (!window.confirm(`¿Seguro que quieres quitar el plan premium de @${user.username}? Volverá al plan gratuito.`)) return;
+    try {
+      const res = await apiFetch('/admin/revoke-plan', {
+        method: 'POST',
+        body: JSON.stringify({ targetUser: user.id }),
+      });
+      showToast(res.message || `Plan retirado de @${user.username}`, 'success');
+      fetchUsers();
+    } catch (err: any) {
+      showToast(err.message || 'Error al retirar el plan', 'error');
     }
   };
 
@@ -298,6 +348,11 @@ export default function AdminUsersPage() {
                               {user.plan && user.plan !== 'FREE' && (
                                 <span style={{ color: '#d4a030', marginLeft: '6px' }}>💎 {user.plan}</span>
                               )}
+                              {user.platformSubscription?.status === 'ACTIVE' && (
+                                <span style={{ color: '#a78bfa', marginLeft: '6px', fontSize: '0.72rem' }}>
+                                  ⏳ hasta {new Date(user.platformSubscription.currentPeriodEnd).toLocaleDateString()}
+                                </span>
+                              )}
                             </span>
                             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e8c060' }}>
                               {user.stardust?.toLocaleString() || 0} ⭐ (Lvl {user.level})
@@ -334,6 +389,34 @@ export default function AdminUsersPage() {
                             >
                               {isVer ? '🔵 Verificado' : '⚪ Verificar'}
                             </button>
+
+                            <button
+                              onClick={() => { setGrantPlan('ASTRO'); setGrantDays(30); setPremiumUser(user); }}
+                              title="Otorgar plan premium"
+                              style={{
+                                padding: '6px 10px', fontSize: '0.78rem',
+                                background: 'rgba(212,160,48,0.15)', color: '#d4a030',
+                                border: '1px solid rgba(212,160,48,0.4)',
+                                borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
+                              }}
+                            >
+                              💎 Premium
+                            </button>
+
+                            {hasPremium(user) && (
+                              <button
+                                onClick={() => revokePremium(user)}
+                                title="Quitar plan premium"
+                                style={{
+                                  padding: '6px 10px', fontSize: '0.78rem',
+                                  background: 'rgba(239,68,68,0.12)', color: '#f87171',
+                                  border: '1px solid rgba(239,68,68,0.35)',
+                                  borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
+                                }}
+                              >
+                                🚫 Quitar
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -434,9 +517,9 @@ export default function AdminUsersPage() {
                   <label className="form-label" style={{ color: '#e8c060', fontWeight: 700 }}>Plan Premium VIP</label>
                   <select className="input" value={editData.plan} onChange={e => setEditData({ ...editData, plan: e.target.value })}>
                     <option value="FREE">Gratuito (FREE)</option>
-                    <option value="VIP">💎 Plan VIP</option>
-                    <option value="PREMIUM">⭐ Plan Premium Estelar</option>
-                    <option value="ESTELAR">🚀 Plan Estelar VIP</option>
+                    <option value="ASTRO">💎 Astro — $2.99/mes</option>
+                    <option value="NOVA">✨ Nova Pro — $5.99/mes</option>
+                    <option value="STELLAR">🌟 Stellar Elite — $12.99/mes</option>
                   </select>
                 </div>
 
@@ -478,6 +561,78 @@ export default function AdminUsersPage() {
               <button onClick={() => setSelectedUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
               <button onClick={saveUser} className="btn" disabled={saving} style={{ background: 'linear-gradient(135deg, #d4a030, #a0782c)', color: '#1a1410', fontWeight: 800 }}>
                 {saving ? 'Guardando...' : '💾 Guardar Cambios'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Grant Premium Plan Modal */}
+      {mounted && premiumUser && createPortal(
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10001, padding: '20px',
+        }} onClick={() => setPremiumUser(null)}>
+          <div className="glass" style={{
+            padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '480px',
+            border: '1px solid rgba(212,160,48,0.4)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f5e6d3' }}>💎 Otorgar Plan Premium</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Activa un plan con expiración para @{premiumUser.username}</p>
+              </div>
+              <button onClick={() => setPremiumUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginBottom: '24px' }}>
+              <div className="form-group">
+                <label className="form-label" style={{ color: '#e8c060', fontWeight: 800 }}>Plan a otorgar</label>
+                <select
+                  className="input"
+                  value={grantPlan}
+                  onChange={e => setGrantPlan(e.target.value as 'ASTRO' | 'NOVA' | 'STELLAR')}
+                  style={{ marginTop: '6px' }}
+                >
+                  <option value="ASTRO">💎 Astro — $2.99/mes (×1.2 Stardust, ×1.5 XP)</option>
+                  <option value="NOVA">✨ Nova Pro — $5.99/mes (×1.5 Stardust, ×2 XP)</option>
+                  <option value="STELLAR">🌟 Stellar Elite — $12.99/mes (×2 Stardust, ×3 XP)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ color: '#e8c060', fontWeight: 800 }}>Duración</label>
+                <select
+                  className="input"
+                  value={grantDays}
+                  onChange={e => setGrantDays(Number(e.target.value))}
+                  style={{ marginTop: '6px' }}
+                >
+                  <option value={7}>7 días</option>
+                  <option value={15}>15 días</option>
+                  <option value={30}>1 mes (30 días)</option>
+                  <option value={90}>3 meses (90 días)</option>
+                  <option value={365}>1 año (365 días)</option>
+                  <option value={3650}>Permanente (10 años)</option>
+                </select>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
+                  El usuario recibirá una notificación y su plan expirará automáticamente al cumplirse el periodo.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setPremiumUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
+              <button
+                onClick={grantPremium}
+                className="btn"
+                disabled={granting}
+                style={{
+                  background: 'linear-gradient(135deg, #d4a030, #a0782c)', color: '#1a1410', fontWeight: 800,
+                }}
+              >
+                {granting ? 'Otorgando...' : `💎 Otorgar ${grantPlan}`}
               </button>
             </div>
           </div>

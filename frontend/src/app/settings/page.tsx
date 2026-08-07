@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getAccessToken } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { hasAnyRole } from '@gremio-estelar/shared';
 
 import RoleBadge from '@/components/ui/RoleBadge';
-import { parseUserRoles, getPrimaryRole, isSpotifyUrl, canUseProfileMusic, toSpotifyEmbedUrl, getSpotifyEmbedHeight } from '@gremio-estelar/shared';
+import { parseUserRoles, getPrimaryRole, isSpotifyUrl, canUseProfileMusic, toSpotifyEmbedUrl, getSpotifyEmbedHeight, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
 
 // ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
@@ -30,6 +30,7 @@ function UserSettings() {
   const [bio, setBio] = useState('');
   const [bannerColor, setBannerColor] = useState('#1a1040');
   const [bannerUrl, setBannerUrl] = useState('');
+  const [bannerVideoUrl, setBannerVideoUrl] = useState('');
   const [displayedRole, setDisplayedRole] = useState('');
   const [profileMusic, setProfileMusic] = useState('');
   const originalProfileMusic = useRef('');
@@ -85,6 +86,41 @@ function UserSettings() {
     setCropperOpen(true);
   };
 
+  // Video banner (STELLAR only) — raw video, no cropper.
+  const videoBannerInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingVideoBanner, setUploadingVideoBanner] = useState(false);
+  const handleVideoBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVideoBanner(true);
+    try {
+      const token = getAccessToken();
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+      const formData = new FormData();
+      formData.append('video', file);
+      const res = await fetch(`${baseUrl}/uploads/banner/video`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Error al subir el video' }));
+        throw new Error(err.message || 'Error al subir el video');
+      }
+      const data = await res.json();
+      if (data?.url) {
+        setBannerVideoUrl(data.url);
+        setBannerUrl('');
+        showToast('Banner en video subido (Stellar Elite)', 'success');
+      }
+    } catch (err: unknown) {
+      showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir el video'}`, 'error');
+    } finally {
+      setUploadingVideoBanner(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/login');
@@ -95,7 +131,8 @@ function UserSettings() {
       setAvatarUrl(user.avatarUrl || '');
       setBio(user.bio || '');
       setBannerColor(user.bannerColor || '#1a1040');
-      setBannerUrl((user as any).bannerUrl || '');
+      setBannerUrl((user as any).bannerUrl || (user as any).vtuberProfile?.bannerUrl || '');
+      setBannerVideoUrl((user as any).vtuberProfile?.bannerVideoUrl || '');
       setDisplayedRole(user.displayedRole || '');
       setProfileMusic(user.profileMusic || '');
       originalProfileMusic.current = user.profileMusic || '';
@@ -131,7 +168,8 @@ function UserSettings() {
           avatarUrl: avatarUrl.trim() || undefined,
           bio: bio.trim() || undefined,
           bannerColor: bannerColor || undefined,
-          bannerUrl: bannerUrl.trim() || undefined,
+          bannerUrl: bannerUrl.trim() || null,
+          bannerVideoUrl: bannerVideoUrl.trim() || null,
           displayedRole: displayedRole || undefined,
           profileMusic: profileMusic.trim() || null,
         }),
@@ -161,6 +199,10 @@ function UserSettings() {
     </div>
   );
   if (!user) return null;
+
+  const effectivePlan = getEffectivePlan(user.plan, user.role);
+  const canBannerGif = planMeetsOrExceeds(user.plan, user.role, 'NOVA');
+  const canVideoBanner = effectivePlan === 'STELLAR';
 
   return (
     <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px', maxWidth: '700px', margin: '0 auto' }}>
@@ -266,14 +308,14 @@ function UserSettings() {
                 <input
                   ref={avatarInputRef}
                   type="file"
-                  accept={(hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR', 'BETA_TESTER']) || user.plan !== 'FREE') ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
+                  accept={(hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'HELPER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR']) || user.plan !== 'FREE') ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
                   style={{ display: 'none' }}
                   onChange={handleFileSelect}
                 />
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-                Formatos: JPEG, PNG, WebP{(hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR', 'BETA_TESTER']) || user.plan !== 'FREE') && ' o GIF'}. Se recomienda 400x400px o superior.
-                {(!hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR', 'BETA_TESTER']) && user.plan === 'FREE') && <span style={{ display: 'block', color: 'var(--accent)', marginTop: '4px' }}>✨ Subir GIFs animados es exclusivo de VTubers y Premium.</span>}
+                Formatos: JPEG, PNG, WebP{(hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'HELPER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR']) || user.plan !== 'FREE') && ' o GIF'}. Se recomienda 400x400px o superior.
+                {(!hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'HELPER', 'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR']) && user.plan === 'FREE') && <span style={{ display: 'block', color: 'var(--accent)', marginTop: '4px' }}>✨ Subir GIFs animados es exclusivo de miembros Premium.</span>}
               </p>
             </div>
           </div>
@@ -344,12 +386,67 @@ function UserSettings() {
               <input
                 ref={bannerInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
+                accept={canBannerGif ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
                 style={{ display: 'none' }}
                 onChange={e => handleFileSelect(e, 'banner')}
               />
             </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+              {canBannerGif
+                ? '✨ Puedes subir banners animados (GIF) — beneficio Nova Pro / Stellar Elite.'
+                : 'Los banners animados (GIF) son exclusivos de Nova Pro y Stellar Elite. Sube JPEG, PNG o WebP.'}
+            </p>
           </div>
+
+          {canVideoBanner && (
+            <div style={{ marginTop: '16px', padding: '14px 16px', borderRadius: '12px', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.25)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffd700' }}>🎬 Banner en Video (Stellar Elite)</span>
+                <span style={{ fontSize: '0.62rem', padding: '2px 8px', borderRadius: '10px', background: 'rgba(255,215,0,0.15)', color: '#ffd700', fontWeight: 700 }}>EXCLUSIVO</span>
+              </div>
+              {bannerVideoUrl && (
+                <video
+                  src={bannerVideoUrl}
+                  autoPlay muted loop playsInline
+                  style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '10px', marginBottom: '10px' }}
+                />
+              )}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => videoBannerInputRef.current?.click()}
+                  disabled={uploadingVideoBanner}
+                  style={{
+                    padding: '9px 16px', borderRadius: '9px',
+                    background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                    border: 'none', color: '#1a0f00', fontWeight: 700, fontSize: '0.83rem',
+                    cursor: uploadingVideoBanner ? 'wait' : 'pointer',
+                  }}
+                >
+                  {uploadingVideoBanner ? 'Subiendo...' : bannerVideoUrl ? 'Cambiar video' : 'Subir video banner'}
+                </button>
+                {bannerVideoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setBannerVideoUrl('')}
+                    style={{ padding: '9px 16px', borderRadius: '9px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#f87171', fontWeight: 600, fontSize: '0.83rem', cursor: 'pointer' }}
+                  >
+                    Quitar
+                  </button>
+                )}
+                <input
+                  ref={videoBannerInputRef}
+                  type="file"
+                  accept="video/mp4,video/webm,video/ogg"
+                  style={{ display: 'none' }}
+                  onChange={handleVideoBannerSelect}
+                />
+              </div>
+              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                MP4, WebM u OGG · máx 25MB. El video reemplaza a la imagen del banner en tu perfil.
+              </p>
+            </div>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <input

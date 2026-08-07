@@ -7,6 +7,7 @@ export interface EventData {
   maxAttendees?: number | null;
   coverUrl?: string | null;
   status: 'UPCOMING' | 'ONGOING' | 'FINISHED' | 'CANCELLED';
+  isVip?: boolean;
   createdAt: string;
   creatorId: string;
   creator?: {
@@ -30,6 +31,7 @@ export interface CreateEventPayload {
   location?: string;
   maxAttendees?: number;
   coverUrl?: string;
+  isVip?: boolean;
 }
 
 export interface UpdateEventPayload {
@@ -40,4 +42,5 @@ export interface UpdateEventPayload {
   maxAttendees?: number;
   coverUrl?: string;
   status?: 'UPCOMING' | 'ONGOING' | 'FINISHED' | 'CANCELLED';
+  isVip?: boolean;
 }

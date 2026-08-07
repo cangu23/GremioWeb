@@ -5,7 +5,7 @@ import adminRoutes from './modules/auth/admin.routes';
 import { adminRoutes as adminModuleRoutes } from './modules/admin';
 
 import * as RequestsController from './modules/admin/requests.controller';
-import { authenticate } from './modules/auth/authenticate';
+import { authenticate, authenticateOptional } from './modules/auth/authenticate';
 import userRoutes from './modules/users/user.routes';
 import socialRoutes from './modules/social/social.routes';
 import friendRoutes from './modules/social/friends.routes';
@@ -17,6 +17,7 @@ import chatRoutes from './modules/chat/chat.routes';
 import paymentRoutes from './modules/payments/payments.routes';
 import postRoutes from './modules/posts/posts.routes';
 import dmRoutes from './modules/posts/dm.routes';
+import groupRoutes from './modules/groups/groups.routes';
 import uploadRoutes from './modules/uploads/uploads.routes';
 import statsRoutes from './modules/stats/stats.routes';
 import activityRoutes from './modules/activity/activity.routes';
@@ -53,6 +54,7 @@ router.use('/chat', chatRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/posts', postRoutes);
 router.use('/dm', dmRoutes);
+router.use('/groups', groupRoutes);
 router.use('/vtubers', vtuberRoutes);
 router.use('/uploads', uploadRateLimiter, uploadRoutes);
 router.use('/stats', statsRoutes);
@@ -70,8 +72,8 @@ router.use('/news', newsRoutes);
 // VTuber request (authenticated users)
 router.post('/vtubers/request', authenticate, RequestsController.submitRequest);
 
-// Public stickers endpoint (no auth required, for sticker picker)
-router.get('/stickers', StickersController.getActiveStickers);
+// Public stickers endpoint (optional auth, plan-gated for exclusivity)
+router.get('/stickers', authenticateOptional, StickersController.getActiveStickers);
 
 // Root health check
 router.get('/', (req, res) => {

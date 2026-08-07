@@ -7,6 +7,7 @@ export const createEvent = (data: {
   location?: string;
   maxAttendees?: number;
   coverUrl?: string;
+  isVip?: boolean;
   creatorId: string;
 }) => {
   return prisma.event.create({

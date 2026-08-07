@@ -3,6 +3,16 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/lib/AuthContext';
+import { hasAnyRole } from '@gremio-estelar/shared';
+
+/** Plan efectivo (misma política que el backend): staff real → STELLAR. */
+function effectivePlan(plan?: string, role?: string): string {
+  if (hasAnyRole(role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER', 'HELPER', 'VIP_STELLAR'])) return 'STELLAR';
+  if (hasAnyRole(role, ['VIP_NOVA'])) return 'NOVA';
+  if (hasAnyRole(role, ['VIP_ASTRO'])) return 'ASTRO';
+  return plan || 'FREE';
+}
 
 interface PetRequest {
   id: string;
@@ -22,6 +32,8 @@ interface PetRequestModalProps {
 }
 
 export default function PetRequestModal({ isOpen, onClose }: PetRequestModalProps) {
+  const { user } = useAuth();
+  const canRequestPet = effectivePlan(user?.plan, user?.role) === 'STELLAR';
   const [petName, setPetName] = useState('');
   const [description, setDescription] = useState('');
   const [referenceUrl, setReferenceUrl] = useState('');
@@ -251,8 +263,46 @@ export default function PetRequestModal({ isOpen, onClose }: PetRequestModalProp
           </div>
         )}
 
+        {/* STELLAR GATE — la mascota es exclusiva del Plan Stellar Elite */}
+        {activeTab === 'REQUEST' && !canRequestPet && (
+          <div
+            style={{
+              padding: '24px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(217, 119, 6, 0.12))',
+              border: '1px solid rgba(251, 191, 36, 0.35)',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '2.4rem', marginBottom: '8px' }}>🌟</div>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', color: '#fbbf24', fontWeight: 800 }}>
+              Mascota Virtual — Exclusiva de Stellar Elite
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 16px' }}>
+              La mascota acompañante personalizada es un beneficio del plan más alto.
+              Mejora tu plan para solicitarla.
+            </p>
+            <button
+              onClick={() => { onClose(); window.location.href = '/premium'; }}
+              style={{
+                padding: '10px 22px',
+                borderRadius: '12px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                color: '#000',
+                background: 'linear-gradient(135deg, #fbbf24, #d97706)',
+                boxShadow: '0 6px 16px rgba(251, 191, 36, 0.3)',
+              }}
+            >
+              ✨ Mejorar a Stellar Elite
+            </button>
+          </div>
+        )}
+
         {/* TAB 1: FORM TO SUBMIT */}
-        {activeTab === 'REQUEST' && (
+        {activeTab === 'REQUEST' && canRequestPet && (
           !hasPending ? (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
@@ -379,7 +429,7 @@ export default function PetRequestModal({ isOpen, onClose }: PetRequestModalProp
         )}
 
         {/* TAB 2: MY REQUESTS HISTORY */}
-        {activeTab === 'HISTORY' && (
+        {activeTab === 'HISTORY' && canRequestPet && (
           <div>
             {fetching ? (
               <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>

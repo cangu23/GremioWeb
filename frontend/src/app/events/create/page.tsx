@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
-import { hasAnyRole } from '@gremio-estelar/shared';
+import { hasAnyRole, getEffectivePlan } from '@gremio-estelar/shared';
 
 function CreateEventForm() {
   const { user, isLoading } = useAuth();
@@ -19,8 +19,10 @@ function CreateEventForm() {
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
   const [maxAttendees, setMaxAttendees] = useState('');
+  const [isVip, setIsVip] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const isStellar = getEffectivePlan(user?.plan, user?.role) === 'STELLAR';
 
   if (isLoading) {
     return (
@@ -62,6 +64,7 @@ function CreateEventForm() {
           date: eventDate.toISOString(),
           location: location || undefined,
           maxAttendees: maxAttendees ? parseInt(maxAttendees) : undefined,
+          isVip: isVip || undefined,
         }),
       });
       router.push(`/events/${event.id}`);
@@ -176,6 +179,36 @@ function CreateEventForm() {
                 placeholder="Sin límite"
               />
             </div>
+
+            {/* Evento VIP (STELLAR only) */}
+            {isStellar ? (
+              <div style={{ marginBottom: '28px', padding: '16px 18px', borderRadius: '14px', background: 'rgba(255,215,0,0.07)', border: '1px solid rgba(255,215,0,0.3)', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                onClick={() => setIsVip(!isVip)}
+              >
+                <div style={{
+                  width: '22px', height: '22px', borderRadius: '7px', flexShrink: 0,
+                  background: isVip ? 'linear-gradient(135deg, #ffd700, #f59e0b)' : 'rgba(255,255,255,0.06)',
+                  border: isVip ? 'none' : '1px solid rgba(255,255,255,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#1a0f00', fontWeight: 800, fontSize: '0.8rem',
+                }}>
+                  {isVip ? '✓' : ''}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#ffd700', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffd700"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    Evento VIP exclusivo
+                  </div>
+                  <p style={{ margin: '3px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Solo los miembros Stellar Elite podrán asistir. Beneficio exclusivo de tu plan.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginBottom: '28px', padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.12)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                🛡️ Crear <strong style={{ color: '#ffd700' }}>Eventos VIP</strong> exclusivos es un beneficio del Plan Stellar Elite.
+              </div>
+            )}
 
             <button type="submit" className="btn" style={{
               width: '100%', padding: '14px', borderRadius: '12px', fontWeight: 700,

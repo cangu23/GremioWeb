@@ -26,6 +26,7 @@ interface EventItem {
   };
   _count: { attendees: number };
   isAttending?: boolean;
+  isVip?: boolean;
 }
 
 function EventCard({ event }: { event: EventItem }) {
@@ -88,6 +89,27 @@ function EventCard({ event }: { event: EventItem }) {
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {event.title}
               </h3>
+              {event.isVip && (
+                <span
+                  title="Evento VIP exclusivo — Stellar Elite"
+                  style={{
+                    fontSize: '0.68rem',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(245,158,11,0.15))',
+                    border: '1px solid rgba(255,215,0,0.45)',
+                    color: '#ffd700',
+                    fontWeight: 800,
+                    letterSpacing: '0.03em',
+                    flexShrink: 0,
+                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    boxShadow: '0 0 12px rgba(255,215,0,0.2)',
+                  }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="#ffd700"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  VIP
+                </span>
+              )}
               <span
                 style={{
                   fontSize: '0.7rem',

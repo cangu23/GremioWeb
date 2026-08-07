@@ -55,8 +55,16 @@ async function checkAllVTubers(): Promise<number> {
     const channelNames = [...channelMap.keys()];
     if (channelNames.length === 0) return 0;
 
-    // Check which channels are live via Twitch API
-    const liveChannels = await checkLiveChannels(channelNames);
+    // Check which channels are live via Twitch API.
+    // Si la API falla (checkLiveChannels lanza), NO marcamos a nadie offline:
+    // un error transitorio no debe borrar los estados EN VIVO reales.
+    let liveChannels: string[];
+    try {
+      liveChannels = await checkLiveChannels(channelNames);
+    } catch (err) {
+      console.error('[StreamMonitor] Error consultando Twitch — no se aplicaron cambios offline:', err);
+      return 0;
+    }
     const liveLowerSet = new Set(liveChannels.map(c => c.toLowerCase()));
 
     const liveProfileIds: string[] = [];

@@ -4,6 +4,8 @@ export * from './auth-provider';
 export * from './role';
 
 export * from './profile-music';
+export * from './verification';
+export * from './plans';
 
 export * from './user';
 export * from './vtuber';

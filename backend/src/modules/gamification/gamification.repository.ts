@@ -35,6 +35,8 @@ export const getUserGamificationProfile = (userId: string) =>
       username: true,
       xp: true,
       level: true,
+      plan: true,
+      role: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true } },
     },
   });
@@ -65,6 +67,7 @@ export const getLeaderboard = (limit = 50) =>
       displayedRole: true,
       xp: true,
       level: true,
+      verifiedUntil: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
     },
   });

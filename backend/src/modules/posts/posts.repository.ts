@@ -1,25 +1,29 @@
 import { prisma } from '../../database';
 
+const userSelect = {
+  id: true,
+  username: true,
+  role: true,
+  avatarUrl: true,
+  plan: true,
+  verifiedUntil: true,
+  vtuberProfile: {
+    select: {
+      displayName: true,
+      avatarUrl: true,
+      isVerified: true,
+      isApproved: true,
+    },
+  },
+  purchases: {
+    where: { equipped: true },
+    include: { item: true },
+  },
+};
+
 const postIncludes = {
   user: {
-    select: {
-      id: true,
-      username: true,
-      role: true,
-      avatarUrl: true,
-      vtuberProfile: {
-        select: {
-          displayName: true,
-          avatarUrl: true,
-          isVerified: true,
-          isApproved: true,
-        },
-      },
-      purchases: {
-        where: { equipped: true },
-        include: { item: true },
-      },
-    },
+    select: userSelect,
   },
   _count: { select: { comments: true, likes: true } },
   hashtags: {
@@ -151,26 +155,7 @@ export const createComment = (data: {
   return prisma.comment.create({
     data,
     include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          role: true,
-          avatarUrl: true,
-          vtuberProfile: {
-            select: {
-              displayName: true,
-              avatarUrl: true,
-              isVerified: true,
-              isApproved: true,
-            },
-          },
-          purchases: {
-            where: { equipped: true },
-            include: { item: true },
-          },
-        },
-      },
+      user: { select: userSelect },
       _count: { select: { likes: true } },
     },
   });
@@ -181,26 +166,7 @@ export const findCommentsByPost = (postId: string) => {
     where: { postId },
     orderBy: { createdAt: 'asc' },
     include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          role: true,
-          avatarUrl: true,
-          vtuberProfile: {
-            select: {
-              displayName: true,
-              avatarUrl: true,
-              isVerified: true,
-              isApproved: true,
-            },
-          },
-          purchases: {
-            where: { equipped: true },
-            include: { item: true },
-          },
-        },
-      },
+      user: { select: userSelect },
       _count: { select: { likes: true } },
     },
   });
@@ -210,26 +176,7 @@ export const findCommentById = (id: string) => {
   return prisma.comment.findUnique({
     where: { id },
     include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          role: true,
-          avatarUrl: true,
-          vtuberProfile: {
-            select: {
-              displayName: true,
-              avatarUrl: true,
-              isVerified: true,
-              isApproved: true,
-            },
-          },
-          purchases: {
-            where: { equipped: true },
-            include: { item: true },
-          },
-        },
-      },
+      user: { select: userSelect },
       _count: { select: { likes: true } },
     },
   });

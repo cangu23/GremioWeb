@@ -1,6 +1,7 @@
 import AppError from '../../errors/AppError';
 import prisma from '../../database/prisma';
 import * as GamificationRepository from '../gamification/gamification.repository';
+import { getXpMultiplierForUser } from '../subscriptions/platform-subscriptions.service';
 import { addStardust } from '../ecosystem/stardust.service';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 import * as GamificationService from '../gamification/gamification.service';
@@ -151,17 +152,20 @@ export const claim = async (userId: string) => {
     }
   }
 
-  // Award XP & Stardust
-  await GamificationRepository.addXpToUser(userId, reward.xp);
+  // Award XP & Stardust — el multiplicador del plan se aplica al XP base
+  const multiplier = await getXpMultiplierForUser(userId);
+  const finalXp = Math.max(1, Math.round(reward.xp * multiplier));
+  await GamificationRepository.addXpToUser(userId, finalXp);
   await addStardust(userId, Math.round(reward.xp / 2), `Recompensa Diaria Día ${reward.day}`).catch(() => {});
   await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
 
   return {
     day: reward.day,
-    xpAwarded: reward.xp,
+    xpAwarded: finalXp,
+    baseXp: reward.xp,
     bonus: reward.bonus || false,
     label: reward.label,
     usedStreakSaver,
-    message: `+${reward.xp} XP — ${reward.bonus ? '¡BONUS!' : `Día ${reward.day}`}${usedStreakSaver ? ' 🛡️ (¡Escudo de Racha usado!)' : ''}`,
+    message: `+${finalXp} XP — ${reward.bonus ? '¡BONUS!' : `Día ${reward.day}`}${usedStreakSaver ? ' 🛡️ (¡Escudo de Racha usado!)' : ''}`,
   };
 };

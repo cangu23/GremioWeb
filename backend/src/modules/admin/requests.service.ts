@@ -4,6 +4,7 @@ import { prisma } from '../../database';
 import AppError from '../../errors/AppError';
 import { generateCode } from './codes.service';
 import * as NotificationsService from '../notifications/notifications.service';
+import { parseUserRoles } from '@gremio-estelar/shared';
 
 /**
  * Submit a VTuber request
@@ -91,10 +92,15 @@ export const approveRequest = async (id: string, adminId: string) => {
     generatedById: adminId,
   });
 
-  // Update User role directly to VTUBER
+  // Append VTUBER role to existing roles (never overwrite: the role field
+  // can hold multiple comma-separated roles like "USER,MAID").
+  const roleList = parseUserRoles(request.user?.role);
+  if (!roleList.includes('VTUBER')) {
+    roleList.push('VTUBER');
+  }
   await prisma.user.update({
     where: { id: request.userId },
-    data: { role: 'VTUBER' },
+    data: { role: roleList.join(',') },
   });
 
   // Create or Update VTuber profile with isApproved: true and isVerified: true

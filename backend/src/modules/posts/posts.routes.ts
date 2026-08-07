@@ -27,6 +27,10 @@ router.post('/:id/report', authenticate, validateRequest(reportPostSchema), Post
 router.post('/:id/like', authenticate, PostsController.likePost);
 router.post('/:id/unlike', authenticate, PostsController.unlikePost);
 
+// ========== REACTIONS (animadas — NOVA+) ==========
+router.get('/:id/reactions', optionalAuth, PostsController.getReactions);
+router.post('/:id/reactions', authenticate, PostsController.addReaction);
+
 // ========== COMMENTS ==========
 router.get('/:postId/comments', optionalAuth, PostsController.getComments);
 router.post('/:postId/comments', authenticate, validateRequest(createCommentSchema), PostsController.createComment);

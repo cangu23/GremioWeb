@@ -2,40 +2,54 @@
 
 ## Arquitectura
 
-- Socket.IO corre sobre el servidor Express (puerto interno **4001**).
-- El frontend Next.js (standalone, puerto 4000) **no puede reenviar upgrades WebSocket**
-  mediante `rewrites()`. Los paquetes `/socket.io/*` se proxean por HTTP normal,
-  por lo que Socket.IO **cae automáticamente a long-polling** cuando la conexión pasa
-  por el rewrite de Next.js.
+- Socket.IO corre sobre el servidor Express (backend).
+- El frontend Next.js standalone **no puede reenviar upgrades WebSocket** mediante
+  `rewrites()` de `next.config.mjs` (limitación conocida de Next.js). Además, en el
+  monolito el rewrite `/socket.io/:path* → 127.0.0.1:4001` rompe incluso el fallback
+  de long-polling con un redirect 308 de trailing-slash → el chat queda siempre en
+  "desconectado".
 
-> Long-polling funciona de forma transparente (mismo protocolo Socket.IO), solo con
-> algo más de latencia y carga por request. No es un fallo, pero sí es mejorable.
+## Configuración RECOMENDADA: backend API-only + frontend separado (Render)
 
-## Opción A (recomendada): WebSocket directo vía Cloudflare Tunnel
+Cuando el frontend se despliega como servicio independiente (ej.
+`gremio-frontend.onrender.com`) y el backend como otro servicio (`gremio-web.onrender.com`):
 
-1. En `docker-compose.yml` el servicio `web` ya publica el puerto **4001:4001**
-   (API + WebSockets directos).
-2. En el panel de Cloudflare Zero Trust → tu túnel → Public Hostname,
-   añade una regla de ingreso para `/socket.io` que apunte a
-   `http://gremio-web-app:4001` (o `localhost:4001` si configuras el túnel en modo
-   local con config file).
-3. Con esa regla, los clientes negocian el upgrade WebSocket contra el backend
-   directo y se usa transporte `websocket` real.
+1. **Backend en modo API-only**: define `RUN_BACKEND_ONLY=1` en el servicio backend.
+   `start.sh` arranca Express + Socket.IO en el puerto público de Render, sin Next.js
+   en medio. Así el cliente conecta el WebSocket directo al backend.
 
-> ⚠️ Exponer 4001 en el host abre la API fuera del túnel. Si no quieres eso,
-> elimina la línea `4001:4001` del compose (long-polling sigue funcionando).
+2. **Frontend separado**: en el build del frontend configura
+   `NEXT_PUBLIC_API_BASE_URL=https://gremio-web.onrender.com/api` y
+   `NEXT_PUBLIC_SOCKET_URL=https://gremio-web.onrender.com` (sin `/api`, sin barra final).
+   Ambas se inlayan en el bundle, así que van como **Build Args** en Render/Docker.
 
-## Opción B: dejar long-polling
+3. **CORS del backend**: `FRONTEND_URL` (o `ALLOWED_ORIGINS`, separado por comas)
+   debe incluir el dominio del frontend, ej. `https://gremio-frontend.onrender.com`.
+   Sin esto el handshake del socket es bloqueado (y la API también).
 
-Sin cambios de configuración. El cliente de Socket.IO ya incluye long-polling como
-fallback nativo; la app funciona igual.
+El cliente de Socket.IO resuelve la URL en este orden:
+`NEXT_PUBLIC_SOCKET_URL` → derivada de `NEXT_PUBLIC_API_BASE_URL` (quita `/api`) →
+misma origin de la página (funciona en el monolito con rewrite, y en dev con el proxy).
+
+## Monolito (sin separar servicios)
+
+Si frontend y backend corren en el mismo contenedor (Next.js en `$PORT`, Express en 4001):
+- Los **upgrades WebSocket no se proxean** por el rewrite (limitación de Next.js).
+- El **polling** puede funcionar si el rewrite está bien formado, pero es frágil
+  (el redirect 308 de trailing-slash lo rompe si el cliente pide `/socket.io/`).
+- La opción robusta es exponer 4001 directamente (Cloudflare Tunnel / puerto)
+  y apuntar el cliente ahí con `NEXT_PUBLIC_SOCKET_URL`.
 
 ## Variables relevantes
 
 | Variable | Descripción |
 |---|---|
-| `FRONTEND_URL` | Origen permitido en CORS del socket (tu dominio público). |
-| `TRUST_PROXY` | `1` (default en producción) para leer la IP real del cliente detrás del túnel. |
+| `NEXT_PUBLIC_SOCKET_URL` | Host del backend para Socket.IO (sin `/api`). Se inlaya en el build. |
+| `NEXT_PUBLIC_API_BASE_URL` | Base de la API REST. También usada para derivar el socket si falta la anterior. |
+| `FRONTEND_URL` | Origen permitido en CORS del socket/API (dominio del frontend). |
+| `ALLOWED_ORIGINS` | Lista extra de orígenes CORS (comas). |
+| `RUN_BACKEND_ONLY` | `1` → backend solo en el puerto público (API + Socket.IO directos). |
+| `TRUST_PROXY` | `1` (default en producción) para leer la IP real del cliente detrás del proxy. |
 
 ## Rate limiting
 

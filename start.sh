@@ -68,6 +68,18 @@ if [ -f /app/backend/prisma/schema.prisma ]; then
   fi
 fi
 
+# ── Modo API-only ─────────────────────────────────────────────
+# Con RUN_BACKEND_ONLY=1 se fuerza Express en el puerto público aunque la
+# imagen contenga el frontend. Es la configuración RECOMENDADA cuando el
+# frontend se despliega como servicio separado (p.ej. Next.js standalone en
+# otro host de Render): Socket.IO escucha en el puerto público y el cliente
+# conecta directo — los rewrites de Next.js NO proxean WebSocket upgrades, así
+# que el monolito siempre deja el chat "desconectado".
+if [ "$RUN_BACKEND_ONLY" = "1" ] || [ "$RUN_BACKEND_ONLY" = "true" ]; then
+  echo "[BOOT] RUN_BACKEND_ONLY=1 — API-only mode (Express + Socket.IO on public port $RENDER_PORT)"
+  exec node /app/backend/dist/server.js
+fi
+
 # ── Check if frontend (Next.js standalone) is available ────
 if [ -f /app/frontend/server.js ]; then
   echo "[BOOT] Frontend found — starting full stack"

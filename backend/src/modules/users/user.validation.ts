@@ -18,7 +18,8 @@ export const updateUserSchema = z.object({
     // where we can compare against the user's current value (legacy MP3 URLs must remain editable).
     profileMusic: z.string().nullable().optional(),
     bannerColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Color hex inválido (ej: #8a2be2)').optional().or(z.literal('')),
-    bannerUrl: z.string().url().optional().or(z.literal('')),
+    bannerUrl: z.string().url().nullable().optional().or(z.literal('')),
+    bannerVideoUrl: z.string().url().nullable().optional().or(z.literal('')),
     displayedRole: z.string().optional().nullable(),
     description: z.string().max(2000).optional(),
     lore: z.string().max(5000).optional(),

@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockPrisma = vi.hoisted(() => ({
   dailyReward: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), count: vi.fn() },
   userPurchase: { findFirst: vi.fn(), delete: vi.fn(), update: vi.fn() },
-  user: { update: vi.fn() },
+  user: { update: vi.fn(), findUnique: vi.fn() },
   $connect: vi.fn(),
   $disconnect: vi.fn(),
 }));
@@ -37,6 +37,8 @@ function daysAgoDate(numDays: number): Date {
 describe('DailyRewardsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Free plan por defecto → multiplicador ×1 (no altera el XP esperado)
+    mockPrisma.user.findUnique.mockResolvedValue({ plan: 'FREE', role: 'USER' });
   });
 
   // ── getStatus ──────────────────────────────────

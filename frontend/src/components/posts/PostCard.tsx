@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic';
 import MentionInput, { renderContentWithMentions } from './MentionInput';
 import { useStickersCache } from '@/lib/content-renderer';
 import RoleBadge from '@/components/ui/RoleBadge';
-import { getPrimaryRole, isStaffRole, hasAnyRole } from '@gremio-estelar/shared';
+import { getPrimaryRole, isStaffRole, hasAnyRole, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
 import type { PostCardData, CommentData } from '../../../../shared/types';
 
 // Lazy-loaded modals to shrink initial bundle & boost rendering speed
@@ -24,9 +24,13 @@ interface PostCardProps {
   onLike: (id: string, isLiked: boolean) => void;
   currentUserId?: string;
   currentUserRole?: string;
+  currentUserPlan?: string;
   onDelete?: (id: string) => void;
   highlight?: boolean;
 }
+
+// Emojis de reacción animada (NOVA+) — deben coincidir con el backend
+const REACTION_EMOJIS = ['💖', '🔥', '😂', '😮', '😢', '👏'];
 
 // ==========================================================================
 // Helpers
@@ -83,7 +87,7 @@ function extractEquippedFrame(user: any): { frameUrl?: string | null; equippedFr
 // ==========================================================================
 // PostCard Component
 // ==========================================================================
-export default function PostCard({ post, onLike, currentUserId, currentUserRole, onDelete, highlight }: PostCardProps) {
+export default function PostCard({ post, onLike, currentUserId, currentUserRole, currentUserPlan, onDelete, highlight }: PostCardProps) {
   useStickersCache();
   const [showComments, setShowComments] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -119,6 +123,71 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
   const [likeAnimating, setLikeAnimating] = useState(false);
   const [dislikeAnimating, setDislikeAnimating] = useState(false);
   const [animatingCommentId, setAnimatingCommentId] = useState<string | null>(null);
+
+  // Animated reactions (NOVA+)
+  const [reactions, setReactions] = useState<Record<string, number>>({});
+  const [myReactions, setMyReactions] = useState<string[]>([]);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [animatingReaction, setAnimatingReaction] = useState<string | null>(null);
+  const canReact = planMeetsOrExceeds(currentUserPlan, currentUserRole, 'NOVA');
+
+  // Cargar reacciones al montar (read-only para usuarios sin plan)
+  useEffect(() => {
+    apiFetch(`/posts/${post.id}/reactions`, {}).then((data: any) => {
+      if (data?.reactions) {
+        const map: Record<string, number> = {};
+        data.reactions.forEach((r: any) => { map[r.emoji] = r.count; });
+        setReactions(map);
+      }
+      if (Array.isArray(data?.myReactions)) setMyReactions(data.myReactions);
+    }).catch(() => {});
+  }, [post.id]);
+
+  const handleReaction = async (emoji: string) => {
+    if (!currentUserId) return;
+    if (!canReact) return;
+    setAnimatingReaction(emoji);
+    setTimeout(() => setAnimatingReaction(null), 600);
+
+    const wasActive = myReactions.includes(emoji);
+    // Optimistic update
+    setReactions(prev => {
+      const count = (prev[emoji] || 0) + (wasActive ? -1 : 1);
+      const next = { ...prev };
+      if (count <= 0) delete next[emoji];
+      else next[emoji] = count;
+      return next;
+    });
+    setMyReactions(prev => wasActive ? prev.filter(e => e !== emoji) : [...prev, emoji]);
+    setShowReactionPicker(false);
+
+    try {
+      const res = await apiFetch(`/posts/${post.id}/reactions`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
+      });
+      if (res?.active === false) {
+        // El backend lo quitó (toggle) — sincronizar
+        setReactions(prev => {
+          const next = { ...prev };
+          next[emoji] = Math.max(0, (next[emoji] || 0) - 1);
+          if (next[emoji] <= 0) delete next[emoji];
+          return next;
+        });
+        setMyReactions(prev => prev.filter(e => e !== emoji));
+      }
+    } catch {
+      // Revertir optimismo
+      setReactions(prev => {
+        const count = (prev[emoji] || 0) + (wasActive ? 1 : -1);
+        const next = { ...prev };
+        if (count <= 0) delete next[emoji];
+        else next[emoji] = count;
+        return next;
+      });
+      setMyReactions(prev => wasActive ? [...prev, emoji] : prev.filter(e => e !== emoji));
+    }
+  };
 
   const handleLikeClick = () => {
     setLikeAnimating(true);
@@ -697,6 +766,19 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           {dislikeCount > 0 && (
             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{dislikeCount} {dislikeCount === 1 ? 'no me gusta' : 'no me gusta'}</span>
           )}
+          {Object.keys(reactions).length > 0 && (
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              {Object.entries(reactions).map(([emoji, count]) => (
+                <span key={emoji} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', background: myReactions.includes(emoji) ? 'rgba(138,43,226,0.15)' : 'rgba(255,255,255,0.04)', padding: '1px 7px', borderRadius: '12px', border: myReactions.includes(emoji) ? '1px solid rgba(138,43,226,0.3)' : '1px solid transparent', cursor: canReact && currentUserId ? 'pointer' : 'default' }}
+                  title={`${emoji} — ${count} ${count === 1 ? 'reacción' : 'reacciones'}`}
+                  onClick={(e) => { e.stopPropagation(); if (canReact && currentUserId) handleReaction(emoji); }}
+                >
+                  <span style={{ fontSize: '0.85rem', display: 'inline-block', animation: animatingReaction === emoji ? 'reactionPop 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none' }}>{emoji}</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.72rem', color: 'var(--text-muted)' }}>{count}</span>
+                </span>
+              ))}
+            </span>
+          )}
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>{post._count.comments} {post._count.comments === 1 ? 'comentario' : 'comentarios'}</span>
         </div>
 
@@ -775,6 +857,64 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             </svg>
             Comentar
           </button>
+
+          {/* REACTION BUTTON (NOVA+) */}
+          <div style={{ position: 'relative', flex: 1, display: 'flex' }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (!currentUserId) return;
+                if (!canReact) return;
+                setShowReactionPicker(!showReactionPicker);
+              }}
+              title={canReact ? 'Reaccionar' : 'Las reacciones animadas son exclusivas de Nova Pro y Stellar Elite'}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flex: 1,
+                background: showReactionPicker ? 'rgba(138,43,226,0.12)' : 'rgba(138,43,226,0.06)',
+                border: showReactionPicker ? '1px solid rgba(138,43,226,0.3)' : '1px solid rgba(138,43,226,0.15)',
+                cursor: canReact ? 'pointer' : 'not-allowed',
+                color: 'var(--primary)', fontSize: '0.82rem', padding: '7px 10px', borderRadius: '10px',
+                transition: 'all 0.2s ease', fontWeight: 600, opacity: canReact ? 1 : 0.55,
+              }}
+              onMouseOver={e => { if (canReact) e.currentTarget.style.background = 'rgba(138,43,226,0.18)'; }}
+              onMouseOut={e => { if (!showReactionPicker) e.currentTarget.style.background = 'rgba(138,43,226,0.06)'; }}
+            >
+              <span style={{ fontSize: '0.95rem', display: 'inline-block', animation: animatingReaction ? 'reactionPop 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none' }}>😍</span>
+              <span>Reaccionar</span>
+            </button>
+            {showReactionPicker && (
+              <div
+                style={{
+                  position: 'absolute', bottom: '100%', left: 0, marginBottom: '8px',
+                  zIndex: 50,
+                  background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '14px', padding: '8px 10px',
+                  boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+                  display: 'flex', gap: '4px',
+                  animation: 'fadeInUp 0.15s ease-out',
+                }}
+                onMouseLeave={() => setShowReactionPicker(false)}
+              >
+                {REACTION_EMOJIS.map(emoji => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => handleReaction(emoji)}
+                    style={{
+                      width: '38px', height: '38px', fontSize: '1.35rem', border: 'none',
+                      background: myReactions.includes(emoji) ? 'rgba(138,43,226,0.2)' : 'transparent',
+                      borderRadius: '10px', cursor: 'pointer',
+                      transition: 'transform 0.15s ease',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.25)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* GIFT STARDUST BUTTON */}
           {currentUserId && post.user && post.user.id !== currentUserId && (
@@ -1109,6 +1249,11 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           40% { transform: scale(1.45) rotate(-12deg); }
           80% { transform: scale(0.9) rotate(4deg); }
           100% { transform: scale(1) rotate(0deg); }
+        }
+        @keyframes reactionPop {
+          0% { transform: scale(0.4) rotate(-15deg); opacity: 0; }
+          60% { transform: scale(1.4) rotate(8deg); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
       `}</style>
     </div>

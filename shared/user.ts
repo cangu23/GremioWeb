@@ -17,6 +17,8 @@ export interface User {
   bio?: string | null;
   bannerColor?: string | null;
   plan?: string;
+  verifiedUntil?: string | Date | null;
+  isVerified?: boolean;
   profileMusic?: string | null;
 }
 
@@ -32,6 +34,7 @@ export interface PublicUser {
   displayName?: string | null;
   avatarUrl?: string | null;
   bio?: string | null;
+  isVerified?: boolean;
   vtuberProfile?: VTuberProfile | null;
 }
 
@@ -41,7 +44,8 @@ export interface UpdateUserPayload {
   avatarUrl?: string;
   bio?: string;
   // VTuber-specific fields (handled by VTuberProfile)
-  bannerUrl?: string;
+  bannerUrl?: string | null;
+  bannerVideoUrl?: string | null; // STELLAR: banner en video animado
   description?: string;
   lore?: string;
   socialLinks?: Record<string, string>;

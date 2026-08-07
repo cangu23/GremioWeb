@@ -87,39 +87,44 @@ export function extractChannelName(url: string | null): string | null {
  * Check which of the given Twitch channel names are currently live.
  * Returns an array of live channel names.
  */
+/**
+ * Check which of the given Twitch channel names are currently live.
+ * Returns an array of live channel names.
+ *
+ * ⚠️  En caso de error de red/API esta función LANZA en vez de devolver []:
+ * los callers deben distinguir "la API falló" (no sabemos nada) de "nadie
+ * está en vivo" (todos offline). Devolver [] en un fallo haría que el
+ * stream monitor marcara a TODOS los VTubers como offline por un error
+ * transitorio de Twitch.
+ */
 export async function checkLiveChannels(channelNames: string[]): Promise<string[]> {
   if (channelNames.length === 0) return [];
 
   const uniqueNames = [...new Set(channelNames)];
 
-  try {
-    const token = await getAccessToken();
+  const token = await getAccessToken();
 
-    // Twitch API allows up to 100 channels per request
-    const queryParams = uniqueNames.map((name) => `user_login=${encodeURIComponent(name)}`).join('&');
-    const url = `https://api.twitch.tv/helix/streams?${queryParams}`;
+  // Twitch API allows up to 100 channels per request
+  const queryParams = uniqueNames.map((name) => `user_login=${encodeURIComponent(name)}`).join('&');
+  const url = `https://api.twitch.tv/helix/streams?${queryParams}`;
 
-    const response = await fetch(url, {
-      headers: {
-        'Client-ID': env.TWITCH_CLIENT_ID,
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const response = await fetch(url, {
+    headers: {
+      'Client-ID': env.TWITCH_CLIENT_ID,
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[TwitchAPI] Failed to check streams:', response.status, errorText);
-      throw new Error(`Twitch API error: ${response.status} - ${errorText}`);
-    }
-
-    const data: TwitchStreamsResponse = await response.json();
-    return data.data
-      .filter((stream) => stream.type === 'live')
-      .map((stream) => stream.user_login);
-  } catch (error) {
-    console.error('[TwitchAPI] Error checking live channels:', error);
-    return [];
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[TwitchAPI] Failed to check streams:', response.status, errorText);
+    throw new Error(`Twitch API error: ${response.status} - ${errorText}`);
   }
+
+  const data: TwitchStreamsResponse = await response.json();
+  return data.data
+    .filter((stream) => stream.type === 'live')
+    .map((stream) => stream.user_login);
 }
 
 /**

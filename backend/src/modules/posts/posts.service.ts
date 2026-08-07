@@ -1,7 +1,8 @@
 import AppError from '../../errors/AppError';
 import * as PostsRepository from './posts.repository';
 import * as NotificationsService from '../notifications/notifications.service';
-import { CreatePostPayload, CreateCommentPayload, hasAnyRole, isStaffRole } from '@gremio-estelar/shared';
+import { CreatePostPayload, CreateCommentPayload, hasAnyRole, isStaffRole, attachVerified } from '@gremio-estelar/shared';
+import { getEffectivePlan, planMeetsOrExceeds } from '../subscriptions/platform-subscriptions.service';
 import * as UserRepository from '../users/user.repository';
 import * as SocialRepository from '../social/social.repository';
 import * as AdminRepository from '../admin/admin.repository';
@@ -261,6 +262,74 @@ export const deletePost = async (postId: string, userId: string, moderationNote?
 
 // ========== LIKES ==========
 
+// ========== REACTIONS (animadas — NOVA+) ==========
+
+const REACTION_EMOJIS = ['💖', '🔥', '😂', '😮', '😢', '👏'];
+
+/**
+ * Reacciones animadas con emojis: beneficio del Plan Nova Pro y Stellar Elite.
+ * (El plan promete "Reacciones animadas en chat y publicaciones".)
+ */
+export const addReaction = async (postId: string, emoji: string, userId: string) => {
+  if (!REACTION_EMOJIS.includes(emoji)) {
+    throw new AppError('Emoji de reacción no válido', 400);
+  }
+
+  const user = await UserRepository.findById(userId);
+  const effectivePlan = getEffectivePlan(user?.plan, user?.role);
+  if (!planMeetsOrExceeds(effectivePlan, 'NOVA')) {
+    throw new AppError('Las reacciones animadas son exclusivas de los Planes Nova Pro y Stellar Elite.', 403);
+  }
+
+  const post = await PostsRepository.findPostById(postId);
+  if (!post) throw new AppError('Publicación no encontrada', 404);
+
+  // Toggle: reaccionar de nuevo con el mismo emoji lo quita
+  const existing = await prisma.postReaction.findUnique({
+    where: { postId_userId_emoji: { postId, userId, emoji } },
+  });
+  if (existing) {
+    await prisma.postReaction.delete({ where: { id: existing.id } });
+    return { message: 'Reacción quitada', active: false, emoji };
+  }
+
+  await prisma.postReaction.create({ data: { postId, userId, emoji } });
+
+  // Notificar al autor de la publicación
+  if (post.userId !== userId) {
+    const reactor = await UserRepository.findById(userId);
+    if (reactor) {
+      NotificationsService.notifyReaction(reactor.username, postId, post.userId, emoji).catch(() => {});
+    }
+  }
+
+  return { message: 'Reacción agregada', active: true, emoji };
+};
+
+export const getPostReactions = async (postId: string, currentUserId?: string) => {
+  const reactions = await prisma.postReaction.groupBy({
+    by: ['emoji'],
+    where: { postId },
+    _count: { _all: true },
+    orderBy: { _count: { emoji: 'desc' } },
+  });
+
+  let myReactions: string[] = [];
+  if (currentUserId) {
+    const mine = await prisma.postReaction.findMany({
+      where: { postId, userId: currentUserId },
+      select: { emoji: true },
+    });
+    myReactions = mine.map((r) => r.emoji);
+  }
+
+  return {
+    reactions: reactions.map((r) => ({ emoji: r.emoji, count: r._count._all })),
+    myReactions,
+    total: reactions.reduce((sum, r) => sum + r._count._all, 0),
+  };
+};
+
 export const likePost = async (postId: string, userId: string) => {
   const post = await PostsRepository.findPostById(postId);
   if (!post) throw new AppError('Publicación no encontrada', 404);
@@ -351,6 +420,7 @@ export const getComments = async (postId: string, currentUserId?: string) => {
 
   return comments.map((c) => ({
     ...c,
+    user: c.user ? attachVerified(c.user as Record<string, unknown>) : c.user,
     isLikedByMe: currentUserId ? likedCommentIds.has(c.id) : false,
     createdAt: c.createdAt.toISOString(),
   }));
@@ -545,7 +615,9 @@ function formatPost(post: NonNullable<Awaited<ReturnType<typeof PostsRepository.
     createdAt: post.createdAt?.toISOString?.() || post.createdAt,
     updatedAt: post.updatedAt?.toISOString?.() || post.updatedAt,
     userId: post.userId,
-    user: post.user,
+    // isVerified computado: incluye verifiedUntil (insignia comprada) además
+    // del isVerified del perfil VTuber (admin o compra).
+    user: post.user ? attachVerified(post.user as Record<string, unknown>) : post.user,
     _count: post._count || { comments: 0, likes: 0 },
     isLikedByMe: false,
     hashtags: post.hashtags?.map((h) => h.hashtag.name) || [],

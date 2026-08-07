@@ -1,5 +1,6 @@
 import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
+import { isStaffRole } from '@gremio-estelar/shared';
 
 export interface PlanBenefitInfo {
   name: string;
@@ -95,29 +96,65 @@ function userHasRole(roleStr: string | null | undefined, targetRole: string): bo
   return roleStr.split(',').map((r) => r.trim()).includes(targetRole);
 }
 
-function userHasAnyRole(roleStr: string | null | undefined, rolesList: string[]): boolean {
-  if (!roleStr) return false;
-  const userRoles = roleStr.split(',').map((r) => r.trim());
-  return rolesList.some((r) => userRoles.includes(r));
+/**
+ * Plan efectivo para beneficios premium — UNA SOLA FUENTE DE VERDAD.
+ * Política de producción: solo staff real (isStaffRole) y roles VIP de pago
+ * reciben un plan elevado sin pagar. VTUBER/MAID/BETA_TESTER usan su plan.
+ */
+export function getEffectivePlan(plan?: string | null, role?: string | null): string {
+  if (isStaffRole(role) || userHasRole(role, 'VIP_STELLAR')) return 'STELLAR';
+  if (userHasRole(role, 'VIP_NOVA')) return 'NOVA';
+  if (userHasRole(role, 'VIP_ASTRO')) return 'ASTRO';
+  return plan || 'FREE';
+}
+
+/**
+ * Multiplicador de XP del plan efectivo — UNA SOLA FUENTE DE VERDAD.
+ * Los planes prometen ×1.5 (ASTRO), ×2 (NOVA) y ×3 (STELLAR) sobre el XP base.
+ */
+export function getXpMultiplier(plan?: string | null, role?: string | null): number {
+  const effective = getEffectivePlan(plan, role);
+  return PLATFORM_PLANS[effective]?.xpMultiplier ?? 1;
+}
+
+/**
+ * Multiplicador de XP del usuario consultado en BD (para servicios que no
+ * tienen el plan/rol a mano). Devuelve 1 si el usuario no existe.
+ */
+export const getXpMultiplierForUser = async (userId: string): Promise<number> => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, role: true },
+    });
+    if (!user) return 1;
+    return getXpMultiplier(user.plan, user.role);
+  } catch {
+    return 1;
+  }
+};
+
+/**
+ * Ranking de planes para comparar tiers (FREE < ASTRO < NOVA < STELLAR).
+ */
+const PLAN_RANK: Record<string, number> = { FREE: 0, ASTRO: 1, NOVA: 2, STELLAR: 3 };
+export function planMeetsOrExceeds(plan: string | null | undefined, required: string): boolean {
+  const effective = getEffectivePlan(plan);
+  return (PLAN_RANK[effective] ?? 0) >= (PLAN_RANK[required] ?? 99);
 }
 
 export const getMyPlatformPlan = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { plan: true, role: true },
+    select: { plan: true, role: true, verifiedUntil: true },
   });
 
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
-  const isSpecialUser = userHasAnyRole(user.role, [
-    'ADMIN',
-    'MODERATOR',
-    'STAFF',
-    'VTUBER',
-    'MAID',
-    'VIP_STELLAR',
-    'BETA_TESTER',
-  ]);
+  // Política de planes (producción): solo el staff interno real y los roles
+  // VIP de pago reciben beneficios premium sin pagar (ver getEffectivePlan).
+  const isStaff = isStaffRole(user.role);
+  const hasStellarVip = userHasRole(user.role, 'VIP_STELLAR');
 
   let activeSub = await prisma.platformSubscription.findUnique({
     where: { userId },
@@ -125,35 +162,34 @@ export const getMyPlatformPlan = async (userId: string) => {
 
   // Verificar expiración del periodo mensual (30 días)
   if (activeSub && activeSub.currentPeriodEnd < new Date() && activeSub.status === 'ACTIVE') {
+    const expiredPlan = activeSub.plan;
     activeSub = await prisma.platformSubscription.update({
       where: { userId },
       data: { status: 'EXPIRED' },
     });
 
-    if (!isSpecialUser) {
+    if (!isStaff && !hasStellarVip) {
+      // Si el verificado venía incluido con STELLAR (caduca con el plan),
+      // se revoca junto con el plan. El comprado aparte se conserva.
+      const verifiedIncluded = expiredPlan === 'STELLAR' && !!user.verifiedUntil;
       await prisma.user.update({
         where: { id: userId },
-        data: { plan: 'FREE' },
+        data: { plan: 'FREE', ...(verifiedIncluded ? { verifiedUntil: null } : {}) },
       });
       user.plan = 'FREE';
+      if (verifiedIncluded) user.verifiedUntil = null;
     }
   }
 
-  // Special roles (ADMIN, STAFF, MODERATOR, VTUBER, MAID, etc.) always receive STELLAR benefits
-  let effectivePlan = user.plan || 'FREE';
-  if (isSpecialUser) {
-    effectivePlan = 'STELLAR';
-  } else if (userHasRole(user.role, 'VIP_NOVA')) {
-    effectivePlan = 'NOVA';
-  } else if (userHasRole(user.role, 'VIP_ASTRO')) {
-    effectivePlan = 'ASTRO';
-  }
+  // El verificado comprado expira solo (no se revoca con el plan).
+  const effectivePlan = getEffectivePlan(user.plan, user.role);
 
   return {
     plan: effectivePlan,
     role: user.role,
     subscription: activeSub,
     planInfo: PLATFORM_PLANS[effectivePlan] || PLATFORM_PLANS.FREE,
+    verifiedUntil: activeSub?.plan === 'STELLAR' ? activeSub.currentPeriodEnd : user.verifiedUntil,
   };
 };
 
@@ -166,8 +202,24 @@ export const activatePlatformPlan = async (
     throw new AppError('Plan no válido', 400);
   }
 
-  const periodEnd = new Date();
+  // El nuevo periodo se APILA sobre el tiempo restante de una suscripción
+  // activa (renovar/extender no descarta los días que quedaban). Si no hay
+  // suscripción activa vigente, el periodo empieza desde hoy.
+  const existing = await prisma.platformSubscription.findUnique({
+    where: { userId },
+    select: { currentPeriodEnd: true, status: true },
+  });
+  const now = new Date();
+  const base =
+    existing && existing.status === 'ACTIVE' && existing.currentPeriodEnd > now
+      ? existing.currentPeriodEnd
+      : now;
+
+  const periodEnd = new Date(base);
   periodEnd.setDate(periodEnd.getDate() + durationDays);
+
+  // STELLAR incluye la insignia de verificación durante todo el plan.
+  const verifiedUntil = plan === 'STELLAR' ? new Date(periodEnd.getTime()) : undefined;
 
   const [sub] = await prisma.$transaction([
     prisma.platformSubscription.upsert({
@@ -187,7 +239,7 @@ export const activatePlatformPlan = async (
     }),
     prisma.user.update({
       where: { id: userId },
-      data: { plan },
+      data: { plan, ...(verifiedUntil ? { verifiedUntil } : {}) },
     }),
   ]);
 
@@ -202,14 +254,26 @@ export const cancelPlatformPlan = async (userId: string) => {
   const sub = await prisma.platformSubscription.findUnique({ where: { userId } });
   if (!sub) throw new AppError('No tienes una suscripción activa', 404);
 
+  const subPlan = sub.plan;
   const updatedSub = await prisma.platformSubscription.update({
     where: { userId },
     data: { status: 'CANCELLED', cancelledAt: new Date() },
   });
 
+  // Al cancelar, el verificado incluido por STELLAR expira con el plan (el
+  // comprado por separado se conserva, se distingue porque no caducó aún).
+  const isStellarIncluded =
+    subPlan === 'STELLAR' &&
+    sub.currentPeriodEnd &&
+    sub.currentPeriodEnd > new Date();
   await prisma.user.update({
     where: { id: userId },
-    data: { plan: 'FREE' },
+    data: {
+      plan: 'FREE',
+      ...(isStellarIncluded
+        ? { verifiedUntil: null }
+        : {}),
+    },
   });
 
   return {

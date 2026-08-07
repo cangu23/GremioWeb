@@ -1,13 +1,25 @@
 import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
+import { getEffectivePlan } from '../subscriptions/platform-subscriptions.service';
 
 /**
- * User submits a new pet request
+ * User submits a new pet request — EXCLUSIVO del plan STELLAR.
+ * El plan Stellar Elite promete "Mascota virtual acompañante" como beneficio;
+ * aquí se aplica el gate para que el resto de planes no pueda solicitarla.
  */
 export const createPetRequest = async (
   userId: string,
   data: { petName: string; description?: string; referenceUrl?: string }
 ) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true, role: true },
+  });
+  const effectivePlan = getEffectivePlan(user?.plan, user?.role);
+  if (effectivePlan !== 'STELLAR') {
+    throw new AppError('La mascota virtual es exclusiva del Plan Stellar Elite. Mejora tu plan en /premium.', 403);
+  }
+
   if (!data.petName || data.petName.trim().length === 0) {
     throw new AppError('El nombre de la mascota es requerido', 400);
   }
