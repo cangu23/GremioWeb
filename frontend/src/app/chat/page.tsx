@@ -21,9 +21,19 @@ import type { Socket } from 'socket.io-client';
 interface UserInfo {
   id: string;
   username: string;
+  role?: string | null;
   displayName?: string | null;
   avatarUrl?: string | null;
   vtuberProfile: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
+}
+
+function isVtuberUser(user: UserInfo | null | undefined): boolean {
+  if (!user || !user.vtuberProfile) return false;
+  if (user.role) {
+    const roles = user.role.split(',').map(r => r.trim().toUpperCase());
+    return roles.includes('VTUBER');
+  }
+  return true;
 }
 
 interface DmMessageData {
@@ -184,12 +194,17 @@ function MessengerContent() {
       return;
     }
 
-    sock.on('connect', () => setConnected(true));
-    sock.on('disconnect', () => setConnected(false));
+    const handleConnect = () => setConnected(true);
+    const handleDisconnect = () => setConnected(false);
 
-    if (sock.connected) {
-      setConnected(true);
-    }
+    sock.on('connect', handleConnect);
+    sock.on('disconnect', handleDisconnect);
+
+    setConnected(sock.connected);
+
+    const interval = setInterval(() => {
+      if (sock) setConnected(sock.connected);
+    }, 1000);
 
     const typingClearRef = { current: null as ReturnType<typeof setTimeout> | null };
 
@@ -197,11 +212,6 @@ function MessengerContent() {
       const otherId = msg.senderId === currentUser.id ? msg.receiverId : msg.senderId;
       const isForActiveChat = activeUserId === otherId;
 
-      // Subtle notification chime for incoming messages from OTHER users.
-      // Skipped when we're actively reading that exact conversation in a
-      // visible tab (we can see it already); plays in any other case — other
-      // chats, other pages, or a background tab. Obeys the site-wide audio
-      // mute (same button as the music).
       if (msg.senderId !== currentUser.id) {
         const readingItLive = document.visibilityState === 'visible' && isForActiveChat;
         if (!readingItLive) playChime();
@@ -243,9 +253,10 @@ function MessengerContent() {
     });
 
     return () => {
+      clearInterval(interval);
       if (typingClearRef.current) clearTimeout(typingClearRef.current);
-      sock.off('connect');
-      sock.off('disconnect');
+      sock.off('connect', handleConnect);
+      sock.off('disconnect', handleDisconnect);
       sock.off(DM_EVENTS.MESSAGE);
       sock.off(DM_EVENTS.TYPING);
     };
@@ -343,6 +354,7 @@ function MessengerContent() {
                 setActiveUserInfo({
                   id: u.id,
                   username: u.username,
+                  role: u.role,
                   displayName: u.displayName,
                   avatarUrl: u.avatarUrl,
                   vtuberProfile: u.vtuberProfile,
@@ -487,7 +499,7 @@ function MessengerContent() {
     const unread = getUnreadCount(other.id);
 
     if (activeCategory === 'unread' && unread === 0) return false;
-    if (activeCategory === 'vtubers' && !other.vtuberProfile) return false;
+    if (activeCategory === 'vtubers' && !isVtuberUser(other)) return false;
 
     if (!convFilter.trim()) return true;
     const name = getUsername(other).toLowerCase();
@@ -860,7 +872,7 @@ function MessengerContent() {
                           }}>
                             {getUsername(other)}
                           </span>
-                          {other.vtuberProfile && (
+                          {isVtuberUser(other) && (
                             <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(233,30,99,0.15)', color: '#ff4081', fontWeight: 700, flexShrink: 0 }}>
                               VTuber
                             </span>
@@ -952,7 +964,7 @@ function MessengerContent() {
                     <div>
                       <div style={{ fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {getUsername(activeUserInfo)}
-                        {activeUserInfo.vtuberProfile && (
+                        {isVtuberUser(activeUserInfo) && (
                           <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', background: 'rgba(233,30,99,0.15)', color: '#ff4081', fontWeight: 700 }}>
                             VTuber
                           </span>

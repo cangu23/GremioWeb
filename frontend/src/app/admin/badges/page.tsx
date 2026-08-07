@@ -41,9 +41,9 @@ export default function BadgeBuilderPage() {
         try {
           const parsed = JSON.parse(res.settings.badges_config);
           if (Array.isArray(parsed) && parsed.length > 0) setBadges(parsed);
-        } catch {}
+        } catch { }
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const handleSaveBadges = async () => {
@@ -67,7 +67,7 @@ export default function BadgeBuilderPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      
+
       {/* Top Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -152,7 +152,7 @@ function AdminAchievementAssigner() {
   useEffect(() => {
     apiFetch('/gamification/achievements')
       .then((data) => setAchievements(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleSearchUser = async () => {

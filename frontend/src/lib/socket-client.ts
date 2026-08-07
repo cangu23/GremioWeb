@@ -12,7 +12,12 @@ let socket: Socket | null = null;
 export const getSocket = (): Socket | null => socket;
 
 export const connectSocket = (): Socket => {
-  if (socket?.connected) return socket;
+  if (socket) {
+    if (!socket.connected && !socket.active) {
+      socket.connect();
+    }
+    return socket;
+  }
 
   const token = getAccessToken();
   if (!token) throw new Error('No auth token');

@@ -5,46 +5,13 @@ export const dynamic = 'force-dynamic';
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
-import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
 import SkeletonVTuberCard from '@/components/vtubers/SkeletonVTuberCard';
-import { Star, Sparkles, Users, FileText, Twitch, Youtube, Twitter, Gamepad, Music, Palette, Mic, Headphones, MessageSquare, Telescope, Rocket } from '@/components/ui/Icons';
-
-/* ─────────── Types ─────────── */
-
-interface VTuberUser {
-  id: string;
-  username: string;
-  role: string;
-  _count: { followers: number; following: number; posts: number };
-}
-
-interface VTuberProfile {
-  id: string;
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  bannerUrl: string | null;
-  description: string | null;
-  lore: string | null;
-  isLive: boolean;
-  isVerified: boolean;
-  isFeatured: boolean;
-  twitchUrl: string | null;
-  youtubeUrl: string | null;
-  kickUrl: string | null;
-  tiktokUrl: string | null;
-  twitterUrl: string | null;
-  discordUrl: string | null;
-  websiteUrl: string | null;
-  streamSchedule: string | null;
-  languages: string | null;
-  contentType: string | null;
-  fanName: string | null;
-  oshiMark: string | null;
-  themeColor: string | null;
-  user: VTuberUser;
-}
+import VTuberIDCard, { VTuberProfile } from '@/components/vtubers/VTuberIDCard';
+import VTuberLiveStage from '@/components/vtubers/VTuberLiveStage';
+import VTuberStatsHeader from '@/components/vtubers/VTuberStatsHeader';
+import VTuberFilterBar from '@/components/vtubers/VTuberFilterBar';
+import { Star, Sparkles, Telescope, ChevronDown, ArrowLeft, ArrowRight } from '@/components/ui/Icons';
 
 interface DirectoryMeta {
   page: number;
@@ -53,347 +20,42 @@ interface DirectoryMeta {
   totalPages: number;
 }
 
-/* ─────────── Helpers ─────────── */
-
-function parseLanguages(raw: string | null): string[] {
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return raw.split(',').map(s => s.trim()).filter(Boolean); }
-}
-
-const CONTENT_TYPES = [
-  { value: '', label: 'Todo' },
-  { value: 'gaming', label: 'Gaming' },
-  { value: 'music', label: 'Música' },
-  { value: 'art', label: 'Arte' },
-  { value: 'singing', label: 'Canto' },
-  { value: 'chatting', label: 'Charla' },
-  { value: 'asmr', label: 'ASMR' },
-];
-
-function ContentTypeIcon({ type, size = 14 }: { type: string; size?: number }) {
-  const props = { size, color: 'var(--primary)', strokeWidth: 2 };
-  switch (type.toLowerCase()) {
-    case 'gaming': return <Gamepad {...props} />;
-    case 'music': return <Music {...props} />;
-    case 'art': return <Palette {...props} />;
-    case 'singing': return <Mic {...props} />;
-    case 'asmr': return <Headphones {...props} />;
-    case 'chatting':
-    case 'just-chatting':
-    default: return <MessageSquare {...props} />;
-  }
-}
-
-/* ─────────── Stats Card ─────────── */
-
-function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
-  return (
-    <div
-      className="glass"
-      style={{
-        padding: '24px 28px',
-        borderRadius: '16px',
-        textAlign: 'center',
-        flex: 1,
-        minWidth: 150,
-        transition: 'all 0.25s ease',
-        border: '1px solid rgba(255,255,255,0.08)',
-        background: 'rgba(20,20,32,0.6)',
-        backdropFilter: 'blur(16px)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
-    >
-      <div style={{ fontSize: '1.6rem', marginBottom: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>{icon}</div>
-      <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>{value}</div>
-      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '6px', fontWeight: 600 }}>{label}</div>
-    </div>
-  );
-}
-
-/* ─────────── VTuber Card ─────────── */
-
-function VTuberCard({ v }: { v: VTuberProfile }) {
-  const langs = parseLanguages(v.languages);
-  const accentColor = v.themeColor || 'var(--primary)';
-
-  return (
-    <Link
-      href={`/profile/${v.userId}`}
-      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-    >
-      <div
-        className="glass"
-        style={{
-          padding: '20px',
-          borderRadius: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          transition: 'all 0.25s ease',
-          cursor: 'pointer',
-          position: 'relative',
-          overflow: 'hidden',
-          height: '100%',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = 'translateY(-4px)';
-          e.currentTarget.style.boxShadow = `0 12px 40px rgba(138,43,226,0.15)`;
-          e.currentTarget.style.borderColor = accentColor;
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = 'none';
-          e.currentTarget.style.borderColor = 'var(--glass-border)';
-        }}
-      >
-        {/* Live badge or featured */}
-        {v.isLive && (
-          <div style={{
-            position: 'absolute', top: '12px', right: '12px',
-            padding: '4px 10px', borderRadius: '8px',
-            background: '#e91e63', color: '#fff',
-            fontSize: '0.7rem', fontWeight: 700,
-            display: 'flex', alignItems: 'center', gap: '5px',
-            boxShadow: '0 2px 12px rgba(233,30,99,0.4)',
-          }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'vtuber-pulse-dot 1.5s ease infinite' }} />
-            EN VIVO
-          </div>
-        )}
-        {!v.isLive && v.isFeatured && (
-          <div style={{
-            position: 'absolute', top: '12px', right: '12px',
-            padding: '4px 10px', borderRadius: '8px',
-            background: 'rgba(255,215,0,0.15)', color: '#ffd700',
-            fontSize: '0.7rem', fontWeight: 700, border: '1px solid rgba(255,215,0,0.3)',
-          }}>
-            <Star size={12} color="#ffd700" strokeWidth={2.5} /> Destacado
-          </div>
-        )}
-
-        {/* Row: Avatar + Name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{
-            width: '52px', height: '52px', borderRadius: '50%', flexShrink: 0,
-            background: v.avatarUrl
-              ? `url(${v.avatarUrl}) center/cover`
-              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            border: `2px solid ${v.isLive ? '#e91e63' : 'rgba(139,92,246,0.15)'}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
-            position: 'relative',
-            transition: 'border-color 0.3s',
-          }}>
-            {!v.avatarUrl && v.displayName.charAt(0).toUpperCase()}
-            {v.isLive && (
-              <div style={{
-                position: 'absolute', bottom: '-2px', right: '-2px',
-                width: 14, height: 14, borderRadius: '50%',
-                background: '#e91e63',
-                border: '2px solid var(--background)',
-                boxShadow: '0 0 6px rgba(233,30,99,0.6)',
-                animation: 'vtuber-pulse-dot 1.5s ease infinite',
-              }} />
-            )}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, fontSize: '1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {v.displayName}
-              </span>
-              {v.isVerified && (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-label="Verificado">
-                  <circle cx="12" cy="12" r="10" fill="#8B5CF6" />
-                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              @{v.user.username}
-            </div>
-          </div>
-        </div>
-
-        {/* Description */}
-        {v.description && (
-          <p style={{
-            fontSize: '0.85rem', color: 'var(--text-secondary)',
-            lineHeight: 1.6,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            margin: 0,
-          }}>
-            {v.description}
-          </p>
-        )}
-
-        {/* Tags row */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {v.contentType && (
-            <span style={{
-              padding: '3px 10px', borderRadius: '8px',
-              fontSize: '0.72rem', fontWeight: 600,
-              background: 'rgba(138,43,226,0.1)',
-              color: 'var(--primary)',
-              border: '1px solid rgba(138,43,226,0.2)',
-            }}>
-              <ContentTypeIcon type={v.contentType} size={12} /> {v.contentType.charAt(0).toUpperCase() + v.contentType.slice(1)}
-            </span>
-          )}
-          {langs.slice(0, 2).map(lang => (
-            <span key={lang} style={{
-              padding: '3px 10px', borderRadius: '8px',
-              fontSize: '0.72rem', fontWeight: 500,
-              background: 'rgba(255,255,255,0.04)',
-              color: 'var(--text-muted)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}>
-              {lang}
-            </span>
-          ))}
-          {langs.length > 2 && (
-            <span style={{
-              padding: '3px 10px', borderRadius: '8px',
-              fontSize: '0.72rem', fontWeight: 500,
-              color: 'var(--text-muted)',
-            }}>
-              +{langs.length - 2}
-            </span>
-          )}
-        </div>
-
-        {/* Stats + Social */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', marginTop: 'auto', paddingTop: '4px',
-          borderTop: '1px solid rgba(255,255,255,0.04)',
-        }}>
-          <div style={{ display: 'flex', gap: '14px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={14} /> {v.user._count.followers}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><FileText size={14} /> {v.user._count.posts}</span>
-          </div>
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            {v.twitchUrl && <Twitch size={14} color="#9146FF" title="Twitch" />}
-            {v.youtubeUrl && <Youtube size={14} color="#FF0000" title="YouTube" />}
-            {v.twitterUrl && <Twitter size={14} color="#1DA1F2" title="Twitter/X" />}
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-/* ─────────── Live VTuber Mini Card ─────────── */
-
-function LiveMiniCard({ v }: { v: VTuberProfile }) {
-  return (
-    <Link
-      href={`/profile/${v.userId}`}
-      style={{ textDecoration: 'none', color: 'inherit', flexShrink: 0 }}
-    >
-      <div
-        className="glass"
-        style={{
-          padding: '12px 16px',
-          borderRadius: '14px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          minWidth: 240,
-          transition: 'all 0.2s ease',
-          border: '1px solid rgba(233,30,99,0.15)',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#e91e63'; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(233,30,99,0.15)'; }}
-      >
-        <div style={{ position: 'relative', width: '40px', height: '40px', flexShrink: 0 }}>
-          <div style={{
-            width: '100%', height: '100%', borderRadius: '50%',
-            background: v.avatarUrl
-              ? `url(${v.avatarUrl}) center/cover`
-              : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            overflow: 'hidden',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontWeight: 'bold', fontSize: '0.9rem',
-          }}>
-            {!v.avatarUrl && v.displayName.charAt(0).toUpperCase()}
-          </div>
-          <div style={{
-            position: 'absolute', bottom: '-2px', right: '-2px',
-            width: 11, height: 11, borderRadius: '50%',
-            background: '#e91e63',
-            border: '2px solid var(--background, #0f0f15)',
-            boxShadow: '0 0 4px rgba(233,30,99,0.5)',
-            zIndex: 2,
-          }} />
-        </div>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontWeight: 600, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {v.displayName}
-            {v.isVerified && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#8B5CF6" />
-                <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#e91e63', display: 'inline-block' }} />
-            En vivo
-            {v.twitchUrl && ' · Twitch'}
-            {v.youtubeUrl && !v.twitchUrl && ' · YouTube'}
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-/* ─────────── Main Component ─────────── */
-
 function VtubersContent() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Stats
+  // Overview Stats
   const [totalVtubers, setTotalVtubers] = useState(0);
   const [liveCount, setLiveCount] = useState(0);
 
-  // Live VTubers
+  // Lists
   const [liveVtubers, setLiveVtubers] = useState<VTuberProfile[]>([]);
-
-  // Featured
   const [featuredVtubers, setFeaturedVtubers] = useState<VTuberProfile[]>([]);
-
-  // Directory
   const [directory, setDirectory] = useState<VTuberProfile[]>([]);
   const [meta, setMeta] = useState<DirectoryMeta | null>(null);
+
+  // Search & Filters
   const [search, setSearch] = useState('');
   const [contentType, setContentType] = useState('');
+  const [onlyLive, setOnlyLive] = useState(false);
   const [page, setPage] = useState(1);
   const [directoryLoading, setDirectoryLoading] = useState(false);
 
-  // Stats & live data — fetch once
+  // Initial fetch overview data
   const fetchOverview = useCallback(async () => {
     try {
       const [liveData, featuredData, dirData] = await Promise.all([
-        apiFetch('/vtubers/live', {}),
-        apiFetch('/vtubers/featured', {}).catch(() => null),
-        apiFetch('/vtubers?limit=1&page=1', {}),
+        apiFetch('/vtubers/live', {}).catch(() => []),
+        apiFetch('/vtubers/featured', {}).catch(() => []),
+        apiFetch('/vtubers?limit=1&page=1', {}).catch(() => null),
       ]);
 
-      setLiveVtubers(liveData || []);
-      setLiveCount(liveData?.length || 0);
-      setFeaturedVtubers(featuredData || []);
+      const liveArr = Array.isArray(liveData) ? liveData : [];
+      const featArr = Array.isArray(featuredData) ? featuredData : [];
+
+      setLiveVtubers(liveArr);
+      setLiveCount(liveArr.length);
+      setFeaturedVtubers(featArr);
       setTotalVtubers(dirData?.meta?.total || 0);
     } catch {
       setError(true);
@@ -403,47 +65,65 @@ function VtubersContent() {
   }, []);
 
   // Directory fetch with search/page/filters
-  const fetchDirectory = useCallback(async (s: string, ct: string, p: number) => {
+  const fetchDirectory = useCallback(async (s: string, ct: string, liveOnly: boolean, p: number) => {
     setDirectoryLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: '12' });
       if (s) params.set('search', s);
       if (ct) params.set('contentType', ct);
+      if (liveOnly) params.set('isLive', 'true');
+
       const data = await apiFetch(`/vtubers?${params}`, {});
       setDirectory(data.data || []);
       setMeta(data.meta || null);
     } catch {
-      // Keep existing data on error
+      // keep existing data on fetch failure
     } finally {
       setDirectoryLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchOverview(); }, [fetchOverview]);
-  useEffect(() => { fetchDirectory(search, contentType, page); }, [search, contentType, page, fetchDirectory]);
+  useEffect(() => {
+    fetchOverview();
+  }, [fetchOverview]);
 
-  // Reset page on filter change
-  useEffect(() => { setPage(1); }, [search, contentType]);
+  useEffect(() => {
+    fetchDirectory(search, contentType, onlyLive, page);
+  }, [search, contentType, onlyLive, page, fetchDirectory]);
 
-  /* ─── Derived ─── */
-  const loggedIn = !!user;
+  // Reset page to 1 on filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, contentType, onlyLive]);
+
+  // Auto-poll live streamers every 60s
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const liveData = await apiFetch('/vtubers/live', {});
+        if (Array.isArray(liveData)) {
+          setLiveVtubers(liveData);
+          setLiveCount(liveData.length);
+        }
+      } catch {
+        // silent
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
-      <div style={{ padding: '40px 0' }}>
-        {/* Stats skeleton */}
-        <div style={{ display: 'flex', gap: '16px', marginBottom: '40px', flexWrap: 'wrap' }}>
+      <div style={{ padding: '30px 0' }}>
+        <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: '32px' }}>
           {[1, 2, 3].map(i => (
-            <div key={i} className="glass" style={{ flex: 1, minWidth: 140, padding: '24px', borderRadius: '16px', textAlign: 'center' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', margin: '0 auto 10px', animation: 'shimmer 2s infinite' }} />
-              <div style={{ width: 50, height: 28, background: 'rgba(255,255,255,0.06)', borderRadius: '6px', margin: '0 auto 6px', animation: 'shimmer 2s infinite' }} />
-              <div style={{ width: 80, height: 12, background: 'rgba(255,255,255,0.04)', borderRadius: '6px', margin: '0 auto', animation: 'shimmer 2s infinite' }} />
-            </div>
+            <div key={i} className="glass" style={{ padding: '20px', borderRadius: '16px', height: '86px' }} />
           ))}
         </div>
-        {/* Cards skeleton */}
-        <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonVTuberCard key={i} />)}
+        <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonVTuberCard key={i} />
+          ))}
         </div>
       </div>
     );
@@ -452,250 +132,189 @@ function VtubersContent() {
   if (error) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}><Sparkles size={48} color="var(--text-muted)" strokeWidth={1.5} /></div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>Algo salió mal</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>No pudimos cargar los VTubers. Intenta de nuevo.</p>
-        <button onClick={() => { setError(false); setLoading(true); fetchOverview(); }} className="btn" style={{ padding: '12px 28px' }}>
+        <div style={{ marginBottom: '16px' }}>
+          <Sparkles size={48} color="var(--text-muted)" strokeWidth={1.5} />
+        </div>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '8px', color: '#fff' }}>No pudimos cargar los VTubers</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.92rem' }}>Ocurrió un inconveniente al conectar con el servidor.</p>
+        <button
+          onClick={() => {
+            setError(false);
+            setLoading(true);
+            fetchOverview();
+          }}
+          className="btn"
+          style={{ padding: '12px 28px', borderRadius: '12px', background: 'var(--primary)', color: '#fff', fontWeight: 700 }}
+        >
           Reintentar
         </button>
       </div>
     );
   }
 
-  const hasLive = liveVtubers.length > 0;
-  const hasFeatured = featuredVtubers.length > 0;
-
   return (
     <>
-      {/* ═══════ HERO / STATS ═══════ */}
-      <div style={{
-        marginBottom: '36px',
-        padding: '0 0 32px',
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '2.4rem', fontWeight: 800, margin: 0, background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              ✦ Directorio de VTubers
-            </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: '4px 0 0 0' }}>
-              Explora, descubre y conecta con los creadores más brillantes del Gremio Estelar
-            </p>
+      {/* 1. Header & Stats Widgets */}
+      <VTuberStatsHeader totalVtubers={totalVtubers} liveCount={liveCount} featuredCount={featuredVtubers.length} />
+
+      {/* 2. Stream iFrame Stage — ONLY RENDERS IF LIVE STREAMERS EXIST */}
+      <VTuberLiveStage liveVtubers={liveVtubers} />
+
+      {/* 3. Featured VTubers Section (If available & no search active) */}
+      {featuredVtubers.length > 0 && !search && !contentType && !onlyLive && page === 1 && (
+        <div style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px' }}>
+            <Star size={20} color="#f59e0b" fill="#f59e0b" />
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: '#fff' }}>VTubers Destacados</h2>
           </div>
-
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              padding: '6px 14px', borderRadius: '20px',
-              background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)',
-              color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 700,
-            }}>
-              <Sparkles size={14} color="var(--primary)" />
-              <span>{totalVtubers} VTubers</span>
-            </div>
-
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              padding: '6px 14px', borderRadius: '20px',
-              background: 'rgba(233,30,99,0.12)', border: '1px solid rgba(233,30,99,0.25)',
-              color: '#e91e63', fontSize: '0.85rem', fontWeight: 700,
-            }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e91e63', animation: 'vtuber-pulse-dot 1.5s ease infinite' }} />
-              <span>{liveCount} En Vivo</span>
-            </div>
-
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              padding: '6px 14px', borderRadius: '20px',
-              background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)',
-              color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700,
-            }}>
-              <Star size={14} color="#f59e0b" fill="#f59e0b" />
-              <span>{featuredVtubers.length} Destacados</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════ LIVE NOW ═══════ */}
-      {hasLive && (
-        <div style={{ marginBottom: '36px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <div style={{
-              width: 10, height: 10, borderRadius: '50%',
-              background: '#e91e63', animation: 'vtuber-pulse-dot 1.5s ease infinite',
-            }} />
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: 0 }}>
-              En vivo ahora
-            </h2>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              {liveCount} {liveCount === 1 ? 'VTuber' : 'VTubers'} transmitiendo
-            </span>
-          </div>
-          <div style={{
-            display: 'flex', gap: '10px',
-            overflowX: 'auto', paddingBottom: '8px',
-            scrollSnapType: 'x mandatory',
-            WebkitOverflowScrolling: 'touch',
-          }}
-            className="hide-scrollbar"
-          >
-            {liveVtubers.map(v => (
-              <div key={v.id} style={{ scrollSnapAlign: 'start' }}>
-                <LiveMiniCard v={v} />
-              </div>
+          <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
+            {featuredVtubers.map(vtuber => (
+              <VTuberIDCard key={vtuber.id} vtuber={vtuber} />
             ))}
           </div>
         </div>
       )}
 
-      {/* ═══════ FEATURED ═══════ */}
-      {hasFeatured && (
-        <div style={{ marginBottom: '36px' }}>
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Star size={22} color="#ffd700" fill="#ffd700" /> VTubers Destacados
-          </h2>
-          <div style={{
-            display: 'grid', gap: '16px',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          }}>
-            {featuredVtubers.map(v => <VTuberCard key={v.id} v={v} />)}
-          </div>
-        </div>
-      )}
-
-      {/* ═══════ DIRECTORY ═══════ */}
+      {/* 4. Directory & Filters Section */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: 0 }}>
-              {hasFeatured ? 'Explorar más VTubers' : 'Directorio de VTubers'}
-            </h2>
-            {meta && (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
-                {meta.total} {meta.total === 1 ? 'VTuber encontrado' : 'VTubers encontrados'}
-              </p>
-            )}
-          </div>
+        <div style={{ marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+            {search || contentType || onlyLive ? 'Resultados de Búsqueda' : 'Directorio de VTubers'}
+          </h2>
         </div>
 
-        {/* Search + Filters */}
-        <div className="glass" style={{ padding: '16px 20px', borderRadius: '14px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
-              <svg
-                style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
-                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                className="input"
-                style={{ paddingLeft: '38px' }}
-                placeholder="Buscar VTuber por nombre o descripción..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
-            <select
-              className="input"
-              value={contentType}
-              onChange={e => setContentType(e.target.value)}
-              style={{ minWidth: 150 }}
-            >
-              {CONTENT_TYPES.map(ct => (
-                <option key={ct.value} value={ct.value}>{ct.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        {/* Search & Filter Bar Widget */}
+        <VTuberFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          contentType={contentType}
+          onCategoryChange={setContentType}
+          onlyLive={onlyLive}
+          onToggleOnlyLive={setOnlyLive}
+          totalResults={meta?.total || directory.length}
+        />
 
-        {/* Cards grid */}
+        {/* Directory Grid */}
         {directoryLoading ? (
-          <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-            {Array.from({ length: 6 }).map((_, i) => <SkeletonVTuberCard key={i} />)}
+          <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonVTuberCard key={i} />
+            ))}
           </div>
         ) : directory.length === 0 ? (
-          <div className="glass" style={{ padding: '48px 20px', textAlign: 'center', borderRadius: '16px' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}><Telescope size={48} color="var(--text-muted)" strokeWidth={1.5} /></div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px' }}>
-              {search || contentType ? 'Sin resultados' : 'Aún no hay VTubers'}
+          <div
+            className="glass"
+            style={{
+              padding: '60px 20px',
+              textAlign: 'center',
+              borderRadius: '20px',
+              background: 'rgba(18, 18, 26, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <div style={{ marginBottom: '14px' }}>
+              <Telescope size={46} color="var(--text-muted)" strokeWidth={1.5} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '6px', color: '#fff' }}>
+              {search || contentType || onlyLive ? 'No se encontraron VTubers' : 'Aún no hay VTubers en esta categoría'}
             </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px', maxWidth: 400, margin: '0 auto' }}>
-              {search || contentType
-                ? 'No encontramos VTubers con esos filtros. Intenta con otros términos.'
-                : 'Sé el primero en crear tu perfil VTuber y únete al Gremio Estelar.'
-              }
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px', maxWidth: 420, margin: '0 auto 20px auto' }}>
+              {search || contentType || onlyLive
+                ? 'Prueba ajustando tus términos de búsqueda o removiendo los filtros activos.'
+                : 'Sé el primero en solicitar tu perfil oficial de VTuber en el Gremio Estelar.'}
             </p>
-            {(search || contentType) && (
+            {(search || contentType || onlyLive) && (
               <button
-                onClick={() => { setSearch(''); setContentType(''); }}
+                onClick={() => {
+                  setSearch('');
+                  setContentType('');
+                  setOnlyLive(false);
+                }}
                 className="btn"
-                style={{ padding: '10px 24px', fontSize: '0.9rem' }}
+                style={{
+                  padding: '10px 24px',
+                  fontSize: '0.88rem',
+                  borderRadius: '12px',
+                  background: 'rgba(139, 92, 246, 0.2)',
+                  color: 'var(--primary-hover)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
               >
-                Limpiar filtros
+                Limpiar Filtros
               </button>
-            )}
-            {!search && !contentType && !loggedIn && (
-              <Link href="/register" className="btn" style={{ padding: '10px 24px', fontSize: '0.9rem', display: 'inline-block' }}>
-                Crear perfil
-              </Link>
             )}
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-              {directory.map(v => <VTuberCard key={v.id} v={v} />)}
+            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
+              {directory.map(vtuber => (
+                <VTuberIDCard key={vtuber.id} vtuber={vtuber} />
+              ))}
             </div>
 
-            {/* Pagination */}
+            {/* Pagination Controls */}
             {meta && meta.totalPages > 1 && (
-              <div style={{
-                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                gap: '8px', marginTop: '28px', padding: '16px 0',
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginTop: '36px',
+                  paddingTop: '16px',
+                }}
+              >
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page <= 1}
                   className="btn"
                   style={{
-                    padding: '10px 20px', fontSize: '0.85rem', borderRadius: '10px',
+                    padding: '10px 18px',
+                    fontSize: '0.85rem',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    color: '#fff',
                     opacity: page <= 1 ? 0.4 : 1,
-                    display: 'flex', alignItems: 'center', gap: '6px',
+                    cursor: page <= 1 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: 700,
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 18 9 12 15 6" />
-                  </svg>
+                  <ArrowLeft size={15} />
                   Anterior
                 </button>
 
-                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   {Array.from({ length: meta.totalPages }, (_, i) => i + 1)
                     .filter(p => p === 1 || p === meta.totalPages || Math.abs(p - page) <= 1)
                     .map((p, idx, arr) => (
-                      <span key={p} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <React.Fragment key={p}>
                         {idx > 0 && arr[idx - 1] !== p - 1 && (
-                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '0 2px' }}>...</span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '0 4px' }}>...</span>
                         )}
                         <button
                           onClick={() => setPage(p)}
                           style={{
-                            width: 36, height: 36, borderRadius: '10px',
-                            border: 'none', cursor: 'pointer',
-                            background: p === page ? 'var(--primary)' : 'transparent',
-                            color: p === page ? '#fff' : 'var(--text-muted)',
-                            fontWeight: p === page ? 700 : 500,
+                            width: 38,
+                            height: 38,
+                            borderRadius: '10px',
+                            border: p === page ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.06)',
+                            background: p === page ? 'var(--primary)' : 'rgba(255, 255, 255, 0.03)',
+                            color: '#fff',
+                            fontWeight: p === page ? 800 : 500,
                             fontSize: '0.85rem',
-                            transition: 'all 0.15s',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
                           }}
-                          onMouseEnter={e => { if (p !== page) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                          onMouseLeave={e => { if (p !== page) e.currentTarget.style.background = 'transparent'; }}
                         >
                           {p}
                         </button>
-                      </span>
+                      </React.Fragment>
                     ))}
                 </div>
 
@@ -704,15 +323,22 @@ function VtubersContent() {
                   disabled={page >= meta.totalPages}
                   className="btn"
                   style={{
-                    padding: '10px 20px', fontSize: '0.85rem', borderRadius: '10px',
+                    padding: '10px 18px',
+                    fontSize: '0.85rem',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    color: '#fff',
                     opacity: page >= meta.totalPages ? 0.4 : 1,
-                    display: 'flex', alignItems: 'center', gap: '6px',
+                    cursor: page >= meta.totalPages ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: 700,
                   }}
                 >
                   Siguiente
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
+                  <ArrowRight size={15} />
                 </button>
               </div>
             )}
@@ -720,16 +346,11 @@ function VtubersContent() {
         )}
       </div>
 
-      {/* ═══════ STYLES ═══════ */}
+      {/* Embedded Dynamic Keyframe Animations */}
       <style>{`
         @keyframes vtuber-pulse-dot {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-        @keyframes vtuber-shimmer {
-          0% { opacity: 0.06; }
-          50% { opacity: 0.12; }
-          100% { opacity: 0.06; }
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.35; transform: scale(0.85); }
         }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -738,18 +359,20 @@ function VtubersContent() {
   );
 }
 
-/* ─────────── Page Export ─────────── */
-
 export default function VtubersPage() {
   return (
-    <div className="container" style={{ paddingBottom: '60px', paddingTop: '24px' }}>
-      <ClientOnly fallback={
-        <div style={{ padding: '40px 0' }}>
-          <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-            {Array.from({ length: 6 }).map((_, i) => <SkeletonVTuberCard key={i} />)}
+    <div className="container" style={{ paddingBottom: '70px', paddingTop: '28px' }}>
+      <ClientOnly
+        fallback={
+          <div style={{ padding: '30px 0' }}>
+            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))' }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <SkeletonVTuberCard key={i} />
+              ))}
+            </div>
           </div>
-        </div>
-      }>
+        }
+      >
         <VtubersContent />
       </ClientOnly>
     </div>
