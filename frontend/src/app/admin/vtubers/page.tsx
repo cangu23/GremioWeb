@@ -6,6 +6,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
+import { useAuth } from '@/lib/AuthContext';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface AdminVtuber {
   id: string;
@@ -42,6 +44,11 @@ interface AdminVtubersResponse {
 
 export default function AdminVtubersPage() {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  // Editar/verificar/aprobar/destacar/ocultar son acciones ADMIN-only en el
+  // backend (PATCH /admin/vtubers/:id exige authorize(ADMIN)). Los moderadores
+  // y staff solo pueden VER la lista; si intentaran una acción recibirían 403.
+  const canAdmin = hasAnyRole(user?.role, ['ADMIN', 'OWNER']); // SYSADMIN pasa por god-mode
   const [data, setData] = useState<AdminVtubersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -114,7 +121,9 @@ export default function AdminVtubersPage() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchData(); }, [page, filterVerified, filterApproved]);
-  useEffect(() => { fetchUnverified(); fetchUnapproved(); }, []);
+  // Las secciones de verificación/aprobación rápida son ADMIN-only: no tiene
+  // sentido que moderadores/staff consulten esos listados que no van a ver.
+  useEffect(() => { if (canAdmin) { fetchUnverified(); fetchUnapproved(); } }, [canAdmin]);
   useEffect(() => { setPage(1); }, [search, filterVerified, filterApproved]);
 
   const openEdit = (profile: AdminVtuber) => {
@@ -209,7 +218,7 @@ export default function AdminVtubersPage() {
       </div>
 
       {/* ===== QUICK VERIFY SECTION ===== */}
-      {!loadingUnverified && unverifiedData.length > 0 && !quickVerifyError && (
+      {canAdmin && !loadingUnverified && unverifiedData.length > 0 && !quickVerifyError && (
         <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid rgba(0,212,255,0.15)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <div style={{
@@ -323,7 +332,7 @@ export default function AdminVtubersPage() {
       )}
 
       {/* ===== QUICK APPROVAL SECTION ===== */}
-      {!loadingUnapproved && unapprovedData.length > 0 && !quickApprovalError && (
+      {canAdmin && !loadingUnapproved && unapprovedData.length > 0 && !quickApprovalError && (
         <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid rgba(33,150,243,0.15)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <div style={{
@@ -503,6 +512,10 @@ export default function AdminVtubersPage() {
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px' }}>
+                        {!canAdmin && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Solo lectura</span>
+                        )}
+                        {canAdmin && (
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                           <button onClick={() => openEdit(profile)} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(138,43,226,0.2)', color: '#8a2be2', border: '1px solid rgba(138,43,226,0.3)' }}>Editar</button>
                           <button onClick={() => handleToggleFlag(profile.id, 'isVerified', profile.isVerified, 'Verificación')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: profile.isVerified ? 'rgba(255,152,0,0.2)' : '#1d9bf033', color: profile.isVerified ? '#ff9800' : '#1d9bf0', border: `1px solid ${profile.isVerified ? '#ff980033' : '#1d9bf033'}` }}>
@@ -518,6 +531,7 @@ export default function AdminVtubersPage() {
                             {profile.isHidden ? 'Mostrar' : 'Ocultar'}
                           </button>
                         </div>
+                        )}
                       </td>
                     </tr>
                   ))}

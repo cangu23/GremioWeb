@@ -10,7 +10,7 @@ import MentionInput, { renderContentWithMentions } from './MentionInput';
 import { useStickersCache } from '@/lib/content-renderer';
 import RoleBadge from '@/components/ui/RoleBadge';
 import { getPrimaryRole, isStaffRole, hasAnyRole, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
-import type { PostCardData, CommentData } from '../../../../shared/types';
+import type { PostCardData, CommentData } from '@gremio-estelar/shared';
 
 // Lazy-loaded modals to shrink initial bundle & boost rendering speed
 const ModerateModal = dynamic(() => import('./ModerateModal'), { ssr: false });

@@ -41,5 +41,7 @@ export const updateUserSchema = z.object({
     hashtags: z.array(z.string()).optional(),
     socialLinks: z.record(z.string().url()).optional(),
     isLive: z.boolean().optional(),
+    // Marco premium del plan: 'OFF' lo oculta, 'PLAN'/null lo muestra
+    profileFrame: z.enum(['PLAN', 'OFF']).nullable().optional(),
   }),
 });

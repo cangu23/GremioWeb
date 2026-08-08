@@ -41,8 +41,10 @@ export const register = async (input: RegisterInput) => {
   if ((input as any).ref) {
     try {
       const refClean = String((input as any).ref).trim().toLowerCase();
-      const allUsers = await prisma.user.findMany({ select: { id: true, username: true } });
-      const referrer = allUsers.find(u => u.username.toLowerCase() === refClean);
+      const referrer = await prisma.user.findFirst({
+        where: { username: { equals: refClean, mode: 'insensitive' } },
+        select: { id: true, username: true },
+      });
 
       if (referrer && referrer.id !== user.id) {
         // Track referrer's mission and grant referrer bonus

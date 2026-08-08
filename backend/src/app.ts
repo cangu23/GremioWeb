@@ -101,8 +101,8 @@ const limiter = rateLimit({
   max: 500, // limit each IP to 500 requests per windowMs (~33/min)
   standardHeaders: true,
   legacyHeaders: false,
-  // Exempt preflight OPTIONS & notification polling from rate limiting
-  skip: (req) => req.method === 'OPTIONS' || req.path.startsWith('/notifications'),
+  // Exempt preflight OPTIONS & notification polling (GET only) from rate limiting
+  skip: (req) => req.method === 'OPTIONS' || (req.method === 'GET' && req.path.startsWith('/notifications')),
   message: {
     status: 'error',
     message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',

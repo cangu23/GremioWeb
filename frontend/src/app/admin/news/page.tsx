@@ -1,7 +1,5 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
@@ -160,7 +158,9 @@ function AdminNewsContent() {
       });
       showToast(article.isPinned ? 'Noticia desfijada' : 'Noticia fijada al inicio', 'success');
       fetchArticles();
-    } catch {}
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al cambiar fijado', 'error');
+    }
   };
 
   const togglePublish = async (article: NewsArticle) => {
@@ -171,7 +171,9 @@ function AdminNewsContent() {
       });
       showToast(article.isPublished ? 'Noticia despublicada (borrador)' : 'Noticia publicada', 'success');
       fetchArticles();
-    } catch {}
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al cambiar publicación', 'error');
+    }
   };
 
   if (isLoading || !user) {

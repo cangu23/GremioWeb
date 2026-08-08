@@ -164,6 +164,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       window.removeEventListener('auth:unauthorized', handleUnauthorized);
+      window.removeEventListener('stardust-updated', handleRefetchUser);
+      window.removeEventListener('stardust:updated', handleRefetchUser);
+      window.removeEventListener('user-refetched', handleRefetchUser);
       window.removeEventListener('pageshow', handlePageShow);
     };
   }, [refreshAuth]);

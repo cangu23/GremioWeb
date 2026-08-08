@@ -20,6 +20,9 @@ export interface User {
   verifiedUntil?: string | Date | null;
   isVerified?: boolean;
   profileMusic?: string | null;
+  // Marco premium del plan (STELLAR dorado / NOVA morado / ASTRO azul):
+  // 'OFF' lo oculta; cualquier otro valor o null lo muestra (fallback del avatar).
+  profileFrame?: string | null;
 }
 
 export interface UserProfile extends User {

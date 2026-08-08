@@ -8,7 +8,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import MentionInput from './MentionInput';
 import StickerPicker from '@/components/ui/StickerPicker';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
-import type { CreatePostData } from '../../../../shared/types';
+import type { CreatePostData } from '@gremio-estelar/shared';
 
 // ==========================================================================
 // Types

@@ -7,6 +7,8 @@ import { useToast } from '@/lib/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import PetRequestModal from '@/components/ui/PetRequestModal';
+import { getEffectivePlan } from '@gremio-estelar/shared';
+import { getPlanAvatarBorder } from '@/lib/plan-avatar-border';
 
 interface ShopItem {
   id: string;
@@ -194,6 +196,7 @@ export default function InventoryPage() {
   const [filter, setFilter] = useState('all');
   const [actionId, setActionId] = useState<string | null>(null);
   const [showPetModal, setShowPetModal] = useState(false);
+  const [togglingFrame, setTogglingFrame] = useState(false);
 
   const refreshInventory = async () => {
     try {
@@ -270,6 +273,29 @@ export default function InventoryPage() {
     }
   };
 
+  // ── Marco premium del plan (aro dorado STELLAR / morado NOVA / azul ASTRO) ──
+  const effectivePlan = getEffectivePlan(user?.plan, user?.role);
+  const isPremium = effectivePlan !== 'FREE';
+  const planFrameHidden = user?.profileFrame === 'OFF';
+  const planBorder = getPlanAvatarBorder(user?.plan, user?.role);
+
+  const togglePlanFrame = async () => {
+    const nextHidden = !planFrameHidden;
+    setTogglingFrame(true);
+    try {
+      await apiFetch('/users/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ profileFrame: nextHidden ? 'OFF' : 'PLAN' }),
+      });
+      showToast(nextHidden ? 'Marco del plan quitado' : 'Marco del plan equipado ✨', 'success');
+      window.dispatchEvent(new Event('user-refetched'));
+    } catch (e: any) {
+      showToast(e.message || 'Error al cambiar el marco del plan', 'error');
+    } finally {
+      setTogglingFrame(false);
+    }
+  };
+
   const filteredInventory = inventory.filter((p) => {
     if (filter === 'all') return true;
     if (filter === 'equipped') return p.equipped;
@@ -343,6 +369,81 @@ export default function InventoryPage() {
         </div>
 
         <PetRequestModal isOpen={showPetModal} onClose={() => setShowPetModal(false)} />
+
+        {/* ── Marco Premium del Plan ── */}
+        {isPremium && planBorder && (
+          <div style={{
+            maxWidth: '560px', margin: '0 auto 32px',
+            padding: '20px', borderRadius: '18px',
+            background: 'linear-gradient(135deg, rgba(28,25,50,0.85), rgba(15,14,30,0.85))',
+            backdropFilter: 'blur(12px)',
+            border: planFrameHidden
+              ? '1px solid rgba(255,255,255,0.08)'
+              : '1.5px solid rgba(255,215,0,0.45)',
+            boxShadow: planFrameHidden ? 'none' : '0 8px 30px rgba(255,215,0,0.15)',
+            display: 'flex', alignItems: 'center', gap: '16px',
+          }}>
+            {/* Aro de vista previa */}
+            <div style={{ flexShrink: 0 }}>
+              <div style={{
+                width: '64px', height: '64px', borderRadius: '50%',
+                padding: '3px',
+                background: planBorder.bg,
+                animation: planBorder.spin ? 'spin 4s linear infinite' : 'none',
+                boxShadow: `0 0 16px ${planBorder.glow}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                opacity: planFrameHidden ? 0.35 : 1,
+                transition: 'opacity 0.3s',
+              }}>
+                <div style={{
+                  width: '100%', height: '100%', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1e1b4b, #31104b)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.4rem', color: '#fff',
+                }}>
+                  👤
+                </div>
+              </div>
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3 style={{ fontSize: '1.02rem', fontWeight: 800, margin: '0 0 4px', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                🏆 Marco de Plan {effectivePlan}
+                <span style={{
+                  fontSize: '0.6rem', padding: '2px 8px', borderRadius: '10px',
+                  background: planFrameHidden ? 'rgba(255,255,255,0.08)' : 'rgba(255,215,0,0.18)',
+                  color: planFrameHidden ? 'var(--text-muted)' : '#ffd700',
+                  fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+                }}>
+                  {planFrameHidden ? 'Oculto' : 'Activo'}
+                </span>
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0', lineHeight: 1.4 }}>
+                Aro de avatar exclusivo de tu plan{planFrameHidden ? ' (actualmente oculto)' : ''}. Se muestra en tu avatar cuando no tienes otro marco equipado de la tienda.
+              </p>
+            </div>
+
+            <button
+              onClick={togglePlanFrame}
+              disabled={togglingFrame}
+              style={{
+                flexShrink: 0, padding: '10px 18px', borderRadius: '10px',
+                border: planFrameHidden
+                  ? '1px solid rgba(255,215,0,0.5)'
+                  : '1px solid rgba(255,255,255,0.2)',
+                background: planFrameHidden
+                  ? 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(245,158,11,0.25))'
+                  : 'rgba(255,255,255,0.06)',
+                color: planFrameHidden ? '#ffd700' : '#fff',
+                cursor: togglingFrame ? 'wait' : 'pointer',
+                fontWeight: 800, fontSize: '0.82rem',
+                transition: 'all 0.2s', opacity: togglingFrame ? 0.6 : 1,
+              }}
+            >
+              {togglingFrame ? '...' : planFrameHidden ? '✨ Equipar' : 'Quitar'}
+            </button>
+          </div>
+        )}
 
         {/* Filters */}
         <div style={{

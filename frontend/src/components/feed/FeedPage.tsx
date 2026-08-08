@@ -14,7 +14,7 @@ import StardustProgressBar from '@/components/ui/StardustProgressBar';
 import PlanBadge from '@/components/ui/PlanBadge';
 import { hasAnyRole } from '@gremio-estelar/shared';
 import { usePosts } from '@/lib/hooks/usePosts';
-import type { GuildItem, TrendingHashtag, LiveVTuberProfile, FollowingUser, EventItem } from '../../../../shared/types';
+import type { GuildItem, TrendingHashtag, LiveVTuberProfile, FollowingUser, EventItem } from '@gremio-estelar/shared';
 
 // Twitch helper
 function extractTwitchChannel(url: string | null): string | null {
@@ -55,8 +55,6 @@ function HomeContent() {
   const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
   const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set());
   const [now, setNow] = useState(() => Date.now());
-  const [maidsData, setMaidsData] = useState<any[]>([]);
-  const [maidsLoading, setMaidsLoading] = useState(true);
 
   // Sentinel ref for infinite scroll
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -91,15 +89,14 @@ function HomeContent() {
     if (!user) return;
 
     const fetchSidebarData = async () => {
-      // Parallelize all 7 sidebar queries simultaneously
-      const [guildsRes, tagsRes, notifsRes, liveRes, followingRes, eventsRes, maidsRes] = await Promise.allSettled([
+      // Parallelize sidebar queries simultaneously
+      const [guildsRes, tagsRes, notifsRes, liveRes, followingRes, eventsRes] = await Promise.allSettled([
         apiFetch('/guilds', {}),
         apiFetch('/posts/hashtags/trending?limit=8', {}),
         apiFetch('/notifications/unread-count', {}),
         apiFetch('/vtubers/live', {}),
         apiFetch(`/social/following/${user.id}`, {}),
         apiFetch('/events?status=UPCOMING&limit=5', {}),
-        apiFetch('/users/role/MAID', {}),
       ]);
 
       if (guildsRes.status === 'fulfilled' && Array.isArray(guildsRes.value)) {
@@ -120,10 +117,6 @@ function HomeContent() {
       if (eventsRes.status === 'fulfilled' && Array.isArray(eventsRes.value)) {
         setUpcomingEvents(eventsRes.value.slice(0, 4));
       }
-      if (maidsRes.status === 'fulfilled' && Array.isArray(maidsRes.value)) {
-        setMaidsData(maidsRes.value);
-      }
-      setMaidsLoading(false);
     };
 
     fetchSidebarData();

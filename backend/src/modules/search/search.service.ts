@@ -24,6 +24,7 @@ export const globalSearch = async (query: string, limit = 5) => {
         avatarUrl: true,
         role: true,
         plan: true,
+        profileFrame: true,
         verifiedUntil: true,
         vtuberProfile: {
           select: {

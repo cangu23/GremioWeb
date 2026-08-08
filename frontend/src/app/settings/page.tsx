@@ -18,6 +18,7 @@ import RoleBadge from '@/components/ui/RoleBadge';
 import { parseUserRoles, getPrimaryRole, isSpotifyUrl, canUseProfileMusic, toSpotifyEmbedUrl, getSpotifyEmbedHeight, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
 import { normalizeUsername } from '@/lib/user-display';
+import { getPlanAvatarBorder } from '@/lib/plan-avatar-border';
 
 // ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
 const PROFILE_MUSIC_ENABLED = false;
@@ -36,6 +37,7 @@ function UserSettings() {
   const [profileMusic, setProfileMusic] = useState('');
   const originalProfileMusic = useRef('');
   const [saving, setSaving] = useState(false);
+  const [togglingFrame, setTogglingFrame] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const { uploadAndWait } = useSocketMedia();
@@ -113,6 +115,24 @@ function UserSettings() {
       originalProfileMusic.current = user.profileMusic || '';
     }
   }, [user, isLoading, router]);
+
+  // ── Marco premium del plan (aro dorado STELLAR / morado NOVA / azul ASTRO) ──
+  const togglePlanFrame = async () => {
+    const nextHidden = !(user?.profileFrame === 'OFF');
+    setTogglingFrame(true);
+    try {
+      await apiFetch('/users/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ profileFrame: nextHidden ? 'OFF' : 'PLAN' }),
+      });
+      showToast(nextHidden ? 'Marco del plan quitado' : 'Marco del plan equipado ✨', 'success');
+      window.dispatchEvent(new Event('user-refetched'));
+    } catch (err: unknown) {
+      showToast(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
+    } finally {
+      setTogglingFrame(false);
+    }
+  };
 
   const handleRemoveMusic = async () => {
     setSaving(true);
@@ -196,6 +216,8 @@ function UserSettings() {
 
   const effectivePlan = getEffectivePlan(user.plan, user.role);
   const canBannerGif = planMeetsOrExceeds(user.plan, user.role, 'NOVA');
+  const planFrameHidden = user?.profileFrame === 'OFF';
+  const planBorder = getPlanAvatarBorder(user?.plan, user?.role);
 
   return (
     <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px', maxWidth: '700px', margin: '0 auto' }}>
@@ -410,6 +432,91 @@ function UserSettings() {
             </div>
           </div>
         </div>
+
+        {/* Marco Premium del Plan (aro dorado STELLAR / morado NOVA / azul ASTRO) */}
+        {effectivePlan !== 'FREE' && planBorder && (
+          <div className="glass" style={{
+            padding: '24px', marginBottom: '20px', borderRadius: '16px',
+            border: planFrameHidden
+              ? '1px solid rgba(255,255,255,0.08)'
+              : '1px solid rgba(255,215,0,0.35)',
+            boxShadow: planFrameHidden ? 'none' : '0 4px 24px rgba(255,215,0,0.12)',
+          }}>
+            <h3 style={{
+              fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px',
+              display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap',
+            }}>
+              🏆 Marco de Avatar Premium
+              <span style={{
+                fontSize: '0.6rem', padding: '2px 8px', borderRadius: '10px',
+                background: planFrameHidden ? 'rgba(255,255,255,0.08)' : 'rgba(255,215,0,0.18)',
+                color: planFrameHidden ? 'var(--text-muted)' : '#ffd700',
+                fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+              }}>
+                {planFrameHidden ? 'Oculto' : 'Activo'}
+              </span>
+            </h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              Aro de avatar exclusivo del Plan {effectivePlan}. Se muestra en tu avatar cuando no tienes
+              otro marco equipado de la tienda. Puedes quitarlo o volver a equiparlo cuando quieras.
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              {/* Aro de vista previa */}
+              <div style={{
+                width: '64px', height: '64px', borderRadius: '50%',
+                padding: '3px', flexShrink: 0,
+                background: planBorder.bg,
+                animation: planBorder.spin ? 'spin 4s linear infinite' : 'none',
+                boxShadow: `0 0 16px ${planBorder.glow}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                opacity: planFrameHidden ? 0.35 : 1,
+                transition: 'opacity 0.3s',
+              }}>
+                <div style={{
+                  width: '100%', height: '100%', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1e1b4b, #31104b)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.4rem', color: '#fff',
+                }}>
+                  👤
+                </div>
+              </div>
+
+              <div style={{ flex: 1, minWidth: '180px' }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700 }}>
+                  Aro de avatar de tu plan
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                  {planFrameHidden
+                    ? 'Actualmente oculto. Pulsa equipar para volver a lucirlo.'
+                    : 'Visible en tu avatar en toda la plataforma.'}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={togglePlanFrame}
+                disabled={togglingFrame}
+                style={{
+                  padding: '10px 20px', borderRadius: '10px', flexShrink: 0,
+                  border: planFrameHidden
+                    ? '1px solid rgba(255,215,0,0.5)'
+                    : '1px solid rgba(255,255,255,0.2)',
+                  background: planFrameHidden
+                    ? 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(245,158,11,0.25))'
+                    : 'rgba(255,255,255,0.06)',
+                  color: planFrameHidden ? '#ffd700' : '#fff',
+                  cursor: togglingFrame ? 'wait' : 'pointer',
+                  fontWeight: 800, fontSize: '0.85rem',
+                  transition: 'all 0.2s', opacity: togglingFrame ? 0.6 : 1,
+                }}
+              >
+                {togglingFrame ? '...' : planFrameHidden ? '✨ Equipar' : 'Quitar'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Preferred Display Badge (when user has multiple roles) */}
         {user && parseUserRoles(user.role).length > 1 && (

@@ -98,6 +98,7 @@ export const searchByUsername = async (query: string) => {
       avatarUrl: true,
       role: true,
       plan: true,
+      profileFrame: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
       purchases: {
         where: { equipped: true },

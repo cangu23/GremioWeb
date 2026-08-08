@@ -36,6 +36,7 @@ export const getUserGamificationProfile = (userId: string) =>
       xp: true,
       level: true,
       plan: true,
+      profileFrame: true,
       role: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true } },
     },

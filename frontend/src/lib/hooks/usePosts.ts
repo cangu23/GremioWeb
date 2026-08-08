@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { apiFetch } from '@/lib/api';
-import type { Post } from '../../../../shared/types';
+import type { Post } from '@gremio-estelar/shared';
 
 // ==========================================================================
 // Types
@@ -115,6 +115,7 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
   useEffect(() => {
     if (!autoFetch) return;
     setPage(1);
+    setLoading(true);
     fetchFeed(1, false);
   }, [fetchFeed, autoFetch]);
 

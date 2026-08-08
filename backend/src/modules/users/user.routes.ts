@@ -25,8 +25,8 @@ router.post('/pet/feed', authenticate, PetController.feedPet);
 router.get('/:id/stats', authenticate, UserController.getProfileStats);
 
 // Public routes
-router.get('/search', UserController.searchUsers);
-router.get('/search/mentions', UserController.searchUsersForMention);
+router.get('/search', optionalAuth, UserController.searchUsers);
+router.get('/search/mentions', optionalAuth, UserController.searchUsersForMention);
 // Roles sensibles (ADMIN, MODERATOR) solo visibles para admins. Roles públicos (VTUBER, MAID) son abiertos.
 router.get('/role/:role', optionalAuth, UserController.getUsersByRole);
 router.get('/:id', UserController.getPublicUser);

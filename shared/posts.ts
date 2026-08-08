@@ -33,27 +33,8 @@ export interface CreatePostPayload {
   hashtags?: string[];
 }
 
-export interface CommentData {
-  id: string;
-  content: string;
-  mediaUrl: string | null;
-  createdAt: string;
-  postId: string;
-  userId: string;
-  user: {
-    id: string;
-    username: string;
-    vtuberProfile?: {
-      displayName: string;
-      avatarUrl: string | null;
-    } | null;
-  };
-  _count: {
-    likes: number;
-  };
-  isLikedByMe?: boolean;
-}
-
+// NOTA: CommentData vive en ./types (versión rica usada por el frontend).
+// Eliminada de aquí para que el barrel export (index.ts) no tenga ambigüedad.
 export interface CreateCommentPayload {
   content: string;
   mediaUrl?: string;

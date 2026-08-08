@@ -6,6 +6,7 @@ const userSelect = {
   role: true,
   avatarUrl: true,
   plan: true,
+  profileFrame: true,
   verifiedUntil: true,
   vtuberProfile: {
     select: {
