@@ -156,15 +156,6 @@ export const updateCommentModerationSchema = z.object({
 
 // ========== REPORT MANAGEMENT ==========
 
-export const createReportSchema = z.object({
-  body: z.object({
-    targetType: z.enum(['USER', 'POST', 'COMMENT', 'EVENT', 'GUILD']),
-    targetId: z.string().min(1),
-    reason: z.string().min(10).max(500),
-    description: z.string().max(2000).optional(),
-  }),
-});
-
 export const resolveReportSchema = z.object({
   body: z.object({
     status: z.enum(['IN_REVIEW', 'RESOLVED', 'DISMISSED']),

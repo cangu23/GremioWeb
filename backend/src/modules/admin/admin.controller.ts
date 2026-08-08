@@ -29,13 +29,6 @@ export const listUsers = async (req: Request, res: Response, next: NextFunction)
   } catch (err) { next(err); }
 };
 
-export const getUserDetail = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = await AdminService.getUserDetail(String(req.params.id));
-    res.json(user);
-  } catch (err) { next(err); }
-};
-
 export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await AdminService.updateUser(String(req.params.id), req.body, req.user!.id, req.ip);
@@ -46,13 +39,6 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
 export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await AdminService.deleteUser(String(req.params.id), req.user!.id, req.ip);
-    res.json(result);
-  } catch (err) { next(err); }
-};
-
-export const restoreUser = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const result = await AdminService.restoreUser(String(req.params.id), req.user!.id, req.ip);
     res.json(result);
   } catch (err) { next(err); }
 };
@@ -93,13 +79,6 @@ export const listVtubers = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const getVtuberDetail = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const profile = await AdminService.getVtuberDetail(String(req.params.id));
-    res.json(profile);
-  } catch (err) { next(err); }
-};
-
 export const updateVtuber = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await AdminService.updateVtuber(String(req.params.id), req.body, req.user!.id, req.ip);
@@ -113,13 +92,6 @@ export const listEvents = async (req: Request, res: Response, next: NextFunction
   try {
     const result = await AdminService.listEvents(req.query as unknown as AdminQueryInput);
     res.json(result);
-  } catch (err) { next(err); }
-};
-
-export const getEventDetail = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const event = await AdminService.getEventDetail(String(req.params.id));
-    res.json(event);
   } catch (err) { next(err); }
 };
 
@@ -176,13 +148,6 @@ export const listPosts = async (req: Request, res: Response, next: NextFunction)
   } catch (err) { next(err); }
 };
 
-export const getPostDetail = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const post = await AdminService.getPostDetail(String(req.params.id));
-    res.json(post);
-  } catch (err) { next(err); }
-};
-
 export const updatePost = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await AdminService.updatePost(String(req.params.id), req.body, req.user!.id, req.ip);
@@ -228,16 +193,6 @@ export const deleteComment = async (req: Request, res: Response, next: NextFunct
 };
 
 // ========== REPORTS ==========
-
-export const createReport = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const result = await AdminService.createReport({
-      ...req.body,
-      reporterId: req.user!.id,
-    });
-    res.status(201).json(result);
-  } catch (err) { next(err); }
-};
 
 export const listReports = async (req: Request, res: Response, next: NextFunction) => {
   try {

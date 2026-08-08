@@ -70,49 +70,6 @@ export const createSticker = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// ========== UPDATE STICKER ==========
-
-export const updateSticker = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = req.params.id as string;
-    const { name, imageUrl, category, type, minPlan } = req.body;
-
-    const existing = await prisma.sticker.findUnique({ where: { id } });
-    if (!existing) {
-      res.status(404).json({ status: 'error', message: 'Sticker no encontrado' });
-      return;
-    }
-
-    const data: Record<string, unknown> = {};
-    if (name !== undefined) data.name = name;
-    if (imageUrl !== undefined) data.imageUrl = imageUrl;
-    if (category !== undefined) data.category = category;
-    if (minPlan !== undefined) {
-      if (!['FREE', 'ASTRO', 'NOVA', 'STELLAR'].includes(minPlan)) {
-        res.status(400).json({ status: 'error', message: 'minPlan debe ser FREE, ASTRO, NOVA o STELLAR' });
-        return;
-      }
-      data.minPlan = minPlan;
-    }
-    if (type !== undefined) {
-      if (!['emoji', 'sticker'].includes(type)) {
-        res.status(400).json({ status: 'error', message: 'type debe ser "emoji" o "sticker"' });
-        return;
-      }
-      data.type = type;
-    }
-
-    const updated = await prisma.sticker.update({ where: { id }, data });
-    res.json(updated);
-  } catch (err: any) {
-    if (err?.code === 'P2002') {
-      res.status(409).json({ status: 'error', message: `Ya existe un sticker con ese nombre` });
-      return;
-    }
-    next(err);
-  }
-};
-
 // ========== DELETE STICKER ==========
 
 export const deleteSticker = async (req: Request, res: Response, next: NextFunction) => {

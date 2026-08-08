@@ -29,13 +29,6 @@ export const listRequests = async (req: Request, res: Response, next: NextFuncti
   } catch (err) { next(err); }
 };
 
-export const getRequestDetail = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const result = await RequestsService.getRequestDetail(String(req.params.id));
-    res.json(result);
-  } catch (err) { next(err); }
-};
-
 export const approveRequest = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await RequestsService.approveRequest(String(req.params.id), req.user!.id);

@@ -15,7 +15,6 @@ import {
   updatePostModerationSchema,
   updateCommentAdminSchema,
   updateCommentModerationSchema,
-  createReportSchema,
   resolveReportSchema,
 } from './admin.validation';
 import * as AdminController from './admin.controller';
@@ -38,10 +37,8 @@ router.get('/dashboard/activity', validateRequest(adminQuerySchema), AdminContro
 
 // ========== USERS (Admin Only) ==========
 router.get('/users', adminOnly, validateRequest(adminQuerySchema), AdminController.listUsers);
-router.get('/users/:id', adminOnly, validateRequest(adminQuerySchema), AdminController.getUserDetail);
 router.patch('/users/:id', adminOnly, validateRequest(updateUserAdminSchema), AdminController.updateUser);
 router.delete('/users/:id', adminOnly, AdminController.deleteUser);
-router.post('/users/:id/restore', adminOnly, AdminController.restoreUser);
 router.post('/users/cleanup-profiles', adminOnly, AdminController.cleanupUserProfiles);
 
 // ========== PREMIUM PLAN GRANT / REVOKE (Admin Only) ==========
@@ -50,12 +47,10 @@ router.post('/revoke-plan', adminOnly, validateRequest(revokePlanSchema), AdminC
 
 // ========== VTUBERS (Staff View, Admin Edit) ==========
 router.get('/vtubers', validateRequest(adminQuerySchema), AdminController.listVtubers);
-router.get('/vtubers/:id', validateRequest(adminQuerySchema), AdminController.getVtuberDetail);
 router.patch('/vtubers/:id', adminOnly, validateRequest(updateVtuberAdminSchema), AdminController.updateVtuber);
 
 // ========== EVENTS (Staff View, Admin Edit) ==========
 router.get('/events', validateRequest(adminQuerySchema), AdminController.listEvents);
-router.get('/events/:id', validateRequest(adminQuerySchema), AdminController.getEventDetail);
 router.patch('/events/:id', adminOnly, validateRequest(updateEventAdminSchema), AdminController.updateEvent);
 router.delete('/events/:id', adminOnly, AdminController.deleteEvent);
 
@@ -67,7 +62,6 @@ router.delete('/guilds/:id', adminOnly, AdminController.deleteGuild);
 
 // ========== POSTS (Moderation — Staff) ==========
 router.get('/posts', validateRequest(adminQuerySchema), AdminController.listPosts);
-router.get('/posts/:id', validateRequest(adminQuerySchema), AdminController.getPostDetail);
 // Moderators can only hide/pin posts. Editing the actual content requires ADMIN.
 router.patch('/posts/:id', (req, res, next) => {
   if (req.body.content !== undefined) {
@@ -95,7 +89,6 @@ router.delete('/comments/:id', AdminController.deleteComment);
 
 // ========== REPORTS (Moderation — Staff) ==========
 router.get('/reports', validateRequest(adminQuerySchema), AdminController.listReports);
-router.post('/reports', validateRequest(createReportSchema), AdminController.createReport);
 router.patch('/reports/:id', validateRequest(resolveReportSchema), AdminController.resolveReport);
 
 // ========== INVITATION CODES (Admin Only) ==========
@@ -105,7 +98,6 @@ router.delete('/codes/:id', adminOnly, CodesController.revokeCode);
 
 // ========== VTUBER REQUESTS (Staff View & Approve) ==========
 router.get('/vtuber-requests', validateRequest(adminQuerySchema), RequestsController.listRequests);
-router.get('/vtuber-requests/:id', validateRequest(adminQuerySchema), RequestsController.getRequestDetail);
 router.post('/vtuber-requests/:id/approve', RequestsController.approveRequest);
 router.post('/vtuber-requests/:id/reject', RequestsController.rejectRequest);
 
@@ -124,7 +116,6 @@ router.patch('/settings', adminOnly, SettingsController.updateSettings);
 // ========== STICKERS / EMOJIS (Admin Only) ==========
 router.get('/stickers', adminOnly, validateRequest(adminQuerySchema), StickersController.listStickers);
 router.post('/stickers', adminOnly, StickersController.createSticker);
-router.patch('/stickers/:id', adminOnly, StickersController.updateSticker);
 router.delete('/stickers/:id', adminOnly, StickersController.deleteSticker);
 
 export default router;

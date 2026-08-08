@@ -547,16 +547,6 @@ export const deleteComment = (id: string) => {
 
 // ========== REPORTS ==========
 
-export const createReport = (data: {
-  reporterId: string;
-  targetType: string;
-  targetId: string;
-  reason: string;
-  description?: string;
-}) => {
-  return prisma.report.create({ data });
-};
-
 export const findReports = (params: {
   skip: number;
   take: number;

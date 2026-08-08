@@ -201,12 +201,3 @@ export const rejectRequest = async (id: string, adminId: string, notes?: string)
 
   return { message: 'Solicitud rechazada' };
 };
-
-/**
- * Get a single request detail
- */
-export const getRequestDetail = async (id: string) => {
-  const request = await RequestsRepository.findRequestById(id);
-  if (!request) throw new AppError('Solicitud no encontrada', 404);
-  return request;
-};

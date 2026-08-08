@@ -71,12 +71,6 @@ export const listUsers = async (query: AdminQueryInput): Promise<PaginatedRespon
   return { data, meta: buildPaginationMeta(total, page, limit) };
 };
 
-export const getUserDetail = async (id: string) => {
-  const user = await AdminRepository.findUserById(id);
-  if (!user) throw new AppError('Usuario no encontrado', 404);
-  return user;
-};
-
 export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId: string, ip?: string) => {
   const user = await AdminRepository.findUserById(id);
   if (!user) throw new AppError('Usuario no encontrado', 404);
@@ -110,7 +104,12 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     changes.push(`username: ${user.username} → ${data.username}`);
   }
 
-  const updated = await AdminRepository.updateUser(id, data);
+  // isVerified NO es columna de User (es del VTuberProfile). Si se pasa en el
+  // update directo, Prisma lanza "Unknown argument isVerified" → 500. Se extrae
+  // aquí y se aplica abajo vía el upsert del VTuberProfile.
+  const userUpdateData = { ...data } as Record<string, unknown>;
+  delete userUpdateData.isVerified;
+  const updated = await AdminRepository.updateUser(id, userUpdateData as Prisma.UserUpdateInput);
 
   // Sync VTuber profile automatically (creates profile if missing)
   const targetRole = data.role || user.role;
@@ -173,24 +172,6 @@ export const deleteUser = async (id: string, adminId: string, ip?: string) => {
   }, ip);
 
   return { message: 'Usuario eliminado permanentemente' };
-};
-
-export const restoreUser = async (id: string, adminId: string, ip?: string) => {
-  const user = await AdminRepository.findUserById(id);
-  if (!user) throw new AppError('Usuario no encontrado', 404);
-  if (user.status !== 'BANNED' && user.status !== 'SUSPENDED') {
-    throw new AppError('El usuario no está suspendido o baneado', 400);
-  }
-
-  const updated = await AdminRepository.updateUser(id, { status: 'ACTIVE' });
-
-  await logAdminAction(adminId, 'RESTORE_USER', {
-    targetUserId: id,
-    targetUsername: user.username,
-    previousStatus: user.status,
-  }, ip);
-
-  return updated;
 };
 
 // ========== PREMIUM PLAN GRANT ==========
@@ -361,12 +342,6 @@ export const listVtubers = async (query: AdminQueryInput): Promise<PaginatedResp
   return { data, meta: buildPaginationMeta(total, page, limit) };
 };
 
-export const getVtuberDetail = async (id: string) => {
-  const profile = await AdminRepository.findVtuberProfileById(id);
-  if (!profile) throw new AppError('Perfil VTuber no encontrado', 404);
-  return profile;
-};
-
 export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adminId: string, ip?: string) => {
   const profile = await AdminRepository.findVtuberProfileById(id);
   if (!profile) throw new AppError('Perfil VTuber no encontrado', 404);
@@ -467,12 +442,6 @@ export const listEvents = async (query: AdminQueryInput): Promise<PaginatedRespo
   ]);
 
   return { data, meta: buildPaginationMeta(total, page, limit) };
-};
-
-export const getEventDetail = async (id: string) => {
-  const event = await AdminRepository.findEventById(id);
-  if (!event) throw new AppError('Evento no encontrado', 404);
-  return event;
 };
 
 export const updateEvent = async (id: string, data: UpdateEventAdminInput, adminId: string, ip?: string) => {
@@ -594,12 +563,6 @@ export const listPosts = async (query: AdminQueryInput): Promise<PaginatedRespon
   return { data, meta: buildPaginationMeta(total, page, limit) };
 };
 
-export const getPostDetail = async (id: string) => {
-  const post = await AdminRepository.findPostById(id);
-  if (!post) throw new AppError('Publicación no encontrada', 404);
-  return post;
-};
-
 export const updatePost = async (id: string, data: UpdatePostAdminInput, adminId: string, ip?: string) => {
   const post = await AdminRepository.findPostById(id);
   if (!post) throw new AppError('Publicación no encontrada', 404);
@@ -702,16 +665,6 @@ export const deleteComment = async (id: string, adminId: string, ip?: string) =>
 };
 
 // ========== REPORTS ==========
-
-export const createReport = async (data: {
-  reporterId: string;
-  targetType: string;
-  targetId: string;
-  reason: string;
-  description?: string;
-}) => {
-  return AdminRepository.createReport(data);
-};
 
 export const listReports = async (query: AdminQueryInput): Promise<PaginatedResponse<any>> => {
   const { page, limit, skip } = extractPagination(query);
