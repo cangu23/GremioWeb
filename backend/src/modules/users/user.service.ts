@@ -1,6 +1,7 @@
 import AppError from '../../errors/AppError';
 import * as UserRepository from './user.repository';
-import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl, attachVerified, isVerifiedEffective } from '@gremio-estelar/shared';
+import prisma from '../../database/prisma';
+import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl, attachVerified, isVerifiedEffective, isStaffRole } from '@gremio-estelar/shared';
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
@@ -59,19 +60,6 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
   if (payload.displayName) payload.displayName = sanitizeString(payload.displayName);
   if ((payload as any).note) (payload as any).note = sanitizeString((payload as any).note);
 
-  // Video banner: STELLAR only (server-side enforcement).
-  // null/'' = quitar el video (siempre permitido, cualquiera puede limpiar).
-  if ((payload as any).bannerVideoUrl !== undefined) {
-    const me = await UserRepository.getUserProfileById(userId);
-    const raw = (payload as any).bannerVideoUrl;
-    const isClear = raw === null || raw === '';
-    const value = isClear ? null : String(raw);
-    const isKeep = !!me?.vtuberProfile && me.vtuberProfile.bannerVideoUrl === raw;
-    if (!isKeep && !isClear && (!me || getEffectivePlanFromUser(me) !== 'STELLAR')) {
-      throw new AppError('Los banners en video son exclusivos del Plan Stellar Elite.', 403);
-    }
-    (payload as any).bannerVideoUrl = value;
-  }
 
   // Profile music: Spotify-only + premium enforcement (server-side).
   // Unchanged values (whether legacy MP3/stream OR Spotify saved while the user
@@ -163,6 +151,51 @@ export const updateNote = async (
     noteUpdatedAt: updated.noteUpdatedAt,
     noteExpiresAt: updated.noteExpiresAt,
   };
+};
+
+/**
+ * Borrado duro de una cuenta dentro de una transacción. Varias FKs hacia User
+ * no tienen onDelete: Cascade (VTuberProfile, Event.creator, Guild.creator,
+ * Warning.warner, RoleCode, VtuberRequest.reviewedBy, Report.moderator,
+ * Sticker.addedBy), así que se limpian manualmente y la DB se encarga del resto
+ * vía cascade (posts, likes, follows, DMs, donaciones, suscripciones, etc.).
+ * Compartido entre el panel admin (DELETE /admin/users/:id) y el borrado
+ * propio del usuario (DELETE /users/me).
+ */
+export const hardDeleteUser = async (id: string) => {
+  await prisma.$transaction(async (tx) => {
+    // FKs opcionales → se ponen a null
+    await tx.vtuberRequest.updateMany({ where: { reviewedById: id }, data: { reviewedById: null } });
+    await tx.report.updateMany({ where: { moderatorId: id }, data: { moderatorId: null } });
+    await tx.roleCode.updateMany({ where: { usedById: id }, data: { usedById: null } });
+
+    // Contenido creado / moderado por el usuario → se elimina (sus hijos cascadean)
+    await tx.warning.deleteMany({ where: { warnedById: id } });
+    await tx.roleCode.deleteMany({ where: { generatedById: id } });
+    await tx.sticker.deleteMany({ where: { addedById: id } });
+    await tx.guild.deleteMany({ where: { creatorId: id } }); // members/channels/joinRequests cascadean
+    await tx.event.deleteMany({ where: { creatorId: id } }); // attendees cascadean
+    await tx.vTuberProfile.deleteMany({ where: { userId: id } });
+
+    await tx.user.delete({ where: { id } });
+  }, { timeout: 15000 });
+};
+
+/**
+ * El propio usuario elimina su cuenta desde Ajustes. Los miembros del staff
+ * no pueden auto-eliminarse (deben contactar a otro administrador).
+ */
+export const deleteMyAccount = async (userId: string) => {
+  const me = await UserRepository.findById(userId);
+  if (!me) throw new AppError('Usuario no encontrado', 404);
+
+  if (isStaffRole(me.role)) {
+    throw new AppError('No puedes eliminar tu cuenta siendo miembro del staff. Contacta a otro administrador.', 400);
+  }
+
+  await hardDeleteUser(userId);
+
+  return { message: 'Tu cuenta ha sido eliminada permanentemente. ¡Hasta pronto!' };
 };
 
 export const getPublicUser = async (userId: string): Promise<PublicUser> => {

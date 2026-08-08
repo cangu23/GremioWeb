@@ -251,54 +251,6 @@ export const handleUploadGeneralImage = async (req: Request, res: Response, next
   await handleUpload(req, res, next, 'general', { maxWidth: 1200, quality: 85 });
 };
 
-// ─── VIDEO BANNER (solo STELLAR) ─────────────────────────────
-// El plan Stellar Elite promete "Banner en video animado". Los videos no pasan
-// por el Media Engine (solo imágenes): se guardan crudos en disco bajo /uploads.
-const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/webm', 'video/ogg'];
-const MAX_VIDEO_SIZE = 25 * 1024 * 1024; // 25MB
-
-const videoFileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  if (ALLOWED_VIDEO_MIMES.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Formato de video no soportado. Usa MP4, WebM u OGG.'));
-  }
-};
-
-export const uploadVideoBanner = multer({
-  storage: memoryStorage,
-  fileFilter: videoFileFilter,
-  limits: { fileSize: MAX_VIDEO_SIZE },
-}).single('video');
-
-export const handleUploadVideoBanner = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = (req as any).user;
-    const effectivePlan = user ? getEffectivePlan(user.plan, user.role) : 'FREE';
-    if (effectivePlan !== 'STELLAR') {
-      res.status(403).json({ status: 'error', message: 'Los banners en video son exclusivos del Plan Stellar Elite.' });
-      return;
-    }
-
-    if (!req.file) {
-      res.status(400).json({ status: 'error', message: 'No se seleccionó ningún video.' });
-      return;
-    }
-
-    const extMap: Record<string, string> = { 'video/mp4': 'mp4', 'video/webm': 'webm', 'video/ogg': 'ogv' };
-    const ext = extMap[req.file.mimetype] || 'mp4';
-    const fileName = `banner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'banner-video');
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    const filePath = path.join(uploadsDir, fileName);
-    fs.writeFileSync(filePath, req.file.buffer);
-
-    const url = `/uploads/banner-video/${fileName}`;
-    res.json({ status: 'ok', url, filename: req.file.originalname, size_bytes: req.file.size });
-  } catch (err) {
-    next(err);
-  }
-};
 
 // ─── Poll endpoint for upload status (backup if no WebSocket) ───
 

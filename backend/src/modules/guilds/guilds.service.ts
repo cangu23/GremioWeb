@@ -2,13 +2,15 @@ import AppError from '../../errors/AppError';
 import * as GuildsRepository from './guilds.repository';
 import * as UserRepository from '../users/user.repository';
 import * as NotificationsService from '../notifications/notifications.service';
-import { CreateGuildPayload } from '@gremio-estelar/shared';
+import { CreateGuildPayload, hasAnyRole } from '@gremio-estelar/shared';
 import { awardXpForAction } from '../gamification/gamification.service';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 
 export const create = async (payload: CreateGuildPayload, creatorId: string, creatorRole: string) => {
-  // Solo VTubers, Maids, Moderadores y Admins pueden crear gremios
-  const canCreateGuild = ['VTUBER', 'MAID', 'MODERATOR', 'ADMIN'].includes(creatorRole);
+  // Solo VTubers, Maids, Moderadores, Admins y staff pueden crear gremios.
+  // hasAnyRole parsea roles múltiples ("ADMIN,MODERATOR") y da god mode a ADMIN/OWNER/SYSADMIN,
+  // igual que el chequeo del frontend en /guilds/create.
+  const canCreateGuild = hasAnyRole(creatorRole, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']);
   if (!canCreateGuild) {
     throw new AppError('Solo los VTubers y el equipo de la plataforma pueden crear gremios.', 403);
   }

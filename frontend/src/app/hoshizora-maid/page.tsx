@@ -8,6 +8,7 @@ import Image from 'next/image';
 import ClientOnly from '@/lib/ClientOnly';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 /* ─────────── Color Theme (café crema) ─────────── */
 const theme = {
@@ -1223,12 +1224,7 @@ function ComingSoonContent() {
 export default function HoshizoraMaidPage() {
   const { user } = useAuth();
 
-  const isAuthorized = user && (
-    user.role === 'ADMIN' ||
-    user.role === 'BETA_TESTER' ||
-    user.role === 'MODERATOR' ||
-    user.role === 'STAFF'
-  );
+  const isAuthorized = user && hasAnyRole(user.role, ['ADMIN', 'BETA_TESTER', 'MODERATOR', 'STAFF']);
 
   return (
     <ClientOnly fallback={<div style={{ minHeight: '100vh', background: theme.bg }} />}>

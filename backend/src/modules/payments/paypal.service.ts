@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import AppError from '../../errors/AppError';
 import { PLATFORM_PLANS } from '../subscriptions/platform-subscriptions.service';
-import { VERIFICATION_PRICE, VERIFICATION_DURATION_DAYS } from '@gremio-estelar/shared';
+import { VERIFICATION_PRICE, VERIFICATION_DURATION_DAYS, hasAnyRole } from '@gremio-estelar/shared';
 import prisma from '../../database/prisma';
 
 const PAYPAL_SANDBOX_BASE = 'https://api-m.sandbox.paypal.com';
@@ -115,7 +115,7 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
     if (!recipient) {
       throw new AppError('El usuario receptor no existe', 404);
     }
-    if (!recipient.role.includes('VTUBER')) {
+    if (!hasAnyRole(recipient.role, ['VTUBER'])) {
       throw new AppError('Solo puedes donar a VTubers', 403);
     }
   } else {

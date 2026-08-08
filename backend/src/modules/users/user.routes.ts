@@ -10,6 +10,8 @@ const router = Router();
 // Protected routes
 router.get('/me', authenticate, UserController.getMe);
 router.patch('/me', authenticate, validateRequest(updateUserSchema), UserController.updateMe);
+// Delete my own account (authenticated; staff must contact another admin)
+router.delete('/me', authenticate, UserController.deleteMyAccount);
 
 import * as PetController from './pet.controller';
 

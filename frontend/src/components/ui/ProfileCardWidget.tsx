@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import UserAvatar, { getNoteBubbleStyle } from './UserAvatar';
 import PetWidget from './PetWidget';
 import RoleBadge from './RoleBadge';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 // ── Types ──
 interface ProfileCardData {
@@ -220,7 +221,7 @@ function CardContent({
 }) {
   const { user: currentUser } = useAuth();
   const isOwnProfile = currentUser?.id === profile.id;
-  const isVtubers = profile.role === 'VTUBER' || (profile.vtuberProfile?.isApproved ?? false);
+  const isVtubers = hasAnyRole(profile.role, ['VTUBER']) || (profile.vtuberProfile?.isApproved ?? false);
   const vtuber = profile.vtuberProfile;
   const parseItemData = (data: string | null) => {
     try { return data ? JSON.parse(data) : {}; } catch { return {}; }

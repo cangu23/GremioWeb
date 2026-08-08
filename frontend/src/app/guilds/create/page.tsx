@@ -36,7 +36,8 @@ function CreateGuildForm() {
 
   if (!user) { router.push('/login'); return null; }
 
-  // Solo VTUBER, ADMIN y MODERATOR pueden crear gremios
+  // Solo VTubers, Maids, Admins, Moderadores y staff pueden crear gremios
+  // (lista alineada con el backend en guilds.service.ts)
   if (!hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) {
     router.push('/guilds');
     return null;

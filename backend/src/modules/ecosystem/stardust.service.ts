@@ -359,7 +359,7 @@ export const grantAdminStardust = async (
     select: { role: true, username: true },
   });
 
-  if (!admin || admin.role !== 'ADMIN') {
+  if (!admin || !hasAnyRole(admin.role, ['ADMIN'])) {
     throw new AppError('Solo los administradores pueden otorgar Stardust.', 403);
   }
 

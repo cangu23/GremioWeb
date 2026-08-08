@@ -5,6 +5,7 @@ import * as SeasonsService from './seasons.service';
 import * as PlatformService from '../subscriptions/platform-subscriptions.service';
 import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 export const getStardust = async (req: any, res: Response) => {
   const userId = req.user!.id;
@@ -27,7 +28,7 @@ export const transferStardust = async (req: any, res: Response) => {
 };
 
 export const grantAdminStardust = async (req: any, res: Response) => {
-  if (req.user?.role !== 'ADMIN') {
+  if (!hasAnyRole(req.user?.role, ['ADMIN'])) {
     throw new AppError('Acceso denegado. Solo administradores.', 403);
   }
   const adminUserId = req.user!.id;
@@ -73,7 +74,7 @@ export const getAllPlans = async (_req: any, res: Response) => {
 };
 
 export const activatePlan = async (req: any, res: Response) => {
-  if (req.user?.role !== 'ADMIN') {
+  if (!hasAnyRole(req.user?.role, ['ADMIN'])) {
     throw new AppError('No tienes permiso para activar planes directamente sin realizar un pago válido.', 403);
   }
   const userId = req.user!.id;

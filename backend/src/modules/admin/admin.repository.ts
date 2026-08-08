@@ -106,10 +106,6 @@ export const updateUser = (id: string, data: Prisma.UserUpdateInput) => {
   });
 };
 
-export const deleteUser = (id: string) => {
-  return prisma.user.delete({ where: { id } });
-};
-
 // ========== VTUBER PROFILES ==========
 
 export const findVtuberProfiles = (params: {

@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/lib/ToastContext';
 import UserAvatar from '@/components/ui/UserAvatar';
 import Link from 'next/link';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface Transaction {
   id: string;
@@ -475,7 +476,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         <div>
                           <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {user?.displayName || user?.username}
-                            {user?.role === 'ADMIN' && (
+                            {hasAnyRole(user?.role, ['ADMIN']) && (
                               <span style={{ fontSize: '0.68rem', fontWeight: 800, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', padding: '1px 7px', borderRadius: '999px' }}>
                                 ADMIN
                               </span>

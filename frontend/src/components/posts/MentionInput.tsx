@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 // ==========================================================================
 // Types
@@ -281,7 +282,7 @@ export default function MentionInput({
                   @{user.username}
                 </span>
               </div>
-              {(user.role === 'VTUBER' || user.vtuberProfile?.isApproved) && (
+              {(hasAnyRole(user.role, ['VTUBER']) || user.vtuberProfile?.isApproved) && (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Oficial">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>

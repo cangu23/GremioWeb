@@ -80,6 +80,26 @@ export const searchUsers = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const deleteMyAccount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await UserService.deleteMyAccount(req.user!.id);
+    // Invalidar la sesión también en el servidor: la fila del refresh token ya
+    // se borró en cascada, pero limpiamos la cookie para que el cierre de sesión
+    // sea inmediato aunque el cliente se interrumpa antes del logout.
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isSecure = isProduction || req.secure || req.headers['x-forwarded-proto'] === 'https';
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: isSecure ? 'none' : 'lax',
+      path: '/',
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateNote = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;

@@ -22,3 +22,11 @@ export function getUserAvatarUrl(user: {
 }): string {
   return user.avatarUrl || user.vtuberProfile?.avatarUrl || '';
 }
+
+/**
+ * Normaliza un username para comparaciones de confirmación (borrar cuenta):
+ * recorta espacios y tolera la arroba inicial (ej: "@kira" → "kira").
+ */
+export function normalizeUsername(name: string): string {
+  return name.trim().replace(/^@/, '');
+}

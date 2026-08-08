@@ -11,6 +11,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/lib/ToastContext';
+import { hasAnyRole } from '@gremio-estelar/shared';
 import FriendButton from '@/components/social/FriendButton';
 import KofiWidget from '@/components/ui/KofiWidget';
 import ProfileMusicPlayer from '@/components/ui/ProfileMusicPlayer';
@@ -41,7 +42,6 @@ interface VTuberProfileData {
   displayName: string;
   avatarUrl: string | null;
   bannerUrl: string | null;
-  bannerVideoUrl: string | null;
   description: string | null;
   lore: string | null;
   fanName: string | null;
@@ -430,7 +430,6 @@ function VtuberPublicProfile() {
   const vtuber = profile.vtuberProfile;
   const avatarUrl = vtuber?.avatarUrl || profile.avatarUrl;
   const bannerUrl = vtuber?.bannerUrl;
-  const bannerVideoUrl = vtuber?.bannerVideoUrl || null;
   const displayName = vtuber?.displayName || profile.username;
   const themeColor = vtuber?.themeColor || 'var(--primary)';
   const languagesList = parseLanguages(vtuber?.languages || null);
@@ -507,25 +506,6 @@ function VtuberPublicProfile() {
             : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
           overflow: 'hidden',
         }}>
-          {/* Video banner (STELLAR) — reemplaza la imagen */}
-          {bannerVideoUrl && (
-            <video
-              src={bannerVideoUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                zIndex: 0,
-                pointerEvents: 'none',
-              }}
-            />
-          )}
           {/* Decorative rings */}
           <div style={{
             position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -571,7 +551,7 @@ function VtuberPublicProfile() {
                 ✓ Verificado
               </div>
             )}
-            {profile.role === 'MAID' && (
+            {hasAnyRole(profile.role, ['MAID']) && (
               <div style={{
                 padding: '6px 14px', borderRadius: '20px',
                 background: 'rgba(212,160,48,0.15)',
@@ -687,7 +667,7 @@ function VtuberPublicProfile() {
                   <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
-              {profile.role === 'MAID' && (
+              {hasAnyRole(profile.role, ['MAID']) && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '0.85rem', fontWeight: 700, color: '#d4a030',

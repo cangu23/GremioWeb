@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { apiFetch, notifyMissionsChanged } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface Mission {
   id: string;
@@ -154,9 +155,9 @@ export default function MissionsWidget() {
         }}>
           <StarIcon size={15} color="#fbbf24" />
           <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#fbbf24' }}>
-            {user?.role === 'ADMIN' ? '♾️ Infinito (ADMIN)' : `${stardust} Stardust`}
+            {hasAnyRole(user?.role, ['ADMIN']) ? '♾️ Infinito (ADMIN)' : `${stardust} Stardust`}
           </span>
-          {multiplier > 1 && user?.role !== 'ADMIN' && (
+          {multiplier > 1 && !hasAnyRole(user?.role, ['ADMIN']) && (
             <span style={{ fontSize: '0.7rem', fontWeight: 700, background: '#fbbf24', color: '#000', padding: '1px 6px', borderRadius: '6px' }}>
               ×{multiplier}
             </span>

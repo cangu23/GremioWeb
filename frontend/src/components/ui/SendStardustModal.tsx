@@ -7,6 +7,7 @@ import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
 import { X, Search, Sparkles, Send, Gift, Check, ArrowRight, UserCheck, AlertCircle, RefreshCw } from '@/components/ui/Icons';
 import UserAvatar from '@/components/ui/UserAvatar';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 export interface RecipientUser {
   id?: string;
@@ -495,9 +496,9 @@ export default function SendStardustModal({
                           👥 Sugerencias de Usuarios
                         </div>
                         {searchResults.map((u) => {
-                          const isVtuber = u.role === 'VTUBER';
-                          const isMaid = u.role === 'MAID';
-                          const isAdmin = u.role === 'ADMIN';
+                          const isVtuber = hasAnyRole(u.role, ['VTUBER']);
+                          const isMaid = hasAnyRole(u.role, ['MAID']);
+                          const isAdmin = hasAnyRole(u.role, ['ADMIN']);
                           return (
                             <div
                               key={u.id || u.username}

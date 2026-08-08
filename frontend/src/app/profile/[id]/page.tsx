@@ -93,7 +93,6 @@ interface SocialProfile {
     twitterUrl: string | null;
     discordUrl: string | null;
     websiteUrl: string | null;
-    bannerVideoUrl?: string | null;
   } | null;
   _count: { followers: number; following: number };
   isFollowedByMe: boolean;
@@ -302,7 +301,6 @@ function ProfileContent() {
 
   const rawBannerUrl = bannerData?.bannerUrl || vtuber?.bannerUrl;
   const bannerUrl = rawBannerUrl ? rawBannerUrl.replace(/"/g, '\\"') : null;
-  const bannerVideoUrl = vtuber?.bannerVideoUrl || (profile as any)?.bannerVideoUrl || null;
   const themeColor = colorData?.color || vtuber?.themeColor || profile.bannerColor || 'var(--primary)';
 
   // Partículas cósmicas flotantes: beneficio del Plan Stellar Elite.
@@ -347,25 +345,6 @@ function ProfileContent() {
               : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
           overflow: 'hidden',
         }}>
-          {/* Video banner (STELLAR) — reemplaza la imagen */}
-          {bannerVideoUrl && (
-            <video
-              src={bannerVideoUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                zIndex: 0,
-                pointerEvents: 'none',
-              }}
-            />
-          )}
           {/* Cosmic particles (STELLAR) */}
           {isStellarProfile && (
             <>

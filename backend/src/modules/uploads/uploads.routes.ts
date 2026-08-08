@@ -11,8 +11,6 @@ router.post('/avatar', authenticate, UploadsController.uploadImage, UploadsContr
 // Upload banner (requires auth)
 router.post('/banner', authenticate, UploadsController.uploadImage, UploadsController.handleUploadBanner);
 
-// Upload video banner (STELLAR only) — video crudo, sin Media Engine
-router.post('/banner/video', authenticate, UploadsController.uploadVideoBanner, UploadsController.handleUploadVideoBanner);
 
 // Upload post image (requires auth)
 router.post('/post', authenticate, UploadsController.uploadImage, UploadsController.handleUploadPostImage);

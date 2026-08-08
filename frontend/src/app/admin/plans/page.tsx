@@ -16,15 +16,14 @@ interface CustomPlanConfig {
   monthlyStardustBonus: number;
   allowGifs: boolean;
   allowCustomPets: boolean;
-  allowVideoBanners: boolean;
   color: string;
 }
 
 const DEFAULT_PLANS: CustomPlanConfig[] = [
-  { id: 'FREE', name: 'Plan Gratis (Aventurero)', price: '$0 / mes', multiplier: 1.0, uploadLimitMb: 5, storeDiscountPct: 0, monthlyStardustBonus: 0, allowGifs: false, allowCustomPets: false, allowVideoBanners: false, color: '#a0a0a0' },
-  { id: 'ASTRO', name: 'Plan Astro ⭐', price: '$4.99 / mes (15,000 ⭐)', multiplier: 1.2, uploadLimitMb: 15, storeDiscountPct: 10, monthlyStardustBonus: 200, allowGifs: true, allowCustomPets: false, allowVideoBanners: false, color: '#818cf8' },
-  { id: 'NOVA', name: 'Plan Nova 🌟', price: '$9.99 / mes (35,000 ⭐)', multiplier: 1.5, uploadLimitMb: 50, storeDiscountPct: 15, monthlyStardustBonus: 500, allowGifs: true, allowCustomPets: false, allowVideoBanners: false, color: '#38bdf8' },
-  { id: 'STELLAR', name: 'Plan Stellar ✨', price: '$19.99 / mes (80,000 ⭐)', multiplier: 2.0, uploadLimitMb: 200, storeDiscountPct: 25, monthlyStardustBonus: 1000, allowGifs: true, allowCustomPets: true, allowVideoBanners: true, color: '#ffd700' },
+  { id: 'FREE', name: 'Plan Gratis (Aventurero)', price: '$0 / mes', multiplier: 1.0, uploadLimitMb: 5, storeDiscountPct: 0, monthlyStardustBonus: 0, allowGifs: false, allowCustomPets: false, color: '#a0a0a0' },
+  { id: 'ASTRO', name: 'Plan Astro ⭐', price: '$4.99 / mes (15,000 ⭐)', multiplier: 1.2, uploadLimitMb: 15, storeDiscountPct: 10, monthlyStardustBonus: 200, allowGifs: true, allowCustomPets: false, color: '#818cf8' },
+  { id: 'NOVA', name: 'Plan Nova 🌟', price: '$9.99 / mes (35,000 ⭐)', multiplier: 1.5, uploadLimitMb: 50, storeDiscountPct: 15, monthlyStardustBonus: 500, allowGifs: true, allowCustomPets: false, color: '#38bdf8' },
+  { id: 'STELLAR', name: 'Plan Stellar ✨', price: '$19.99 / mes (80,000 ⭐)', multiplier: 2.0, uploadLimitMb: 200, storeDiscountPct: 25, monthlyStardustBonus: 1000, allowGifs: true, allowCustomPets: true, color: '#ffd700' },
 ];
 
 export default function PlanBuilderPage() {
@@ -169,15 +168,6 @@ export default function PlanBuilderPage() {
                   onChange={e => updatePlanField(idx, 'allowCustomPets', e.target.checked)}
                 />
                 🐾 Solicitud de Mascota Personalizada
-              </label>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: p.allowVideoBanners ? '#38bdf8' : '#71717a' }}>
-                <input
-                  type="checkbox"
-                  checked={p.allowVideoBanners}
-                  onChange={e => updatePlanField(idx, 'allowVideoBanners', e.target.checked)}
-                />
-                🎬 Banner en Vídeo Animado
               </label>
             </div>
 

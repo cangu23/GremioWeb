@@ -3,25 +3,27 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { apiFetch, getAccessToken } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import Link from 'next/link';
-import { hasAnyRole } from '@gremio-estelar/shared';
+import { hasAnyRole, isStaffRole } from '@gremio-estelar/shared';
 
 import RoleBadge from '@/components/ui/RoleBadge';
 import { parseUserRoles, getPrimaryRole, isSpotifyUrl, canUseProfileMusic, toSpotifyEmbedUrl, getSpotifyEmbedHeight, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
+import { normalizeUsername } from '@/lib/user-display';
 
 // ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
 const PROFILE_MUSIC_ENABLED = false;
 
 function UserSettings() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
 
@@ -30,7 +32,6 @@ function UserSettings() {
   const [bio, setBio] = useState('');
   const [bannerColor, setBannerColor] = useState('#1a1040');
   const [bannerUrl, setBannerUrl] = useState('');
-  const [bannerVideoUrl, setBannerVideoUrl] = useState('');
   const [displayedRole, setDisplayedRole] = useState('');
   const [profileMusic, setProfileMusic] = useState('');
   const originalProfileMusic = useRef('');
@@ -45,6 +46,14 @@ function UserSettings() {
   const [cropperType, setCropperType] = useState<'avatar' | 'banner'>('avatar');
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete my account (danger zone)
+  const [mounted, setMounted] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner' = 'avatar') => {
     const file = e.target.files?.[0];
@@ -86,40 +95,7 @@ function UserSettings() {
     setCropperOpen(true);
   };
 
-  // Video banner (STELLAR only) — raw video, no cropper.
-  const videoBannerInputRef = useRef<HTMLInputElement>(null);
-  const [uploadingVideoBanner, setUploadingVideoBanner] = useState(false);
-  const handleVideoBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingVideoBanner(true);
-    try {
-      const token = getAccessToken();
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
-      const formData = new FormData();
-      formData.append('video', file);
-      const res = await fetch(`${baseUrl}/uploads/banner/video`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: 'Error al subir el video' }));
-        throw new Error(err.message || 'Error al subir el video');
-      }
-      const data = await res.json();
-      if (data?.url) {
-        setBannerVideoUrl(data.url);
-        setBannerUrl('');
-        showToast('Banner en video subido (Stellar Elite)', 'success');
-      }
-    } catch (err: unknown) {
-      showToast(`Error: ${err instanceof Error ? err.message : 'Error al subir el video'}`, 'error');
-    } finally {
-      setUploadingVideoBanner(false);
-      if (e.target) e.target.value = '';
-    }
-  };
+
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -132,7 +108,6 @@ function UserSettings() {
       setBio(user.bio || '');
       setBannerColor(user.bannerColor || '#1a1040');
       setBannerUrl((user as any).bannerUrl || (user as any).vtuberProfile?.bannerUrl || '');
-      setBannerVideoUrl((user as any).vtuberProfile?.bannerVideoUrl || '');
       setDisplayedRole(user.displayedRole || '');
       setProfileMusic(user.profileMusic || '');
       originalProfileMusic.current = user.profileMusic || '';
@@ -169,7 +144,6 @@ function UserSettings() {
           bio: bio.trim() || undefined,
           bannerColor: bannerColor || undefined,
           bannerUrl: bannerUrl.trim() || null,
-          bannerVideoUrl: bannerVideoUrl.trim() || null,
           displayedRole: displayedRole || undefined,
           profileMusic: profileMusic.trim() || null,
         }),
@@ -183,6 +157,26 @@ function UserSettings() {
       showToast(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    if (normalizeUsername(deleteConfirmName) !== user.username) {
+      showToast('El nombre de usuario no coincide con tu cuenta', 'error');
+      return;
+    }
+    setDeleting(true);
+    try {
+      await apiFetch('/users/me', { method: 'DELETE' });
+      showToast('Tu cuenta ha sido eliminada. ¡Hasta pronto!', 'success');
+      setDeleteOpen(false);
+      await logout();
+      router.push('/');
+    } catch (err: unknown) {
+      showToast(`Error: ${err instanceof Error ? err.message : 'Error al eliminar la cuenta'}`, 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -202,7 +196,6 @@ function UserSettings() {
 
   const effectivePlan = getEffectivePlan(user.plan, user.role);
   const canBannerGif = planMeetsOrExceeds(user.plan, user.role, 'NOVA');
-  const canVideoBanner = effectivePlan === 'STELLAR';
 
   return (
     <div className="container" style={{ paddingTop: '20px', paddingBottom: '40px', maxWidth: '700px', margin: '0 auto' }}>
@@ -397,56 +390,6 @@ function UserSettings() {
                 : 'Los banners animados (GIF) son exclusivos de Nova Pro y Stellar Elite. Sube JPEG, PNG o WebP.'}
             </p>
           </div>
-
-          {canVideoBanner && (
-            <div style={{ marginTop: '16px', padding: '14px 16px', borderRadius: '12px', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.25)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffd700' }}>🎬 Banner en Video (Stellar Elite)</span>
-                <span style={{ fontSize: '0.62rem', padding: '2px 8px', borderRadius: '10px', background: 'rgba(255,215,0,0.15)', color: '#ffd700', fontWeight: 700 }}>EXCLUSIVO</span>
-              </div>
-              {bannerVideoUrl && (
-                <video
-                  src={bannerVideoUrl}
-                  autoPlay muted loop playsInline
-                  style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '10px', marginBottom: '10px' }}
-                />
-              )}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => videoBannerInputRef.current?.click()}
-                  disabled={uploadingVideoBanner}
-                  style={{
-                    padding: '9px 16px', borderRadius: '9px',
-                    background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-                    border: 'none', color: '#1a0f00', fontWeight: 700, fontSize: '0.83rem',
-                    cursor: uploadingVideoBanner ? 'wait' : 'pointer',
-                  }}
-                >
-                  {uploadingVideoBanner ? 'Subiendo...' : bannerVideoUrl ? 'Cambiar video' : 'Subir video banner'}
-                </button>
-                {bannerVideoUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setBannerVideoUrl('')}
-                    style={{ padding: '9px 16px', borderRadius: '9px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#f87171', fontWeight: 600, fontSize: '0.83rem', cursor: 'pointer' }}
-                  >
-                    Quitar
-                  </button>
-                )}
-                <input
-                  ref={videoBannerInputRef}
-                  type="file"
-                  accept="video/mp4,video/webm,video/ogg"
-                  style={{ display: 'none' }}
-                  onChange={handleVideoBannerSelect}
-                />
-              </div>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                MP4, WebM u OGG · máx 25MB. El video reemplaza a la imagen del banner en tu perfil.
-              </p>
-            </div>
-          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <input
@@ -728,6 +671,41 @@ function UserSettings() {
         </p>
       </form>
 
+      {/* Danger Zone — Delete my account */}
+      {!isStaffRole(user.role) && (
+        <div className="glass" style={{
+          marginTop: '32px', padding: '24px', borderRadius: '16px',
+          background: 'rgba(239,68,68,0.06)',
+          border: '1px solid rgba(239,68,68,0.3)',
+        }}>
+          <h3 style={{
+            fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px',
+            display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171',
+          }}>
+            ⚠️ Zona de peligro
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '16px' }}>
+            Eliminar tu cuenta borrará <strong style={{ color: '#f87171' }}>permanentemente</strong> tu perfil,
+            posts, comentarios, gremios, eventos, saldo de ⭐ y todo tu historial.
+            Esta acción <strong style={{ color: '#f87171' }}>no se puede deshacer</strong>.
+          </p>
+          <button
+            type="button"
+            onClick={() => { setDeleteConfirmName(''); setDeleteOpen(true); }}
+            style={{
+              padding: '11px 20px', borderRadius: '10px', cursor: 'pointer',
+              background: 'rgba(239,68,68,0.15)', color: '#f87171',
+              border: '1px solid rgba(239,68,68,0.45)', fontWeight: 800, fontSize: '0.88rem',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.28)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
+          >
+            🗑️ Borrar mi cuenta permanentemente
+          </button>
+        </div>
+      )}
+
       {/* VS Disclaimer */}
       <div className="glass" style={{
         marginTop: '32px', padding: '20px', borderRadius: '16px',
@@ -769,6 +747,65 @@ function UserSettings() {
         onCropComplete={handleCropComplete}
         onClose={() => setCropperOpen(false)}
       />
+
+      {/* Delete Account Confirmation Modal */}
+      {mounted && deleteOpen && user && createPortal(
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '20px',
+        }} onClick={() => setDeleteOpen(false)}>
+          <div className="glass" style={{
+            padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '460px',
+            border: '1px solid rgba(239,68,68,0.4)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f87171' }}>🗑️ Eliminar mi cuenta</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Esta acción es permanente e irreversible.</p>
+              </div>
+              <button onClick={() => setDeleteOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '14px', padding: '16px', marginBottom: '20px', fontSize: '0.88rem', color: '#fca5a5', lineHeight: 1.6 }}>
+              Se eliminará permanentemente tu cuenta <strong>@{user.username}</strong> junto con todos tus
+              posts, comentarios, likes, seguidores, amigos, mensajes, gremios, eventos, donaciones y saldo de ⭐.
+              Esta acción <strong>no se puede deshacer</strong>.
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label className="form-label" style={{ color: '#f87171', fontWeight: 800 }}>
+                Escribe <span style={{ color: '#fff' }}>@{user.username}</span> para confirmar
+              </label>
+              <input
+                className="input"
+                value={deleteConfirmName}
+                onChange={e => setDeleteConfirmName(e.target.value)}
+                placeholder={`@${user.username}`}
+                autoFocus
+                style={{ marginTop: '6px', borderColor: 'rgba(239,68,68,0.4)' }}
+                onKeyDown={e => { if (e.key === 'Enter' && normalizeUsername(deleteConfirmName) === user.username && !deleting) handleDeleteAccount(); }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setDeleteOpen(false)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
+              <button
+                onClick={handleDeleteAccount}
+                className="btn"
+                disabled={deleting || normalizeUsername(deleteConfirmName) !== user.username}
+                style={{
+                  background: 'linear-gradient(135deg, #ef4444, #b91c1c)', color: '#fff', fontWeight: 800,
+                  opacity: normalizeUsername(deleteConfirmName) === user.username ? 1 : 0.5,
+                  cursor: normalizeUsername(deleteConfirmName) === user.username ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {deleting ? 'Eliminando...' : '🗑️ Eliminar permanentemente'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

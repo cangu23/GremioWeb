@@ -2,14 +2,16 @@ import AppError from '../../errors/AppError';
 import * as EventsRepository from './events.repository';
 import * as UserRepository from '../users/user.repository';
 import * as NotificationsService from '../notifications/notifications.service';
-import { CreateEventPayload, UpdateEventPayload } from '@gremio-estelar/shared';
+import { CreateEventPayload, UpdateEventPayload, hasAnyRole } from '@gremio-estelar/shared';
 import { getEffectivePlan } from '../subscriptions/platform-subscriptions.service';
 import { awardXpForAction } from '../gamification/gamification.service';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 
 export const create = async (payload: CreateEventPayload, creatorId: string, creatorRole: string) => {
-  // Solo VTubers, Maids, Moderadores y Admins pueden crear eventos en la plataforma
-  const canCreateEvent = ['VTUBER', 'MAID', 'MODERATOR', 'ADMIN'].includes(creatorRole);
+  // Solo VTubers, Maids, Admins, Moderadores y staff pueden crear eventos.
+  // hasAnyRole parsea roles múltiples ("ADMIN,MODERATOR") y da god mode a ADMIN/OWNER/SYSADMIN,
+  // igual que el menú rápido del Navbar (Nuevo Evento).
+  const canCreateEvent = hasAnyRole(creatorRole, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']);
   if (!canCreateEvent) {
     throw new AppError('Solo los VTubers y el equipo de la plataforma pueden crear eventos.', 403);
   }

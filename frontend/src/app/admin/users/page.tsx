@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { isStaffRole, parseUserRoles } from '@gremio-estelar/shared';
+import { normalizeUsername } from '@/lib/user-display';
 
 interface User {
   id: string;
@@ -104,6 +105,11 @@ export default function AdminUsersPage() {
   const [grantPlan, setGrantPlan] = useState<'ASTRO' | 'NOVA' | 'STELLAR'>('ASTRO');
   const [grantDays, setGrantDays] = useState(30);
   const [granting, setGranting] = useState(false);
+
+  // Delete account (ADMIN only)
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -210,6 +216,26 @@ export default function AdminUsersPage() {
       fetchUsers();
     } catch (err: any) {
       showToast(err.message || 'Error al retirar el plan', 'error');
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!deleteTarget) return;
+    if (normalizeUsername(deleteConfirmName) !== deleteTarget.username) {
+      showToast('El nombre de usuario no coincide con la cuenta a eliminar', 'error');
+      return;
+    }
+    setDeleting(true);
+    try {
+      await apiFetch(`/admin/users/${deleteTarget.id}`, { method: 'DELETE' });
+      showToast(`Cuenta de @${deleteTarget.username} eliminada permanentemente`, 'success');
+      setDeleteTarget(null);
+      setDeleteConfirmName('');
+      fetchUsers();
+    } catch (err: any) {
+      showToast(err.message || 'Error al eliminar la cuenta', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -417,6 +443,21 @@ export default function AdminUsersPage() {
                                 🚫 Quitar
                               </button>
                             )}
+
+                            <button
+                              onClick={() => { setDeleteConfirmName(''); setDeleteTarget(user); }}
+                              title={isStaffRole(user.role) ? 'No se puede eliminar a miembros del staff' : 'Eliminar cuenta permanentemente'}
+                              disabled={isStaffRole(user.role)}
+                              style={{
+                                padding: '6px 10px', fontSize: '0.78rem',
+                                background: isStaffRole(user.role) ? 'rgba(255,255,255,0.03)' : 'rgba(239,68,68,0.12)',
+                                color: isStaffRole(user.role) ? 'var(--text-muted)' : '#f87171',
+                                border: isStaffRole(user.role) ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(239,68,68,0.35)',
+                                borderRadius: '8px', cursor: isStaffRole(user.role) ? 'not-allowed' : 'pointer', fontWeight: 700,
+                              }}
+                            >
+                              🗑️ Borrar
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -561,6 +602,65 @@ export default function AdminUsersPage() {
               <button onClick={() => setSelectedUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
               <button onClick={saveUser} className="btn" disabled={saving} style={{ background: 'linear-gradient(135deg, #d4a030, #a0782c)', color: '#1a1410', fontWeight: 800 }}>
                 {saving ? 'Guardando...' : '💾 Guardar Cambios'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {mounted && deleteTarget && createPortal(
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10002, padding: '20px',
+        }} onClick={() => setDeleteTarget(null)}>
+          <div className="glass" style={{
+            padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '480px',
+            border: '1px solid rgba(239,68,68,0.4)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f87171' }}>🗑️ Eliminar Cuenta</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Esta acción es permanente e irreversible.</p>
+              </div>
+              <button onClick={() => setDeleteTarget(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '14px', padding: '16px', marginBottom: '20px', fontSize: '0.88rem', color: '#fca5a5', lineHeight: 1.6 }}>
+              Se eliminará <strong>permanentemente</strong> la cuenta de <strong>@{deleteTarget.username}</strong> junto con todos sus
+              posts, comentarios, likes, seguidores, amigos, mensajes, gremios, eventos, donaciones y saldo de ⭐.
+              Esta acción <strong>no se puede deshacer</strong>.
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label className="form-label" style={{ color: '#f87171', fontWeight: 800 }}>
+                Escribe <span style={{ color: '#fff' }}>@{deleteTarget.username}</span> para confirmar
+              </label>
+              <input
+                className="input"
+                value={deleteConfirmName}
+                onChange={e => setDeleteConfirmName(e.target.value)}
+                placeholder={`@${deleteTarget.username}`}
+                autoFocus
+                style={{ marginTop: '6px', borderColor: 'rgba(239,68,68,0.4)' }}
+                onKeyDown={e => { if (e.key === 'Enter' && normalizeUsername(deleteConfirmName) === deleteTarget.username && !deleting) deleteAccount(); }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setDeleteTarget(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
+              <button
+                onClick={deleteAccount}
+                className="btn"
+                disabled={deleting || normalizeUsername(deleteConfirmName) !== deleteTarget.username}
+                style={{
+                  background: 'linear-gradient(135deg, #ef4444, #b91c1c)', color: '#fff', fontWeight: 800,
+                  opacity: normalizeUsername(deleteConfirmName) === deleteTarget.username ? 1 : 0.5,
+                  cursor: normalizeUsername(deleteConfirmName) === deleteTarget.username ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {deleting ? 'Eliminando...' : '🗑️ Eliminar permanentemente'}
               </button>
             </div>
           </div>

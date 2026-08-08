@@ -176,7 +176,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
     ];
     // Fields that specifically belong to VTuberProfile (excluding shared userFields)
     const vtuberSpecificFields = [
-      'bannerUrl', 'bannerVideoUrl', 'description', 'lore',
+      'bannerUrl', 'description', 'lore',
       'twitchUrl', 'youtubeUrl', 'kickUrl', 'tiktokUrl', 'twitterUrl',
       'discordUrl', 'websiteUrl', 'kofiUrl', 'streamSchedule', 'contentType',
       'live2dModel', 'model3d', 'fanName', 'oshiMark', 'themeColor', 'isLive',

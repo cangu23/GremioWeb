@@ -45,7 +45,6 @@ export interface UpdateUserPayload {
   bio?: string;
   // VTuber-specific fields (handled by VTuberProfile)
   bannerUrl?: string | null;
-  bannerVideoUrl?: string | null; // STELLAR: banner en video animado
   description?: string;
   lore?: string;
   socialLinks?: Record<string, string>;

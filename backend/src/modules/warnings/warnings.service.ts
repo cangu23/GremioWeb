@@ -2,7 +2,7 @@ import AppError from '../../errors/AppError';
 import prisma from '../../database/prisma';
 import * as AdminRepository from '../admin/admin.repository';
 import * as NotificationsService from '../notifications/notifications.service';
-import { isStaffRole } from '@gremio-estelar/shared';
+import { isStaffRole, hasAnyRole } from '@gremio-estelar/shared';
 
 export const issueWarning = async (inputUserId: string, warnedById: string, reason: string, ip?: string) => {
   if (!reason?.trim()) throw new AppError('Debes proporcionar una razón para la advertencia', 400);
@@ -169,7 +169,7 @@ export const deleteChatMessage = async (messageId: string, type: string, adminId
       message = await prisma.directMessage.findUnique({ where: { id: messageId } });
       if (!message) throw new AppError('Mensaje no encontrado', 404);
       const dmAdmin = await prisma.user.findUnique({ where: { id: adminId } });
-      if (message.senderId !== adminId && message.receiverId !== adminId && dmAdmin?.role !== 'ADMIN') {
+      if (message.senderId !== adminId && message.receiverId !== adminId && !hasAnyRole(dmAdmin?.role, ['ADMIN'])) {
         throw new AppError('No tienes permiso para eliminar este mensaje', 403);
       }
       await prisma.directMessage.delete({ where: { id: messageId } });
@@ -185,7 +185,7 @@ export const deleteChatMessage = async (messageId: string, type: string, adminId
 // Delete a feed post (admin only)
 export const deleteFeedPost = async (postId: string, adminId: string) => {
   const admin = await prisma.user.findUnique({ where: { id: adminId } });
-  if (admin?.role !== 'ADMIN') throw new AppError('No tienes permiso para eliminar esta publicación', 403);
+  if (!hasAnyRole(admin?.role, ['ADMIN'])) throw new AppError('No tienes permiso para eliminar esta publicación', 403);
 
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post) throw new AppError('Publicación no encontrada', 404);

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Sparkles, Star, Users, Rocket, ExternalLink } from '@/components/ui/Icons';
 import { useAuth } from '@/lib/AuthContext';
+import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface VTuberStatsHeaderProps {
   totalVtubers: number;
@@ -13,7 +14,7 @@ interface VTuberStatsHeaderProps {
 
 export default function VTuberStatsHeader({ totalVtubers, liveCount, featuredCount }: VTuberStatsHeaderProps) {
   const { user } = useAuth();
-  const isVtuber = user?.role === 'VTUBER' || user?.role === 'ADMIN' || user?.role === 'STAFF';
+  const isVtuber = hasAnyRole(user?.role, ['VTUBER', 'ADMIN', 'STAFF']);
 
   return (
     <div style={{ marginBottom: '32px' }}>

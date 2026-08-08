@@ -4,8 +4,9 @@ import * as AdminRepository from './admin.repository';
 import AppError from '../../errors/AppError';
 import { AdminQueryInput, PaginatedResponse } from './admin.types';
 import { UpdateUserAdminInput, UpdateVtuberAdminInput, UpdateEventAdminInput, UpdateGuildAdminInput, UpdatePostAdminInput, UpdateCommentAdminInput } from './admin.types';
-import { NOTIFICATION_TYPES, isStaffRole } from '@gremio-estelar/shared';
+import { NOTIFICATION_TYPES, isStaffRole, hasAnyRole } from '@gremio-estelar/shared';
 import { activatePlatformPlan, PLATFORM_PLANS } from '../subscriptions/platform-subscriptions.service';
+import { hardDeleteUser } from '../users/user.service';
 
 // ========== HELPERS ==========
 
@@ -80,9 +81,10 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
   const user = await AdminRepository.findUserById(id);
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
-  // Safety check: prevent an admin from demoting or banning themselves
+  // Safety check: prevent an admin from demoting or banning themselves.
+  // hasAnyRole tolera roles múltiples: solo bloquea si el nuevo rol pierde ADMIN.
   if (id === adminId) {
-    if (data.role && data.role !== 'ADMIN') {
+    if (data.role && !hasAnyRole(data.role, ['ADMIN'])) {
       throw new AppError('No puedes degradar tu propio rango de Administrador', 400);
     }
     if (data.status === 'BANNED' || data.status === 'SUSPENDED') {
@@ -112,7 +114,7 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 
   // Sync VTuber profile automatically (creates profile if missing)
   const targetRole = data.role || user.role;
-  if (targetRole === 'VTUBER' || data.isVerified !== undefined) {
+  if (hasAnyRole(targetRole, ['VTUBER']) || data.isVerified !== undefined) {
     const isVer = data.isVerified !== undefined ? data.isVerified : true;
     await prisma.vTuberProfile.upsert({
       where: { userId: id },
@@ -130,7 +132,7 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
         isVerified: isVer,
       },
     });
-  } else if (data.role && data.role !== 'VTUBER' && user.vtuberProfile) {
+  } else if (data.role && !hasAnyRole(data.role, ['VTUBER']) && user.vtuberProfile) {
     await prisma.vTuberProfile.update({
       where: { userId: id },
       data: { isApproved: false, isHidden: true },
@@ -152,11 +154,18 @@ export const deleteUser = async (id: string, adminId: string, ip?: string) => {
   const user = await AdminRepository.findUserById(id);
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
+  // Safety: an admin can't delete their own account
+  if (id === adminId) {
+    throw new AppError('No puedes eliminar tu propia cuenta de administrador', 400);
+  }
+
   if (isStaffRole(user.role)) {
     throw new AppError('No se puede eliminar la cuenta de un miembro del staff', 400);
   }
 
-  await AdminRepository.deleteUser(id);
+  // Hard delete (shared con el borrado propio del usuario): limpia en una
+  // transacción las FKs sin onDelete: Cascade y deja que la DB cascadee el resto.
+  await hardDeleteUser(id);
 
   await logAdminAction(adminId, 'DELETE_USER', {
     targetUserId: id,
