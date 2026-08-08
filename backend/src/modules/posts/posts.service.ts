@@ -8,6 +8,7 @@ import * as SocialRepository from '../social/social.repository';
 import * as AdminRepository from '../admin/admin.repository';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 import { addStardust } from '../ecosystem/stardust.service';
+import { ioContext } from '../../websocket/socket.server';
 import prisma from '../../database/prisma';
 import { sanitizeString } from '../../middleware/sanitize';
 
@@ -577,7 +578,7 @@ export const sendMessage = async (content: string, senderId: string, receiverId:
 
 export const getConversation = async (user1Id: string, user2Id: string) => {
   // Automatically mark any DMs sent from user2Id to user1Id as read
-  await PostsRepository.markConversationAsRead(user1Id, user2Id);
+  await markConversationAsRead(user1Id, user2Id);
   return PostsRepository.findConversation(user1Id, user2Id);
 };
 
@@ -591,11 +592,32 @@ export const markAsRead = async (dmId: string, userId: string) => {
 };
 
 export const markConversationAsRead = async (receiverId: string, senderId: string) => {
-  return PostsRepository.markConversationAsRead(receiverId, senderId);
+  const unread = await PostsRepository.findUnreadConversationMessageIds(receiverId, senderId);
+  await PostsRepository.markConversationAsRead(receiverId, senderId);
+  if (unread.length > 0) {
+    // Notify the sender in real time so their "read" checkmarks update live.
+    // Idempotente en el cliente, así que es seguro que llegue duplicado con el
+    // camino socket (dm:read) cuando ambos están activos.
+    ioContext.instance?.to(`user:${senderId}`).emit('dm:read-receipt', {
+      messageIds: unread.map(m => m.id),
+    });
+  }
 };
 
 export const markAllDmsAsRead = async (receiverId: string) => {
-  return PostsRepository.markAllDmsAsRead(receiverId);
+  const unread = await PostsRepository.findAllUnreadDmMessageIds(receiverId);
+  await PostsRepository.markAllDmsAsRead(receiverId);
+  if (unread.length > 0) {
+    const bySender = new Map<string, string[]>();
+    for (const m of unread) {
+      const list = bySender.get(m.senderId) || [];
+      list.push(m.id);
+      bySender.set(m.senderId, list);
+    }
+    for (const [senderId, messageIds] of bySender) {
+      ioContext.instance?.to(`user:${senderId}`).emit('dm:read-receipt', { messageIds });
+    }
+  }
 };
 
 export const getUnreadDmCount = async (userId: string) => {

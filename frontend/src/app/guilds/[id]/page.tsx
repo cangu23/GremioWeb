@@ -268,14 +268,16 @@ function GuildDetailContent() {
       });
     };
 
+    const onGuildError = (err: { message: string }) => {
+      console.warn('[Guild Socket]', err.message);
+    };
+
     sock.on('guild:message', onMessage);
     sock.on('guild:message:deleted', onMessageDeleted);
     sock.on('guild:message:updated', onMessageUpdated);
     sock.on('guild:online', onOnline);
     sock.on('guild:typing', onTyping);
-    sock.on('guild:error', (err: { message: string }) => {
-      console.warn('[Guild Socket]', err.message);
-    });
+    sock.on('guild:error', onGuildError);
 
     const currentTypingTimeout = typingTimeoutRef.current;
     return () => {
@@ -284,7 +286,7 @@ function GuildDetailContent() {
       sock.off('guild:message:updated', onMessageUpdated);
       sock.off('guild:online', onOnline);
       sock.off('guild:typing', onTyping);
-      sock.off('guild:error');
+      sock.off('guild:error', onGuildError);
       // Clean up typing timeouts
       if (currentTypingTimeout) clearTimeout(currentTypingTimeout);
       cleanup.forEach(t => clearTimeout(t));

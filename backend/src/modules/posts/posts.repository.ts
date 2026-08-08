@@ -369,6 +369,20 @@ export const markConversationAsRead = (receiverId: string, senderId: string) => 
   });
 };
 
+export const findAllUnreadDmMessageIds = (receiverId: string) => {
+  return prisma.directMessage.findMany({
+    where: { receiverId, read: false },
+    select: { id: true, senderId: true },
+  });
+};
+
+export const findUnreadConversationMessageIds = (receiverId: string, senderId: string) => {
+  return prisma.directMessage.findMany({
+    where: { receiverId, senderId, read: false },
+    select: { id: true },
+  });
+};
+
 export const markAllDmsAsRead = (receiverId: string) => {
   return prisma.directMessage.updateMany({
     where: {

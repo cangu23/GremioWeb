@@ -9,7 +9,6 @@ export const getPublicStats = async (_req: Request, res: Response, next: NextFun
       totalVtubers: stats.totalVtubers,
       totalEvents: stats.totalEvents,
       totalGuilds: stats.totalGuilds,
-      totalMessages: stats.totalMessages,
       totalPosts: stats.totalPosts,
       totalUsers: stats.totalUsers,
     });

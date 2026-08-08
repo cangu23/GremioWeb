@@ -27,7 +27,7 @@ export const listWarnings = async (req: Request, res: Response, next: NextFuncti
 
 export const deleteChatMessage = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { messageId, type } = req.body; // type: 'global', 'guild', or 'dm'
+    const { messageId, type } = req.body; // type: 'dm'
     const result = await WarningsService.deleteChatMessage(messageId, type, req.user!.id);
     res.json(result);
   } catch (err) { next(err); }

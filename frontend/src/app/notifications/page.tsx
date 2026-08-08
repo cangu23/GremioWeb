@@ -72,15 +72,18 @@ function NotificationsContent() {
   useEffect(() => {
     if (!user) return;
     let sock: any;
+    // Handler con nombre: `off(event)` sin handler borraría los listeners del
+    // Navbar en el socket compartido (el contador de notificaciones se rompería).
+    const handleNewNotif = (notif: Notification) => {
+      setNotifications(prev => [notif, ...prev]);
+      showToast(`🔔 ${notif.title}`, 'info');
+    };
     try {
       sock = connectSocket();
-      sock.on(NOTIFICATION_EVENTS.NEW, (notif: Notification) => {
-        setNotifications(prev => [notif, ...prev]);
-        showToast(`🔔 ${notif.title}`, 'info');
-      });
+      sock.on(NOTIFICATION_EVENTS.NEW, handleNewNotif);
     } catch {}
     return () => {
-      if (sock) sock.off(NOTIFICATION_EVENTS.NEW);
+      if (sock) sock.off(NOTIFICATION_EVENTS.NEW, handleNewNotif);
     };
   }, [user, showToast]);
 

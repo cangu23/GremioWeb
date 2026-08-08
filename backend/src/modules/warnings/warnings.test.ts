@@ -6,7 +6,6 @@ const mockPrisma = vi.hoisted(() => ({
   warning: { findMany: vi.fn(), create: vi.fn(), count: vi.fn() },
   notification: { create: vi.fn() },
   adminLog: { create: vi.fn() },
-  chatMessage: { findUnique: vi.fn(), delete: vi.fn() },
   directMessage: { findUnique: vi.fn(), delete: vi.fn() },
   post: { findUnique: vi.fn(), delete: vi.fn() },
   $connect: vi.fn(),
@@ -234,46 +233,8 @@ describe('WarningsService', () => {
     });
   });
 
-  // ── deleteChatMessage ──────────────────────────
+  // ── deleteChatMessage (DMs únicamente; el chat global se eliminó) ──
   describe('deleteChatMessage', () => {
-    it('deletes global chat message when user is the owner', async () => {
-      mockPrisma.chatMessage.findUnique.mockResolvedValue({
-        id: 'msg-1',
-        userId: 'user-1',
-        content: 'Hello',
-      });
-
-      await WarningsService.deleteChatMessage('msg-1', 'global', 'user-1');
-
-      expect(mockPrisma.chatMessage.delete).toHaveBeenCalledWith({ where: { id: 'msg-1' } });
-    });
-
-    it('deletes global chat message when user is admin', async () => {
-      mockPrisma.chatMessage.findUnique.mockResolvedValue({
-        id: 'msg-1',
-        userId: 'other-user',
-        content: 'Hello',
-      });
-      mockPrisma.user.findUnique.mockResolvedValue({ role: 'ADMIN' });
-
-      await WarningsService.deleteChatMessage('msg-1', 'global', 'admin-1');
-
-      expect(mockPrisma.chatMessage.delete).toHaveBeenCalledWith({ where: { id: 'msg-1' } });
-    });
-
-    it('throws when non-admin tries to delete another user\'s message', async () => {
-      mockPrisma.chatMessage.findUnique.mockResolvedValue({
-        id: 'msg-1',
-        userId: 'other-user',
-        content: 'Hello',
-      });
-      mockPrisma.user.findUnique.mockResolvedValue({ role: 'USER' });
-
-      await expect(
-        WarningsService.deleteChatMessage('msg-1', 'global', 'user-2')
-      ).rejects.toThrow('No tienes permiso');
-    });
-
     it('deletes DM when user is sender or receiver', async () => {
       mockPrisma.directMessage.findUnique.mockResolvedValue({
         id: 'dm-1',

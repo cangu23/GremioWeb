@@ -103,8 +103,10 @@ export default function FeaturedVtubersSection() {
       style={{ position: 'relative', zIndex: 1 }}
     >
       <div className="container">
-        <div className="section-accent-line" />
-        <h2 className="section-title">VTubers Destacados</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4px' }}>
+          <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>La comunidad</span>
+        </div>
+        <h2 className="section-title">VTubers <span className="landing-gradient-text">Destacados</span></h2>
         <p className="section-subtitle">Conoce a los creadores más brillantes de nuestra comunidad</p>
 
         {/* Selector tabs */}

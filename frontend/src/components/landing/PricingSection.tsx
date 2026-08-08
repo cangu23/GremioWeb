@@ -33,7 +33,6 @@ const plans: Plan[] = [
       { text: 'Feed social', included: true },
       { text: 'Unirse a gremios', included: true },
       { text: 'Asistir a eventos', included: true },
-      { text: 'Chat global', included: true },
       { text: 'Perfil VTuber personalizado', included: false },
       { text: 'Tema de color personalizado', included: false },
       { text: 'Monetización y donaciones', included: false },
@@ -133,8 +132,10 @@ export default function PricingSection() {
       style={{ position: 'relative', zIndex: 1 }}
     >
       <div className="container">
-        <div className="section-accent-line" />
-        <h2 className="section-title">Planes y Precios</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '4px' }}>
+          <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>Planes</span>
+        </div>
+        <h2 className="section-title">Planes y <span className="landing-gradient-text">Precios</span></h2>
         <p className="section-subtitle">
           Todos los planes son completamente gratuitos. Estamos construyendo la plataforma
           y queremos que seas parte desde el inicio.
@@ -161,22 +162,29 @@ export default function PricingSection() {
                 style={{
                   position: 'relative',
                   padding: '28px 22px',
-                  borderRadius: '12px',
-                  background: isHighlighted ? 'rgba(139,92,246,0.04)' : 'var(--bg-card)',
+                  borderRadius: '14px',
+                  background: isHighlighted
+                    ? 'linear-gradient(170deg, rgba(139,92,246,0.1), rgba(25,25,28,0.7))'
+                    : 'rgba(28,28,34,0.65)',
                   border: isHighlighted
-                    ? '1px solid rgba(139,92,246,0.2)'
+                    ? '1px solid rgba(139,92,246,0.25)'
                     : '1px solid var(--glass-border)',
                   display: 'flex',
                   flexDirection: 'column',
                   transition: 'all 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
                   opacity: isVisible ? 1 : 0,
                   transform: isVisible
-                    ? isHovered ? 'translateY(-4px)' : 'translateY(0)'
+                    ? isHovered ? 'translateY(-6px)' : 'translateY(0)'
                     : 'translateY(25px)',
-                  boxShadow: isHovered ? '0 8px 32px rgba(0,0,0,0.35)' : 'none',
+                  boxShadow: isHovered
+                    ? '0 16px 48px rgba(0,0,0,0.45)'
+                    : isHighlighted ? '0 12px 40px rgba(139,92,246,0.12)' : 'none',
                   overflow: 'hidden',
                 }}
               >
+                {/* Animated gradient border for highlighted plan */}
+                {isHighlighted && <div className="landing-price-glow" />}
+
                 {/* Highlighted badge */}
                 {isHighlighted && (
                   <div style={{
@@ -184,13 +192,15 @@ export default function PricingSection() {
                     top: '14px',
                     right: '-24px',
                     transform: 'rotate(45deg)',
-                    background: 'var(--primary)',
+                    background: 'linear-gradient(135deg, var(--secondary), var(--primary))',
                     color: '#fff',
                     fontSize: '0.6rem',
                     fontWeight: 700,
                     padding: '3px 32px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
+                    boxShadow: '0 4px 16px rgba(139,92,246,0.35)',
+                    zIndex: 1,
                   }}>
                     Popular
                   </div>

@@ -131,6 +131,24 @@ function formatMessagePreview(msg: ConversationData, currentUserId: string): str
   return `${prefix}${msg.content}`;
 }
 
+/**
+ * Reacciones almacenadas: pueden llegar como objeto (payload socket) o como
+ * string JSON (filas REST de la DB, campo TEXT). Normaliza a objeto.
+ */
+function parseStoredReactions(raw: unknown): Record<string, string[]> | undefined {
+  if (!raw) return undefined;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed as Record<string, string[]> : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  if (typeof raw === 'object') return raw as Record<string, string[]>;
+  return undefined;
+}
+
 /* ─────────── Main Content ─────────── */
 
 function MessengerContent() {
@@ -162,8 +180,8 @@ function MessengerContent() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Reactions state (in-memory per message)
-  const [messageReactions, setMessageReactions] = useState<Record<string, Record<string, number>>>({});
+  // Reactions state: messageId -> emoji -> userIds que reaccionaron (persistido en backend)
+  const [messageReactions, setMessageReactions] = useState<Record<string, Record<string, string[]>>>({});
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   // Typing
@@ -254,9 +272,19 @@ function MessengerContent() {
 
     const typingClearRef = { current: null as ReturnType<typeof setTimeout> | null };
 
-    sock.on(DM_EVENTS.MESSAGE, (msg: DmMessageData) => {
+    // Handlers se definen con nombre y se desregistran con `sock.off(event, handler)`:
+    // el socket es un singleton compartido con el Navbar y otros componentes, y
+    // `sock.off(event)` sin handler borraría TODOS los listeners de ese evento
+    // (incluidos los del Navbar), rompiendo el contador de no leídos en tiempo real.
+    const handleMessage = (msg: DmMessageData) => {
       const otherId = msg.senderId === currentUser.id ? msg.receiverId : msg.senderId;
       const isForActiveChat = activeUserId === otherId;
+
+      // Cargar reacciones persistidas del mensaje recibido/emitido
+      if (msg.reactions) {
+        const reactions: Record<string, string[]> = msg.reactions;
+        setMessageReactions(prev => ({ ...prev, [msg.id]: reactions }));
+      }
 
       if (msg.senderId !== currentUser.id) {
         const readingItLive = document.visibilityState === 'visible' && isForActiveChat;
@@ -284,9 +312,9 @@ function MessengerContent() {
         });
         return [msg, ...filtered];
       });
-    });
+    };
 
-    sock.on(DM_EVENTS.TYPING, (data: { userId: string; isTyping: boolean }) => {
+    const handleTyping = (data: { userId: string; isTyping: boolean }) => {
       if (data.userId === activeUserId) {
         setTypingUserId(data.isTyping ? data.userId : null);
       }
@@ -296,17 +324,48 @@ function MessengerContent() {
           setTypingUserId(prev => prev === data.userId ? null : prev);
         }, 3000);
       }
-    });
+    };
+
+    const handleMessageDeleted = (data: { messageId: string }) => {
+      setMessages(prev => prev.filter(m => m.id !== data.messageId));
+      setConversations(prev => prev.filter(c => c.id !== data.messageId));
+    };
+
+    const handleReadReceipt = (data: { messageIds: string[] }) => {
+      setMessages(prev => prev.map(m =>
+        data.messageIds.includes(m.id) ? { ...m, read: true } : m
+      ));
+    };
+
+    // Errores del borrado/reacciones de DMs (permiso denegado, mensaje no encontrado, ...)
+    const handleChatError = (data: { message: string }) => {
+      showToast(data.message || 'Error al eliminar el mensaje', 'error');
+    };
+
+    const handleReaction = (data: { messageId: string; reactions: Record<string, string[]> }) => {
+      setMessageReactions(prev => ({ ...prev, [data.messageId]: data.reactions || {} }));
+    };
+
+    sock.on(DM_EVENTS.MESSAGE, handleMessage);
+    sock.on(DM_EVENTS.TYPING, handleTyping);
+    sock.on(DM_EVENTS.DELETED, handleMessageDeleted);
+    sock.on(DM_EVENTS.READ_RECEIPT, handleReadReceipt);
+    sock.on(DM_EVENTS.REACTION, handleReaction);
+    sock.on('chat:error', handleChatError);
 
     return () => {
       clearInterval(interval);
       if (typingClearRef.current) clearTimeout(typingClearRef.current);
       sock.off('connect', handleConnect);
       sock.off('disconnect', handleDisconnect);
-      sock.off(DM_EVENTS.MESSAGE);
-      sock.off(DM_EVENTS.TYPING);
+      sock.off(DM_EVENTS.MESSAGE, handleMessage);
+      sock.off(DM_EVENTS.TYPING, handleTyping);
+      sock.off(DM_EVENTS.DELETED, handleMessageDeleted);
+      sock.off(DM_EVENTS.READ_RECEIPT, handleReadReceipt);
+      sock.off(DM_EVENTS.REACTION, handleReaction);
+      sock.off('chat:error', handleChatError);
     };
-  }, [currentUser, isLoading, router, activeUserId]);
+  }, [currentUser, isLoading, router, activeUserId, showToast]);
 
   /* ─── Socket presence tracking ─── */
   useEffect(() => {
@@ -319,30 +378,35 @@ function MessengerContent() {
       return;
     }
 
-    sock.on('user:online-list', (data: { onlineIds: string[] }) => {
+    // Mismos handlers con nombre para no pisar los listeners del singleton
+    const handleOnlineList = (data: { onlineIds: string[] }) => {
       setOnlineUsers(new Set(data.onlineIds));
-    });
+    };
 
-    sock.on('user:online', (data: { userId: string }) => {
+    const handleOnline = (data: { userId: string }) => {
       setOnlineUsers(prev => {
         const next = new Set(prev);
         next.add(data.userId);
         return next;
       });
-    });
+    };
 
-    sock.on('user:offline', (data: { userId: string }) => {
+    const handleOffline = (data: { userId: string }) => {
       setOnlineUsers(prev => {
         const next = new Set(prev);
         next.delete(data.userId);
         return next;
       });
-    });
+    };
+
+    sock.on('user:online-list', handleOnlineList);
+    sock.on('user:online', handleOnline);
+    sock.on('user:offline', handleOffline);
 
     return () => {
-      sock.off('user:online-list');
-      sock.off('user:online');
-      sock.off('user:offline');
+      sock.off('user:online-list', handleOnlineList);
+      sock.off('user:online', handleOnline);
+      sock.off('user:offline', handleOffline);
     };
   }, [currentUser]);
 
@@ -473,6 +537,16 @@ function MessengerContent() {
       .then((data: DmMessageData[]) => {
         setMessages(data || []);
 
+        // Cargar reacciones persistidas de cada mensaje del historial
+        setMessageReactions(prev => {
+          const next = { ...prev };
+          (data || []).forEach(m => {
+            const parsed = parseStoredReactions(m.reactions);
+            if (parsed) next[m.id] = parsed;
+          });
+          return next;
+        });
+
         // Mark conversation read on backend DB & trigger dm-read event
         apiFetch(`/dm/conversations/${activeUserId}/read`, { method: 'POST' }).catch(() => {});
         window.dispatchEvent(new CustomEvent('dm-read'));
@@ -540,7 +614,9 @@ function MessengerContent() {
     socket.emit(DM_EVENTS.TYPING, { receiverId: activeUserId, isTyping: false });
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
-    setSending(false);
+    // Bloquear el envío unos instantes: `setSending(false)` inmediato era
+    // agrupado por React y nunca llegaba a proteger contra dobles clics.
+    setTimeout(() => setSending(false), 400);
     setTimeout(() => inputRef.current?.focus(), 50);
   }, [input, socket, activeUserId, sending]);
 
@@ -557,15 +633,36 @@ function MessengerContent() {
 
   /* ─── Reaction Handler ─── */
   const handleAddReaction = useCallback((msgId: string, emoji: string) => {
+    if (!socket || !connected || !currentUser) return;
+    socket.emit(DM_EVENTS.REACTION, { messageId: msgId, emoji });
+    // Toggle optimista: el servidor confirma con `dm:reaction` (idempotente).
     setMessageReactions(prev => {
       const msgRecs = prev[msgId] || {};
-      const currentCount = msgRecs[emoji] || 0;
-      return {
-        ...prev,
-        [msgId]: { ...msgRecs, [emoji]: currentCount + 1 }
-      };
+      const users = msgRecs[emoji] || [];
+      const hasReacted = users.includes(currentUser.id);
+      const nextUsers = hasReacted ? users.filter(id => id !== currentUser.id) : [...users, currentUser.id];
+      const next = { ...msgRecs };
+      if (nextUsers.length > 0) next[emoji] = nextUsers;
+      else delete next[emoji];
+      return { ...prev, [msgId]: next };
     });
-  }, []);
+  }, [socket, connected, currentUser]);
+
+  /* ─── Delete own message ─── */
+  const handleDeleteMessage = useCallback((messageId: string) => {
+    if (!socket) return;
+    if (!connected) {
+      // Sin conexión el borrado optimista sería falso: el mensaje reaparecería al recargar.
+      showToast('Sin conexión en tiempo real. Inténtalo de nuevo.', 'error');
+      return;
+    }
+    if (!confirm('¿Eliminar este mensaje? Esta acción no se puede deshacer.')) return;
+    socket.emit(DM_EVENTS.DELETE, { messageId });
+    // Eliminación optimista: el servidor también emite `dm:message-deleted` a
+    // ambos usuarios (idempotente, así que es seguro que llegue duplicado).
+    setMessages(prev => prev.filter(m => m.id !== messageId));
+    setConversations(prev => prev.filter(c => c.id !== messageId));
+  }, [socket, connected, showToast]);
 
   /* ─── Typing indicator ─── */
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1498,11 +1595,30 @@ function MessengerContent() {
                               padding: '2px 4px', borderRadius: '10px', background: 'rgba(0,0,0,0.3)',
                               animation: 'reactionPop 0.3s ease',
                             }}>
-                              {Object.entries(recs).map(([emoji, count]) => (
-                                <span key={emoji} style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                                  {emoji} <span style={{ fontSize: '0.65rem', opacity: 0.8, fontWeight: 700 }}>{count}</span>
-                                </span>
-                              ))}
+                              {Object.entries(recs).map(([emoji, users]) => {
+                                const usersArr = Array.isArray(users) ? users : [];
+                                const mine = usersArr.includes(currentUser.id);
+                                return (
+                                  <button
+                                    key={emoji}
+                                    type="button"
+                                    onClick={() => handleAddReaction(msg.id, emoji)}
+                                    title={mine ? `Quitar ${emoji}` : `Reaccionar con ${emoji}`}
+                                    style={{
+                                      fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '3px',
+                                      border: mine ? '1px solid rgba(138,43,226,0.5)' : '1px solid transparent',
+                                      background: mine ? 'rgba(138,43,226,0.22)' : 'transparent',
+                                      borderRadius: '12px', cursor: 'pointer', padding: '1px 6px',
+                                      transition: 'all 0.15s',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = mine ? 'rgba(138,43,226,0.32)' : 'rgba(255,255,255,0.08)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = mine ? 'rgba(138,43,226,0.22)' : 'transparent'; }}
+                                  >
+                                    <span>{emoji}</span>
+                                    <span style={{ fontSize: '0.65rem', opacity: 0.8, fontWeight: 700 }}>{usersArr.length}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
 
@@ -1513,6 +1629,30 @@ function MessengerContent() {
                             <span style={{ fontSize: '0.68rem', opacity: 0.8, fontWeight: 500 }}>
                               {formatTimeFull(msg.createdAt)}
                             </span>
+                            {isMine && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMessage(msg.id)}
+                                title={connected ? "Eliminar mensaje" : "Sin conexión"}
+                                aria-label="Eliminar mensaje"
+                                disabled={!connected}
+                                style={{
+                                  background: 'none', border: 'none',
+                                  cursor: connected ? 'pointer' : 'not-allowed',
+                                  padding: '3px', display: 'inline-flex', alignItems: 'center',
+                                  color: 'rgba(255,255,255,0.45)', borderRadius: '7px',
+                                  transition: 'all 0.15s', flexShrink: 0, lineHeight: 1,
+                                  opacity: connected ? 1 : 0.4,
+                                }}
+                                onMouseEnter={e => { if (connected) { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.background = 'rgba(239,68,68,0.18)'; } }}
+                                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; e.currentTarget.style.background = 'transparent'; }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                              </button>
+                            )}
                             {isMine && (
                               <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '3px' }}>
                                 {msg.read ? (
@@ -1540,21 +1680,27 @@ function MessengerContent() {
                               boxShadow: '0 4px 12px rgba(0,0,0,0.4)', zIndex: 10,
                               animation: 'reactionPop 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                             }}>
-                              {['❤️', '🔥', '😂', '👍', '✨'].map(emoji => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => handleAddReaction(msg.id, emoji)}
-                                  style={{
-                                    border: 'none', background: 'transparent', cursor: 'pointer',
-                                    fontSize: '0.85rem', padding: '1px 3px', borderRadius: '4px',
-                                    transition: 'transform 0.1s',
-                                  }}
-                                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.3)'; }}
-                                  onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
+                              {['❤️', '🔥', '😂', '👍', '✨'].map(emoji => {
+                                const reactedEmoji = (messageReactions[msg.id]?.[emoji] || []).includes(currentUser.id);
+                                return (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => handleAddReaction(msg.id, emoji)}
+                                    title={reactedEmoji ? `Quitar ${emoji}` : `Reaccionar con ${emoji}`}
+                                    style={{
+                                      border: reactedEmoji ? '1px solid rgba(138,43,226,0.5)' : 'none',
+                                      background: reactedEmoji ? 'rgba(138,43,226,0.25)' : 'transparent',
+                                      cursor: 'pointer',
+                                      fontSize: '0.85rem', padding: '1px 3px', borderRadius: '4px',
+                                      transition: 'transform 0.1s',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.3)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                                  >
+                                    {emoji}
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
                         </div>

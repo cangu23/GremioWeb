@@ -120,14 +120,18 @@ export default function RecentActivitySection() {
       style={{ position: 'relative', zIndex: 1 }}
     >
       <div className="container">
-        <div className="section-accent-line" style={{
-          opacity: visible ? 1 : 0, transition: 'opacity 0.5s ease',
-        }} />
-        <h2 className="section-title" style={{
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
           opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(15px)',
           transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
         }}>
-          Actividad Reciente
+          <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>En tiempo real</span>
+        </div>
+        <h2 className="section-title" style={{
+          opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(15px)',
+          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s',
+        }}>
+          Actividad <span className="landing-gradient-text">Reciente</span>
         </h2>
         <p className="section-subtitle" style={{
           opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(15px)',

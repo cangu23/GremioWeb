@@ -115,9 +115,9 @@ interface RateLimiterEntry {
  * Usage:
  *   const limiter = createSocketRateLimiter({ maxEvents: 10, windowMs: 5000 });
  *
- *   socket.on('chat:message', (data) => {
+ *   socket.on('dm:message', (data) => {
  *     if (!limiter.allow(socket.userId)) {
- *       socket.emit('chat:error', { message: 'Enviando mensajes muy rápido.' });
+ *       socket.emit('dm:error', { message: 'Enviando mensajes muy rápido.' });
  *       return;
  *     }
  *     // ... process message

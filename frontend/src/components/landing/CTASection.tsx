@@ -32,57 +32,73 @@ export default function CTASection() {
       <div className="container">
         <div
           style={{
-            padding: '60px 40px',
-            borderRadius: '18px',
+            padding: '64px 40px',
+            borderRadius: '22px',
             textAlign: 'center',
             position: 'relative',
             overflow: 'hidden',
-            border: '1px solid rgba(139,92,246,0.15)',
-            background: 'linear-gradient(135deg, rgba(139,92,246,0.06), rgba(42,157,143,0.03))',
+            border: '1px solid rgba(139,92,246,0.22)',
+            background: 'linear-gradient(150deg, rgba(139,92,246,0.12), rgba(108,180,238,0.05) 45%, rgba(245,158,11,0.05))',
             transform: visible ? 'translateY(0)' : 'translateY(20px)',
             opacity: visible ? 1 : 0,
             transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.4), 0 0 60px rgba(139,92,246,0.08)',
           }}
         >
+          {/* Animated aurora glow border */}
+          <div className="landing-price-glow" />
+
           {/* Decorative elements */}
           <div style={{
-            position: 'absolute', top: '-60px', right: '-60px',
-            width: '200px', height: '200px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(139,92,246,0.08), transparent)',
+            position: 'absolute', top: '-80px', right: '-80px',
+            width: '260px', height: '260px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.18), transparent 70%)',
             pointerEvents: 'none',
+            animation: 'landingFloat 10s ease-in-out infinite',
           }} />
           <div style={{
-            position: 'absolute', bottom: '-60px', left: '-60px',
-            width: '150px', height: '150px', borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(42,157,143,0.06), transparent)',
+            position: 'absolute', bottom: '-80px', left: '-80px',
+            width: '220px', height: '220px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(108,180,238,0.14), transparent 70%)',
             pointerEvents: 'none',
+            animation: 'landingFloat 12s ease-in-out infinite reverse',
+          }} />
+          <div style={{
+            position: 'absolute', top: '18%', right: '18%',
+            width: '5px', height: '5px', borderRadius: '50%',
+            background: 'var(--warm)',
+            boxShadow: '0 0 12px var(--warm)',
+            pointerEvents: 'none',
+            animation: 'pulse 2.4s ease-in-out infinite',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: '24%', left: '14%',
+            width: '4px', height: '4px', borderRadius: '50%',
+            background: 'var(--accent)',
+            boxShadow: '0 0 10px var(--accent)',
+            pointerEvents: 'none',
+            animation: 'pulse 3s ease-in-out infinite',
           }} />
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{
-              width: '40px', height: '2px',
-              background: 'var(--primary)',
-              margin: '0 auto 20px',
-              borderRadius: '1px',
-            }} />
+            <span className="landing-eyebrow" style={{ marginBottom: '20px' }}>Únete hoy</span>
 
             <h2 style={{
-              fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)',
-              fontWeight: 700,
+              fontSize: 'clamp(1.7rem, 3.5vw, 2.6rem)',
+              fontWeight: 800,
               marginBottom: '14px',
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
+              lineHeight: 1.15,
+              letterSpacing: '-0.025em',
             }}>
-              ¿Listo para{' '}
-              <span style={{ color: 'var(--primary)' }}>brillar</span>?
+              ¿Listo para <span className="landing-gradient-text">brillar</span>?
             </h2>
 
             <p style={{
               fontSize: '1rem',
               color: 'var(--text-muted)',
               maxWidth: '480px',
-              margin: '0 auto 32px',
-              lineHeight: 1.7,
+              margin: '0 auto 34px',
+              lineHeight: 1.75,
             }}>
               Únete a la comunidad de VTubers más vibrante. Crea tu perfil, conecta con otros
               creadores y lleva tu personaje al siguiente nivel.
@@ -90,16 +106,16 @@ export default function CTASection() {
 
             <div style={{
               display: 'flex',
-              gap: '12px',
+              gap: '14px',
               flexWrap: 'wrap',
               justifyContent: 'center',
             }}>
               {user ? (
-                <Link href="/dashboard" className="btn btn--lg">
+                <Link href="/dashboard" className="btn btn--lg btn--shine">
                   Ir al Dashboard
                 </Link>
               ) : (
-                <Link href="/register" className="btn btn--lg">
+                <Link href="/register" className="btn btn--lg btn--shine">
                   ✦ Crear cuenta gratis
                 </Link>
               )}

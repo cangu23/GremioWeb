@@ -74,16 +74,20 @@ export default function HowItWorksSection() {
       style={{ position: 'relative', zIndex: 1 }}
     >
       <div className="container">
-        <div className="section-accent-line" style={{
-          opacity: visibleSteps.size > 0 ? 1 : 0,
-          transition: 'opacity 0.6s ease',
-        }} />
-        <h2 className="section-title" style={{
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
           opacity: visibleSteps.size > 0 ? 1 : 0,
           transform: visibleSteps.size > 0 ? 'translateY(0)' : 'translateY(15px)',
           transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
         }}>
-          Cómo empezar
+          <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>Primeros pasos</span>
+        </div>
+        <h2 className="section-title" style={{
+          opacity: visibleSteps.size > 0 ? 1 : 0,
+          transform: visibleSteps.size > 0 ? 'translateY(0)' : 'translateY(15px)',
+          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s',
+        }}>
+          Cómo <span className="landing-gradient-text">empezar</span>
         </h2>
         <p className="section-subtitle" style={{
           opacity: visibleSteps.size > 0 ? 1 : 0,
@@ -98,6 +102,7 @@ export default function HowItWorksSection() {
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: '24px',
+          position: 'relative',
         }}>
           {STEPS.map((step, index) => {
             const isVisible = visibleSteps.has(index);
@@ -107,10 +112,12 @@ export default function HowItWorksSection() {
                 className="step-card"
                 data-index={index}
                 style={{
-                  padding: '36px 28px',
-                  borderRadius: '14px',
-                  background: isVisible ? 'var(--bg-card)' : 'rgba(255,255,255,0.01)',
-                  border: isVisible ? '1px solid var(--glass-border)' : '1px solid transparent',
+                  padding: '38px 28px 34px',
+                  borderRadius: '18px',
+                  background: isVisible
+                    ? 'linear-gradient(170deg, rgba(30,30,35,0.7), rgba(22,22,26,0.5))'
+                    : 'rgba(255,255,255,0.01)',
+                  border: isVisible ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
                   opacity: isVisible ? 1 : 0,
                   transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
                   transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
@@ -118,44 +125,78 @@ export default function HowItWorksSection() {
                   position: 'relative',
                 }}
               >
-                {/* Step number */}
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: isVisible ? 'var(--primary-subtle)' : 'rgba(255,255,255,0.03)',
-                  color: isVisible ? 'var(--primary)' : 'var(--text-muted)',
-                  marginBottom: '20px',
-                  transition: 'all 0.4s ease',
+                {/* Connector line between steps (skip on last) */}
+                {isVisible && index < STEPS.length - 1 && (
+                  <div className="landing-step-connector" style={{
+                    left: 'calc(50% + 32px)',
+                    width: 'calc(100% - 64px)',
+                    opacity: 0.5,
+                  }} />
+                )}
+
+                {/* Big ghost number */}
+                <span style={{
+                  position: 'absolute', top: '2px', right: '14px',
+                  fontSize: '3.4rem', fontWeight: 800, lineHeight: 1,
+                  color: isVisible ? 'rgba(139,92,246,0.08)' : 'transparent',
+                  transition: 'color 0.6s ease',
+                  letterSpacing: '-0.03em',
+                  pointerEvents: 'none',
                 }}>
-                  {step.icon}
+                  {step.number}
+                </span>
+
+                {/* Step icon with glow ring */}
+                <div style={{ position: 'relative', display: 'inline-block', marginBottom: '20px' }}>
+                  <div style={{
+                    position: 'absolute', inset: '-8px', borderRadius: '18px',
+                    background: isVisible ? 'radial-gradient(circle, rgba(139,92,246,0.2), transparent 70%)' : 'transparent',
+                    transition: 'opacity 0.5s ease',
+                  }} />
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '14px',
+                    background: isVisible
+                      ? 'linear-gradient(135deg, var(--secondary), var(--primary))'
+                      : 'rgba(255,255,255,0.03)',
+                    color: isVisible ? '#fff' : 'var(--text-muted)',
+                    position: 'relative',
+                    boxShadow: isVisible ? '0 10px 30px rgba(139,92,246,0.35)' : 'none',
+                    transition: 'all 0.5s ease',
+                  }}>
+                    {step.icon}
+                  </div>
                 </div>
 
                 {/* Label */}
                 <span style={{
                   display: 'inline-block',
-                  padding: '2px 12px',
-                  borderRadius: '12px',
-                  background: isVisible ? 'rgba(139,92,246,0.06)' : 'rgba(255,255,255,0.02)',
-                  color: isVisible ? 'var(--primary)' : 'var(--text-muted)',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.06em',
+                  padding: '3px 14px',
+                  borderRadius: '50px',
+                  background: isVisible ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.02)',
+                  color: isVisible ? 'var(--primary-hover)' : 'var(--text-muted)',
+                  fontSize: '0.66rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
                   marginBottom: '12px',
+                  border: isVisible ? '1px solid rgba(139,92,246,0.18)' : '1px solid transparent',
                   transition: 'all 0.4s ease',
                 }}>
                   Paso {step.number}
                 </span>
 
                 <h3 style={{
-                  fontSize: '1.15rem',
-                  fontWeight: 600,
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
                   marginBottom: '10px',
                   color: isVisible ? 'var(--text-primary)' : 'var(--text-muted)',
                   transition: 'color 0.4s ease',
+                  letterSpacing: '-0.01em',
                 }}>
                   {step.title}
                 </h3>

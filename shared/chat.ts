@@ -2,6 +2,7 @@ export interface DmMessage {
   id: string;
   content: string;
   read: boolean;
+  reactions?: Record<string, string[]>; // emoji -> userIds que reaccionaron
   createdAt: string;
   senderId: string;
   receiverId: string;
@@ -21,6 +22,7 @@ export interface Conversation {
   id: string;
   content: string;
   read: boolean;
+  reactions?: Record<string, string[]>; // emoji -> userIds que reaccionaron
   createdAt: string;
   senderId: string;
   receiverId: string;
@@ -53,4 +55,5 @@ export const DM_EVENTS = {
   MESSAGE: 'dm:message',
   TYPING: 'dm:typing',
   READ: 'dm:read',
+  REACTION: 'dm:reaction',
 } as const;

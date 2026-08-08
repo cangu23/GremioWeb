@@ -99,18 +99,12 @@ export default function LiveNowSection() {
           opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(15px)',
           transition: 'all 0.5s cubic-bezier(0.22,1,0.36,1)',
         }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            padding: '4px 16px', borderRadius: '20px',
-            background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)',
-            fontSize: '0.78rem', fontWeight: 600, color: 'var(--primary)',
-            marginBottom: '12px',
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-            EN VIVO
-          </div>
+          <span className="landing-eyebrow landing-eyebrow--live" style={{ marginBottom: '16px' }}>
+            <span className="landing-live-dot" />
+            En Vivo Ahora
+          </span>
           <h2 className="section-title" style={{ marginBottom: 0 }}>
-            Transmitiendo Ahora
+            Transmitiendo <span className="landing-gradient-text">Ahora</span>
           </h2>
           <p className="section-subtitle" style={{ marginTop: '8px', marginBottom: 0 }}>
             {liveVtubers.length === 1 ? '1 VTuber está transmitiendo' : `${liveVtubers.length} VTubers están transmitiendo`}

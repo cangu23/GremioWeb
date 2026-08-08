@@ -88,27 +88,21 @@ export const NOTIFICATION_EVENTS = {
   NEW: 'notification:new',
 } as const;
 
-export const CHAT_EVENTS = {
-  MESSAGE: 'chat:message',
-  HISTORY: 'chat:history',
-  JOIN: 'chat:join',
-  TYPING: 'chat:typing',
-  ERROR: 'chat:error',
-  DELETE: 'chat:delete-message',
-  DELETED: 'chat:message-deleted',
-} as const;
-
 export const DM_EVENTS = {
   MESSAGE: 'dm:message',
   TYPING: 'dm:typing',
   READ: 'dm:read',
+  READ_RECEIPT: 'dm:read-receipt',
+  REACTION: 'dm:reaction',
   DELETE: 'dm:delete-message',
   DELETED: 'dm:message-deleted',
 } as const;
 
 export const GUILD_EVENTS = {
   DELETE: 'guild:delete-message',
-  DELETED: 'guild:message-deleted',
+  // Unificado con el nombre que emite el backend (REST y socket) y que escucha
+  // la página de gremios: `guild:message:deleted` (con dos puntos).
+  DELETED: 'guild:message:deleted',
 } as const;
 
 export const MEDIA_EVENTS = {

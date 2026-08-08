@@ -140,15 +140,18 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
     window.addEventListener('notifications-read', handleNotifsRead);
 
     let sock: any;
+    // Handler con nombre: `off(event)` sin handler borraría los listeners de
+    // otros componentes (ej. la página /notifications) del socket compartido.
+    const handleNewNotif = (notif: any) => {
+      setUnreadCount(prev => prev + 1);
+      const toastMsg = notif?.title || 'Nueva notificación';
+      showToast(toastMsg, 'success');
+      window.dispatchEvent(new CustomEvent('stardust:updated'));
+      window.dispatchEvent(new CustomEvent('missions:updated'));
+    };
     try {
       sock = connectSocket();
-      sock.on(NOTIFICATION_EVENTS.NEW, (notif: any) => {
-        setUnreadCount(prev => prev + 1);
-        const toastMsg = notif?.title || 'Nueva notificación';
-        showToast(toastMsg, 'success');
-        window.dispatchEvent(new CustomEvent('stardust:updated'));
-        window.dispatchEvent(new CustomEvent('missions:updated'));
-      });
+      sock.on(NOTIFICATION_EVENTS.NEW, handleNewNotif);
     } catch (err) {
       console.warn('[Socket] Could not connect for notifications:', err);
     }
@@ -156,7 +159,7 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
     return () => {
       clearInterval(interval);
       window.removeEventListener('notifications-read', handleNotifsRead);
-      if (sock) sock.off(NOTIFICATION_EVENTS.NEW);
+      if (sock) sock.off(NOTIFICATION_EVENTS.NEW, handleNewNotif);
     };
   }, [user, showToast]);
 
@@ -178,13 +181,16 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
     window.addEventListener('dm-read', handleDmRead);
 
     let sock: any;
+    // Handler con nombre: `off(event)` sin handler borraría los listeners de la
+    // página /chat del socket compartido y la insignia de DM se rompería sola.
+    const handleNewDm = (msg: { receiverId: string }) => {
+      if (msg.receiverId === user.id) {
+        fetchDmUnread();
+      }
+    };
     try {
       sock = connectSocket();
-      sock.on(DM_EVENTS.MESSAGE, (msg: { receiverId: string }) => {
-        if (msg.receiverId === user.id) {
-          fetchDmUnread();
-        }
-      });
+      sock.on(DM_EVENTS.MESSAGE, handleNewDm);
     } catch (err) {
       console.warn('[Socket] Could not connect for DM count:', err);
     }
@@ -192,7 +198,7 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
     return () => {
       clearInterval(interval);
       window.removeEventListener('dm-read', handleDmRead);
-      if (sock) sock.off(DM_EVENTS.MESSAGE);
+      if (sock) sock.off(DM_EVENTS.MESSAGE, handleNewDm);
     };
   }, [user, isLoading]);
 

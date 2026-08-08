@@ -13,6 +13,20 @@ interface AuthenticatedSocket extends Socket {
 }
 
 /**
+ * Parse the reactions JSON stored on a DirectMessage (TEXT column, formato
+ * JSON) into Record<emoji, userIds>. Tolerante con null y valores corruptos.
+ */
+function parseReactionsJson(raw: string | null | undefined): Record<string, string[]> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed as Record<string, string[]> : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
  * Object wrapper for the Socket.IO server instance.
  * We use an object so that CommonJS consumers get a mutable reference
  * (exports.io = value copies the value; mutating a shared object works).
@@ -64,6 +78,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
   // Rate limiter: max 10 messages per 5 seconds per user
   const messageLimiter = createSocketRateLimiter({ maxEvents: 10, windowMs: 5000 });
+  // Rate limiter for reactions (more permissive: quick taps across emojis)
+  const reactionLimiter = createSocketRateLimiter({ maxEvents: 20, windowMs: 5000 });
 
   // Authentication middleware
   io.use(async (socket: AuthenticatedSocket, next) => {
@@ -81,7 +97,12 @@ export const createSocketServer = (httpServer: HttpServer) => {
       // tokens issued before username was added to the payload.
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
-        select: { username: true, status: true },
+        select: {
+          username: true,
+          status: true,
+          displayName: true,
+          vtuberProfile: { select: { displayName: true } },
+        },
       });
       if (!user) {
         return next(new Error('Cuenta no encontrada'));
@@ -90,6 +111,9 @@ export const createSocketServer = (httpServer: HttpServer) => {
         return next(new Error('Cuenta suspendida o baneada'));
       }
       socket.username = user.username;
+      // displayName real para los indicadores de escritura de gremios
+      // (antes `socket.data.displayName` nunca se asignaba y llegaba null).
+      socket.data.displayName = user.displayName || user.vtuberProfile?.displayName || null;
       next();
     } catch {
       next(new Error('Invalid token'));
@@ -105,8 +129,6 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
     console.log(`[Socket] User connected: ${username} (${userId})`);
 
-    // Join default global room
-    socket.join('global');
     // Join personal room for notifications & targeted events
     socket.join(`user:${userId}`);
 
@@ -172,6 +194,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
           id: message.id,
           content: message.content,
           read: message.read,
+          reactions: parseReactionsJson(message.reactions),
           createdAt: message.createdAt.toISOString(),
           senderId: message.senderId,
           receiverId: message.receiverId,
@@ -201,11 +224,60 @@ export const createSocketServer = (httpServer: HttpServer) => {
       });
     });
 
+    // Handle reactions on DMs (emoji -> userIds, persisted on the message)
+    socket.on('dm:reaction', async (data: { messageId: string; emoji: string }) => {
+      if (!reactionLimiter.allow(userId)) {
+        socket.emit('chat:error', { message: 'Reaccionando muy rápido. Espera unos segundos.' });
+        return;
+      }
+      if (!data.messageId || !isValidCuid(data.messageId)) return;
+      const emoji = String(data.emoji || '').trim();
+      if (!emoji || emoji.length > 16) return;
+
+      try {
+        const message = await prisma.directMessage.findUnique({ where: { id: data.messageId } });
+        if (!message) {
+          socket.emit('chat:error', { message: 'Mensaje no encontrado' });
+          return;
+        }
+        // Solo los participantes del DM pueden reaccionar
+        if (message.senderId !== userId && message.receiverId !== userId) {
+          socket.emit('chat:error', { message: 'No tienes permiso para reaccionar a este mensaje' });
+          return;
+        }
+
+        const current = parseReactionsJson(message.reactions);
+        const reactedUsers = current[emoji] || [];
+        const hasReacted = reactedUsers.includes(userId);
+        const updated: Record<string, string[]> = { ...current };
+        if (hasReacted) {
+          const remaining = reactedUsers.filter(id => id !== userId);
+          if (remaining.length > 0) updated[emoji] = remaining;
+          else delete updated[emoji];
+        } else {
+          updated[emoji] = [...reactedUsers, userId];
+        }
+
+        await prisma.directMessage.update({
+          where: { id: data.messageId },
+          data: { reactions: JSON.stringify(updated) },
+        });
+
+        // Broadcast to both participants (io.to incluye al propio socket)
+        const payload = { messageId: data.messageId, reactions: updated };
+        io.to(`user:${message.senderId}`).emit('dm:reaction', payload);
+        io.to(`user:${message.receiverId}`).emit('dm:reaction', payload);
+      } catch (err) {
+        console.error('[Socket] Error reacting to DM:', err);
+        socket.emit('chat:error', { message: 'Error al reaccionar al mensaje' });
+      }
+    });
+
     // Handle read receipts for DMs
     socket.on('dm:read', async (data: { messageIds: string[] }) => {
       if (!data.messageIds?.length) return;
       try {
-        await prisma.directMessage.updateMany({
+        const updated = await prisma.directMessage.updateMany({
           where: {
             id: { in: data.messageIds },
             receiverId: userId,
@@ -213,20 +285,25 @@ export const createSocketServer = (httpServer: HttpServer) => {
           },
           data: { read: true },
         });
+
+        // Notify each sender in real time so their "read" checkmarks update live
+        if (updated.count > 0) {
+          const readMessages = await prisma.directMessage.findMany({
+            where: { id: { in: data.messageIds }, receiverId: userId, read: true },
+            select: { id: true, senderId: true },
+          });
+          const bySender = new Map<string, string[]>();
+          for (const m of readMessages) {
+            const list = bySender.get(m.senderId) || [];
+            list.push(m.id);
+            bySender.set(m.senderId, list);
+          }
+          for (const [senderId, messageIds] of bySender) {
+            socket.to(`user:${senderId}`).emit('dm:read-receipt', { messageIds });
+          }
+        }
       } catch (err) {
         console.error('[Socket] Error marking DMs as read:', err);
-      }
-    });
-
-    // Handle room joins (restricted to safe rooms)
-    socket.on('chat:join', (data: { room: string }) => {
-      const room = String(data.room || '');
-      // Only the global room and the user's own private room can be joined.
-      // Joining arbitrary rooms (user:<otherId>, guild:<id>) would leak
-      // private DMs and guild channel messages to non-members.
-      if (room === 'global' || room === `user:${userId}`) {
-        socket.join(room);
-        console.log(`[Socket] ${username} joined room: ${room}`);
       }
     });
 
@@ -374,41 +451,14 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
         await prisma.guildChannelMessage.delete({ where: { id: data.messageId } });
 
-        io.to(`guild:${data.guildId}`).emit('guild:message-deleted', {
+        // Nombre unificado con el del camino REST (channels.service) y con el
+        // que escucha la página de gremios: `guild:message:deleted`.
+        io.to(`guild:${data.guildId}`).emit('guild:message:deleted', {
           messageId: data.messageId,
           channelId: data.channelId,
         });
       } catch (err) {
         console.error('[Socket] Error deleting guild message:', err);
-        socket.emit('chat:error', { message: 'Error al eliminar mensaje' });
-      }
-    });
-
-    // Handle message deletion (owned or admin)
-    socket.on('chat:delete-message', async (data: { messageId: string; room?: string }) => {
-      try {
-        const message = await prisma.chatMessage.findUnique({ where: { id: data.messageId } });
-        if (!message) {
-          socket.emit('chat:error', { message: 'Mensaje no encontrado' });
-          return;
-        }
-        
-        const adminUser = await prisma.user.findUnique({ where: { id: userId } });
-        const isAdmin = hasAnyRole(adminUser?.role, ['ADMIN', 'MODERATOR', 'STAFF']);
-        
-        // Allow if user owns the message OR is admin
-        if (message.userId !== userId && !isAdmin) {
-          socket.emit('chat:error', { message: 'No tienes permiso para eliminar este mensaje' });
-          return;
-        }
-
-        await prisma.chatMessage.delete({ where: { id: data.messageId } });
-        
-        // Notify the room that the message was deleted
-        const room = data.room || 'global';
-        io.to(room).emit('chat:message-deleted', { messageId: data.messageId });
-      } catch (err) {
-        console.error('[Socket] Error deleting message:', err);
         socket.emit('chat:error', { message: 'Error al eliminar mensaje' });
       }
     });
@@ -447,8 +497,9 @@ export const createSocketServer = (httpServer: HttpServer) => {
       globalOnlineUsers.delete(userId);
       socket.broadcast.emit('user:offline', { userId });
 
-      // Clean up rate limiter entry
+      // Clean up rate limiter entries
       messageLimiter.remove(userId);
+      reactionLimiter.remove(userId);
 
       // Remove user from all guilds they were in
       const guilds = socket.data.guilds as Set<string> | undefined;

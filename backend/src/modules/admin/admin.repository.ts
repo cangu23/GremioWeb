@@ -670,7 +670,6 @@ export const getDashboardStats = async () => {
     totalPosts,
     totalComments,
     totalLikes,
-    totalMessages,
     pendingReports,
     pendingVtuberRequests,
     newUsersToday,
@@ -689,7 +688,6 @@ export const getDashboardStats = async () => {
     prisma.post.count(),
     prisma.comment.count(),
     prisma.like.count(),
-    prisma.chatMessage.count(),
     prisma.report.count({ where: { status: 'PENDING' } }),
     prisma.vtuberRequest.count({ where: { status: 'PENDING' } }),
     prisma.user.count({
@@ -721,7 +719,6 @@ export const getDashboardStats = async () => {
     totalPosts,
     totalComments,
     totalLikes,
-    totalMessages,
     pendingReports,
     pendingVtuberRequests,
     newUsersToday,

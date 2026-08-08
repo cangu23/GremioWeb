@@ -7,7 +7,6 @@ interface PlatformStats {
   totalVtubers: number;
   totalEvents: number;
   totalGuilds: number;
-  totalMessages: number;
   totalPosts: number;
   totalUsers: number;
 }
@@ -23,7 +22,6 @@ const statConfigs: StatDisplay[] = [
   { value: 0, suffix: '+', label: 'VTubers Registrados', key: 'totalVtubers' },
   { value: 0, suffix: '+', label: 'Eventos Realizados', key: 'totalEvents' },
   { value: 0, suffix: '+', label: 'Gremios Creados', key: 'totalGuilds' },
-  { value: 0, suffix: '+', label: 'Mensajes Enviados', key: 'totalMessages' },
 ];
 
 function AnimatedNumber({ target, suffix }: { target: number; suffix: string }) {
@@ -93,27 +91,36 @@ export default function StatsSection() {
     <section
       ref={sectionRef}
       className="section"
-      style={{ position: 'relative', zIndex: 1 }}
+      style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}
     >
-      <div className="container">
-        <div className="section-accent-line" />
-        <h2 className="section-title">Estadísticas</h2>
-        <p className="section-subtitle">
-          Números que reflejan el crecimiento de nuestra comunidad
-        </p>
+      <div className="landing-orb" style={{
+        width: 400, height: 400, left: '-160px', bottom: '-60px',
+        background: 'radial-gradient(circle, rgba(108,180,238,0.09), transparent 65%)',
+        animation: 'landingFloat 14s ease-in-out infinite',
+      }} />
+      <div className="container" style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
+          <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>Comunidad en cifras</span>
+          <h2 className="section-title" style={{ marginBottom: '12px' }}>
+            Estadísticas <span className="landing-gradient-text">reales</span>
+          </h2>
+          <p className="section-subtitle" style={{ marginBottom: 0 }}>
+            Números que reflejan el crecimiento de nuestra comunidad
+          </p>
+        </div>
 
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '16px',
+          gap: '18px',
         }}>
           {loading ? (
             [0, 1, 2, 3].map((i) => (
               <div key={i} style={{
-                padding: '32px 20px',
+                padding: '34px 20px',
                 textAlign: 'center',
-                background: 'var(--bg-card)',
-                borderRadius: '12px',
+                background: 'rgba(28,28,34,0.7)',
+                borderRadius: '16px',
                 border: '1px solid var(--glass-border)',
               }}>
                 <div className="skeleton" style={{ width: '60px', height: '28px', margin: '0 auto 8px' }} />
@@ -124,41 +131,32 @@ export default function StatsSection() {
             statsWithValues.map((stat, i) => (
               <div
                 key={i}
+                className="landing-card"
                 style={{
-                  padding: '32px 20px',
+                  padding: '36px 20px',
                   textAlign: 'center',
-                  background: 'var(--bg-card)',
-                  borderRadius: '12px',
-                  border: '1px solid var(--glass-border)',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--bg-card-hover)';
-                  e.currentTarget.style.borderColor = 'rgba(139,92,246,0.15)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--bg-card)';
-                  e.currentTarget.style.borderColor = 'var(--glass-border)';
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  cursor: 'default',
                 }}
               >
+                <div className="landing-spotlight" />
                 <div style={{
-                  width: '24px',
+                  width: '32px',
                   height: '2px',
-                  background: 'var(--primary)',
-                  margin: '0 auto 12px',
+                  background: 'linear-gradient(90deg, transparent, var(--primary), transparent)',
+                  margin: '0 auto 14px',
                   borderRadius: '1px',
                 }} />
                 <div style={{
-                  fontSize: '2.2rem',
-                  fontWeight: 700,
-                  color: 'var(--text-primary)',
+                  fontSize: '2.5rem',
+                  fontWeight: 800,
                   marginBottom: '6px',
                   lineHeight: 1.2,
                   fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '-0.02em',
                 }}>
-                  <AnimatedNumber target={stat.value} suffix={stat.suffix} />
+                  <span className="landing-stat-value">
+                    <AnimatedNumber target={stat.value} suffix={stat.suffix} />
+                  </span>
                 </div>
                 <div style={{
                   fontSize: '0.85rem',

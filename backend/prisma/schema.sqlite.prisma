@@ -111,8 +111,6 @@ model User {
   // Stickers (admin-managed)
   stickersAdded Sticker[]    @relation("stickerAuthor")
 
-  // Chat messages
-  chatMessages  ChatMessage[]
   dmsSent       DirectMessage[] @relation("dmSender")
   dmsReceived   DirectMessage[] @relation("dmReceiver")
 
@@ -721,23 +719,11 @@ model AppSetting {
 
 // ========== CHAT ==========
 
-model ChatMessage {
-  id        String   @id @default(cuid())
-  room      String   @default("global")
-  userId    String
-  content   String
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([room, createdAt])
-  @@index([userId])
-}
-
 model DirectMessage {
   id        String   @id @default(cuid())
   content   String
   read      Boolean  @default(false)
+  reactions String?  // JSON: emoji -> array de userIds que reaccionaron
   createdAt DateTime @default(now())
 
   senderId   String

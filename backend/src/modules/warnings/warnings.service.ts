@@ -165,17 +165,6 @@ export const deleteChatMessage = async (messageId: string, type: string, adminId
   let message;
 
   switch (type) {
-    case 'global':
-      message = await prisma.chatMessage.findUnique({ where: { id: messageId } });
-      if (!message) throw new AppError('Mensaje no encontrado', 404);
-      // Check if user is admin or the message owner
-      const globalAdmin = await prisma.user.findUnique({ where: { id: adminId } });
-      if (message.userId !== adminId && globalAdmin?.role !== 'ADMIN') {
-        throw new AppError('No tienes permiso para eliminar este mensaje', 403);
-      }
-      await prisma.chatMessage.delete({ where: { id: messageId } });
-      break;
-
     case 'dm':
       message = await prisma.directMessage.findUnique({ where: { id: messageId } });
       if (!message) throw new AppError('Mensaje no encontrado', 404);

@@ -109,36 +109,52 @@ export default function FeaturesSection() {
             const index = Number(entry.target.getAttribute('data-index'));
             setTimeout(() => {
               setVisibleCards((prev) => new Set(prev).add(index));
-            }, index * 60);
+            }, index * 70);
           }
         }
       },
       { threshold: 0.1 }
     );
 
-    const cards = sectionRef.current?.querySelectorAll('.feature-card');
+    const cards = sectionRef.current?.querySelectorAll('.landing-card');
     cards?.forEach((card) => observer.observe(card));
     return () => observer.disconnect();
   }, []);
+
+  const handleSpotlight = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty('--spot-x', `${e.clientX - rect.left}px`);
+    el.style.setProperty('--spot-y', `${e.clientY - rect.top}px`);
+  };
 
   return (
     <section
       ref={sectionRef}
       className="section"
       id="features"
-      style={{ position: 'relative', zIndex: 1 }}
+      style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}
     >
-      <div className="container">
-        <div className="section-accent-line" style={{
-          opacity: visibleCards.size > 0 ? 1 : 0,
-          transition: 'opacity 0.6s ease',
-        }} />
-        <h2 className="section-title" style={{
+      <div className="landing-orb" style={{
+        width: 420, height: 420, right: '-180px', top: '10%',
+        background: 'radial-gradient(circle, rgba(139,92,246,0.1), transparent 65%)',
+        animation: 'landingFloat 12s ease-in-out infinite',
+      }} />
+      <div className="container" style={{ position: 'relative' }}>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
           opacity: visibleCards.size > 0 ? 1 : 0,
           transform: visibleCards.size > 0 ? 'translateY(0)' : 'translateY(15px)',
           transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
         }}>
-          Todo lo que necesitas
+          <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>Funcionalidades</span>
+        </div>
+        <h2 className="section-title" style={{
+          opacity: visibleCards.size > 0 ? 1 : 0,
+          transform: visibleCards.size > 0 ? 'translateY(0)' : 'translateY(15px)',
+          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s',
+        }}>
+          Todo lo que <span className="landing-gradient-text">necesitas</span>
         </h2>
         <p className="section-subtitle" style={{
           opacity: visibleCards.size > 0 ? 1 : 0,
@@ -152,64 +168,65 @@ export default function FeaturesSection() {
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '16px',
+          gap: '18px',
         }}>
           {FEATURES.map((feature, index) => (
             <div
               key={index}
-              className="feature-card"
+              className="landing-card"
               data-index={index}
+              onMouseMove={handleSpotlight}
               style={{
-                padding: '24px 22px',
-                borderRadius: '12px',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--glass-border)',
-                transition: 'all 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+                padding: '26px 24px',
                 opacity: visibleCards.has(index) ? 1 : 0,
                 transform: visibleCards.has(index) ? 'translateY(0)' : 'translateY(25px)',
+                transition: 'opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
                 cursor: 'default',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.background = 'var(--bg-card-hover)';
-                e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)';
-                e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)';
-                const icon = e.currentTarget.querySelector('.feature-icon') as HTMLElement;
-                if (icon) icon.style.color = 'var(--primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.background = 'var(--bg-card)';
-                e.currentTarget.style.borderColor = 'var(--glass-border)';
-                e.currentTarget.style.boxShadow = 'none';
-                const icon = e.currentTarget.querySelector('.feature-icon') as HTMLElement;
-                if (icon) icon.style.color = 'var(--text-muted)';
-              }}
             >
+              <div className="landing-spotlight" />
+
               {/* Icon */}
               <div
                 className="feature-icon"
                 style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: 'var(--primary-muted)',
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '13px',
+                  background: 'linear-gradient(135deg, var(--primary-muted), rgba(108,180,238,0.06))',
+                  border: '1px solid rgba(139,92,246,0.14)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--text-muted)',
-                  marginBottom: '14px',
-                  transition: 'color 0.3s ease, background 0.3s ease',
+                  color: 'var(--primary-hover)',
+                  marginBottom: '16px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 0 0 rgba(139,92,246,0)',
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget;
+                  el.style.color = '#fff';
+                  el.style.background = 'linear-gradient(135deg, var(--secondary), var(--primary))';
+                  el.style.boxShadow = '0 8px 24px rgba(139,92,246,0.35)';
+                  el.style.transform = 'translateY(-2px) scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget;
+                  el.style.color = 'var(--primary-hover)';
+                  el.style.background = 'linear-gradient(135deg, var(--primary-muted), rgba(108,180,238,0.06))';
+                  el.style.boxShadow = '0 0 0 rgba(139,92,246,0)';
+                  el.style.transform = 'translateY(0) scale(1)';
                 }}
               >
                 {feature.icon}
               </div>
 
               <h3 style={{
-                fontSize: '1rem',
-                fontWeight: 600,
+                fontSize: '1.02rem',
+                fontWeight: 700,
                 marginBottom: '8px',
                 color: 'var(--text-primary)',
+                letterSpacing: '-0.01em',
               }}>
                 {feature.title}
               </h3>

@@ -146,46 +146,53 @@ function HomeContent() {
     if (!user) return;
 
     let sock: Socket;
+    // Handlers con nombre: `off(event)` sin handler borraría los listeners de
+    // otros componentes (ej. la página /chat) del socket singleton compartido.
+    const handleOnlineList = (data: { onlineIds: string[] }) => {
+      setOnlineFriendIds(new Set(data.onlineIds));
+    };
+
+    // User came online
+    const handleOnline = (data: { userId: string }) => {
+      setOnlineFriendIds(prev => {
+        const next = new Set(prev);
+        next.add(data.userId);
+        return next;
+      });
+    };
+
+    // Real-time notification count increment
+    const handleNotifNew = () => {
+      setUnreadNotifs(prev => prev + 1);
+    };
+
+    // User went offline
+    const handleOffline = (data: { userId: string }) => {
+      setOnlineFriendIds(prev => {
+        const next = new Set(prev);
+        next.delete(data.userId);
+        return next;
+      });
+    };
+
     try {
       sock = connectSocket();
 
       // Receive full list of currently online users
-      sock.on('user:online-list', (data: { onlineIds: string[] }) => {
-        setOnlineFriendIds(new Set(data.onlineIds));
-      });
-
-      // User came online
-      sock.on('user:online', (data: { userId: string }) => {
-        setOnlineFriendIds(prev => {
-          const next = new Set(prev);
-          next.add(data.userId);
-          return next;
-        });
-      });
-
-      // Real-time notification count increment
-      sock.on('notification:new', () => {
-        setUnreadNotifs(prev => prev + 1);
-      });
-
-      // User went offline
-      sock.on('user:offline', (data: { userId: string }) => {
-        setOnlineFriendIds(prev => {
-          const next = new Set(prev);
-          next.delete(data.userId);
-          return next;
-        });
-      });
+      sock.on('user:online-list', handleOnlineList);
+      sock.on('user:online', handleOnline);
+      sock.on('notification:new', handleNotifNew);
+      sock.on('user:offline', handleOffline);
     } catch (err) {
       console.warn('[Socket] Could not connect for presence:', err);
     }
 
     return () => {
       if (sock) {
-        sock.off('user:online-list');
-        sock.off('user:online');
-        sock.off('user:offline');
-        sock.off('notification:new');
+        sock.off('user:online-list', handleOnlineList);
+        sock.off('user:online', handleOnline);
+        sock.off('notification:new', handleNotifNew);
+        sock.off('user:offline', handleOffline);
       }
     };
   }, [user]);

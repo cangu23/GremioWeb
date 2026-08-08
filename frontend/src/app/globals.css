@@ -1476,6 +1476,235 @@ img, svg {
   animation: authKickerPulse 3.2s ease-in-out infinite;
 }
 
+/* ==========================================================================
+   LANDING PREMIUM SYSTEM (cosmic upgrade)
+   ========================================================================== */
+
+/* Section eyebrow badge — small pill above titles */
+.landing-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary-hover);
+  background: linear-gradient(120deg, var(--primary-subtle), rgba(108, 180, 238, 0.06));
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.06);
+}
+
+.landing-eyebrow::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+/* Variant that hides the default dot (e.g. LiveNow uses its own red dot) */
+.landing-eyebrow--live::before {
+  display: none;
+}
+
+/* Animated gradient text for headlines */
+.landing-gradient-text {
+  background: linear-gradient(
+    120deg,
+    var(--primary) 0%,
+    var(--accent) 35%,
+    var(--warm) 65%,
+    var(--primary) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: landingGradientShift 6s ease-in-out infinite;
+}
+
+@keyframes landingGradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Glowing orb used in hero / section backgrounds.
+   No filter:blur — los gradientes radiales ya se desvanecen suavemente,
+   y animar transform sobre un elemento con blur fuerza re-rasterización
+   por frame. Solo transform + will-change. */
+.landing-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.5;
+  z-index: 0;
+  will-change: transform;
+}
+
+/* Floating card (hero mini-cards) */
+.landing-float-card {
+  position: absolute;
+  border-radius: 14px;
+  background: rgba(20, 20, 24, 0.72);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.06) inset;
+  animation: landingFloat 7s ease-in-out infinite;
+}
+
+@keyframes landingFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-14px); }
+}
+
+/* Shine sweep on primary CTAs */
+.btn--shine {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--secondary), var(--primary) 60%, var(--accent));
+  background-size: 200% auto;
+  box-shadow: 0 8px 28px rgba(139, 92, 246, 0.35);
+}
+
+.btn--shine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: skewX(-20deg);
+  animation: landingShine 3.2s ease-in-out infinite;
+}
+
+@keyframes landingShine {
+  0%   { left: -80%; }
+  55%  { left: 130%; }
+  100% { left: 130%; }
+}
+
+.btn--shine:hover {
+  background-position: 100% 0;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5);
+}
+
+/* Premium feature card — gradient border on hover */
+.landing-card {
+  position: relative;
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(28, 28, 34, 0.8), rgba(22, 22, 26, 0.55));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  transition: transform 0.4s var(--ease-out-expo), box-shadow 0.4s ease, border-color 0.3s ease;
+}
+
+.landing-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(108, 180, 238, 0.15), rgba(245, 158, 11, 0.25));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.landing-card:hover::before {
+  opacity: 1;
+}
+
+.landing-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(139, 92, 246, 0.08);
+}
+
+/* Spotlight tracked inside premium cards (JS sets CSS vars) */
+.landing-spotlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    520px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(139, 92, 246, 0.09),
+    transparent 60%
+  );
+}
+
+.landing-card:hover .landing-spotlight {
+  opacity: 1;
+}
+
+/* Stat number with gradient */
+.landing-stat-value {
+  background: linear-gradient(135deg, #fff 20%, var(--primary-hover) 60%, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Pulsing live dot */
+.landing-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff4757;
+  box-shadow: 0 0 10px #ff4757;
+  animation: landingLivePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes landingLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* Connector line for how-it-works steps */
+.landing-step-connector {
+  position: absolute;
+  top: 42px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.0), rgba(139, 92, 246, 0.4), rgba(139, 92, 246, 0.0));
+}
+
+/* Pulsing aurora ring behind highlighted pricing card */
+.landing-price-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--primary), var(--accent), var(--warm), var(--primary));
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: landingBorderFlow 5s ease infinite;
+  pointer-events: none;
+}
+
+@keyframes landingBorderFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 
 
 
