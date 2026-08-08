@@ -92,6 +92,24 @@ export default function ParticlesBackground() {
     window.addEventListener('mouseleave', handleMouseLeave);
     window.addEventListener('touchmove', handleTouchMove);
 
+    // ⚡ OPTIMIZACIÓN: pausar el canvas cuando la pestaña no es visible.
+    // El requestAnimationFrame sigue corriendo en background y quema CPU/GPU
+    // aunque nadie esté viendo la página; al volver, se reanuda desde donde
+    // quedó (el estado de estrellas/meteoros es continuo).
+    let paused = false;
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (!paused) {
+          paused = true;
+          cancelAnimationFrame(animationId);
+        }
+      } else if (paused) {
+        paused = false;
+        render();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
     // Static cosmic nebula layer — pre-rendered once (per-frame radial
     // gradients + full-canvas fills are expensive on modest GPUs/CPUs).
     const nebulaCanvas = document.createElement('canvas');
@@ -440,6 +458,7 @@ export default function ParticlesBackground() {
       window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [isAuthPage]);
 

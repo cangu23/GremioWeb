@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 
 import type { Metadata } from 'next';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import { AuthProvider } from '@/lib/AuthContext';
 import { ToastProvider } from '@/lib/ToastContext';
@@ -11,8 +10,6 @@ import PageTransition from '@/components/layout/PageTransition';
 import ClientOnly from '@/lib/ClientOnly';
 import ParticlesBackground from '@/components/landing/ParticlesBackground';
 import './globals.css';
-
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export const metadata: Metadata = {
   title: 'Gremio Estelar — El Hogar de los VTubers',
@@ -41,34 +38,23 @@ export default function RootLayout({
         {/* One music player for the whole site — survives navigation, never
             restarts when changing pages (stelar.mp3 in frontend/public/audio) */}
         <GlobalMusicPlayer />
-        {GOOGLE_CLIENT_ID ? (
-          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <ToastProvider>
-              <AuthProvider>
-                {/* PageTransition must wrap ClientLayoutShell (NOT be wrapped by
-                    it): ClientLayoutShell swaps its JSX shape between auth pages
-                    (bare fragment) and normal pages (Navbar+main+Footer), which
-                    would remount PageTransition and reset its ref — breaking the
-                    veil on navigation. As a stable outer wrapper it survives. */}
-                <PageTransition>
-                  <ClientLayoutShell>
-                    {children}
-                  </ClientLayoutShell>
-                </PageTransition>
-              </AuthProvider>
-            </ToastProvider>
-          </GoogleOAuthProvider>
-        ) : (
-          <ToastProvider>
-            <AuthProvider>
-              <PageTransition>
-                <ClientLayoutShell>
-                  {children}
-                </ClientLayoutShell>
-              </PageTransition>
-            </AuthProvider>
-          </ToastProvider>
-        )}
+        {/* ⚡ OPTIMIZACIÓN: GoogleOAuthProvider (que inyecta el script GSI de
+            Google ~300KB) se movió a GoogleLoginButton, que es su único
+            consumidor (login/registro). Antes se cargaba en TODAS las páginas. */}
+        <ToastProvider>
+          <AuthProvider>
+            {/* PageTransition must wrap ClientLayoutShell (NOT be wrapped by
+                it): ClientLayoutShell swaps its JSX shape between auth pages
+                (bare fragment) and normal pages (Navbar+main+Footer), which
+                would remount PageTransition and reset its ref — breaking the
+                veil on navigation. As a stable outer wrapper it survives. */}
+            <PageTransition>
+              <ClientLayoutShell>
+                {children}
+              </ClientLayoutShell>
+            </PageTransition>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

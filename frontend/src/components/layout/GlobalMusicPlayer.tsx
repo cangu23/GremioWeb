@@ -38,7 +38,11 @@ export default function GlobalMusicPlayer() {
 
     const audio = new Audio(AUDIO_SRC);
     audio.loop = true;
-    audio.preload = 'auto';
+    // ⚡ OPTIMIZACIÓN: era 'auto' → cada página descargaba los 61 MB de
+    // stelar.mp3 entero. 'metadata' solo lee la cabecera (~KB) y el archivo
+    // se streamea cuando el usuario realmente reproduce (que ya es el flujo:
+    // la música arranca tras el primer gesto del usuario).
+    audio.preload = 'metadata';
     audio.volume = 0;
     audioRef.current = audio;
     // Route the music through the shared AudioContext so the ECG waveform
@@ -53,12 +57,16 @@ export default function GlobalMusicPlayer() {
       setReady(false);
     };
 
+    // 'loadedmetadata' dispara con preload='metadata' (canplay espera a que
+    // haya datos suficientes, que con metadata no llegan hasta reproducir).
+    audio.addEventListener('loadedmetadata', handleCanPlay);
     audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('error', handleError);
 
     return () => {
       if (fadeTimer.current) window.cancelAnimationFrame(fadeTimer.current);
       audio.pause();
+      audio.removeEventListener('loadedmetadata', handleCanPlay);
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('error', handleError);
       audioRef.current = null;

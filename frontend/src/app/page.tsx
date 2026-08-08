@@ -1,21 +1,31 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/lib/AuthContext';
 import ClientOnly from '@/lib/ClientOnly';
+import LazyMount from '@/components/ui/LazyMount';
 
-// Landing sections (for non-authenticated users)
+// ⚡ OPTIMIZACIÓN DE CARGA:
+// - next/dynamic: las secciones bajo el pliegue van en chunks separados
+//   (el bundle inicial del landing se reduce mucho).
+// - LazyMount: además se montan solo cuando se acercan al viewport, así que
+//   sus fetches (/vtubers/live, /activity, /stats…) no compiten con el
+//   render del Hero.
+// HeroSection queda eager porque es lo primero que ve el usuario.
 import HeroSection from '@/components/landing/HeroSection';
-import HowItWorksSection from '@/components/landing/HowItWorksSection';
-import StatsSection from '@/components/landing/StatsSection';
-import FeaturesSection from '@/components/landing/FeaturesSection';
-import LiveNowSection from '@/components/landing/LiveNowSection';
-import FeaturedVtubersSection from '@/components/landing/FeaturedVtubersSection';
-import PricingSection from '@/components/landing/PricingSection';
-import RecentActivitySection from '@/components/landing/RecentActivitySection';
-import CTASection from '@/components/landing/CTASection';
 
-// Authenticated feed
-import HomeContent from '@/components/feed/FeedPage';
+const LiveNowSection = dynamic(() => import('@/components/landing/LiveNowSection'), { ssr: false });
+const HowItWorksSection = dynamic(() => import('@/components/landing/HowItWorksSection'), { ssr: false });
+const StatsSection = dynamic(() => import('@/components/landing/StatsSection'), { ssr: false });
+const FeaturesSection = dynamic(() => import('@/components/landing/FeaturesSection'), { ssr: false });
+const FeaturedVtubersSection = dynamic(() => import('@/components/landing/FeaturedVtubersSection'), { ssr: false });
+const PricingSection = dynamic(() => import('@/components/landing/PricingSection'), { ssr: false });
+const RecentActivitySection = dynamic(() => import('@/components/landing/RecentActivitySection'), { ssr: false });
+const CTASection = dynamic(() => import('@/components/landing/CTASection'), { ssr: false });
+
+// Authenticated feed: también lazy, porque solo se renderiza para usuarios
+// logueados (antes su chunk pesado viajaba en el bundle inicial para todos).
+const HomeContent = dynamic(() => import('@/components/feed/FeedPage'), { ssr: false });
 
 // ==========================================================================
 // Section Divider
@@ -49,21 +59,21 @@ function LandingPage() {
     <>
       <HeroSection />
       <SectionDivider />
-      <LiveNowSection />
+      <LazyMount minHeight={420}><LiveNowSection /></LazyMount>
       <SectionDivider />
-      <HowItWorksSection />
+      <LazyMount minHeight={500}><HowItWorksSection /></LazyMount>
       <SectionDivider />
-      <StatsSection />
+      <LazyMount minHeight={300}><StatsSection /></LazyMount>
       <SectionDivider />
-      <FeaturesSection />
+      <LazyMount minHeight={500}><FeaturesSection /></LazyMount>
       <SectionDivider />
-      <FeaturedVtubersSection />
+      <LazyMount minHeight={500}><FeaturedVtubersSection /></LazyMount>
       <SectionDivider />
-      <PricingSection />
+      <LazyMount minHeight={600}><PricingSection /></LazyMount>
       <SectionDivider />
-      <RecentActivitySection />
+      <LazyMount minHeight={450}><RecentActivitySection /></LazyMount>
       <SectionDivider />
-      <CTASection />
+      <LazyMount minHeight={300}><CTASection /></LazyMount>
     </>
   );
 }
