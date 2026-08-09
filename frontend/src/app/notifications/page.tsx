@@ -133,7 +133,7 @@ function NotificationsContent() {
       if (activeTab === 'UNREAD') return !n.read;
       if (activeTab === 'SOCIAL') return ['follow', 'friend_request', 'friend_accept'].includes(n.type);
       if (activeTab === 'INTERACTION') return ['like', 'comment', 'mention', 'dm'].includes(n.type);
-      if (activeTab === 'STELLAR') return ['achievement', 'level_up', 'event_attend', 'event_created', 'guild_joined', 'vtuber_approved', 'vtuber_rejected', 'vtuber_verified'].includes(n.type);
+      if (activeTab === 'STELLAR') return ['achievement', 'level_up', 'event_attend', 'event_created', 'guild_joined', 'vtuber_approved', 'vtuber_rejected', 'vtuber_verified', 'streamer_request', 'streamer_approved', 'streamer_rejected', 'streamer_verified'].includes(n.type);
       return true;
     });
   }, [notifications, activeTab]);
@@ -178,10 +178,18 @@ function NotificationsContent() {
       case 'VTUBER_REQUEST':
         return '/admin/vtuber-requests';
 
+      case 'STREAMER_REQUEST':
+        return '/admin/streamer-requests';
+
       case 'VTUBER_APPROVED':
       case 'VTUBER_REJECTED':
       case 'VTUBER_VERIFIED':
         return '/vtuber-profile';
+
+      case 'STREAMER_APPROVED':
+      case 'STREAMER_REJECTED':
+      case 'STREAMER_VERIFIED':
+        return '/streamer-profile';
 
       case 'PET_REQUEST_APPROVED':
       case 'PET_REQUEST_REJECTED':

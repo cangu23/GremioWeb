@@ -71,7 +71,7 @@ export const getSocialProfile = async (userIdOrUsername: string, currentUserId?:
   }
 
   if (currentUserId && currentUserId !== userId) {
-    if (hasAnyRole(userProfile.role, ['VTUBER']) || userProfile.vtuberProfile) {
+    if (hasAnyRole(userProfile.role, ['VTUBER', 'STREAMER']) || userProfile.vtuberProfile || (userProfile as any).streamerProfile) {
       trackMissionProgress(currentUserId, 'VTUBER_VISIT').catch(() => {});
     }
   }
@@ -89,11 +89,14 @@ export const getSocialProfile = async (userIdOrUsername: string, currentUserId?:
 
   const { password, ...safeProfile } = userProfile;
 
-  // Insignia azul efectiva: admin/verificado de VTuber o verificado comprado.
+  // Insignia azul efectiva: admin/verificado de VTuber/Streamer o verificado comprado.
   const verified = isVerifiedEffective(userProfile as any);
   const profile = attachVerified(safeProfile as unknown as Record<string, unknown>);
   if (verified && profile.vtuberProfile) {
     (profile.vtuberProfile as any).isVerified = true;
+  }
+  if (verified && (profile as any).streamerProfile) {
+    ((profile as any).streamerProfile as any).isVerified = true;
   }
 
   return {

@@ -98,6 +98,7 @@ const PERMISSION_CATEGORIES: { category: string; icon: string; items: Permission
 const MATRIX_COLUMNS = [
   { id: 'USER', label: 'USER', color: '#a0a0a0' },
   { id: 'VTUBER', label: 'VTUBER', color: '#ec4899' },
+  { id: 'STREAMER', label: 'STREAMER', color: '#38bdf8' },
   { id: 'ARTIST', label: 'ARTIST', color: '#a78bfa' },
   { id: 'CLIPPER', label: 'CLIPPER', color: '#fbbf24' },
   { id: 'MAID', label: 'MAID', color: '#c084fc' },

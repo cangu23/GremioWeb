@@ -91,6 +91,8 @@ function DashboardContent() {
 
   const xpThresholds = [0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 4000, 5200, 6600, 8200, 10000, 12000];
   const isVtuber = hasAnyRole(user?.role, ['VTUBER', 'MAID']) || user?.vtuberProfile?.isApproved === true;
+  const isStreamer = hasAnyRole(user?.role, ['STREAMER']) || (user as any)?.streamerProfile?.isApproved === true;
+  const isCreator = isVtuber || isStreamer;
 
   useEffect(() => {
     if (user) {
@@ -256,8 +258,8 @@ function DashboardContent() {
                 Bienvenido,{' '}
                 <span className="text-gradient--primary">{user.username}</span>
               </h1>
-              {isVtuber && (
-                <span className="badge badge--secondary">VTuber</span>
+              {isCreator && (
+                <span className="badge badge--secondary">{isVtuber ? 'VTuber' : 'Streamer'}</span>
               )}
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
@@ -269,13 +271,13 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ===== CREATOR STUDIO (solo VTubers) ===== */}
-      {isVtuber && (
+      {/* ===== CREATOR STUDIO (solo creadores) ===== */}
+      {isCreator && (
         <div style={{ marginBottom: '40px' }}>
           <SectionHeader icon={<SvgStar />} label="Studio del Creador" color="#ff007f" />
           <div className="grid-4">
             {[
-              { icon: <SvgStar />, label: 'Mi Perfil VTuber', href: '/vtuber-profile', desc: 'Edita tu personaje', color: '#ff007f' },
+              { icon: <SvgStar />, label: isVtuber ? 'Mi Perfil VTuber' : 'Mi Perfil Streamer', href: isVtuber ? '/vtuber-profile' : '/streamer-profile', desc: 'Edita tu perfil', color: '#ff007f' },
               { icon: <SvgAward />, label: 'Logros', href: '/achievements', desc: 'Desbloquea recompensas' },
               { icon: <SvgRss />, label: 'Feed', href: '/feed', desc: 'Publica contenido' },
               { icon: <SvgCalendar />, label: 'Mis Eventos', href: '/events', desc: 'Organiza streams' },
@@ -361,7 +363,7 @@ function DashboardContent() {
             Canjear Código
           </h2>
           <p className="text-muted" style={{ fontSize: '0.9rem', marginBottom: '20px', lineHeight: 1.6 }}>
-            {isVtuber
+            {isCreator
               ? 'Canjea un código especial para obtener beneficios exclusivos como creador.'
               : '¿Tienes un código de invitación? Canjéalo aquí para obtener un rol especial.'}
           </p>
@@ -410,20 +412,22 @@ function DashboardContent() {
         {/* Perfil público */}
         <div className="glass-card">
           <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {isVtuber ? 'Mi Perfil' : 'Tu Perfil'}
+            {isCreator ? 'Mi Perfil' : 'Tu Perfil'}
           </h2>
           <p className="text-muted" style={{ fontSize: '0.9rem', marginBottom: '20px', lineHeight: 1.6 }}>
-            {isVtuber
-              ? 'Administra tu perfil de VTuber, tu personaje y cómo te ve la comunidad.'
+            {isCreator
+              ? isVtuber
+                ? 'Administra tu perfil de VTuber, tu personaje y cómo te ve la comunidad.'
+                : 'Administra tu perfil de Streamer, tus horarios y cómo te ve la comunidad.'
               : 'Completa tu perfil y personaliza tu experiencia en Gremio Estelar.'}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <Link href={`/profile/${user.id}`} className="btn btn--outline" style={{ width: '100%', padding: '12px', justifyContent: 'center', fontSize: '0.9rem' }}>
               Ver Perfil Público
             </Link>
-            {isVtuber && (
-              <Link href="/vtuber-profile" className="btn btn--gradient" style={{ width: '100%', padding: '12px', justifyContent: 'center', fontSize: '0.9rem' }}>
-                Editar Personaje VTuber
+            {isCreator && (
+              <Link href={isVtuber ? "/vtuber-profile" : "/streamer-profile"} className="btn btn--gradient" style={{ width: '100%', padding: '12px', justifyContent: 'center', fontSize: '0.9rem' }}>
+                {isVtuber ? 'Editar Personaje VTuber' : 'Editar Perfil Streamer'}
               </Link>
             )}
           </div>

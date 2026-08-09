@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
@@ -18,9 +18,13 @@ function PayPalCallbackContent() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultData, setResultData] = useState<any>(null);
+  // Guard against the effect re-running (StrictMode remounts, searchParams
+  // identity changes) and capturing the same order twice.
+  const processedRef = useRef(false);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || processedRef.current) return;
+    processedRef.current = true;
 
     const confirmTx = async () => {
       const token = searchParams?.get('token'); // PayPal Order ID

@@ -2,6 +2,7 @@
 export enum BaseRole {
   USER = 'USER',
   VTUBER = 'VTUBER',
+  STREAMER = 'STREAMER',
   ARTIST = 'ARTIST',
   CLIPPER = 'CLIPPER',
   MAID = 'MAID',
@@ -43,6 +44,7 @@ export enum BadgeType {
 export enum Role {
   USER = 'USER',
   VTUBER = 'VTUBER',
+  STREAMER = 'STREAMER',
   MAID = 'MAID',
   ARTIST = 'ARTIST',
   CLIPPER = 'CLIPPER',
@@ -72,7 +74,7 @@ export const hasAnyRole = (role?: string | null, targetRoles: string[] = []): bo
   return userRoles.some(r => targets.includes(r));
 };
 
-export const ROLE_PRIORITY = ['ADMIN', 'OWNER', 'STAFF', 'MODERATOR', 'VTUBER', 'MAID', 'BETA_TESTER', 'USER'];
+export const ROLE_PRIORITY = ['ADMIN', 'OWNER', 'STAFF', 'MODERATOR', 'VTUBER', 'STREAMER', 'MAID', 'BETA_TESTER', 'USER'];
 
 export const getPrimaryRole = (roleStr?: string | null, displayedRole?: string | null): string => {
   const userRoles = parseUserRoles(roleStr);

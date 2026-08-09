@@ -48,6 +48,9 @@ export const getMe = async (userId: string): Promise<UserProfile & { dailyReward
   if (isVerifiedEffective(userProfile as any) && (profile as any).vtuberProfile) {
     (profile as any).vtuberProfile.isVerified = true;
   }
+  if (isVerifiedEffective(userProfile as any) && (profile as any).streamerProfile) {
+    (profile as any).streamerProfile.isVerified = true;
+  }
 
   return {
     ...profile,
@@ -208,6 +211,9 @@ export const getPublicUser = async (userId: string): Promise<PublicUser> => {
   const vtuberProfile = userProfile.vtuberProfile
     ? ({ ...userProfile.vtuberProfile, isVerified: verified || !!userProfile.vtuberProfile.isVerified } as unknown as PublicUser['vtuberProfile'])
     : null;
+  const streamerProfile = userProfile.streamerProfile
+    ? ({ ...userProfile.streamerProfile, isVerified: verified || !!userProfile.streamerProfile.isVerified } as unknown as PublicUser['streamerProfile'])
+    : null;
 
   return {
     id: userProfile.id,
@@ -218,5 +224,6 @@ export const getPublicUser = async (userId: string): Promise<PublicUser> => {
     bio: userProfile.bio,
     isVerified: verified,
     vtuberProfile,
+    streamerProfile,
   };
 };

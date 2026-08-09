@@ -43,8 +43,8 @@ function CreateEventForm() {
     return null;
   }
 
-  // Solo VTUBER, MAID y ADMIN pueden crear eventos
-  if (!hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) {
+  // Solo creadores (VTUBER, STREAMER, MAID) y staff pueden crear eventos
+  if (!hasAnyRole(user.role, ['VTUBER', 'STREAMER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER'])) {
     router.push('/events');
     return null;
   }

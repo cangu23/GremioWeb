@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic';
 import MentionInput, { renderContentWithMentions } from './MentionInput';
 import { useStickersCache } from '@/lib/content-renderer';
 import RoleBadge from '@/components/ui/RoleBadge';
-import { getPrimaryRole, isStaffRole, hasAnyRole, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
+import { getPrimaryRole, isStaffRole, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
 import type { PostCardData, CommentData } from '@gremio-estelar/shared';
 
 // Lazy-loaded modals to shrink initial bundle & boost rendering speed
@@ -489,8 +489,8 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           : post.user?.username || ''
         }
         authorAvatarUrl={deleteCommentId
-          ? (comments.find(c => c.id === deleteCommentId)?.user?.avatarUrl || comments.find(c => c.id === deleteCommentId)?.user?.vtuberProfile?.avatarUrl || undefined)
-          : (post.user?.avatarUrl || post.user?.vtuberProfile?.avatarUrl || undefined)
+          ? (comments.find(c => c.id === deleteCommentId)?.user?.avatarUrl || comments.find(c => c.id === deleteCommentId)?.user?.vtuberProfile?.avatarUrl || (comments.find(c => c.id === deleteCommentId)?.user as any)?.streamerProfile?.avatarUrl || undefined)
+          : (post.user?.avatarUrl || post.user?.vtuberProfile?.avatarUrl || (post.user as any)?.streamerProfile?.avatarUrl || undefined)
         }
         authorId={deleteCommentId
           ? comments.find(c => c.id === deleteCommentId)?.userId || ''
@@ -515,11 +515,15 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           {(() => {
             const { frameUrl, equippedFrame } = extractEquippedFrame(post.user);
-            const isUserVerified = !!(post.user.vtuberProfile?.isVerified || (post.user as any).isVerified);
+            const isUserVerified = !!(post.user.vtuberProfile?.isVerified || (post.user as any).streamerProfile?.isVerified || (post.user as any).isVerified);
+            const vtuberProfile = post.user.vtuberProfile;
+            const streamerProfile = (post.user as any)?.streamerProfile;
+            const vtuberApproved = !!(vtuberProfile?.isApproved || vtuberProfile?.isVerified);
+            const streamerApproved = !!(streamerProfile?.isApproved || streamerProfile?.isVerified);
             return (
               <UserAvatar
-                src={post.user.avatarUrl || (hasAnyRole(post.user.role, ['VTUBER']) ? post.user.vtuberProfile?.avatarUrl : null)}
-                alt={post.user.displayName || (hasAnyRole(post.user.role, ['VTUBER']) ? post.user.vtuberProfile?.displayName : null) || post.user.username}
+                src={post.user.avatarUrl || (vtuberApproved ? vtuberProfile?.avatarUrl : null) || (streamerApproved ? streamerProfile?.avatarUrl : null)}
+                alt={post.user.displayName || (vtuberApproved ? vtuberProfile?.displayName : null) || (streamerApproved ? streamerProfile?.displayName : null) || post.user.username}
                 userId={post.user.id}
                 isVerified={isUserVerified}
                 frameUrl={frameUrl}
@@ -531,15 +535,28 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
               {(() => {
-                const isVerified = !!(post.user.vtuberProfile?.isVerified || (post.user as any).isVerified);
-                const displayRole = getPrimaryRole(post.user.role, (post.user as any).displayedRole);
+                const isVerified = !!(post.user.vtuberProfile?.isVerified || (post.user as any).streamerProfile?.isVerified || (post.user as any).isVerified);
+                // Badge del autor basado en perfiles de creador aprobados, no solo
+                // en el rol: un streamer con streamerProfile (sin vtuberProfile)
+                // debe lucir el badge STREAMER aunque su rol principal sea USER.
+                const vtuberApproved = !!(post.user.vtuberProfile?.isApproved || post.user.vtuberProfile?.isVerified);
+                const streamerApproved = !!(post.user.streamerProfile?.isApproved || post.user.streamerProfile?.isVerified);
+                const roleFromRoleField = getPrimaryRole(post.user.role, (post.user as any).displayedRole);
+                const badgeRole = vtuberApproved ? 'VTUBER' : (streamerApproved ? 'STREAMER' : roleFromRoleField);
+                // Mismas condiciones que el avatar: solo se usa el nombre del perfil
+                // de creador si el perfil está aprobado/verificado (fuente única).
+                const displayName =
+                  post.user.displayName ||
+                  (vtuberApproved ? post.user.vtuberProfile?.displayName : null) ||
+                  (streamerApproved ? post.user.streamerProfile?.displayName : null) ||
+                  post.user.username;
                 return (
                   <>
                     <Link href={`/profile/${post.user.id}`} style={{
                       color: 'var(--text)', textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
                       display: 'inline-flex', alignItems: 'center', gap: '4px',
                     }}>
-                      <span>{post.user.displayName || (hasAnyRole(post.user.role, ['VTUBER']) ? post.user.vtuberProfile?.displayName : null) || post.user.username}</span>
+                      <span>{displayName}</span>
                       {isVerified && (
                         <svg width="15" height="15" viewBox="0 0 24 24" aria-label="Verificado" style={{ flexShrink: 0, filter: 'drop-shadow(0 0 4px rgba(29, 155, 240, 0.6))' }}>
                           <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
@@ -547,9 +564,9 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                         </svg>
                       )}
                     </Link>
-                    {displayRole !== 'USER' && (
+                    {badgeRole !== 'USER' && (
                       <RoleBadge
-                        role={displayRole}
+                        role={badgeRole}
                         size="sm"
                       />
                     )}
@@ -964,12 +981,14 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                 >
                   {(() => {
                     const { frameUrl, equippedFrame } = extractEquippedFrame(comment.user);
+                    const cVtuberApproved = !!(comment.user?.vtuberProfile?.isApproved || comment.user?.vtuberProfile?.isVerified);
+                    const cStreamerApproved = !!(comment.user?.streamerProfile?.isApproved || comment.user?.streamerProfile?.isVerified);
                     return (
                       <UserAvatar
-                        src={comment.user?.avatarUrl || (hasAnyRole(comment.user?.role, ['VTUBER']) ? comment.user?.vtuberProfile?.avatarUrl : null)}
-                        alt={comment.user?.displayName || (hasAnyRole(comment.user?.role, ['VTUBER']) ? comment.user?.vtuberProfile?.displayName : null) || comment.user?.username || '?'}
+                        src={comment.user?.avatarUrl || (cVtuberApproved ? comment.user?.vtuberProfile?.avatarUrl : null) || (cStreamerApproved ? comment.user?.streamerProfile?.avatarUrl : null)}
+                        alt={comment.user?.displayName || (cVtuberApproved ? comment.user?.vtuberProfile?.displayName : null) || (cStreamerApproved ? comment.user?.streamerProfile?.displayName : null) || comment.user?.username || '?'}
                         userId={comment.userId}
-                        isVerified={hasAnyRole(comment.user?.role, ['VTUBER']) && (comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved)}
+                        isVerified={(cVtuberApproved && (comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved)) || (cStreamerApproved && (comment.user?.streamerProfile?.isVerified || comment.user?.streamerProfile?.isApproved))}
                         frameUrl={frameUrl}
                         equippedFrame={equippedFrame}
                         size={34}
@@ -980,13 +999,23 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                     {/* Comment Header */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
                       <Link href={`/profile/${comment.userId}`} style={{ fontWeight: 600, fontSize: '0.84rem', color: 'var(--text)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        {comment.user?.displayName || (hasAnyRole(comment.user?.role, ['VTUBER']) ? comment.user?.vtuberProfile?.displayName : null) || comment.user?.username}
-                        {(hasAnyRole(comment.user?.role, ['VTUBER']) && (comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved)) && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
-                            <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
-                            <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
+                        {(() => {
+                          const cVtuberApproved = !!(comment.user?.vtuberProfile?.isApproved || comment.user?.vtuberProfile?.isVerified);
+                          const cStreamerApproved = !!(comment.user?.streamerProfile?.isApproved || comment.user?.streamerProfile?.isVerified);
+                          const cVerified = (cVtuberApproved && (comment.user?.vtuberProfile?.isVerified || comment.user?.vtuberProfile?.isApproved)) || (cStreamerApproved && (comment.user?.streamerProfile?.isVerified || comment.user?.streamerProfile?.isApproved));
+                          const cName = comment.user?.displayName || (cVtuberApproved ? comment.user?.vtuberProfile?.displayName : null) || (cStreamerApproved ? comment.user?.streamerProfile?.displayName : null) || comment.user?.username;
+                          return (
+                            <>
+                              {cName}
+                              {cVerified && (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="#1d9bf0" aria-label="Verificado">
+                                  <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
+                                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </>
+                          );
+                        })()}
                       </Link>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                         @{comment.user?.username}

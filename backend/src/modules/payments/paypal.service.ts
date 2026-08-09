@@ -115,7 +115,7 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
     if (!recipient) {
       throw new AppError('El usuario receptor no existe', 404);
     }
-    if (!hasAnyRole(recipient.role, ['VTUBER'])) {
+    if (!hasAnyRole(recipient.role, ['VTUBER', 'STREAMER'])) {
       throw new AppError('Solo puedes donar a VTubers', 403);
     }
   } else {

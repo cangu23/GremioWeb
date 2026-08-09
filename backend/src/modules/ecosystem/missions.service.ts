@@ -78,32 +78,49 @@ export const DEFAULT_MISSIONS = [
   },
 ];
 
-export const seedDefaultMissions = async () => {
-  // Deactivate old intrusive or forced missions
-  await prisma.mission.updateMany({
-    where: { action: { in: ['EVENT_JOIN', 'POST_CREATE', 'NOTE_UPDATE', 'EQUIP_ITEM'] } },
-    data: { active: false },
-  });
+// El seed se ejecuta UNA vez por proceso (con reintento si falla). Antes se
+// corría en CADA GET de misiones, provocando escrituras en BD por petición
+// (updateMany + 9 × findFirst/create).
+let hasSeededMissions = false;
 
-  for (const m of DEFAULT_MISSIONS) {
-    const existing = await prisma.mission.findFirst({
-      where: { action: m.action, type: m.type },
+export const seedDefaultMissions = async () => {
+  if (hasSeededMissions) return;
+  // Flag optimista ANTES de las escrituras: evita que dos peticiones
+  // concurrentes seeden a la vez (carrera findFirst/create).
+  hasSeededMissions = true;
+  try {
+    // Deactivate old intrusive or forced missions
+    await prisma.mission.updateMany({
+      where: { action: { in: ['EVENT_JOIN', 'POST_CREATE', 'NOTE_UPDATE', 'EQUIP_ITEM'] } },
+      data: { active: false },
     });
-    if (!existing) {
-      await prisma.mission.create({ data: { ...m, active: true } });
-    } else {
-      await prisma.mission.update({
-        where: { id: existing.id },
-        data: {
-          title: m.title,
-          description: m.description,
-          goal: m.goal,
-          xpReward: m.xpReward,
-          stardustReward: m.stardustReward,
-          active: true,
-        },
+
+    for (const m of DEFAULT_MISSIONS) {
+      const existing = await prisma.mission.findFirst({
+        where: { action: m.action, type: m.type },
       });
+      if (!existing) {
+        await prisma.mission.create({ data: { ...m, active: true } });
+      } else {
+        await prisma.mission.update({
+          where: { id: existing.id },
+          data: {
+            title: m.title,
+            description: m.description,
+            goal: m.goal,
+            xpReward: m.xpReward,
+            stardustReward: m.stardustReward,
+            active: true,
+          },
+        });
+      }
     }
+
+    hasSeededMissions = true;
+  } catch (err) {
+    // Si falla (p. ej. la BD aún no está lista), reintentar en la próxima
+    // petición en vez de quedarse sin seed para siempre.
+    console.error('Error seeding default missions:', err);
   }
 };
 
@@ -362,7 +379,10 @@ export const STREAK_REWARDS = [
 export const getDailyStreak = async (userId: string) => {
   await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // UTC, igual que el resto del sistema de misiones/recompensas diarias:
+  // antes usaba medianoche LOCAL, por lo que la racha se reseteaba en horas
+  // distintas a las misiones según la zona horaria del servidor.
+  today.setUTCHours(0, 0, 0, 0);
 
   // Check login check-in progress
   const loginMission = await prisma.mission.findFirst({ where: { action: 'DAILY_LOGIN' } });

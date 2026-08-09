@@ -21,6 +21,7 @@ import uploadRoutes from './modules/uploads/uploads.routes';
 import statsRoutes from './modules/stats/stats.routes';
 import activityRoutes from './modules/activity/activity.routes';
 import vtuberRoutes from './modules/vtubers/vtubers.routes';
+import streamerRoutes from './modules/streamers/streamers.routes';
 import shopRoutes from './modules/shop/shop.routes';
 import dailyRewardsRoutes from './modules/daily-rewards/daily-rewards.routes';
 import rouletteRoutes from './modules/roulette/roulette.routes';
@@ -54,6 +55,7 @@ router.use('/posts', postRoutes);
 router.use('/dm', dmRoutes);
 router.use('/groups', groupRoutes);
 router.use('/vtubers', vtuberRoutes);
+router.use('/streamers', streamerRoutes);
 router.use('/uploads', uploadRateLimiter, uploadRoutes);
 router.use('/stats', statsRoutes);
 router.use('/activity', activityRoutes);
@@ -70,6 +72,9 @@ router.use('/news', newsRoutes);
 // VTuber request (authenticated users)
 router.post('/vtubers/request', authenticate, RequestsController.submitRequest);
 
+// Streamer request (authenticated users)
+router.post('/streamers/request', authenticate, RequestsController.submitRequest);
+
 // Public stickers endpoint (optional auth, plan-gated for exclusivity)
 router.get('/stickers', authenticateOptional, StickersController.getActiveStickers);
 
@@ -78,6 +83,6 @@ router.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'gremio-estelar-api', timestamp: new Date().toISOString() });
 });
 
-log.info('All API routes registered (23 modules)');
+log.info('All API routes registered (24 modules)');
 
 export default router;

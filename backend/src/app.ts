@@ -96,24 +96,11 @@ console.log(`${BOOT} Helmet configured`);
 
 // Rate Limiting: Protect API from abuse
 console.log(`${BOOT} Configuring rate limiters...`);
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // limit each IP to 500 requests per windowMs (~33/min)
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Exempt preflight OPTIONS & notification polling (GET only) from rate limiting
-  skip: (req) => req.method === 'OPTIONS' || (req.method === 'GET' && req.path.startsWith('/notifications')),
-  message: {
-    status: 'error',
-    message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',
-  },
-});
 
-// Apply rate limiting to all /api routes
-app.use('/api', limiter);
-console.log(`${BOOT} General rate limiter applied to /api`);
-
-// More strict rate limit for auth routes (applied BEFORE general limiter)
+// More strict rate limit for auth routes. IMPORTANTE: se define y monta ANTES
+// que el limitador general de /api, de modo que los intentos de login/register
+// NO consuman el pool general (500/15min) — si lo hicieran, 50 intentos de
+// auth + uso normal de la misma IP bloquearían TODO el API para ese usuario.
 const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 50, // 50 login/register attempts per 10 minutes
@@ -125,6 +112,34 @@ const authLimiter = rateLimit({
     message: 'Demasiados intentos de autenticación. Intenta de nuevo en 10 minutos.',
   },
 });
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/google', authLimiter);
+console.log(`${BOOT} Auth rate limiters applied (before general limiter)`);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // limit each IP to 500 requests per windowMs (~33/min)
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Exempt preflight OPTIONS, notification polling (GET only), y TODAS las rutas
+  // /api/auth/* (gobernadas exclusivamente por authLimiter): sin este skip, los
+  // intentos de login/register consumían también el pool general y podían
+  // agotarlo (500) bloqueando el API entero para esa IP.
+  skip: (req) =>
+    req.method === 'OPTIONS' ||
+    (req.method === 'GET' && req.path.startsWith('/notifications')) ||
+    req.path.startsWith('/api/auth/'),
+  message: {
+    status: 'error',
+    message: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.',
+  },
+});
+
+// Apply rate limiting to all /api routes (auth routes are already limited above)
+app.use('/api', limiter);
+console.log(`${BOOT} General rate limiter applied to /api`);
 
 // ========== PARSING MIDDLEWARE ==========
 
@@ -147,12 +162,6 @@ console.log(`${BOOT} Body parsers configured`);
 // ========== ROUTES ==========
 
 console.log(`${BOOT} Mounting routes...`);
-
-// Apply auth limiter BEFORE general limiter so auth routes get stricter limit
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/google', authLimiter);
-console.log(`${BOOT} Auth rate limiters applied`);
 
 console.log(`${BOOT} Mounting main API router...`);
 app.use('/api', mainRouter);
@@ -196,11 +205,36 @@ app.use(
 
 // ========== ERROR HANDLING ==========
 
+console.log(`${BOOT} Registering 404 handler...`);
+// JSON 404 para rutas /api desconocidas (en vez del HTML por defecto de Express)
+app.use('/api', (req: Request, res: Response) => {
+  res.status(404).json({ status: 'error', message: `Ruta no encontrada: ${req.method} ${req.path}` });
+});
+
 console.log(`${BOOT} Registering error handler...`);
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(`${REQ} [ERROR] Unhandled error for ${req.method} ${req.originalUrl}:`, err.message);
   console.error(`${REQ} [ERROR] Stack:`, err.stack?.split('\n').slice(0, 5).join('\n'));
-  
+
+  // Errores del parser de body: JSON malformado → 400, payload demasiado grande → 413
+  if ((err as any)?.type === 'entity.parse.failed') {
+    return res.status(400).json({ status: 'error', message: 'JSON inválido en el cuerpo de la petición' });
+  }
+  if ((err as any)?.type === 'entity.too.large') {
+    return res.status(413).json({ status: 'error', message: 'El cuerpo de la petición supera el límite permitido (10MB)' });
+  }
+  if (err instanceof SyntaxError && (err as any)?.status === 400 && 'body' in err) {
+    return res.status(400).json({ status: 'error', message: 'JSON inválido en el cuerpo de la petición' });
+  }
+  // Errores de multer (subidas de archivos): 400 en vez de 500
+  if (err.name === 'MulterError') {
+    const message =
+      (err as any)?.code === 'LIMIT_FILE_SIZE'
+        ? 'El archivo supera el tamaño máximo permitido (5MB)'
+        : `Error al subir el archivo: ${(err as any)?.code || err.message}`;
+    return res.status(400).json({ status: 'error', message });
+  }
+
   if (err instanceof AppError) {
     console.warn(`${REQ} [AppError] ${err.statusCode} - ${err.message}`);
     return res.status(err.statusCode).json({

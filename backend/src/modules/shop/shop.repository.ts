@@ -40,12 +40,6 @@ export const findUserPurchase = async (userId: string, itemId: string) =>
     include: { item: true },
   });
 
-export const createPurchase = (userId: string, itemId: string, remaining?: number) =>
-  prisma.userPurchase.create({
-    data: { userId, itemId, remaining },
-    include: { item: true },
-  });
-
 export const updatePurchaseRemaining = (id: string, remaining: number) =>
   prisma.userPurchase.update({
     where: { id },

@@ -114,10 +114,10 @@ export const login = async (input: LoginInput) => {
 
   await AuthRepository.createRefreshToken(hashedRefreshToken, user.id, expiresAt);
 
-  // Fetch full user with vtuberProfile (so avatarUrl is available immediately after login)
+  // Fetch full user with creator profiles (so avatarUrl is available immediately after login)
   const fullUser = await prisma.user.findUnique({
     where: { id: user.id },
-    include: { vtuberProfile: true },
+    include: { vtuberProfile: true, streamerProfile: true },
   });
 
   if (!fullUser) {

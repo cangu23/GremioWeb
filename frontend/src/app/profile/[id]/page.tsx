@@ -94,6 +94,31 @@ interface SocialProfile {
     discordUrl: string | null;
     websiteUrl: string | null;
   } | null;
+  streamerProfile?: {
+    id: string;
+    displayName: string;
+    avatarUrl: string | null;
+    bannerUrl: string | null;
+    description: string | null;
+    lore: string | null;
+    fanName: string | null;
+    oshiMark: string | null;
+    contentType: string | null;
+    streamSchedule: string | null;
+    languages: string | null;
+    themeColor?: string | null;
+    isLive: boolean;
+    isVerified: boolean;
+    isApproved: boolean;
+    isFeatured: boolean;
+    twitchUrl: string | null;
+    youtubeUrl: string | null;
+    kickUrl: string | null;
+    tiktokUrl: string | null;
+    twitterUrl: string | null;
+    discordUrl: string | null;
+    websiteUrl: string | null;
+  } | null;
   _count: { followers: number; following: number };
   isFollowedByMe: boolean;
 }
@@ -269,7 +294,11 @@ function ProfileContent() {
   };
 
   const isOwnProfile = currentUser?.id === profile.id;
-  const vtuber = profile.vtuberProfile;
+  // El perfil público unifica vtuberProfile y streamerProfile: ambos comparten
+  // la misma estructura de campos, así que el resto de la página los consume
+  // de forma idéntica (avatar, banner, redes, horario, verificado, etc.).
+  const vtuber = profile.vtuberProfile || profile.streamerProfile;
+  const isStreamer = !!profile.streamerProfile && !profile.vtuberProfile;
   const avatarUrl = profile.avatarUrl || vtuber?.avatarUrl;
   const displayName = profile.displayName || vtuber?.displayName || profile.username;
   const bio = vtuber?.description || profile.bio;
@@ -670,7 +699,7 @@ function ProfileContent() {
                   key={idx}
                   role={r}
                   size="sm"
-                  isVerified={r === 'VTUBER' ? !!(vtuber?.isVerified || (profile as any)?.isVerified) : false}
+                  isVerified={(r === 'VTUBER' || r === 'STREAMER') ? !!(vtuber?.isVerified || (profile as any)?.isVerified) : false}
                 />
               ));
             })()}
@@ -938,7 +967,7 @@ function ProfileContent() {
             </>
           ) : (
             <Link
-              href="/vtuber-profile"
+              href={isStreamer ? '/streamer-profile' : '/vtuber-profile'}
               className="btn"
               style={{
                 padding: '14px 36px', fontSize: '1rem', fontWeight: 700,
@@ -946,7 +975,7 @@ function ProfileContent() {
                 background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg> Editar Perfil VTuber
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg> {isStreamer ? 'Editar Perfil Streamer' : 'Editar Perfil VTuber'}
             </Link>
           )}
         </div>

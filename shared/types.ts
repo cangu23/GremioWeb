@@ -26,6 +26,12 @@ export interface Post {
       isApproved?: boolean;
       isVerified?: boolean;
     } | null;
+    streamerProfile?: {
+      displayName: string;
+      avatarUrl: string | null;
+      isApproved?: boolean;
+      isVerified?: boolean;
+    } | null;
   };
   _count: { comments: number; likes: number };
   isLikedByMe: boolean;
@@ -54,6 +60,12 @@ export interface CommentData {
     displayName?: string | null;
     avatarUrl?: string | null;
     vtuberProfile?: {
+      displayName: string;
+      avatarUrl: string | null;
+      isApproved?: boolean;
+      isVerified?: boolean;
+    } | null;
+    streamerProfile?: {
       displayName: string;
       avatarUrl: string | null;
       isApproved?: boolean;
@@ -92,6 +104,22 @@ export interface TrendingHashtag {
 // Live VTuber (sidebar)
 // ============================================================================
 export interface LiveVTuberProfile {
+  id: string;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isLive: boolean;
+  lastLiveAt: string | null;
+  isVerified: boolean;
+  twitchUrl: string | null;
+  youtubeUrl: string | null;
+  user: { id: string; username: string };
+}
+
+// ============================================================================
+// Live Streamer (sidebar) — misma forma que /streamers/live
+// ============================================================================
+export interface LiveStreamerProfile {
   id: string;
   userId: string;
   displayName: string;

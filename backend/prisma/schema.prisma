@@ -61,6 +61,7 @@ model User {
 
   // Relations
   vtuberProfile VTuberProfile?
+  streamerProfile StreamerProfile?
   refreshTokens RefreshToken[]
 
   // Social
@@ -190,6 +191,49 @@ model VTuberProfile {
   isVerified  Boolean  @default(false)  // Admin: verified VTuber
   isApproved  Boolean  @default(false)  // Admin: approved profile
   isFeatured  Boolean  @default(false)  // Admin: featured VTuber
+  isHidden    Boolean  @default(false)  // Admin: hidden profile
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @unique
+
+  @@index([displayName])
+  @@index([isVerified])
+  @@index([isApproved])
+}
+
+// ========== STREAMER PROFILES ==========
+
+model StreamerProfile {
+  id          String   @id @default(cuid())
+  displayName String
+  avatarUrl   String?
+  bannerUrl   String?                    // Banner/image de portada
+  description String?
+  lore        String?                    // Historia / lore del streamer
+  socialLinks String?                    // JSON con enlaces a redes sociales
+  twitchUrl   String?                    // Enlace directo a Twitch
+  youtubeUrl  String?                    // Enlace directo a YouTube
+  kickUrl     String?                    // Enlace a Kick
+  tiktokUrl   String?                    // Enlace a TikTok
+  twitterUrl  String?                    // Enlace a X/Twitter
+  discordUrl  String?                    // Enlace a Discord
+  websiteUrl  String?                    // Sitio web personal
+  kofiUrl     String?                    // Enlace personal de Ko-fi
+  streamSchedule String?                // Horario de streams (texto libre)
+  languages   String?                    // JSON array de idiomas
+  contentType String?                    // Tipo de contenido (gaming, IRL, música, etc.)
+  live2dModel String?                    // URL al modelo Live2D
+  model3d     String?                    // URL al modelo 3D
+  fanName     String?                    // Nombre de los fans
+  oshiMark    String?                    // Oshi mark (emoji/símbolo)
+  hashtags    String?                    // JSON array de hashtags oficiales
+  themeColor  String?                   // Color de tema del perfil (hex)
+  isLive      Boolean  @default(false)  // Estado en directo / offline
+  lastLiveAt  DateTime?                  // Última vez que estuvo en vivo
+  isVerified  Boolean  @default(false)  // Admin: verified streamer
+  isApproved  Boolean  @default(false)  // Admin: approved profile
+  isFeatured  Boolean  @default(false)  // Admin: featured streamer
   isHidden    Boolean  @default(false)  // Admin: hidden profile
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -668,8 +712,9 @@ model RoleCode {
 model VtuberRequest {
   id            String   @id @default(cuid())
   userId        String
+  type          String   @default("VTUBER") // VTUBER o STREAMER
   status        String   @default("PENDING")  // PENDING, APPROVED, REJECTED
-  displayName   String                       // Nombre VTuber solicitado
+  displayName   String                       // Nombre solicitado
   description   String?
   avatarUrl     String?
   lore          String?
@@ -685,6 +730,7 @@ model VtuberRequest {
 
   @@index([status])
   @@index([userId])
+  @@index([type])
 }
 
 model Report {

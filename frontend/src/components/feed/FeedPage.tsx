@@ -14,7 +14,7 @@ import StardustProgressBar from '@/components/ui/StardustProgressBar';
 import PlanBadge from '@/components/ui/PlanBadge';
 import { hasAnyRole } from '@gremio-estelar/shared';
 import { usePosts } from '@/lib/hooks/usePosts';
-import type { GuildItem, TrendingHashtag, LiveVTuberProfile, FollowingUser, EventItem } from '@gremio-estelar/shared';
+import type { GuildItem, TrendingHashtag, LiveVTuberProfile, LiveStreamerProfile, FollowingUser, EventItem } from '@gremio-estelar/shared';
 
 // Twitch helper
 function extractTwitchChannel(url: string | null): string | null {
@@ -51,6 +51,7 @@ function HomeContent() {
   // Right sidebar data
   const [trendingHashtags, setTrendingHashtags] = useState<TrendingHashtag[]>([]);
   const [liveVtubers, setLiveVtubers] = useState<LiveVTuberProfile[]>([]);
+  const [liveStreamers, setLiveStreamers] = useState<LiveStreamerProfile[]>([]);
   const [followingUsers, setFollowingUsers] = useState<FollowingUser[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
   const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set());
@@ -90,11 +91,12 @@ function HomeContent() {
 
     const fetchSidebarData = async () => {
       // Parallelize sidebar queries simultaneously
-      const [guildsRes, tagsRes, notifsRes, liveRes, followingRes, eventsRes] = await Promise.allSettled([
+      const [guildsRes, tagsRes, notifsRes, liveRes, liveStreamersRes, followingRes, eventsRes] = await Promise.allSettled([
         apiFetch('/guilds', {}),
         apiFetch('/posts/hashtags/trending?limit=8', {}),
         apiFetch('/notifications/unread-count', {}),
         apiFetch('/vtubers/live', {}),
+        apiFetch('/streamers/live', {}),
         apiFetch(`/social/following/${user.id}`, {}),
         apiFetch('/events?status=UPCOMING&limit=5', {}),
       ]);
@@ -111,6 +113,9 @@ function HomeContent() {
       if (liveRes.status === 'fulfilled' && Array.isArray(liveRes.value)) {
         setLiveVtubers(liveRes.value.slice(0, 5));
       }
+      if (liveStreamersRes.status === 'fulfilled' && Array.isArray(liveStreamersRes.value)) {
+        setLiveStreamers(liveStreamersRes.value.slice(0, 5));
+      }
       if (followingRes.status === 'fulfilled' && Array.isArray(followingRes.value)) {
         setFollowingUsers(followingRes.value.slice(0, 8));
       }
@@ -121,11 +126,19 @@ function HomeContent() {
 
     fetchSidebarData();
 
-    // Poll live VTubers every 60s for real-time updates (efficient background refresh)
+    // Poll live VTubers & Streamers every 60s for real-time updates
     const livePollInterval = setInterval(async () => {
       try {
-        const data = await apiFetch('/vtubers/live', {});
-        if (Array.isArray(data)) setLiveVtubers(data.slice(0, 5));
+        const [vtubersData, streamersData] = await Promise.allSettled([
+          apiFetch('/vtubers/live', {}),
+          apiFetch('/streamers/live', {}),
+        ]);
+        if (vtubersData.status === 'fulfilled' && Array.isArray(vtubersData.value)) {
+          setLiveVtubers(vtubersData.value.slice(0, 5));
+        }
+        if (streamersData.status === 'fulfilled' && Array.isArray(streamersData.value)) {
+          setLiveStreamers(streamersData.value.slice(0, 5));
+        }
       } catch {}
     }, 60000);
 
@@ -215,6 +228,7 @@ function HomeContent() {
     { icon: NavIcons.events, label: 'Eventos', href: '/events' },
     { icon: NavIcons.guilds, label: 'Gremios', href: '/guilds' },
     { icon: NavIcons.vtubers, label: 'VTubers', href: '/vtubers' },
+    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><polyline points="6 1 3 4"/><polyline points="10 1 7 4"/><polyline points="14 1 11 4"/><polyline points="18 1 15 4"/></svg>, label: 'Streamers', href: '/streamers', color: '#22d3ee' },
     { icon: NavIcons.chat, label: 'Chat', href: '/chat' },
     { icon: NavIcons.shop, label: 'Observatorio Estelar', href: '/shop', color: 'var(--warm)' },
     { icon: NavIcons.leaderboard, label: 'Ranking', href: '/leaderboard' },
@@ -241,9 +255,9 @@ function HomeContent() {
           <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{displayName}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{user.username}</div>
         </Link>
-        {hasAnyRole(user.role, ['VTUBER', 'MAID']) && (
-          <Link href="/vtuber-profile" className="btn" style={{ marginTop: '10px', padding: '6px 14px', fontSize: '0.78rem', width: '100%' }}>
-            Editar Perfil VTuber
+        {(hasAnyRole(user.role, ['VTUBER', 'MAID']) || hasAnyRole(user.role, ['STREAMER'])) && (
+          <Link href={hasAnyRole(user.role, ['VTUBER', 'MAID']) ? "/vtuber-profile" : "/streamer-profile"} className="btn" style={{ marginTop: '10px', padding: '6px 14px', fontSize: '0.78rem', width: '100%' }}>
+            {hasAnyRole(user.role, ['VTUBER', 'MAID']) ? 'Editar Perfil VTuber' : 'Editar Perfil Streamer'}
           </Link>
         )}
         <Link href={`/profile/${user.id}`} className="btn btn--outline" style={{ marginTop: '6px', padding: '6px 14px', fontSize: '0.78rem', width: '100%' }}>
@@ -251,15 +265,15 @@ function HomeContent() {
         </Link>
       </div>
 
-      {/* Live VTubers */}
-      {liveVtubers.length > 0 && (
+      {/* Live VTubers & Streamers */}
+      {(liveVtubers.length > 0 || liveStreamers.length > 0) && (
         <div className="glass" style={{ padding: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <h4 style={{ fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', animation: 'pulse 1.5s ease-in-out infinite' }} />
               En Vivo
             </h4>
-            <Link href="/vtubers" style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
+            <Link href={liveStreamers.length > 0 && liveVtubers.length === 0 ? '/streamers' : '/vtubers'} style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>
               Ver todos
             </Link>
           </div>
@@ -293,6 +307,46 @@ function HomeContent() {
                 <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
                   {(v.twitchUrl || v.youtubeUrl) && (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                      )}
+                </span>
+              </Link>
+            ))}
+            {/* Separador sutil si hay ambos tipos */}
+            {liveVtubers.length > 0 && liveStreamers.length > 0 && (
+              <div style={{ margin: '4px 0 2px', height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+            )}
+            {liveStreamers.map(v => (
+              <Link key={v.id} href={`/profile/${v.userId}`} style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '6px 8px', borderRadius: '8px', textDecoration: 'none', color: 'inherit',
+                fontSize: '0.82rem', transition: 'background 0.15s',
+              }}
+                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>
+                <UserAvatar
+                  src={v.avatarUrl}
+                  alt={v.displayName}
+                  userId={v.userId}
+                  isLive={true}
+                  size={28}
+                />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {v.displayName}
+                    {v.isVerified && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#22d3ee" stroke="none" aria-label="Verificado">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: '#22d3ee', fontWeight: 600 }}>EN VIVO</div>
+                </div>
+                <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+                  {(v.twitchUrl || v.youtubeUrl) && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                           <polygon points="5 3 19 12 5 21 5 3"/>
                         </svg>
                       )}
@@ -681,6 +735,237 @@ function HomeContent() {
           compact
           onPostCreated={handlePostCreated}
         />
+
+        {/* ═══ LIVE STREAMERS — tarjetas con embed directo ═══ */}
+        {liveStreamers.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {liveStreamers.map((v, idx) => (
+              <div key={v.id} className="glass" style={{
+                borderRadius: '16px',
+                border: '1px solid rgba(34,211,238,0.2)',
+                boxShadow: '0 0 30px rgba(34,211,238,0.07)',
+                overflow: 'hidden',
+                transition: 'all 0.3s ease',
+                animation: `fadeInUp 0.5s ease ${idx * 0.1}s forwards`,
+                opacity: 0,
+              }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'rgba(34,211,238,0.45)';
+                  e.currentTarget.style.boxShadow = '0 0 40px rgba(34,211,238,0.12)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'rgba(34,211,238,0.2)';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(34,211,238,0.07)';
+                }}
+              >
+                {/* ██████ HEADER con info del streamer ██████ */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '12px 16px',
+                  background: 'linear-gradient(135deg, rgba(34,211,238,0.1), rgba(124,58,237,0.05))',
+                  borderBottom: '1px solid rgba(34,211,238,0.12)',
+                }}>
+                  {/* Avatar */}
+                  <Link href={`/profile/${v.userId}`} style={{ flexShrink: 0, textDecoration: 'none' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '50%',
+                      background: v.avatarUrl
+                        ? `url(${v.avatarUrl}) center/cover`
+                        : 'linear-gradient(135deg, #0891b2, #7c3aed)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontWeight: 'bold', fontSize: '0.8rem',
+                      overflow: 'hidden',
+                      position: 'relative',
+                    }}>
+                      {!v.avatarUrl && v.displayName.charAt(0).toUpperCase()}
+                      {v.avatarUrl && (
+                        <img src={v.avatarUrl} alt={v.displayName}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                      <div style={{
+                        position: 'absolute', inset: -2, borderRadius: '50%',
+                        border: '2px solid rgba(34,211,238,0.6)',
+                        animation: 'pulse 2s ease-in-out infinite',
+                        pointerEvents: 'none',
+                      }} />
+                    </div>
+                  </Link>
+
+                  {/* Name + platform */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Link href={`/profile/${v.userId}`} style={{ color: 'var(--text)', textDecoration: 'none' }}>
+                        {v.displayName}
+                      </Link>
+                      {v.isVerified && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#22d3ee" stroke="none" aria-label="Verificado">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                        marginLeft: '6px',
+                        padding: '2px 8px', borderRadius: '10px',
+                        background: 'rgba(34,211,238,0.15)',
+                        fontSize: '0.65rem', fontWeight: 700, color: '#22d3ee',
+                        textTransform: 'uppercase', letterSpacing: '0.04em',
+                      }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22d3ee', animation: 'pulse 1.5s ease-in-out infinite', display: 'inline-block' }} />
+                        En vivo
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '1px' }}>
+                      @{v.user.username} ·{' '}
+                      <span style={{ color: v.twitchUrl ? '#9146FF' : '#FF0000', fontWeight: 600 }}>
+                        {v.twitchUrl ? 'Twitch' : 'YouTube'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Ir al perfil */}
+                  <Link href={`/profile/${v.userId}`} style={{
+                    fontSize: '0.75rem', color: '#22d3ee', fontWeight: 600,
+                    textDecoration: 'none', padding: '4px 10px', borderRadius: '6px',
+                    transition: 'background 0.15s', flexShrink: 0,
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(34,211,238,0.1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    Ver perfil →
+                  </Link>
+                </div>
+
+                {/* ██████ TWITCH EMBED — iframe del directo ██████ */}
+                {v.twitchUrl && (() => {
+                  const channel = extractTwitchChannel(v.twitchUrl);
+                  if (!channel) return null;
+                  const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+                  return (
+                    <div style={{
+                      position: 'relative',
+                      width: '100%',
+                      paddingTop: '56.25%',
+                      background: '#0a0a0a',
+                      borderBottom: '1px solid rgba(34,211,238,0.1)',
+                    }}>
+                      <iframe
+                        src={`https://player.twitch.tv/?channel=${channel}&parent=${host}&muted=true`}
+                        style={{
+                          position: 'absolute',
+                          top: 0, left: 0,
+                          width: '100%', height: '100%',
+                          border: 'none',
+                        }}
+                        allowFullScreen
+                        title={`${v.displayName} en vivo`}
+                      />
+                    </div>
+                  );
+                })()}
+
+                {/* ██████ YOUTUBE FALLBACK — si no tiene Twitch ██████ */}
+                {!v.twitchUrl && v.youtubeUrl && (
+                  <div style={{
+                    padding: '40px 20px', textAlign: 'center',
+                    background: 'rgba(10,10,10,0.5)',
+                    borderBottom: '1px solid rgba(34,211,238,0.1)',
+                  }}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>
+                      <rect x="2" y="3" width="20" height="18" rx="3" ry="3"/>
+                    </svg>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '8px', marginBottom: '12px' }}>
+                      Stream en YouTube
+                    </p>
+                    <a href={v.youtubeUrl} target="_blank" rel="noopener noreferrer"
+                      className="btn"
+                      style={{
+                        padding: '10px 24px', fontSize: '0.85rem', fontWeight: 700,
+                        borderRadius: '10px',
+                        background: '#FF0000', color: '#fff',
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        textDecoration: 'none',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#cc0000'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#FF0000'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>
+                      </svg>
+                      Ver en YouTube
+                    </a>
+                  </div>
+                )}
+
+                {/* ██████ FOOTER — interacción ██████ */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '12px 16px',
+                  borderTop: '1px solid var(--glass-border)',
+                }}>
+                  {/* Ver en Twitch */}
+                  {v.twitchUrl && (
+                    <a
+                      href={v.twitchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '6px 14px', borderRadius: '8px',
+                        background: '#9146FF', color: '#fff',
+                        fontSize: '0.78rem', fontWeight: 600,
+                        textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#7c3aed'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#9146FF'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.428l-3 3v-3H6.857V1.714h13.714z"/>
+                      </svg>
+                      Ver en Twitch
+                    </a>
+                  )}
+
+                  {/* Seguidores / reacción */}
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '14px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    <Link href={`/profile/${v.userId}`} style={{
+                      color: 'var(--text-muted)', textDecoration: 'none',
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      padding: '4px 8px', borderRadius: '6px',
+                      fontSize: '0.78rem',
+                      transition: 'all 0.15s',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                      Perfil
+                    </Link>
+                    <Link href={`/chat?user=${v.userId}`} style={{
+                      color: 'var(--text-muted)', textDecoration: 'none',
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      padding: '4px 8px', borderRadius: '6px',
+                      transition: 'all 0.15s',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      Mensaje
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ═══ LIVE VTUBERS — tarjetas con embed directo ═══ */}
         {liveVtubers.length > 0 && (

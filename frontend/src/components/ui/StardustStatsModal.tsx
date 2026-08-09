@@ -219,6 +219,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
     userPlan === 'NOVA' ||
     userPlan === 'STELLAR' ||
     userRole === 'VTUBER' ||
+    userRole === 'STREAMER' ||
     userRole === 'MAID' ||
     userRole === 'ADMIN';
 

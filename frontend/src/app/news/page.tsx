@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import Link from 'next/link';
@@ -72,8 +72,12 @@ function NewsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [readingModalOpen, setReadingModalOpen] = useState(false);
+  // Drop stale responses when the user types/opens articles quickly
+  const newsSeqRef = useRef(0);
+  const articleSeqRef = useRef(0);
 
   const fetchNews = useCallback(async () => {
+    const seq = ++newsSeqRef.current;
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
@@ -81,11 +85,13 @@ function NewsContent() {
       if (searchQuery.trim()) queryParams.append('search', searchQuery.trim());
 
       const data = await apiFetch(`/news?${queryParams.toString()}`);
+      if (seq !== newsSeqRef.current) return; // a newer request superseded this one
       setArticles(data.articles || []);
     } catch (err: unknown) {
+      if (seq !== newsSeqRef.current) return;
       showToast('Error al cargar noticias', 'error');
     } finally {
-      setLoading(false);
+      if (seq === newsSeqRef.current) setLoading(false);
     }
   }, [selectedCategory, searchQuery, showToast]);
 
@@ -97,17 +103,28 @@ function NewsContent() {
   }, []);
 
   useEffect(() => {
-    fetchNews();
+    // Debounce while typing; categories apply immediately
+    const timer = setTimeout(() => {
+      fetchNews();
+    }, searchQuery ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [fetchNews, searchQuery]);
+
+  // Pinned article doesn't depend on filters/search, fetch it once
+  useEffect(() => {
     fetchPinned();
-  }, [fetchNews, fetchPinned]);
+  }, [fetchPinned]);
 
   const openArticleReader = async (article: NewsArticle) => {
+    const seq = ++articleSeqRef.current;
     setSelectedArticle(article);
     setReadingModalOpen(true);
 
     // Fetch single article to register view counter
     try {
       const full = await apiFetch(`/news/${article.slug}`);
+      // Ignore if the user opened another article while this one was loading
+      if (seq !== articleSeqRef.current) return;
       setSelectedArticle(full);
       // update local view counter
       setArticles((prev) =>

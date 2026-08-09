@@ -3,22 +3,25 @@ import { Prisma } from '@prisma/client';
 
 export const createRequest = (data: {
   userId: string;
+  type?: string;
   displayName: string;
   description?: string;
   avatarUrl?: string;
   lore?: string;
   surveyAnswers?: string; // JSON string
 }) => {
-  return prisma.vtuberRequest.create({ data });
+  return prisma.vtuberRequest.create({ data: { ...data, type: data.type || 'VTUBER' } });
 };
 
 export const findRequests = (params: {
   skip: number;
   take: number;
+  type?: string;
   status?: string;
   search?: string;
 }) => {
   const where: Prisma.VtuberRequestWhereInput = {};
+  if (params.type) where.type = params.type;
   if (params.status) where.status = params.status;
   if (params.search) {
     where.displayName = { contains: params.search };
@@ -38,6 +41,9 @@ export const findRequests = (params: {
           vtuberProfile: {
             select: { id: true, displayName: true, avatarUrl: true, isApproved: true, isVerified: true },
           },
+          streamerProfile: {
+            select: { id: true, displayName: true, avatarUrl: true, isApproved: true, isVerified: true },
+          },
         },
       },
       reviewedBy: { select: { id: true, username: true } },
@@ -45,8 +51,9 @@ export const findRequests = (params: {
   });
 };
 
-export const countRequests = (params: { status?: string; search?: string }) => {
+export const countRequests = (params: { type?: string; status?: string; search?: string }) => {
   const where: Prisma.VtuberRequestWhereInput = {};
+  if (params.type) where.type = params.type;
   if (params.status) where.status = params.status;
   return prisma.vtuberRequest.count({ where });
 };
@@ -64,6 +71,9 @@ export const findRequestById = (id: string) => {
           vtuberProfile: {
             select: { id: true, displayName: true, avatarUrl: true, description: true, lore: true },
           },
+          streamerProfile: {
+            select: { id: true, displayName: true, avatarUrl: true, description: true, lore: true },
+          },
         },
       },
       reviewedBy: { select: { id: true, username: true } },
@@ -75,8 +85,8 @@ export const updateRequest = (id: string, data: Prisma.VtuberRequestUpdateInput)
   return prisma.vtuberRequest.update({ where: { id }, data });
 };
 
-export const findUserRequestPending = (userId: string) => {
+export const findUserRequestPending = (userId: string, type = 'VTUBER') => {
   return prisma.vtuberRequest.findFirst({
-    where: { userId, status: 'PENDING' },
+    where: { userId, type, status: 'PENDING' },
   });
 };

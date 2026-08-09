@@ -62,6 +62,7 @@ const roleColors: Record<string, string> = {
   STAFF: '#10b981',
   BETA_TESTER: '#00bcd4',
   VTUBER: '#ff007f',
+  STREAMER: '#38bdf8',
   MAID: '#d4a030',
   USER: '#4caf50',
 };
@@ -72,6 +73,7 @@ const AVAILABLE_ROLES = [
   { id: 'STAFF', label: '🛡️ Staff', color: '#10b981' },
   { id: 'BETA_TESTER', label: '🧪 Beta Tester', color: '#00bcd4' },
   { id: 'VTUBER', label: '🌸 VTuber / Creador', color: '#ff007f' },
+  { id: 'STREAMER', label: '🎥 Streamer / Creador', color: '#38bdf8' },
   { id: 'MAID', label: '☕ Maid Café Host', color: '#d4a030' },
   { id: 'USER', label: '👤 Usuario Normal', color: '#4caf50' },
 ];

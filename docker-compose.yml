@@ -86,14 +86,17 @@ services:
       - NODE_ENV=production
       - PORT=4000
       - DATABASE_URL=postgresql://${POSTGRES_USER:-gremio_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-gremioweb}?schema=public
-      - JWT_ACCESS_SECRET="${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required in .env}"
-      - JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required in .env}"
+      # OJO: sin comillas — en la forma de lista de docker-compose las comillas
+      # pasan a formar parte del valor, lo que rompía CORS (FRONTEND_URL con
+      # comillas no coincidía con el origin real) y firmaba los JWT con comillas.
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required in .env}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required in .env}
       - JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN:-15m}
       - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-7d}
       - MEDIA_ENGINE_URL=http://media-engine:8001
       - MEDIA_ENGINE_TOKEN=${MEDIA_ENGINE_TOKEN:-}
       # FRONTEND_URL debe ser tu dominio público (CORS/WebSocket)
-      - FRONTEND_URL="${FRONTEND_URL:?FRONTEND_URL is required in .env}"
+      - FRONTEND_URL=${FRONTEND_URL:?FRONTEND_URL is required in .env}
       # TRUST_PROXY=1 (default en prod): estás detrás de Cloudflare Tunnel.
       # Pon TRUST_PROXY=0 si expones el puerto directo a internet.
       - TRUST_PROXY=${TRUST_PROXY:-1}
@@ -131,7 +134,7 @@ services:
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
-      - TUNNEL_TOKEN="${TUNNEL_TOKEN:?Error: TUNNEL_TOKEN is mandatory in .env}"
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN:?Error: TUNNEL_TOKEN is mandatory in .env}
     networks:
       - gremio-network
     depends_on:

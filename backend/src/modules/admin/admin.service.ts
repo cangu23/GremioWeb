@@ -3,7 +3,7 @@ import prisma from '../../database/prisma';
 import * as AdminRepository from './admin.repository';
 import AppError from '../../errors/AppError';
 import { AdminQueryInput, PaginatedResponse } from './admin.types';
-import { UpdateUserAdminInput, UpdateVtuberAdminInput, UpdateEventAdminInput, UpdateGuildAdminInput, UpdatePostAdminInput, UpdateCommentAdminInput } from './admin.types';
+import { UpdateUserAdminInput, UpdateVtuberAdminInput, UpdateStreamerAdminInput, UpdateEventAdminInput, UpdateGuildAdminInput, UpdatePostAdminInput, UpdateCommentAdminInput } from './admin.types';
 import { NOTIFICATION_TYPES, isStaffRole, hasAnyRole } from '@gremio-estelar/shared';
 import { activatePlatformPlan, PLATFORM_PLANS } from '../subscriptions/platform-subscriptions.service';
 import { hardDeleteUser } from '../users/user.service';
@@ -133,6 +133,32 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     });
   } else if (data.role && !hasAnyRole(data.role, ['VTUBER']) && user.vtuberProfile) {
     await prisma.vTuberProfile.update({
+      where: { userId: id },
+      data: { isApproved: false, isHidden: true },
+    });
+  }
+
+  // Sync Streamer profile automatically (mirror of the VTuber sync)
+  if (hasAnyRole(targetRole, ['STREAMER']) || data.isVerified !== undefined) {
+    const isVer = data.isVerified !== undefined ? data.isVerified : true;
+    await prisma.streamerProfile.upsert({
+      where: { userId: id },
+      create: {
+        userId: id,
+        displayName: user.displayName || user.username,
+        avatarUrl: user.avatarUrl || null,
+        isApproved: true,
+        isHidden: false,
+        isVerified: isVer,
+      },
+      update: {
+        isApproved: true,
+        isHidden: false,
+        isVerified: isVer,
+      },
+    });
+  } else if (data.role && !hasAnyRole(data.role, ['STREAMER']) && (user as any).streamerProfile) {
+    await prisma.streamerProfile.update({
       where: { userId: id },
       data: { isApproved: false, isHidden: true },
     });
@@ -416,6 +442,109 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
     }
   } catch (notifErr) {
     console.error('[Notifications] Error sending VTuber notification:', notifErr);
+  }
+
+  return updated;
+};
+
+// ========== STREAMERS ==========
+
+export const listStreamers = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
+  const { page, limit, skip } = extractPagination(query);
+
+  const filters: Record<string, boolean> = {};
+  if (query.isVerified !== undefined) filters.isVerified = query.isVerified === 'true';
+  if (query.isApproved !== undefined) filters.isApproved = query.isApproved === 'true';
+  if (query.isHidden !== undefined) filters.isHidden = query.isHidden === 'true';
+  if (query.isFeatured !== undefined) filters.isFeatured = query.isFeatured === 'true';
+
+  const [data, total] = await Promise.all([
+    AdminRepository.findStreamerProfiles({
+      skip,
+      take: limit,
+      search: query.search,
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
+      ...filters,
+    }),
+    AdminRepository.countStreamerProfiles({ search: query.search, ...filters }),
+  ]);
+
+  return { data, meta: buildPaginationMeta(total, page, limit) };
+};
+
+export const updateStreamer = async (id: string, data: UpdateStreamerAdminInput, adminId: string, ip?: string) => {
+  const profile = await AdminRepository.findStreamerProfileById(id);
+  if (!profile) throw new AppError('Perfil Streamer no encontrado', 404);
+
+  const updated = await AdminRepository.updateStreamerProfile(id, data);
+
+  // Sync user role based on streamer profile status changes.
+  // Only demote to USER if explicitly revoking approval.
+  // Hiding the profile temporarily should NOT remove the STREAMER role.
+  if (data.isApproved === false) {
+    await prisma.user.update({
+      where: { id: profile.userId },
+      data: { role: 'USER' },
+    });
+  } else if (data.isApproved === true) {
+    await prisma.user.update({
+      where: { id: profile.userId },
+      data: { role: 'STREAMER' },
+    });
+  }
+
+  const changes: string[] = [];
+  if (data.isVerified !== undefined && data.isVerified !== profile.isVerified) {
+    changes.push(data.isVerified ? 'verificado' : 'verificación removida');
+  }
+  if (data.isApproved !== undefined && data.isApproved !== profile.isApproved) {
+    changes.push(data.isApproved ? 'aprobado' : 'aprobación removida');
+  }
+  if (data.isFeatured !== undefined && data.isFeatured !== profile.isFeatured) {
+    changes.push(data.isFeatured ? 'destacado' : 'no destacado');
+  }
+  if (data.isHidden !== undefined && data.isHidden !== profile.isHidden) {
+    changes.push(data.isHidden ? 'oculto' : 'visible');
+  }
+
+  if (changes.length > 0) {
+    await logAdminAction(adminId, 'UPDATE_STREAMER', {
+      targetProfileId: id,
+      displayName: profile.displayName,
+      changes,
+    }, ip);
+  }
+
+  // Notify streamer when approved or verified (fire-and-forget)
+  try {
+    const updatedUser = updated.user;
+    if (updatedUser) {
+      if (data.isApproved === true && profile.isApproved === false) {
+        await prisma.notification.create({
+          data: {
+            userId: updatedUser.id,
+            type: NOTIFICATION_TYPES.STREAMER_APPROVED,
+            title: '✅ ¡Felicidades, ahora eres Streamer oficial!',
+            message: `Tu perfil ha sido aprobado. ¡Bienvenido a la comunidad de Streamers! Ya puedes personalizar tu perfil, crear eventos y unirte a gremios.`,
+            referenceId: id,
+          },
+        });
+      }
+      if (data.isVerified === true && profile.isVerified === false) {
+        await prisma.notification.create({
+          data: {
+            userId: updatedUser.id,
+            type: NOTIFICATION_TYPES.STREAMER_VERIFIED,
+            title: '🔵 ¡Has sido verificado!',
+            message: `Tu cuenta de streamer ha sido verificada. Ahora lucirás la insignia azul de verificación en tu perfil, publicaciones y en toda la plataforma.`,
+            referenceId: id,
+          },
+        });
+      }
+    }
+  } catch (notifErr) {
+    console.error('[Notifications] Error sending Streamer notification:', notifErr);
   }
 
   return updated;

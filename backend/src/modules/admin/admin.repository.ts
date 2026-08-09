@@ -44,6 +44,17 @@ export const findUsers = (params: {
           isHidden: true,
         },
       },
+      streamerProfile: {
+        select: {
+          id: true,
+          displayName: true,
+          avatarUrl: true,
+          isVerified: true,
+          isApproved: true,
+          isFeatured: true,
+          isHidden: true,
+        },
+      },
       platformSubscription: {
         select: {
           plan: true,
@@ -83,6 +94,7 @@ export const findUserById = (id: string) => {
     where: { id },
     include: {
       vtuberProfile: true,
+      streamerProfile: true,
       _count: {
         select: {
           posts: true,
@@ -102,7 +114,7 @@ export const updateUser = (id: string, data: Prisma.UserUpdateInput) => {
   return prisma.user.update({
     where: { id },
     data,
-    include: { vtuberProfile: true },
+    include: { vtuberProfile: true, streamerProfile: true },
   });
 };
 
@@ -204,6 +216,110 @@ export const findVtuberProfileById = (id: string) => {
 
 export const updateVtuberProfile = (id: string, data: Prisma.VTuberProfileUpdateInput) => {
   return prisma.vTuberProfile.update({
+    where: { id },
+    data,
+    include: { user: { select: { id: true, username: true } } },
+  });
+};
+
+// ========== STREAMER PROFILES ==========
+
+export const findStreamerProfiles = (params: {
+  skip: number;
+  take: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  isVerified?: boolean;
+  isApproved?: boolean;
+  isHidden?: boolean;
+  isFeatured?: boolean;
+}) => {
+  const where: Prisma.StreamerProfileWhereInput = {};
+
+  if (params.search) {
+    where.OR = [
+      { displayName: { contains: params.search } },
+      { user: { username: { contains: params.search } } },
+    ];
+  }
+  if (params.isVerified !== undefined) where.isVerified = params.isVerified;
+  if (params.isApproved !== undefined) where.isApproved = params.isApproved;
+  if (params.isHidden !== undefined) where.isHidden = params.isHidden;
+  if (params.isFeatured !== undefined) where.isFeatured = params.isFeatured;
+
+  const sortField = params.sortBy || 'createdAt';
+  const sortOrder = params.sortOrder || 'desc';
+  const orderBy = { [sortField]: sortOrder } as Prisma.StreamerProfileOrderByWithRelationInput;
+
+  return prisma.streamerProfile.findMany({
+    where,
+    orderBy,
+    skip: params.skip,
+    take: params.take,
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          role: true,
+          status: true,
+          createdAt: true,
+          xp: true,
+          level: true,
+        },
+      },
+    },
+  });
+};
+
+export const countStreamerProfiles = (params: {
+  search?: string;
+  isVerified?: boolean;
+  isApproved?: boolean;
+  isHidden?: boolean;
+  isFeatured?: boolean;
+}) => {
+  const where: Prisma.StreamerProfileWhereInput = {};
+  if (params.search) {
+    where.OR = [
+      { displayName: { contains: params.search } },
+      { user: { username: { contains: params.search } } },
+    ];
+  }
+  if (params.isVerified !== undefined) where.isVerified = params.isVerified;
+  if (params.isApproved !== undefined) where.isApproved = params.isApproved;
+  if (params.isHidden !== undefined) where.isHidden = params.isHidden;
+  if (params.isFeatured !== undefined) where.isFeatured = params.isFeatured;
+  return prisma.streamerProfile.count({ where });
+};
+
+export const findStreamerProfileById = (id: string) => {
+  return prisma.streamerProfile.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          role: true,
+          status: true,
+          createdAt: true,
+          xp: true,
+          level: true,
+          _count: {
+            select: { followers: true, following: true },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const updateStreamerProfile = (id: string, data: Prisma.StreamerProfileUpdateInput) => {
+  return prisma.streamerProfile.update({
     where: { id },
     data,
     include: { user: { select: { id: true, username: true } } },

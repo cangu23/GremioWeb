@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch, notifyMissionsChanged } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -53,7 +53,7 @@ export default function MissionsWidget() {
   const [multiplier, setMultiplier] = useState<number>(1);
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
     try {
       const [stardustRes, missionsRes] = await Promise.all([
@@ -71,7 +71,7 @@ export default function MissionsWidget() {
     } catch (err) {
       console.error('Error loading missions widget data:', err);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     loadData();
@@ -86,7 +86,7 @@ export default function MissionsWidget() {
       window.removeEventListener('stardust:updated', handleUpdate);
       window.removeEventListener('missions:updated', handleUpdate);
     };
-  }, [user]);
+  }, [user, loadData]);
 
   const handleClaim = async (missionId: string) => {
     const targetMission = missions.find(m => m.id === missionId);

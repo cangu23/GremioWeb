@@ -10,10 +10,20 @@ const mockStardustService = vi.hoisted(() => ({
   addStardust: vi.fn(),
 }));
 
+// Client de transacción: refundItem ahora ejecuta el borrado + reembolso dentro
+// de prisma.$transaction (atómico), así que el mock de prisma debe exponer
+// $transaction con un cliente tx simulado.
+const mockTx = vi.hoisted(() => ({
+  userPurchase: { delete: vi.fn() },
+  user: { update: vi.fn() },
+  stardustTransaction: { create: vi.fn() },
+}));
+
 vi.mock('./shop.repository', () => mockShopRepository);
 vi.mock('../ecosystem/stardust.service', () => mockStardustService);
 vi.mock('../../database/prisma', () => ({
   default: {
+    $transaction: vi.fn(async (fn: (tx: any) => any) => fn(mockTx)),
     user: { findUnique: vi.fn() },
     shopItem: { updateMany: vi.fn(), update: vi.fn() },
   },
@@ -67,36 +77,44 @@ describe('ShopService.refundItem', () => {
 
   it('allows refund of a fully unused multi-use consumable', async () => {
     mockShopRepository.findUserPurchase.mockResolvedValue(makePurchase('PIN_POST', 3));
-    mockShopRepository.deletePurchase.mockResolvedValue({});
-    mockStardustService.addStardust.mockResolvedValue({ newBalance: 500 });
+    mockTx.userPurchase.delete.mockResolvedValue({});
+    mockTx.user.update.mockResolvedValue({ stardust: 500 });
 
     const result = await refundItem('user-1', 'item-1');
 
     expect(result.refundedStardust).toBe(100);
-    expect(mockShopRepository.deletePurchase).toHaveBeenCalledWith('purchase-1');
-    expect(mockStardustService.addStardust).toHaveBeenCalledWith('user-1', 100, expect.any(String));
+    // Borrado + crédito + log de transacción dentro de la misma transacción
+    expect(mockTx.userPurchase.delete).toHaveBeenCalledWith({ where: { id: 'purchase-1' } });
+    expect(mockTx.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { stardust: { increment: 100 } },
+    });
+    expect(mockTx.stardustTransaction.create).toHaveBeenCalledWith({
+      data: { userId: 'user-1', amount: 100, reason: expect.any(String) },
+    });
+    expect(result.newBalance).toBe(500);
   });
 
   it('allows refund of a fully unused single-use consumable', async () => {
     mockShopRepository.findUserPurchase.mockResolvedValue(makePurchase('STREAK_SAVER', 1));
-    mockShopRepository.deletePurchase.mockResolvedValue({});
-    mockStardustService.addStardust.mockResolvedValue({ newBalance: 100 });
+    mockTx.userPurchase.delete.mockResolvedValue({});
+    mockTx.user.update.mockResolvedValue({ stardust: 100 });
 
     const result = await refundItem('user-1', 'item-1');
 
     expect(result.refundedStardust).toBe(100);
-    expect(mockShopRepository.deletePurchase).toHaveBeenCalledWith('purchase-1');
+    expect(mockTx.userPurchase.delete).toHaveBeenCalledWith({ where: { id: 'purchase-1' } });
   });
 
   it('allows refund of non-consumable items (e.g. badges)', async () => {
     mockShopRepository.findUserPurchase.mockResolvedValue(makePurchase('BADGE', null));
-    mockShopRepository.deletePurchase.mockResolvedValue({});
-    mockStardustService.addStardust.mockResolvedValue({ newBalance: 100 });
+    mockTx.userPurchase.delete.mockResolvedValue({});
+    mockTx.user.update.mockResolvedValue({ stardust: 100 });
 
     const result = await refundItem('user-1', 'item-1');
 
     expect(result.refundedStardust).toBe(100);
-    expect(mockShopRepository.deletePurchase).toHaveBeenCalledWith('purchase-1');
+    expect(mockTx.userPurchase.delete).toHaveBeenCalledWith({ where: { id: 'purchase-1' } });
   });
 
   it('documents the stacked multi-use case: remaining >= initial uses passes the guard (refund only returns a single item price, so no net farm)', async () => {
@@ -105,12 +123,12 @@ describe('ShopService.refundItem', () => {
     // refund is allowed — but it returns the price of ONE item and deletes all
     // remaining uses, which is economically neutral, not a farm.
     mockShopRepository.findUserPurchase.mockResolvedValue(makePurchase('PIN_POST', 3));
-    mockShopRepository.deletePurchase.mockResolvedValue({});
-    mockStardustService.addStardust.mockResolvedValue({ newBalance: 100 });
+    mockTx.userPurchase.delete.mockResolvedValue({});
+    mockTx.user.update.mockResolvedValue({ stardust: 100 });
 
     const result = await refundItem('user-1', 'item-1');
 
     expect(result.refundedStardust).toBe(100);
-    expect(mockShopRepository.deletePurchase).toHaveBeenCalledWith('purchase-1');
+    expect(mockTx.userPurchase.delete).toHaveBeenCalledWith({ where: { id: 'purchase-1' } });
   });
 });

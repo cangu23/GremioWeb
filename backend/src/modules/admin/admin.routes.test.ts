@@ -42,6 +42,8 @@ vi.mock('./admin.controller', () => ({
   listVtubers: vi.fn(),
   getVtuberDetail: vi.fn(mockJson),
   updateVtuber: vi.fn(),
+  listStreamers: vi.fn(),
+  updateStreamer: vi.fn(),
   listEvents: vi.fn(),
   getEventDetail: vi.fn(mockJson),
   updateEvent: vi.fn(),

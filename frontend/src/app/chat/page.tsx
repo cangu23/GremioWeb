@@ -27,15 +27,59 @@ interface UserInfo {
   displayName?: string | null;
   avatarUrl?: string | null;
   vtuberProfile: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
+  streamerProfile?: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
 }
 
 function isVtuberUser(user: UserInfo | null | undefined): boolean {
-  if (!user || !user.vtuberProfile) return false;
+  if (!user) return false;
+  if (user.vtuberProfile || user.streamerProfile) return true;
   if (user.role) {
     const roles = user.role.split(',').map(r => r.trim().toUpperCase());
-    return roles.includes('VTUBER');
+    return roles.includes('VTUBER') || roles.includes('STREAMER');
   }
-  return true;
+  return false;
+}
+
+function getCreatorLabel(user: UserInfo | null | undefined): string | null {
+  if (!user) return null;
+  if (user.role) {
+    const roles = user.role.split(',').map(r => r.trim().toUpperCase());
+    if (roles.includes('STREAMER')) return 'Streamer';
+    if (roles.includes('VTUBER')) return 'VTuber';
+  }
+  if (user.streamerProfile) return 'Streamer';
+  if (user.vtuberProfile) return 'VTuber';
+  return null;
+}
+
+function getCreatorBadgeStyle(user: UserInfo | null | undefined): { bg: string; color: string } {
+  return getCreatorLabel(user) === 'Streamer'
+    ? { bg: 'rgba(34,211,238,0.15)', color: '#22d3ee' }
+    : { bg: 'rgba(233,30,99,0.15)', color: '#ff4081' };
+}
+
+/** Check de creador verificado para superponer sobre avatares (morado VTuber / cian Streamer) */
+function CreatorCheck({ user, size = 12, corner = 'top-right' }: { user: UserInfo; size?: number; corner?: 'top-right' | 'top-left' }) {
+  const isStreamer = getCreatorLabel(user) === 'Streamer';
+  const color = isStreamer ? '#22D3EE' : '#8B5CF6';
+  const pos = corner === 'top-left'
+    ? { top: '-3px', left: '-3px' }
+    : { top: '-3px', right: '-3px' };
+  return (
+    <span
+      style={{
+        position: 'absolute', ...pos, zIndex: 12,
+        display: 'flex',
+        filter: 'drop-shadow(0 0 3px rgba(0,0,0,0.7))',
+        pointerEvents: 'none',
+      }}
+      aria-label={isStreamer ? 'Streamer verificado' : 'VTuber verificada'}
+    >
+      <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    </span>
+  );
 }
 
 interface DmMessageData {
@@ -115,7 +159,7 @@ function formatTimeFull(dateStr: string): string {
 }
 
 function getUsername(user: UserInfo): string {
-  return user.displayName || user.vtuberProfile?.displayName || user.username;
+  return user.displayName || user.vtuberProfile?.displayName || user.streamerProfile?.displayName || user.username;
 }
 
 function getInitial(user: UserInfo): string {
@@ -187,6 +231,8 @@ function MessengerContent() {
   // Typing
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Throttle del evento dm:typing (máx. 1 emisión cada 400ms en vez de una por tecla)
+  const lastTypingEmitRef = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -463,7 +509,7 @@ function MessengerContent() {
     } finally {
       setGroupSending(false);
     }
-  }, [groupInput, activeGroupId, groupSending, currentUser]);
+  }, [groupInput, activeGroupId, groupSending, currentUser, showToast]);
 
   const searchGroupMembers = useCallback(async (q: string) => {
     setGroupMemberSearch(q);
@@ -576,6 +622,7 @@ function MessengerContent() {
                   displayName: u.displayName,
                   avatarUrl: u.avatarUrl,
                   vtuberProfile: u.vtuberProfile,
+                  streamerProfile: u.streamerProfile,
                 });
               }
             })
@@ -669,7 +716,13 @@ function MessengerContent() {
     setInput(e.target.value);
     if (!socket || !activeUserId) return;
 
-    socket.emit(DM_EVENTS.TYPING, { receiverId: activeUserId, isTyping: true });
+    // Throttle: el servidor limita los eventos de typing; sin esto, escribir
+    // rápido satura el rate limiter y el indicador "escribiendo..." se corta.
+    const now = Date.now();
+    if (now - lastTypingEmitRef.current >= 400) {
+      lastTypingEmitRef.current = now;
+      socket.emit(DM_EVENTS.TYPING, { receiverId: activeUserId, isTyping: true });
+    }
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit(DM_EVENTS.TYPING, { receiverId: activeUserId, isTyping: false });
@@ -855,7 +908,7 @@ function MessengerContent() {
               {[
                 { id: 'all', label: 'Todos' },
                 { id: 'unread', label: 'No leídos' },
-                { id: 'vtubers', label: 'VTubers' },
+                { id: 'vtubers', label: 'Creadores' },
               ].map(cat => (
                 <button
                   key={cat.id}
@@ -933,13 +986,13 @@ function MessengerContent() {
                       >
                         <div style={{
                           width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
-                          background: u.vtuberProfile?.avatarUrl
-                            ? `url(${u.vtuberProfile.avatarUrl}) center/cover`
+                          background: (u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl)
+                            ? `url(${u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl}) center/cover`
                             : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           color: '#fff', fontSize: '0.7rem', fontWeight: 700,
                         }}>
-                          {!u.vtuberProfile?.avatarUrl && getInitial(u)}
+                          {!(u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl) && getInitial(u)}
                         </div>
                         <span style={{ fontWeight: 600 }}>{getUsername(u)}</span>
                         <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -1064,16 +1117,17 @@ function MessengerContent() {
                       <div style={{ position: 'relative', width: '38px', height: '38px', flexShrink: 0 }}>
                         <div style={{
                           width: '100%', height: '100%', borderRadius: '50%',
-                          background: (friend.avatarUrl || friend.vtuberProfile?.avatarUrl)
-                            ? `url(${friend.avatarUrl || friend.vtuberProfile?.avatarUrl}) center/cover`
+                          background: (friend.avatarUrl || friend.vtuberProfile?.avatarUrl || friend.streamerProfile?.avatarUrl)
+                            ? `url(${friend.avatarUrl || friend.vtuberProfile?.avatarUrl || friend.streamerProfile?.avatarUrl}) center/cover`
                             : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           color: '#fff', fontSize: '0.75rem', fontWeight: 700,
                           boxShadow: isSelected ? '0 0 0 2px var(--primary)' : 'none',
                           overflow: 'hidden',
                         }}>
-                          {!(friend.avatarUrl || friend.vtuberProfile?.avatarUrl) && getInitial(friend)}
+                          {!(friend.avatarUrl || friend.vtuberProfile?.avatarUrl || friend.streamerProfile?.avatarUrl) && getInitial(friend)}
                         </div>
+                        {isVtuberUser(friend) && <CreatorCheck user={friend} size={11} corner="top-left" />}
                         {friendUnread > 0 && (
                           <span style={{
                             position: 'absolute', top: '-4px', right: '-4px',
@@ -1175,15 +1229,16 @@ function MessengerContent() {
                       if (!isActive) e.currentTarget.style.background = isPinned ? 'rgba(255,255,255,0.02)' : 'transparent';
                     }}
                   >
-                    {/* Avatar with online dot */}
+                    {/* Avatar with online dot + creator check */}
                     <div style={{ position: 'relative', flexShrink: 0 }}>
                       <UserAvatar
-                        src={other.avatarUrl || other.vtuberProfile?.avatarUrl}
+                        src={other.avatarUrl || other.vtuberProfile?.avatarUrl || other.streamerProfile?.avatarUrl}
                         alt={getUsername(other)}
                         size={40}
                         user={other}
                         userId={other.id}
                       />
+                      {isVtuberUser(other) && <CreatorCheck user={other} size={13} />}
                       <div style={{
                         position: 'absolute', bottom: '-2px', right: '-2px',
                         width: '12px', height: '12px', borderRadius: '50%',
@@ -1206,8 +1261,8 @@ function MessengerContent() {
                             {getUsername(other)}
                           </span>
                           {isVtuberUser(other) && (
-                            <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(233,30,99,0.15)', color: '#ff4081', fontWeight: 700, flexShrink: 0 }}>
-                              VTuber
+                            <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', ...getCreatorBadgeStyle(other), fontWeight: 700, flexShrink: 0 }}>
+                              {getCreatorLabel(other)}
                             </span>
                           )}
                         </div>
@@ -1349,13 +1404,16 @@ function MessengerContent() {
                         }}
                       >
                         {showAvatar && (
-                          <UserAvatar
-                            src={msg.sender.avatarUrl || msg.sender.vtuberProfile?.avatarUrl}
-                            alt={getUsername(msg.sender)}
-                            size={28}
-                            user={msg.sender}
-                            userId={msg.sender.id}
-                          />
+                          <div style={{ position: 'relative', flexShrink: 0 }}>
+                            <UserAvatar
+                              src={msg.sender.avatarUrl || msg.sender.vtuberProfile?.avatarUrl || msg.sender.streamerProfile?.avatarUrl}
+                              alt={getUsername(msg.sender)}
+                              size={28}
+                              user={msg.sender}
+                              userId={msg.sender.id}
+                            />
+                            {isVtuberUser(msg.sender) && <CreatorCheck user={msg.sender} size={11} />}
+                          </div>
                         )}
                         {!showAvatar && !isMine && <div style={{ width: '28px', flexShrink: 0 }} />}
                         <div style={{
@@ -1421,13 +1479,13 @@ function MessengerContent() {
                     <div style={{
                       position: 'relative',
                       width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-                      background: activeUserInfo.vtuberProfile?.avatarUrl
-                        ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
+                      background: (activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl)
+                        ? `url(${activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl}) center/cover`
                         : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: '#fff', fontSize: '0.85rem', fontWeight: 700,
                     }}>
-                      {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
+                      {!(activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl) && getInitial(activeUserInfo)}
                       <div style={{
                         position: 'absolute', bottom: '0', right: '0',
                         width: '11px', height: '11px', borderRadius: '50%',
@@ -1440,8 +1498,8 @@ function MessengerContent() {
                       <div style={{ fontWeight: 800, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {getUsername(activeUserInfo)}
                         {isVtuberUser(activeUserInfo) && (
-                          <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', background: 'rgba(233,30,99,0.15)', color: '#ff4081', fontWeight: 700 }}>
-                            VTuber
+                          <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', ...getCreatorBadgeStyle(activeUserInfo), fontWeight: 700 }}>
+                            {getCreatorLabel(activeUserInfo)}
                           </span>
                         )}
                       </div>
@@ -1484,14 +1542,14 @@ function MessengerContent() {
                   }}>
                     <div style={{
                       width: '72px', height: '72px', borderRadius: '50%',
-                      background: activeUserInfo.vtuberProfile?.avatarUrl
-                        ? `url(${activeUserInfo.vtuberProfile.avatarUrl}) center/cover`
+                      background: (activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl)
+                        ? `url(${activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl}) center/cover`
                         : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: '#fff', fontSize: '1.6rem', fontWeight: 700,
                       boxShadow: '0 0 24px rgba(138,43,226,0.3)',
                     }}>
-                      {!activeUserInfo.vtuberProfile?.avatarUrl && getInitial(activeUserInfo)}
+                      {!(activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl) && getInitial(activeUserInfo)}
                     </div>
                     <div>
                       <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>{getUsername(activeUserInfo)}</h4>
@@ -1545,13 +1603,16 @@ function MessengerContent() {
                         }}
                       >
                         {showAvatar && (
-                          <UserAvatar
-                            src={activeUserInfo.avatarUrl || activeUserInfo.vtuberProfile?.avatarUrl}
-                            alt={getUsername(activeUserInfo)}
-                            size={28}
-                            user={activeUserInfo}
-                            userId={activeUserInfo.id}
-                          />
+                          <div style={{ position: 'relative', flexShrink: 0 }}>
+                            <UserAvatar
+                              src={activeUserInfo.avatarUrl || activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl}
+                              alt={getUsername(activeUserInfo)}
+                              size={28}
+                              user={activeUserInfo}
+                              userId={activeUserInfo.id}
+                            />
+                            {isVtuberUser(activeUserInfo) && <CreatorCheck user={activeUserInfo} size={11} />}
+                          </div>
                         )}
                         {!showAvatar && !isMine && <div style={{ width: '28px', flexShrink: 0 }} />}
                         
@@ -1962,10 +2023,10 @@ function MessengerContent() {
                     >
                       <div style={{
                         width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                        background: u.vtuberProfile?.avatarUrl ? `url(${u.vtuberProfile.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        background: (u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl) ? `url(${u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.65rem', fontWeight: 700,
                       }}>
-                        {!u.vtuberProfile?.avatarUrl && getInitial(u)}
+                        {!(u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl) && getInitial(u)}
                       </div>
                       <span style={{ fontWeight: 600 }}>{getUsername(u)}</span>
                       <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--primary)' }}>Agregar +</span>

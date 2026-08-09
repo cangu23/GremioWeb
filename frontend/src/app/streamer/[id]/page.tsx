@@ -1,0 +1,1690 @@
+'use client';
+
+export const dynamic = 'force-dynamic';
+
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/lib/AuthContext';
+import ClientOnly from '@/lib/ClientOnly';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useToast } from '@/lib/ToastContext';
+import { hasAnyRole } from '@gremio-estelar/shared';
+import FriendButton from '@/components/social/FriendButton';
+import KofiWidget from '@/components/ui/KofiWidget';
+import ProfileMusicPlayer from '@/components/ui/ProfileMusicPlayer';
+import { Star, Users, Heart, MessageCircle, Image as IconImage, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, Sparkles, Telescope, Info, ZoomIn, Gamepad, Palette, Mic, Headphones, MessageSquare } from '@/components/ui/Icons';
+
+// ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
+const PROFILE_MUSIC_ENABLED = false;
+
+/* ─────────── Types ─────────── */
+
+interface SocialUser {
+  id: string;
+  username: string;
+  streamerProfile?: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
+}
+
+interface Post {
+  id: string;
+  content: string;
+  mediaUrl: string | null;
+  createdAt: string;
+  _count: { comments: number; likes: number };
+  hashtags: string[];
+}
+
+interface StreamerProfileData {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bannerUrl: string | null;
+  description: string | null;
+  lore: string | null;
+  fanName: string | null;
+  oshiMark: string | null;
+  contentType: string | null;
+  streamSchedule: string | null;
+  languages: string | null;
+  themeColor: string | null;
+  isLive: boolean;
+  lastLiveAt: string | null;
+  isVerified: boolean;
+  isApproved: boolean;
+  isFeatured: boolean;
+  twitchUrl: string | null;
+  youtubeUrl: string | null;
+  kickUrl: string | null;
+  tiktokUrl: string | null;
+  twitterUrl: string | null;
+  discordUrl: string | null;
+  websiteUrl: string | null;
+}
+
+interface ProfileData {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  status: string;
+  provider: string;
+  createdAt: string;
+  xp: number;
+  level: number;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  profileMusic?: string | null;
+  streamerProfile: StreamerProfileData | null;
+  _count: { followers: number; following: number };
+  isFollowedByMe: boolean;
+}
+
+/* ─────────── Helpers ─────────── */
+
+function formatTimeAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffMins < 1) return 'ahora';
+  if (diffMins < 60) return `${diffMins}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  if (diffDays < 7) return `${diffDays}d`;
+  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+}
+
+function parseLanguages(raw: string | null): string[] {
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return raw.split(',').map(s => s.trim()).filter(Boolean); }
+}
+
+function extractTwitchChannel(url: string | null): string | null {
+  if (!url || !url.trim()) return null;
+  const clean = url.trim().replace(/^@/, '');
+  const match = clean.match(/(?:twitch\.tv\/)?([a-zA-Z0-9_]{2,25})/i);
+  return match ? match[1].toLowerCase() : null;
+}
+
+function ContentTypeIcon({ type, size = 16 }: { type: string | null; size?: number }) {
+  const props = { size, color: 'var(--primary)', strokeWidth: 2 };
+  if (!type) return <Sparkles {...props} />;
+  switch (type.toLowerCase()) {
+    case 'gaming': return <Gamepad {...props} />;
+    case 'music': return <Music {...props} />;
+    case 'art': return <Palette {...props} />;
+    case 'singing': return <Mic {...props} />;
+    case 'asmr': return <Headphones {...props} />;
+    case 'chatting':
+    case 'just-chatting':
+    case 'streamer':
+    default: return <MessageSquare {...props} />;
+  }
+}
+
+function StreamRewardTimer({ streamerName }: { streamerName: string }) {
+  const { showToast } = useToast();
+  const [secondsLeft, setSecondsLeft] = useState(300);
+  const [claimedCount, setClaimedCount] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          apiFetch('/gamification/stream-xp', {
+            method: 'POST',
+            body: JSON.stringify({ minutes: 5 }),
+          })
+            .then((res: any) => {
+              if (res?.xpAwarded) {
+                showToast(`🍿 ¡+${res.xpAwarded} XP / Stardust ganados por ver a ${streamerName}!`, 'success');
+                setClaimedCount(c => c + 1);
+              }
+            })
+            .catch(() => {});
+          return 300;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [streamerName, showToast]);
+
+  const mins = Math.floor(secondsLeft / 60);
+  const secs = secondsLeft % 60;
+  const formattedTime = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+  return (
+    <div style={{
+      marginLeft: 'auto',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '4px 10px',
+      borderRadius: '12px',
+      background: 'rgba(245,158,11,0.15)',
+      border: '1px solid rgba(245,158,11,0.3)',
+      color: '#f59e0b',
+      fontSize: '0.78rem',
+      fontWeight: 700,
+    }}>
+      <span>🍿 Ganando Stardust en {formattedTime}</span>
+      {claimedCount > 0 && <span style={{ color: '#00e676' }}>({claimedCount}x ⭐)</span>}
+    </div>
+  );
+}
+
+/* ─────────── Section Title ─────────── */
+
+function SectionTitle({ icon, children, count }: { icon: React.ReactNode; children: React.ReactNode; count?: string | number }) {
+  return (
+    <h3 style={{
+      fontSize: '0.85rem', fontWeight: 700, marginBottom: '14px',
+      textTransform: 'uppercase', letterSpacing: '0.05em',
+      color: 'var(--text-muted)',
+      display: 'flex', alignItems: 'center', gap: '8px',
+    }}>
+      <span style={{ display: 'flex', alignItems: 'center' }}>{icon}</span>
+      {children}
+      {count !== undefined && (
+        <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-muted)', opacity: 0.7 }}>
+          ({count})
+        </span>
+      )}
+    </h3>
+  );
+}
+
+function StreamerWeeklyScheduleGrid({ streamer, isLive }: { streamer: StreamerProfileData | null; isLive: boolean }) {
+  const days = [
+    { code: 'MON', label: 'Lun', topic: 'Gaming 🎮' },
+    { code: 'TUE', label: 'Mar', topic: 'Collab 💜' },
+    { code: 'WED', label: 'Mié', topic: 'Chatting 💬' },
+    { code: 'THU', label: 'Jue', topic: 'Edición 🎬' },
+    { code: 'FRI', label: 'Vie', topic: 'Karaoke 🎤' },
+    { code: 'SAT', label: 'Sáb', topic: 'Special ✨' },
+    { code: 'SUN', label: 'Dom', topic: 'Descanso 💤' },
+  ];
+
+  const streamUrl = streamer?.twitchUrl || streamer?.youtubeUrl || '#';
+
+  return (
+    <div className="glass" style={{ padding: '20px 24px', borderRadius: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+          <Calendar size={16} color="var(--primary)" /> Horario Semanal de Stream
+        </h3>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Zona Horaria Local</span>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))',
+        gap: '8px',
+      }}>
+        {days.map((day, idx) => {
+          const todayIdx = new Date().getDay();
+          const isToday = todayIdx === (idx === 6 ? 0 : idx + 1);
+          return (
+            <div
+              key={day.code}
+              style={{
+                padding: '12px 8px',
+                borderRadius: '12px',
+                background: isToday ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.03)',
+                border: isToday ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.06)',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+              }}
+            >
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isToday ? 'var(--primary)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
+                {day.label}
+              </div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#fff', minHeight: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {day.topic}
+              </div>
+              {streamUrl !== '#' ? (
+                <a
+                  href={streamUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '4px 6px',
+                    borderRadius: '6px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    background: isToday && isLive ? '#e91e63' : 'rgba(255,255,255,0.08)',
+                    color: '#fff',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {isToday && isLive ? '🔴 En Vivo' : 'Ver Stream'}
+                </a>
+              ) : (
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Día Libre</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────── Main Content ─────────── */
+
+function StreamerPublicProfile() {
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? '';
+  const { user: currentUser } = useAuth();
+  const router = useRouter();
+  const { showToast } = useToast();
+
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [error, setError] = useState('');
+  const [followLoading, setFollowLoading] = useState(false);
+  const [isFollowed, setIsFollowed] = useState(false);
+  const [showLore, setShowLore] = useState(false);
+
+  // Modals
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+  const [showDonate, setShowDonate] = useState(false);
+  const [donateAmount, setDonateAmount] = useState(5);
+  const [donateMessage, setDonateMessage] = useState('');
+  const [donateLoading, setDonateLoading] = useState(false);
+  const [donateSuccess, setDonateSuccess] = useState('');
+  const [followers, setFollowers] = useState<SocialUser[]>([]);
+  const [following, setFollowing] = useState<SocialUser[]>([]);
+  const [galleryImage, setGalleryImage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Posts
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [mediaPosts, setMediaPosts] = useState<Post[]>([]);
+  const [mediaPostsLoading, setMediaPostsLoading] = useState(true);
+
+  // Guard para descartar respuestas obsoletas al cambiar de streamer: el
+  // efecto incrementa una "generación" y cada fetch captura la vigente antes
+  // de su await, así ninguna respuesta de un streamer anterior sobreescribe
+  // el estado del actual (evita carreras en la navegación /streamer/A → B).
+  const profileSeqRef = useRef(0);
+
+  const fetchProfile = useCallback(async () => {
+    const seq = profileSeqRef.current;
+    try {
+      const data = await apiFetch(`/social/profile/${id}`);
+      if (seq !== profileSeqRef.current) return;
+      setProfile(data);
+      setIsFollowed(data.isFollowedByMe);
+    } catch (err: unknown) {
+      if (seq !== profileSeqRef.current) return;
+      setError(err instanceof Error ? err.message : 'Error al cargar perfil');
+    }
+  }, [id]);
+
+  const fetchPosts = useCallback(async () => {
+    const seq = profileSeqRef.current;
+    try {
+      const data = await apiFetch(`/posts/user/${id}?limit=5`, {});
+      if (seq !== profileSeqRef.current) return;
+      setPosts(data);
+    } catch { /* silent */ }
+    finally { if (seq === profileSeqRef.current) setPostsLoading(false); }
+  }, [id]);
+
+  const fetchMediaPosts = useCallback(async () => {
+    const seq = profileSeqRef.current;
+    try {
+      const data = await apiFetch(`/posts/user/${id}?limit=50`, {});
+      if (seq !== profileSeqRef.current) return;
+      setMediaPosts(data.filter((p: Post) => p.mediaUrl));
+    } catch { /* silent */ }
+    finally { if (seq === profileSeqRef.current) setMediaPostsLoading(false); }
+  }, [id]);
+
+  useEffect(() => {
+    profileSeqRef.current += 1;
+    fetchProfile(); fetchPosts(); fetchMediaPosts();
+  }, [fetchProfile, fetchPosts, fetchMediaPosts]);
+
+  const handleFollow = async () => {
+    if (!currentUser) { router.push('/login'); return; }
+    setFollowLoading(true);
+    try {
+      if (isFollowed) {
+        await apiFetch(`/social/unfollow/${id}`, { method: 'POST' });
+        setIsFollowed(false);
+        setProfile(prev => prev ? { ...prev, _count: { ...prev._count, followers: prev._count.followers - 1 } } : prev);
+      } else {
+        await apiFetch(`/social/follow/${id}`, { method: 'POST' });
+        setIsFollowed(true);
+        setProfile(prev => prev ? { ...prev, _count: { ...prev._count, followers: prev._count.followers + 1 } } : prev);
+      }
+    } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error al seguir', 'error'); }
+    finally { setFollowLoading(false); }
+  };
+
+  const handleDonate = async () => {
+    if (!currentUser) { router.push('/login'); return; }
+    setDonateLoading(true);
+    try {
+      showToast('Abriendo pasarela segura de PayPal...', 'info');
+      const res = await apiFetch('/payments/paypal/create-order', {
+        method: 'POST',
+        body: JSON.stringify({
+          recipientId: String(id),
+          amount: donateAmount,
+          message: donateMessage || undefined,
+          type: 'DONATION',
+        }),
+      });
+
+      if (res?.approveUrl) {
+        window.location.href = res.approveUrl;
+      } else {
+        showToast('No se pudo abrir el checkout de PayPal.', 'error');
+      }
+    } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error al donar con PayPal', 'error'); }
+    finally { setDonateLoading(false); }
+  };
+
+  const loadFollowers = async () => {
+    setShowFollowers(true);
+    try { const data = await apiFetch(`/social/followers/${id}`); setFollowers(data); } catch { /* silent */ }
+  };
+
+  const loadFollowing = async () => {
+    setShowFollowing(true);
+    try { const data = await apiFetch(`/social/following/${id}`); setFollowing(data); } catch { /* silent */ }
+  };
+
+  /* ─── Derived data ─── */
+
+  if (error) {
+    return (
+      <div className="container" style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '16px' }}><Telescope size={48} color="var(--text-muted)" strokeWidth={1.5} /></div>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>Perfil no encontrado</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>{error}</p>
+        <Link href="/streamers" className="btn" style={{ padding: '12px 28px' }}>            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Volver al Directorio
+        </Link>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="container" style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <div style={{
+          width: 40, height: 40,
+          border: '3px solid rgba(255,255,255,0.08)',
+          borderTopColor: 'var(--primary)',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+          margin: '0 auto 16px',
+        }} />
+        <p style={{ color: 'var(--text-muted)' }}>Cargando perfil Streamer...</p>
+      </div>
+    );
+  }
+
+  const isOwnProfile = currentUser?.id === profile.id;
+  const streamer = profile.streamerProfile;
+  const avatarUrl = streamer?.avatarUrl || profile.avatarUrl;
+  const bannerUrl = streamer?.bannerUrl;
+  const displayName = streamer?.displayName || profile.username;
+  const themeColor = streamer?.themeColor || 'var(--primary)';
+  const languagesList = parseLanguages(streamer?.languages || null);
+
+  const isLive = streamer?.isLive || false;
+
+  const socialLinks = [
+    { url: streamer?.twitchUrl, label: 'Twitch', icon: <Twitch size={18} color="#9146FF" strokeWidth={2} />, color: '#9146FF', bg: 'rgba(145,65,255,0.15)' },
+    { url: streamer?.youtubeUrl, label: 'YouTube', icon: <Youtube size={18} color="#FF0000" strokeWidth={2} />, color: '#FF0000', bg: 'rgba(255,0,0,0.12)' },
+    { url: streamer?.kickUrl, label: 'Kick', icon: <Sparkles size={18} color="#53fc18" strokeWidth={2.5} />, color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
+    { url: streamer?.tiktokUrl, label: 'TikTok', icon: <Music size={18} color="#00f2ea" strokeWidth={2} />, color: '#00f2ea', bg: 'rgba(0,242,234,0.12)' },
+    { url: streamer?.twitterUrl, label: 'Twitter/X', icon: <Twitter size={18} color="#1DA1F2" strokeWidth={2} />, color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)' },
+    { url: streamer?.discordUrl, label: 'Discord', icon: <Discord size={18} color="#5865F2" strokeWidth={2} />, color: '#5865F2', bg: 'rgba(88,101,242,0.12)' },
+    { url: streamer?.websiteUrl, label: 'Sitio Web', icon: <Globe size={18} color="var(--primary)" strokeWidth={2} />, color: 'var(--primary)', bg: 'rgba(138,43,226,0.1)' },
+  ].filter(s => s.url);
+
+  return (
+    <>        {/* Back navigation */}
+        <div className="container" style={{ padding: '12px 20px', marginBottom: 0 }}>
+          <Link href="/streamers" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)',
+            textDecoration: 'none', padding: '6px 14px',
+            borderRadius: '10px',
+            transition: 'all 0.2s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Directorio de Streamers
+          </Link>
+        </div>
+
+        {/* Non-Streamer profile notice */}
+        {!streamer && (
+          <div className="container" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
+            <div style={{
+              padding: '16px 20px', borderRadius: '12px', marginBottom: '24px',
+              background: 'rgba(255,152,0,0.08)',
+              border: '1px solid rgba(255,152,0,0.2)',
+              display: 'flex', alignItems: 'center', gap: '12px',
+              flexWrap: 'wrap',
+            }}>
+              <span style={{ display: 'flex' }}><Info size={22} color="#ff9800" /></span>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Este usuario no tiene perfil Streamer</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginLeft: '8px' }}>
+                  Puedes ver su perfil general aquí abajo.
+                </span>
+              </div>
+              <Link href={`/profile/${profile.id}`} className="btn" style={{
+                padding: '8px 18px', fontSize: '0.85rem', fontWeight: 600,
+                borderRadius: '10px',
+                background: 'rgba(255,152,0,0.15)', color: '#ff9800',
+                border: '1px solid rgba(255,152,0,0.3)',
+              }}>
+                Ver perfil general
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════ HERO BANNER ═══════════════════ */}
+      <div style={{ position: 'relative' }}>
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          height: 'clamp(220px, 32vw, 400px)',
+          background: bannerUrl
+            ? `url(${bannerUrl}) center/cover`
+            : 'linear-gradient(135deg, #1a1040, #302b63, #1a1040)',
+          overflow: 'hidden',
+        }}>
+          {/* Decorative rings */}
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: 'min(80vw, 500px)', height: 'min(80vw, 500px)',
+            borderRadius: '50%',
+            border: '1px solid rgba(138,43,226,0.08)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
+          <div style={{
+            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            width: 'min(60vw, 380px)', height: 'min(60vw, 380px)',
+            borderRadius: '50%',
+            border: '1px solid rgba(138,43,226,0.06)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
+
+          {/* Gradient overlay */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.3) 70%, var(--background) 100%)',
+            zIndex: 1,
+          }} />
+
+          {/* Animated glow */}
+          <div style={{
+            position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
+            width: '300px', height: '300px', borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(138,43,226,0.12), transparent 70%)',
+            pointerEvents: 'none', zIndex: 0,
+          }} />
+
+          {/* Badges top-right */}
+          <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 2, display: 'flex', gap: '8px' }}>
+            {streamer?.isVerified && (
+              <div style={{
+                padding: '6px 14px', borderRadius: '20px',
+                background: 'rgba(0,212,255,0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0,212,255,0.3)',
+                fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent)',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}>
+                ✓ Verificado
+              </div>
+            )}
+            {hasAnyRole(profile.role, ['MAID']) && (
+              <div style={{
+                padding: '6px 14px', borderRadius: '20px',
+                background: 'rgba(212,160,48,0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(212,160,48,0.3)',
+                fontSize: '0.8rem', fontWeight: 700, color: '#d4a030',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+                </svg>
+                Maid Oficial
+              </div>
+            )}
+            {isLive && (
+              <div style={{
+                padding: '6px 14px', borderRadius: '20px',
+                background: 'rgba(233,30,99,0.2)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(233,30,99,0.4)',
+                fontSize: '0.8rem', fontWeight: 700, color: '#e91e63',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#e91e63', animation: 'streamer-pulse-dot 1.5s ease infinite' }} />
+                EN VIVO
+              </div>
+            )}
+            {streamer?.isFeatured && !isLive && (
+              <div style={{
+                padding: '6px 14px', borderRadius: '20px',
+                background: 'rgba(255,215,0,0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,215,0,0.3)',
+                fontSize: '0.8rem', fontWeight: 600, color: '#ffd700',
+                display: 'flex', alignItems: 'center', gap: '4px',
+              }}>
+                <Star size={12} color="#ffd700" fill="#ffd700" strokeWidth={2.5} /> Destacado
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Avatar — fuera del overflow:hidden */}
+        <div style={{
+          position: 'absolute', bottom: '-60px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 3, textAlign: 'center',
+        }}>
+          <div style={{
+            width: 'clamp(110px, 16vw, 150px)',
+            height: 'clamp(110px, 16vw, 150px)',
+            borderRadius: '50%',
+            background: avatarUrl ? 'transparent' : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+            border: '4px solid var(--background)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4), 0 0 40px rgba(138,43,226,0.15)',
+            margin: '0 auto 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 'clamp(2.2rem, 4vw, 3.5rem)', color: 'white', fontWeight: 'bold',
+            overflow: 'hidden', position: 'relative',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 12px 60px rgba(138,43,226,0.3), 0 0 60px rgba(138,43,226,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,0,0,0.4), 0 0 40px rgba(138,43,226,0.15)';
+            }}
+          >
+            {avatarUrl ? (
+              <Image src={avatarUrl} alt={displayName} width={0} height={0} sizes="100vw" unoptimized
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              displayName.charAt(0).toUpperCase()
+            )}
+
+            {/* Live ring pulse */}
+            {isLive && (
+              <div style={{
+                position: 'absolute', inset: -4, borderRadius: '50%',
+                border: '3px solid rgba(233,30,99,0.5)',
+                animation: 'streamer-live-ring 2s ease-in-out infinite',
+                pointerEvents: 'none',
+              }} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════ PROFILE HEADER ═══════════════════ */}
+      <div className="container" style={{ paddingTop: '80px', paddingBottom: '40px' }}>
+        {/* Name + badges */}
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: '10px', flexWrap: 'wrap', marginBottom: '4px',
+          }}>
+            <h1 style={{
+              fontSize: 'clamp(2rem, 4vw, 3rem)',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              display: 'flex', alignItems: 'center', gap: '10px',
+            }}>
+              {displayName}
+              {streamer?.isApproved && (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff007f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Streamer Oficial">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              )}
+              {streamer?.isVerified && (
+                <svg width="26" height="26" viewBox="0 0 24 24" aria-label="Verificado">
+                  <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
+                  <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              {hasAnyRole(profile.role, ['MAID']) && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
+                  fontSize: '0.85rem', fontWeight: 700, color: '#d4a030',
+                  padding: '4px 12px', borderRadius: '20px',
+                  background: 'rgba(212,160,48,0.1)',
+                  border: '1px solid rgba(212,160,48,0.3)',
+                  flexShrink: 0,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4a030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+                  </svg>
+                  Maid Oficial
+                </span>
+              )}
+            </h1>
+          </div>
+
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginBottom: '6px' }}>
+            @{profile.username}
+          </p>
+
+          {/* Oshi mark + fan name */}
+          {(streamer?.oshiMark || streamer?.fanName) && (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '10px' }}>
+              {streamer?.oshiMark && <span style={{ marginRight: '8px', fontSize: '1.2rem' }}>{streamer.oshiMark}</span>}
+              {streamer?.fanName && <span>Fans: <strong style={{ color: 'var(--primary)' }}>{streamer.fanName}</strong></span>}
+            </p>
+          )}
+
+          {/* Content type badge */}
+          {streamer?.contentType && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              padding: '6px 18px', borderRadius: '20px',
+              background: 'rgba(138,43,226,0.1)',
+              border: '1px solid rgba(138,43,226,0.25)',
+              fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600,
+            }}>
+              <ContentTypeIcon type={streamer.contentType} size={16} /> {streamer.contentType.charAt(0).toUpperCase() + streamer.contentType.slice(1)}
+            </span>
+          )}
+        </div>
+
+        {/* ═══════ STATS ROW (CLEAN & FRAMELESS) ═══════ */}
+        <div style={{
+          maxWidth: '800px', margin: '0 auto 32px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '0',
+          padding: '12px 0',
+        }}>
+          <button onClick={loadFollowers} style={{
+            background: 'none', border: 'none', borderRight: '1px solid rgba(255,255,255,0.08)',
+            color: 'var(--text)', cursor: 'pointer',
+            textAlign: 'center', padding: '12px 16px', borderRadius: '12px',
+            transition: 'all 0.2s ease',
+          }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              {profile._count.followers}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Seguidores</div>
+          </button>
+          <button onClick={loadFollowing} style={{
+            background: 'none', border: 'none', borderRight: '1px solid rgba(255,255,255,0.08)',
+            color: 'var(--text)', cursor: 'pointer',
+            textAlign: 'center', padding: '12px 16px', borderRadius: '12px',
+            transition: 'all 0.2s ease',
+          }}
+            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              {profile._count.following}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Siguiendo</div>
+          </button>
+          <div style={{ textAlign: 'center', padding: '12px 16px', borderRight: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              {profile.level || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>Nivel</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '12px 16px', borderRadius: '12px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, background: 'linear-gradient(135deg, var(--primary), var(--secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              {profile.xp || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.02em' }}>XP</div>
+          </div>
+        </div>
+
+        {/* ═══════ ACTION BUTTONS ═══════ */}
+        {donateSuccess && (
+          <div style={{
+            maxWidth: '600px', margin: '0 auto 20px',
+            padding: '14px 20px', borderRadius: '12px',
+            background: 'rgba(0,230,118,0.1)', border: '1px solid rgba(0,230,118,0.2)',
+            color: 'var(--success)', fontSize: '0.95rem', fontWeight: 600,
+            textAlign: 'center',
+          }}>
+            {donateSuccess}
+          </div>
+        )}
+
+        <div style={{
+          display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap',
+          marginBottom: '40px',
+        }}>
+          {!isOwnProfile ? (
+            <>
+              <button
+                onClick={handleFollow}
+                disabled={followLoading}
+                className="btn"
+                style={{
+                  padding: '14px 36px', fontSize: '1rem', fontWeight: 700,
+                  borderRadius: '14px',
+                  background: isFollowed
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                  border: isFollowed ? '1px solid var(--glass-border)' : 'none',
+                  color: isFollowed ? 'var(--text-muted)' : '#fff',
+                  minWidth: '160px',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (isFollowed) {
+                    e.currentTarget.style.background = 'rgba(245,158,11,0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(245,158,11,0.3)';
+                    e.currentTarget.textContent = 'Dejar de seguir';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (isFollowed) {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.borderColor = 'var(--glass-border)';
+                    e.currentTarget.textContent = 'Siguiendo';
+                  }
+                }}
+              >
+                {followLoading ? '...' : isFollowed ? 'Siguiendo' : (<><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Seguir</>)}
+              </button>
+
+              <FriendButton targetUserId={profile.id} size="md" />
+              {/* Watch Stream button — only if live */}
+              {isLive && (
+                <a
+                  href={streamer?.twitchUrl || streamer?.youtubeUrl || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn"
+                  style={{
+                    padding: '14px 28px', fontSize: '1rem', fontWeight: 700,
+                    borderRadius: '14px',
+                    background: 'linear-gradient(135deg, #e91e63, #ff6b9d)',
+                    color: '#fff', border: 'none',
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    animation: 'streamer-live-glow 2s ease-in-out infinite',
+                  }}
+                >
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', animation: 'streamer-pulse-dot 1.5s ease infinite' }} />
+                  Ver Stream
+                </a>
+              )}
+
+              <button
+                onClick={() => setShowDonate(true)}
+                className="btn"
+                style={{
+                  padding: '14px 28px', fontSize: '1rem', fontWeight: 700,
+                  borderRadius: '14px',
+                  background: 'transparent',
+                  border: '2px solid rgba(255,215,0,0.4)',
+                  color: '#ffd700',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,215,0,0.1)';
+                  e.currentTarget.style.borderColor = '#ffd700';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(255,215,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderColor = 'rgba(255,215,0,0.4)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >                      <Heart size={18} /> Donar
+              </button>
+
+              <Link
+                href={`/chat?user=${profile.id}`}
+                className="btn"
+                style={{
+                  padding: '14px 28px', fontSize: '1rem', fontWeight: 700,
+                  borderRadius: '14px',
+                  background: 'transparent',
+                  border: '2px solid rgba(0,212,255,0.3)',
+                  color: 'var(--accent)',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0,212,255,0.1)';
+                  e.currentTarget.style.borderColor = 'var(--accent)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.borderColor = 'rgba(0,212,255,0.3)';
+                }}
+              >
+                <MessageCircle size={18} /> Mensaje
+              </Link>
+            </>
+          ) : (
+            <Link
+              href="/streamer-profile"
+              className="btn"
+              style={{
+                padding: '14px 36px', fontSize: '1rem', fontWeight: 700,
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg> Editar Perfil Streamer
+            </Link>
+          )}
+        </div>
+
+        {/* ═══════════════════ TWITCH EMBED (solo si está en vivo) ═══════════════════ */}
+        {isLive && streamer?.twitchUrl && (() => {
+          const channel = extractTwitchChannel(streamer.twitchUrl);
+          if (!channel) return null;
+          const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+          const parentParams = `parent=${encodeURIComponent(host)}&parent=localhost&parent=127.0.0.1`;
+          return (
+            <div style={{ marginBottom: '32px' }}>
+              <div className="glass" style={{
+                borderRadius: '16px', overflow: 'hidden',
+                border: '1px solid rgba(233,30,99,0.2)',
+                boxShadow: '0 0 40px rgba(233,30,99,0.08)',
+              }}>
+                {/* Live header bar */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '12px 18px',
+                  background: 'linear-gradient(135deg, rgba(233,30,99,0.08), rgba(145,65,255,0.05))',
+                  borderBottom: '1px solid rgba(233,30,99,0.15)',
+                }}>
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: '#e91e63',
+                    animation: 'streamer-pulse-dot 1.5s ease infinite',
+                  }} />
+                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#e91e63' }}>
+                    EN VIVO AHORA
+                  </span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                    — {displayName} está transmitiendo
+                  </span>
+                  <StreamRewardTimer streamerName={displayName} />
+                  <a
+                    href={streamer.twitchUrl.startsWith('http') ? streamer.twitchUrl : `https://twitch.tv/${channel}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      marginLeft: 'auto',
+                      padding: '6px 16px', borderRadius: '8px',
+                      background: '#9146FF', color: '#fff',
+                      fontSize: '0.8rem', fontWeight: 600,
+                      textDecoration: 'none',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#7c3aed'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#9146FF'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Twitch size={14} color="#fff" strokeWidth={2.5} />
+                      Ver en Twitch
+                    </span>
+                  </a>
+                </div>
+                {/* Embed iframe */}
+                <div style={{
+                  position: 'relative',
+                  width: '100%',
+                  paddingTop: '56.25%', /* 16:9 aspect ratio */
+                  background: '#0a0a0a',
+                }}>
+                  <iframe
+                    src={`https://player.twitch.tv/?channel=${channel}&${parentParams}&muted=true`}
+                    style={{
+                      position: 'absolute',
+                      top: 0, left: 0,
+                      width: '100%', height: '100%',
+                      border: 'none',
+                    }}
+                    allowFullScreen
+                    title={`${displayName} en vivo`}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ═══════════════════ CONTENT GRID ═══════════════════ */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(300px, 380px) 1fr',
+          gap: '24px',
+          alignItems: 'start',
+        }}>
+          {/* ═══ LEFT COLUMN ═══ */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Description */}
+            {streamer?.description && (
+              <div className="glass" style={{
+                padding: '24px', borderRadius: '16px',
+                borderLeft: `3px solid ${themeColor}`,
+              }}>
+                <SectionTitle icon={<BookOpen size={16} />}>Descripción</SectionTitle>
+                <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: 'var(--text)', whiteSpace: 'pre-wrap' }}>
+                  {streamer.description}
+                </p>
+              </div>
+            )}
+
+            {/* Lore */}
+            {streamer?.lore && (
+              <div className="glass" style={{
+                padding: '24px', borderRadius: '16px',
+                borderLeft: `3px solid ${themeColor}`,
+              }}>
+                <button
+                  onClick={() => setShowLore(!showLore)}
+                  style={{
+                    background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer',
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    fontSize: '1rem', fontWeight: 700, padding: 0,
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                    <BookOpen size={16} /> Lore / Historia
+                  </span>
+                  <span style={{
+                    fontSize: '0.85rem', color: themeColor, fontWeight: 600,
+                    transition: 'transform 0.3s',
+                    transform: showLore ? 'rotate(180deg)' : 'rotate(0deg)',
+                  }}>
+                    ▼
+                  </span>
+                </button>
+                {showLore && (
+                  <div style={{
+                    marginTop: '16px', paddingTop: '16px',
+                    borderTop: '1px solid var(--glass-border)',
+                    animation: 'fadeIn 0.3s ease',
+                  }}>
+                    <p style={{
+                      fontSize: '0.95rem', lineHeight: 1.8, color: 'var(--text)',
+                      whiteSpace: 'pre-wrap', fontStyle: 'italic',
+                    }}>
+                      {streamer.lore}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Social Links */}
+            {socialLinks.length > 0 && (
+              <div className="glass" style={{ padding: '24px', borderRadius: '16px', borderTop: `3px solid ${themeColor}` }}>
+                <SectionTitle icon={<Link2 size={16} />}>Redes Sociales</SectionTitle>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {socialLinks.map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.url!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        padding: '12px 16px', borderRadius: '12px',
+                        background: link.bg, color: link.color,
+                        textDecoration: 'none', fontWeight: 600, fontSize: '0.9rem',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateX(4px)';
+                        e.currentTarget.style.filter = 'brightness(1.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateX(0)';
+                        e.currentTarget.style.filter = 'brightness(1)';
+                      }}
+                    >
+                      <span style={{ fontSize: '1.1rem' }}>{link.icon}</span>
+                      <span>{link.label}</span>
+                      <span style={{ marginLeft: 'auto', fontSize: '0.75rem', opacity: 0.6 }}>↗</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Stream Info */}
+            {(streamer?.streamSchedule || languagesList.length > 0 || (!isLive && streamer?.lastLiveAt)) && (
+              <div className="glass" style={{ padding: '24px', borderRadius: '16px', borderLeft: `3px solid ${themeColor}` }}>
+                <SectionTitle icon={<Calendar size={16} />}>Información de Stream</SectionTitle>
+
+                {/* Última vez en vivo */}
+                {!isLive && streamer?.lastLiveAt && (
+                  <div style={{ marginBottom: (streamer?.streamSchedule || languagesList.length > 0) ? '16px' : 0 }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Último Stream
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      Última vez en vivo: {(() => {
+                        const lastLive = streamer?.lastLiveAt;
+                        if (!lastLive) return 'desconocido';
+                        const dt = new Date(lastLive);
+                        const diffMs = Date.now() - dt.getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMins / 60);
+                        const diffDays = Math.floor(diffHours / 24);
+                        if (diffMins < 1) return 'ahora mismo';
+                        if (diffMins < 60) return `hace ${diffMins} min`;
+                        if (diffHours < 24) return `hace ${diffHours}h`;
+                        if (diffDays < 7) return `hace ${diffDays}d`;
+                        return dt.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+                      })()}
+                    </p>
+                  </div>
+                )}
+
+                {streamer?.streamSchedule && (
+                  <div style={{ marginBottom: languagesList.length > 0 ? '16px' : 0 }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Horario
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.6 }}>
+                      {streamer.streamSchedule}
+                    </p>
+                  </div>
+                )}
+                {languagesList.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Idiomas
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {languagesList.map((lang) => (
+                        <span key={lang} style={{
+                          padding: '4px 14px', borderRadius: '20px',
+                          background: 'rgba(0,212,255,0.1)',
+                          border: '1px solid rgba(0,212,255,0.2)',
+                          fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 500,
+                        }}>
+                          {lang}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Platforms / Links quick view */}
+            {(streamer?.twitchUrl || streamer?.youtubeUrl) && (
+              <div className="glass" style={{ padding: '20px', borderRadius: '16px', textAlign: 'center' }}>
+                <SectionTitle icon={<Twitch size={16} color="var(--primary)" />}>Plataformas</SectionTitle>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                  {streamer?.twitchUrl && (
+                    <a href={streamer.twitchUrl} target="_blank" rel="noopener noreferrer"
+                      style={{
+                        padding: '10px 20px', borderRadius: '12px',
+                        background: 'rgba(145,65,255,0.15)', color: '#9146FF',
+                        fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none',
+                        transition: 'all 0.2s',
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(145,65,255,0.25)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(145,65,255,0.15)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      <Twitch size={16} color="#9146FF" /> Twitch
+                    </a>
+                  )}
+                  {streamer?.youtubeUrl && (
+                    <a href={streamer.youtubeUrl} target="_blank" rel="noopener noreferrer"
+                      style={{
+                        padding: '10px 20px', borderRadius: '12px',
+                        background: 'rgba(255,0,0,0.12)', color: '#FF0000',
+                        fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none',
+                        transition: 'all 0.2s',
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,0,0,0.2)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,0,0,0.12)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      <Youtube size={16} color="#FF0000" /> YouTube
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ═══ RIGHT COLUMN — SCHEDULE & POSTS FEED ═══ */}
+          <div>
+            <StreamerWeeklyScheduleGrid streamer={streamer} isLive={isLive} />
+
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: '16px',
+            }}>
+              <h3 style={{
+                fontSize: '1.15rem', fontWeight: 700,
+                display: 'flex', alignItems: 'center', gap: '8px',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Publicaciones
+              </h3>
+              <Link href={`/feed?user=${profile.id}`} style={{
+                fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600,
+              }}>
+                Ver todas →
+              </Link>
+            </div>
+
+            {postsLoading ? (
+              <div className="glass" style={{ padding: '40px', textAlign: 'center', borderRadius: '16px' }}>
+                <span style={{
+                  width: '20px', height: '20px',
+                  border: '2px solid rgba(255,255,255,0.1)',
+                  borderTopColor: 'var(--primary)',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                  display: 'inline-block',
+                }} />
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="glass" style={{ padding: '40px', textAlign: 'center', borderRadius: '16px' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                  {isOwnProfile
+                    ? 'No has publicado nada aún. ¡Comparte algo con la comunidad!'
+                    : `${displayName} aún no ha publicado nada.`}
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {posts.map((post, idx) => (
+                  <div
+                    key={post.id}
+                    className="glass"
+                    style={{
+                      borderRadius: '16px', padding: '20px',
+                      transition: 'all 0.3s ease',
+                      animation: `fadeInUp 0.5s ease ${idx * 0.08}s forwards`,
+                      opacity: 0,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.3)';
+                      e.currentTarget.style.borderColor = 'rgba(138,43,226,0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.borderColor = 'var(--glass-border)';
+                    }}
+                  >
+                    {/* Post header */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      marginBottom: '10px',
+                    }}>
+                      <div style={{
+                        width: '30px', height: '30px', borderRadius: '50%',
+                        background: avatarUrl
+                          ? `url(${avatarUrl}) center/cover`
+                          : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'white', fontWeight: 'bold', fontSize: '0.7rem',
+                        overflow: 'hidden', flexShrink: 0,
+                      }}>
+                        {!avatarUrl && displayName.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 600 }}>{displayName}</span>
+                        <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>
+                          · {formatTimeAgo(post.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {post.content && post.content !== '(imagen)' && post.content !== '[imagen]' && post.content.trim() !== '' && (
+                      <p style={{
+                        fontSize: '0.9rem', lineHeight: 1.6,
+                        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                        marginBottom: post.mediaUrl ? '10px' : 0,
+                      }}>
+                        {post.content.length > 280
+                          ? post.content.slice(0, 280) + '...'
+                          : post.content}
+                      </p>
+                    )}
+
+                    {post.mediaUrl && (
+                      <div style={{ borderRadius: '10px', overflow: 'hidden', marginBottom: '10px', background: 'rgba(0,0,0,0.3)' }}>
+                        <Image src={post.mediaUrl} alt="" width={0} height={0} sizes="100vw" unoptimized
+                          style={{ width: '100%', maxHeight: '550px', objectFit: 'contain', display: 'block' }} />
+                      </div>
+                    )}
+
+                    {post.hashtags.length > 0 && (
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        {post.hashtags.map((tag) => (
+                          <Link key={tag} href={`/feed?tag=${tag}`} style={{
+                            fontSize: '0.78rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 500,
+                          }}>
+                            #{tag}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{
+                      display: 'flex', gap: '16px', borderTop: '1px solid var(--glass-border)',
+                      paddingTop: '10px', fontSize: '0.8rem', color: 'var(--text-muted)',
+                    }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Heart size={14} color="var(--text-muted)" /> {post._count.likes}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MessageCircle size={14} color="var(--text-muted)" /> {post._count.comments}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ═══════════════════ GALLERY ═══════════════════ */}
+        {(mediaPosts.length > 0 || mediaPostsLoading) && (
+          <div style={{ marginTop: '40px' }}>
+            <SectionTitle icon={<IconImage size={16} />}>
+              Galería
+            </SectionTitle>
+
+            {mediaPostsLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <span style={{
+                  width: '20px', height: '20px',
+                  border: '2px solid rgba(255,255,255,0.1)',
+                  borderTopColor: 'var(--primary)',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                  display: 'inline-block',
+                }} />
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: '12px',
+              }}>
+                {mediaPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    onClick={() => setGalleryImage(post.mediaUrl!)}
+                    style={{
+                      position: 'relative',
+                      aspectRatio: '1',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      border: '1px solid var(--glass-border)',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.03)';
+                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(138,43,226,0.25)';
+                      e.currentTarget.style.borderColor = 'var(--primary)';
+                      const overlay = e.currentTarget.querySelector('.g-overlay') as HTMLElement;
+                      if (overlay) overlay.style.opacity = '1';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.borderColor = 'var(--glass-border)';
+                      const overlay = e.currentTarget.querySelector('.g-overlay') as HTMLElement;
+                      if (overlay) overlay.style.opacity = '0';
+                    }}
+                  >
+                    <Image src={post.mediaUrl!} alt="" fill
+                      sizes="(max-width: 768px) 50vw, 25vw" unoptimized
+                      style={{ objectFit: 'cover' }} />
+                    <div className="g-overlay" style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(0,0,0,0.3)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontSize: '1.2rem', fontWeight: 600,
+                      pointerEvents: 'none',
+                    }}>
+                      <ZoomIn size={22} color="white" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ═══════════════════ GALLERY LIGHTBOX ═══════════════════ */}
+      {mounted && galleryImage && createPortal(
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10000,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '40px', cursor: 'zoom-out',
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setGalleryImage(null)}
+        >
+          <Image
+            src={galleryImage}
+            alt="Galería"
+            width={0}
+            height={0}
+            sizes="90vw"
+            unoptimized
+            style={{
+              maxWidth: '90vw', maxHeight: '90vh',
+              borderRadius: '12px', objectFit: 'contain',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              animation: 'scaleIn 0.25s ease',
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setGalleryImage(null)}
+            style={{
+              position: 'absolute', top: '20px', right: '20px',
+              background: 'rgba(0,0,0,0.5)', border: 'none',
+              color: 'white', fontSize: '1.5rem', cursor: 'pointer',
+              width: '40px', height: '40px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; }}
+          >
+            ✕
+          </button>
+        </div>,
+        document.body
+      )}
+
+      {/* ═══════════════════ DONATE MODAL ═══════════════════ */}
+      {mounted && showDonate && createPortal(
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000,
+        }}
+          onClick={() => setShowDonate(false)}>
+          <div className="glass" style={{
+            padding: '30px', width: '90%', maxWidth: '400px',
+            borderRadius: '20px',
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '8px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Heart size={22} color="#ffd700" fill="#ffd700" /> Donar a {displayName}</span>
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '24px' }}>
+              Apoya a tu Streamer favorito con una donación
+            </p>
+
+            <div className="form-group">
+              <label className="form-label">Monto (USD)</label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                {[1, 3, 5, 10, 20].map(a => (
+                  <button key={a} onClick={() => setDonateAmount(a)}
+                    style={{
+                      padding: '10px 20px', borderRadius: '10px',
+                      border: donateAmount === a ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
+                      background: donateAmount === a ? 'rgba(138,43,226,0.2)' : 'rgba(255,255,255,0.05)',
+                      color: 'var(--text)', cursor: 'pointer', fontWeight: 700,
+                      transition: 'all 0.2s', fontSize: '0.95rem',
+                    }}>
+                    ${a}
+                  </button>
+                ))}
+              </div>
+              <input type="number" className="input"
+                value={donateAmount}
+                onChange={e => setDonateAmount(Math.max(1, Number(e.target.value)))}
+                min={1} max={1000}
+                style={{ width: '100%' }} />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Mensaje (opcional)</label>
+              <textarea className="input"
+                value={donateMessage}
+                onChange={e => setDonateMessage(e.target.value)}
+                placeholder="Escribe un mensaje..."
+                style={{ minHeight: '80px', resize: 'vertical' }} />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '24px' }}>
+              <button onClick={handleDonate} className="btn" style={{
+                width: '100%', padding: '12px', background: 'linear-gradient(135deg, #0070ba, #1546a0)',
+                color: '#fff', fontWeight: 800, borderRadius: '12px', border: 'none',
+              }} disabled={donateLoading}>
+                {donateLoading ? 'Procesando PayPal...' : `🅿️ Donar $${donateAmount} con PayPal`}
+              </button>
+
+              <div style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0' }}>o también</div>
+
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <KofiWidget kofiId={(profile?.streamerProfile as any)?.kofiUrl || profile?.streamerProfile?.websiteUrl || profile?.username} label={`Ko-fi de ${displayName} ☕`} />
+              </div>
+
+              <button onClick={() => setShowDonate(false)} className="btn" style={{
+                width: '100%', marginTop: '6px', padding: '8px', background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)', fontSize: '0.82rem',
+              }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ═══════════════════ FOLLOWERS MODAL ═══════════════════ */}
+      {mounted && showFollowers && createPortal(
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000,
+        }}
+          onClick={() => setShowFollowers(false)}>
+          <div className="glass" style={{
+            padding: '24px', width: '90%', maxWidth: '420px',
+            maxHeight: '60vh', overflow: 'auto', borderRadius: '20px',
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Users size={20} /> Seguidores <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>({profile._count.followers})</span>
+            </h3>
+            {followers.length === 0
+              ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>Sin seguidores aún.</p>
+              : followers.map(f => (
+                <Link key={f.id} href={`/profile/${f.id}`} style={{
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '10px 12px', borderRadius: '12px',
+                  color: 'var(--text)', textDecoration: 'none',
+                  transition: 'background 0.2s',
+                }}
+                  onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                  onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                  onClick={() => setShowFollowers(false)}>
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '50%',
+                    background: f.streamerProfile?.avatarUrl
+                      ? `url(${f.streamerProfile.avatarUrl}) center/cover`
+                      : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
+                    overflow: 'hidden',
+                  }}>
+                    {!f.streamerProfile?.avatarUrl && (f.streamerProfile?.displayName || f.username).charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {f.streamerProfile?.displayName || f.username}
+                      {f.streamerProfile?.isVerified && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado">
+                          <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
+                          <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{f.username}</div>
+                  </div>
+                </Link>
+              ))}
+            <button onClick={() => setShowFollowers(false)} className="btn" style={{
+              width: '100%', marginTop: '16px', padding: '10px',
+              background: 'rgba(255,255,255,0.05)', color: 'var(--text)',
+              border: '1px solid var(--glass-border)',
+            }}>
+              Cerrar
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ═══════════════════ FOLLOWING MODAL ═══════════════════ */}
+      {mounted && showFollowing && createPortal(
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000,
+        }}
+          onClick={() => setShowFollowing(false)}>
+          <div className="glass" style={{
+            padding: '24px', width: '90%', maxWidth: '420px',
+            maxHeight: '60vh', overflow: 'auto', borderRadius: '20px',
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Users size={20} /> Siguiendo <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 400 }}>({profile._count.following})</span>
+            </h3>
+            {following.length === 0
+              ? <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>No sigue a nadie aún.</p>
+              : following.map(f => (
+                <Link key={f.id} href={`/profile/${f.id}`} style={{
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '10px 12px', borderRadius: '12px',
+                  color: 'var(--text)', textDecoration: 'none',
+                  transition: 'background 0.2s',
+                }}
+                  onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                  onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                  onClick={() => setShowFollowing(false)}>
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '50%',
+                    background: f.streamerProfile?.avatarUrl
+                      ? `url(${f.streamerProfile.avatarUrl}) center/cover`
+                      : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
+                    overflow: 'hidden',
+                  }}>
+                    {!f.streamerProfile?.avatarUrl && (f.streamerProfile?.displayName || f.username).charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{f.streamerProfile?.displayName || f.username}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{f.username}</div>
+                  </div>
+                </Link>
+              ))}
+            <button onClick={() => setShowFollowing(false)} className="btn" style={{
+              width: '100%', marginTop: '16px', padding: '10px',
+              background: 'rgba(255,255,255,0.05)', color: 'var(--text)',
+              border: '1px solid var(--glass-border)',
+            }}>
+              Cerrar
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ═══════════════════ ANIMATIONS ═══════════════════ */}
+      <style>{`
+        @keyframes streamer-pulse-dot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+        @keyframes streamer-live-ring {
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.05); opacity: 0.2; }
+        }
+        @keyframes streamer-live-glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(233,30,99,0.3); }
+          50% { box-shadow: 0 0 40px rgba(233,30,99,0.5); }
+        }
+      `}</style>
+      {/* ===== PROFILE MUSIC PLAYER WIDGET (DISABLED — PROFILE_MUSIC_ENABLED = false) ===== */}
+      {PROFILE_MUSIC_ENABLED && <ProfileMusicPlayer musicUrl={profile?.profileMusic} displayName={displayName} />}
+    </>
+  );
+}
+
+/* ═══════════════════════ PAGE EXPORT ═══════════════════════ */
+
+export default function StreamerProfilePage() {
+  return (
+    <ClientOnly fallback={
+      <div className="container" style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <div style={{
+          width: 40, height: 40,
+          border: '3px solid rgba(255,255,255,0.08)',
+          borderTopColor: 'var(--primary)',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+          margin: '0 auto 16px',
+        }} />
+      </div>
+    }>
+      <StreamerPublicProfile />
+    </ClientOnly>
+  );
+}

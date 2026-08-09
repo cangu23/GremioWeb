@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
@@ -738,7 +738,10 @@ export default function StellarPassPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const loadPass = async () => {
+  // useCallback (con `user` en deps) para que el efecto de carga tenga
+  // dependencias estables y no se re-ejecute en bucle (antes eran funciones
+  // nuevas en cada render, lo que además generaba el warning de exhaustive-deps).
+  const loadPass = useCallback(async () => {
     if (!user) return;
     try {
       const res = await apiFetch('/ecosystem/pass');
@@ -752,9 +755,9 @@ export default function StellarPassPage() {
     } catch (err) {
       console.error('Error loading Stellar Pass:', err);
     }
-  };
+  }, [user]);
 
-  const loadMissions = async () => {
+  const loadMissions = useCallback(async () => {
     if (!user) return;
     try {
       const res = await apiFetch('/ecosystem/missions');
@@ -762,9 +765,9 @@ export default function StellarPassPage() {
     } catch (err) {
       console.error('Error loading missions:', err);
     }
-  };
+  }, [user]);
 
-  const loadStreak = async () => {
+  const loadStreak = useCallback(async () => {
     if (!user) return;
     try {
       const res = await apiFetch('/ecosystem/streak');
@@ -772,23 +775,23 @@ export default function StellarPassPage() {
     } catch (err) {
       console.error('Error loading streak:', err);
     }
-  };
+  }, [user]);
 
-  const loadCommunityChallenge = async () => {
+  const loadCommunityChallenge = useCallback(async () => {
     try {
       const res = await apiFetch('/ecosystem/community-challenge');
       if (res?.data) setCommunityChallenge(res.data);
     } catch (err) {
       console.error('Error loading community challenge:', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (user) {
       setLoading(true);
       Promise.all([loadPass(), loadMissions(), loadStreak(), loadCommunityChallenge()]).finally(() => setLoading(false));
     }
-  }, [user]);
+  }, [user, loadPass, loadMissions, loadStreak, loadCommunityChallenge]);
 
   const handleClaim = async (levelNumber: number) => {
     setClaimingLevel(levelNumber);

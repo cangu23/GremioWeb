@@ -1,5 +1,6 @@
 import logging
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -16,9 +17,28 @@ logging.basicConfig(
 logger = logging.getLogger("media-engine")
 
 # ── FastAPI App ──────────────────────────────────────────
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup/shutdown hooks (sustituye a @app.on_event, deprecado)."""
+    logger.info("=" * 50)
+    logger.info(f"  {settings.APP_NAME}")
+    logger.info(f"  Port: {settings.PORT}")
+    logger.info(f"  R2 Configured: {r2_configured()}")
+    if r2_configured():
+        logger.info(f"  R2 Bucket: {settings.R2_BUCKET}")
+        logger.info(f"  R2 Public URL: {settings.R2_PUBLIC_URL}")
+    else:
+        logger.warning("  ⚠️  R2 not configured — uploads will fail!")
+    logger.info("=" * 50)
+    yield
+
+
 app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
+    lifespan=lifespan,
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
 )
@@ -58,21 +78,6 @@ async def root():
             "optimize": "/internal/optimize",
         },
     }
-
-
-# ── Startup ──────────────────────────────────────────────
-@app.on_event("startup")
-async def startup():
-    logger.info("=" * 50)
-    logger.info(f"  {settings.APP_NAME}")
-    logger.info(f"  Port: {settings.PORT}")
-    logger.info(f"  R2 Configured: {r2_configured()}")
-    if r2_configured():
-        logger.info(f"  R2 Bucket: {settings.R2_BUCKET}")
-        logger.info(f"  R2 Public URL: {settings.R2_PUBLIC_URL}")
-    else:
-        logger.warning("  ⚠️  R2 not configured — uploads will fail!")
-    logger.info("=" * 50)
 
 
 # ── Entry point ──────────────────────────────────────────

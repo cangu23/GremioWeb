@@ -222,7 +222,9 @@ function CardContent({
   const { user: currentUser } = useAuth();
   const isOwnProfile = currentUser?.id === profile.id;
   const isVtubers = hasAnyRole(profile.role, ['VTUBER']) || (profile.vtuberProfile?.isApproved ?? false);
+  const isStreamer = hasAnyRole(profile.role, ['STREAMER']) || ((profile as any).streamerProfile?.isApproved ?? false);
   const vtuber = profile.vtuberProfile;
+  const streamer = (profile as any).streamerProfile;
   const parseItemData = (data: string | null) => {
     try { return data ? JSON.parse(data) : {}; } catch { return {}; }
   };
@@ -417,7 +419,7 @@ function CardContent({
           </h3>
 
           <RoleBadge
-            role={profile.role || (isVtubers ? 'VTUBER' : 'USER')}
+            role={profile.role || (isVtubers ? 'VTUBER' : isStreamer ? 'STREAMER' : 'USER')}
             size="sm"
             isVerified={isVerified}
           />

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Prisma mock (vi.hoisted ensures init BEFORE vi.mock runs) ──
 const mockPrisma = vi.hoisted(() => ({
   vTuberProfile: { upsert: vi.fn(), update: vi.fn() },
+  streamerProfile: { upsert: vi.fn(), update: vi.fn() },
   user: { findUnique: vi.fn(), update: vi.fn() },
   notification: { create: vi.fn() },
   platformSubscription: { findUnique: vi.fn(), upsert: vi.fn(), update: vi.fn() },
@@ -50,6 +51,7 @@ describe('AdminService.updateUser — verificación (isVerified)', () => {
       Promise.resolve({ id, ...data })
     );
     mockPrisma.vTuberProfile.upsert.mockResolvedValue({ userId: 'user-1', isVerified: true });
+    mockPrisma.streamerProfile.upsert.mockResolvedValue({ userId: 'user-1', isVerified: true });
   });
 
   it("verifica a un usuario: isVerified va al VTuberProfile, NO al update de User", async () => {

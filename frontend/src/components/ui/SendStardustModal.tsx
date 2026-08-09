@@ -497,6 +497,7 @@ export default function SendStardustModal({
                         </div>
                         {searchResults.map((u) => {
                           const isVtuber = hasAnyRole(u.role, ['VTUBER']);
+                          const isStreamer = hasAnyRole(u.role, ['STREAMER']);
                           const isMaid = hasAnyRole(u.role, ['MAID']);
                           const isAdmin = hasAnyRole(u.role, ['ADMIN']);
                           return (
@@ -530,11 +531,11 @@ export default function SendStardustModal({
                                   fontWeight: 700,
                                   padding: '2px 6px',
                                   borderRadius: '10px',
-                                  background: isVtuber ? 'rgba(168,85,247,0.2)' : isMaid ? 'rgba(212,160,48,0.2)' : isAdmin ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.06)',
-                                  color: isVtuber ? '#c084fc' : isMaid ? '#d4a030' : isAdmin ? '#f87171' : '#9ca3af',
+                                  background: isVtuber ? 'rgba(168,85,247,0.2)' : isStreamer ? 'rgba(34,211,238,0.2)' : isMaid ? 'rgba(212,160,48,0.2)' : isAdmin ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.06)',
+                                  color: isVtuber ? '#c084fc' : isStreamer ? '#22d3ee' : isMaid ? '#d4a030' : isAdmin ? '#f87171' : '#9ca3af',
                                 }}
                               >
-                                {isVtuber ? '👑 VTuber' : isMaid ? '🧹 Maid' : isAdmin ? '🛡️ Admin' : '👤 User'}
+                                {isVtuber ? '👑 VTuber' : isStreamer ? '📡 Streamer' : isMaid ? '🧹 Maid' : isAdmin ? '🛡️ Admin' : '👤 User'}
                               </div>
                             </div>
                           );

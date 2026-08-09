@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,8 @@ export default function FriendButton({ targetUserId, size = 'sm' }: FriendButton
   const router = useRouter();
   const [status, setStatus] = useState<FriendStatus>('loading');
   const [actionLoading, setActionLoading] = useState(false);
+  // Prevents double-submitting when the button is clicked rapidly
+  const actionInFlightRef = useRef(false);
 
   const checkStatus = useCallback(async () => {
     if (!user) { setStatus('none'); return; }
@@ -58,6 +60,8 @@ export default function FriendButton({ targetUserId, size = 'sm' }: FriendButton
   const handleAction = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (!user) { router.push('/login'); return; }
+    if (actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
     setActionLoading(true);
     try {
       switch (status) {
@@ -82,6 +86,7 @@ export default function FriendButton({ targetUserId, size = 'sm' }: FriendButton
       // Re-check status on error
       checkStatus();
     } finally {
+      actionInFlightRef.current = false;
       setActionLoading(false);
     }
   };

@@ -10,7 +10,7 @@ export const create = async (payload: CreateGuildPayload, creatorId: string, cre
   // Solo VTubers, Maids, Moderadores, Admins y staff pueden crear gremios.
   // hasAnyRole parsea roles múltiples ("ADMIN,MODERATOR") y da god mode a ADMIN/OWNER/SYSADMIN,
   // igual que el chequeo del frontend en /guilds/create.
-  const canCreateGuild = hasAnyRole(creatorRole, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']);
+  const canCreateGuild = hasAnyRole(creatorRole, ['VTUBER', 'STREAMER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']);
   if (!canCreateGuild) {
     throw new AppError('Solo los VTubers y el equipo de la plataforma pueden crear gremios.', 403);
   }

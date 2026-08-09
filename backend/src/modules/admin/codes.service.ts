@@ -40,7 +40,7 @@ export const generateCode = async (data: {
   generatedById: string;
 }) => {
   const validRoles = [
-    'VTUBER', 'MAID', 'ARTIST', 'CLIPPER',
+    'VTUBER', 'STREAMER', 'MAID', 'ARTIST', 'CLIPPER',
     'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR',
     'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN', 'BOT'
   ];
@@ -183,6 +183,26 @@ export const redeemCode = async (rawCode: string, userId: string) => {
       create: {
         userId,
         displayName: currentUser?.displayName || currentUser?.username || 'VTuber',
+        avatarUrl: currentUser?.avatarUrl || null,
+        isApproved: true,
+        isVerified: true,
+        isHidden: false,
+      },
+      update: {
+        isApproved: true,
+        isVerified: true,
+        isHidden: false,
+      },
+    });
+  }
+
+  // If redeemed role is STREAMER, ensure streamerProfile is created and approved automatically
+  if (matchedCode.role === 'STREAMER') {
+    await prisma.streamerProfile.upsert({
+      where: { userId },
+      create: {
+        userId,
+        displayName: currentUser?.displayName || currentUser?.username || 'Streamer',
         avatarUrl: currentUser?.avatarUrl || null,
         isApproved: true,
         isVerified: true,

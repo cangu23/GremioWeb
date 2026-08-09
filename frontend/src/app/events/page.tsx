@@ -192,7 +192,7 @@ function EventsContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filter]);
 
   useEffect(() => {
     fetchEvents();
@@ -234,7 +234,7 @@ function EventsContent() {
             Descubre y participa en eventos de la comunidad
           </p>
         </div>
-        {user && hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF']) && (
+        {user && hasAnyRole(user.role, ['VTUBER', 'STREAMER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF']) && (
           <Link href="/events/create" className="btn" style={{
             padding: '12px 24px', borderRadius: '12px', fontWeight: 700,
             background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
@@ -319,7 +319,7 @@ function EventsContent() {
               ? 'Intenta con otro filtro'
               : 'Sé el primero en crear un evento'}
           </p>
-          {user && !filter && hasAnyRole(user.role, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF']) && (
+          {user && !filter && hasAnyRole(user.role, ['VTUBER', 'STREAMER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF']) && (
             <Link href="/events/create" className="btn" style={{
               padding: '12px 28px', borderRadius: '12px',
               display: 'inline-flex',

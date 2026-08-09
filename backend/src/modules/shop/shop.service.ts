@@ -1,6 +1,6 @@
 import AppError from '../../errors/AppError';
 import * as ShopRepository from './shop.repository';
-import { spendStardust, addStardust } from '../ecosystem/stardust.service';
+import { hasAnyRole } from '@gremio-estelar/shared';
 import prisma from '../../database/prisma';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 
@@ -29,10 +29,14 @@ export const listItems = async () => {
     return shopItemsCache.data;
   }
 
-  // Asynchronously seed default items once in background if not done yet
+  // Asynchronously seed default items once in background if not done yet.
+  // Si el seed falla, se resetea hasSeeded para reintentarlo en la próxima
+  // petición (antes quedaba marcado como hecho para siempre).
   if (!hasSeeded) {
     hasSeeded = true;
-    seedDefaultItems().catch(() => {});
+    seedDefaultItems().catch(() => {
+      hasSeeded = false;
+    });
   }
 
   const items = await ShopRepository.findActiveItems();
@@ -84,33 +88,90 @@ export const buyItem = async (userId: string, itemId: string) => {
     );
   }
 
-  // Check if already purchased
   const type = item.type;
   const isConsumable = isConsumableType(type);
-  const existing = await ShopRepository.findUserPurchase(userId, itemId);
 
-  if (!isConsumable && existing) {
-    throw new AppError('Ya tienes este ítem', 400);
-  }
+  // Cargo + entrega del ítem en UNA transacción: el débito de Stardust y la
+  // creación/actualización de la compra deben commitearse o revertirse juntos.
+  // Antes, si fallaba el paso intermedio, el usuario perdía Stardust sin ítem
+  // (o recibía el ítem sin pagar).
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { stardust: true, role: true },
+    });
+    if (!user) throw new AppError('Usuario no encontrado', 404);
 
-  // Deduct stardust (charging effectivePrice)
-  const result = await spendStardust(userId, effectivePrice, `Compra en tienda: ${item.name}`);
+    // Admins tienen Stardust infinito: no se les descuenta ni se les bloquea.
+    const isAdmin = hasAnyRole(user.role, ['ADMIN']);
+    if (!isAdmin && user.stardust < effectivePrice) {
+      throw new AppError(
+        `No tienes suficiente Stardust. Necesitas ⭐ ${effectivePrice.toLocaleString()}, tienes ⭐ ${user.stardust.toLocaleString()}.`,
+        400
+      );
+    }
 
-  let purchase;
-  if (isConsumable && existing) {
-    const usesToAdd = getInitialUses(type);
-    const newRemaining = (existing.remaining || 0) + usesToAdd;
-    purchase = await ShopRepository.updatePurchaseRemaining(existing.id, newRemaining);
-  } else if (isConsumable) {
-    purchase = await ShopRepository.createPurchase(userId, itemId, getInitialUses(type));
-  } else {
-    purchase = await ShopRepository.createPurchase(userId, itemId);
-  }
+    const existing = await tx.userPurchase.findFirst({ where: { userId, itemId } });
+    if (!isConsumable && existing) {
+      throw new AppError('Ya tienes este ítem', 400);
+    }
 
-  return {
-    purchase,
-    balance: result.newBalance,
-  };
+    let newBalance = user.stardust;
+    if (!isAdmin) {
+      // Decremento atómico condicional: solo descuenta si el saldo sigue siendo
+      // suficiente, de modo que dos compras paralelas no puedan gastar el
+      // mismo Stardust (evita saldos negativos / doble gasto).
+      const debited = await tx.user.updateMany({
+        where: { id: userId, stardust: { gte: effectivePrice } },
+        data: { stardust: { decrement: effectivePrice } },
+      });
+      if (debited.count === 0) {
+        const fresh = await tx.user.findUnique({
+          where: { id: userId },
+          select: { stardust: true },
+        });
+        throw new AppError(
+          `No tienes suficiente Stardust. Necesitas ⭐ ${effectivePrice.toLocaleString()}, tienes ⭐ ${fresh?.stardust?.toLocaleString() ?? 0}.`,
+          400
+        );
+      }
+      await tx.stardustTransaction.create({
+        data: {
+          userId,
+          amount: -effectivePrice,
+          reason: `Compra en tienda: ${item.name}`,
+        },
+      });
+      newBalance = user.stardust - effectivePrice;
+    } else {
+      newBalance = 999999999;
+    }
+
+    let purchase;
+    if (isConsumable && existing) {
+      const usesToAdd = getInitialUses(type);
+      purchase = await tx.userPurchase.update({
+        where: { id: existing.id },
+        data: { remaining: (existing.remaining || 0) + usesToAdd },
+        include: { item: true },
+      });
+    } else if (isConsumable) {
+      purchase = await tx.userPurchase.create({
+        data: { userId, itemId, remaining: getInitialUses(type) },
+        include: { item: true },
+      });
+    } else {
+      purchase = await tx.userPurchase.create({
+        data: { userId, itemId },
+        include: { item: true },
+      });
+    }
+
+    return {
+      purchase,
+      balance: newBalance,
+    };
+  });
 };
 
 // ─── Equip/unequip an item ───
@@ -190,18 +251,29 @@ export const refundItem = async (userId: string, itemId: string) => {
     } catch {}
   }
 
-  // Delete purchase record & unequip
-  await ShopRepository.deletePurchase(purchase.id);
+  // Borrado + reembolso en UNA transacción: si fallara el paso intermedio,
+  // antes el usuario perdía el ítem sin recuperar su Stardust (o viceversa).
+  return prisma.$transaction(async (tx) => {
+    await tx.userPurchase.delete({ where: { id: purchase.id } });
+    const updated = await tx.user.update({
+      where: { id: userId },
+      data: { stardust: { increment: refundPrice } },
+    });
+    await tx.stardustTransaction.create({
+      data: {
+        userId,
+        amount: refundPrice,
+        reason: `Reembolso de ítem: ${item.name}`,
+      },
+    });
 
-  // Add Stardust back to user balance
-  const result = await addStardust(userId, refundPrice, `Reembolso de ítem: ${item.name}`);
-
-  return {
-    success: true,
-    refundedStardust: refundPrice,
-    newBalance: result.newBalance,
-    itemName: item.name,
-  };
+    return {
+      success: true,
+      refundedStardust: refundPrice,
+      newBalance: updated.stardust,
+      itemName: item.name,
+    };
+  });
 };
 
 // ─── Get equipped badge ───

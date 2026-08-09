@@ -8,6 +8,7 @@ export type RoleType =
   | 'STAFF'
   | 'BETA_TESTER'
   | 'VTUBER'
+  | 'STREAMER'
   | 'MAID'
   | 'ARTIST'
   | 'CLIPPER'
@@ -67,6 +68,15 @@ function VtuberSparkleIcon({ size = 12 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" />
+    </svg>
+  );
+}
+
+function StreamerBroadcastIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="2" />
+      <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14" />
     </svg>
   );
 }
@@ -213,6 +223,14 @@ const ROLE_CONFIGS: Record<string, {
     color: '#f472b6',
     glow: 'rgba(236, 72, 153, 0.35)',
     IconComponent: VtuberSparkleIcon,
+  },
+  STREAMER: {
+    label: 'STREAMER',
+    bg: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.25))',
+    border: 'rgba(56, 189, 248, 0.5)',
+    color: '#38bdf8',
+    glow: 'rgba(56, 189, 248, 0.35)',
+    IconComponent: StreamerBroadcastIcon,
   },
   MAID: {
     label: 'MAID',

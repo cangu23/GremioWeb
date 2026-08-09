@@ -5,6 +5,7 @@ export const submitRequest = async (req: Request, res: Response, next: NextFunct
   try {
     const result = await RequestsService.submitRequest({
       userId: req.user!.id,
+      type: req.body.type,
       displayName: req.body.displayName,
       description: req.body.description,
       avatarUrl: req.body.avatarUrl,
@@ -22,6 +23,7 @@ export const listRequests = async (req: Request, res: Response, next: NextFuncti
     const result = await RequestsService.listRequests({
       page,
       limit,
+      type: req.query.type as string | undefined,
       status: req.query.status as string | undefined,
       search: req.query.search as string | undefined,
     });

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
@@ -40,6 +40,8 @@ function VtubersContent() {
   const [onlyLive, setOnlyLive] = useState(false);
   const [page, setPage] = useState(1);
   const [directoryLoading, setDirectoryLoading] = useState(false);
+  // Discard stale directory responses (filter/page changes or keystrokes)
+  const dirSeqRef = useRef(0);
 
   // Initial fetch overview data
   const fetchOverview = useCallback(async () => {
@@ -66,6 +68,7 @@ function VtubersContent() {
 
   // Directory fetch with search/page/filters
   const fetchDirectory = useCallback(async (s: string, ct: string, liveOnly: boolean, p: number) => {
+    const seq = ++dirSeqRef.current;
     setDirectoryLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: '12' });
@@ -74,12 +77,13 @@ function VtubersContent() {
       if (liveOnly) params.set('isLive', 'true');
 
       const data = await apiFetch(`/vtubers?${params}`, {});
+      if (seq !== dirSeqRef.current) return; // a newer request superseded this one
       setDirectory(data.data || []);
       setMeta(data.meta || null);
     } catch {
       // keep existing data on fetch failure
     } finally {
-      setDirectoryLoading(false);
+      if (seq === dirSeqRef.current) setDirectoryLoading(false);
     }
   }, []);
 
@@ -87,8 +91,13 @@ function VtubersContent() {
     fetchOverview();
   }, [fetchOverview]);
 
+  // Debounce keystrokes so typing in search doesn't fire a request per character;
+  // the seq guard inside fetchDirectory also drops any response that arrives late.
   useEffect(() => {
-    fetchDirectory(search, contentType, onlyLive, page);
+    const timer = setTimeout(() => {
+      fetchDirectory(search, contentType, onlyLive, page);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [search, contentType, onlyLive, page, fetchDirectory]);
 
   // Reset page to 1 on filter changes

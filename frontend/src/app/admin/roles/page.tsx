@@ -26,10 +26,11 @@ const DEFAULT_ROLES: CustomRoleConfig[] = [
   { id: 'MOD', name: 'Moderador', color: '#fb7185', description: 'Control de contenidos y reportes', priority: 4, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
   { id: 'HELPER', name: 'Helper / Asistente', color: '#34d399', description: 'Soporte a miembros y guía', priority: 5, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
   { id: 'VTUBER', name: 'VTuber / Streamer', color: '#ec4899', description: 'Perfil de creador y alertas live', priority: 6, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
-  { id: 'ARTIST', name: 'Artista / Ilustrador', color: '#a78bfa', description: 'Portafolio de arte y comisiones', priority: 7, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
-  { id: 'CLIPPER', name: 'Clipper', color: '#fbbf24', description: 'Edits y recortes destacados', priority: 8, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
-  { id: 'MAID', name: 'Maid', color: '#c084fc', description: 'Anfitrión del Hoshizora Café', priority: 9, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
-  { id: 'USER', name: 'Aventurero Estándar', color: '#a0a0a0', description: 'Miembro registrado común', priority: 10, isVisible: true, isVerified: false, isAutoAssign: true, isProtected: true },
+  { id: 'STREAMER', name: 'Streamer', color: '#38bdf8', description: 'Creador de contenido en directo con perfil propio', priority: 7, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
+  { id: 'ARTIST', name: 'Artista / Ilustrador', color: '#a78bfa', description: 'Portafolio de arte y comisiones', priority: 8, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
+  { id: 'CLIPPER', name: 'Clipper', color: '#fbbf24', description: 'Edits y recortes destacados', priority: 9, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
+  { id: 'MAID', name: 'Maid', color: '#c084fc', description: 'Anfitrión del Hoshizora Café', priority: 10, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
+  { id: 'USER', name: 'Aventurero Estándar', color: '#a0a0a0', description: 'Miembro registrado común', priority: 11, isVisible: true, isVerified: false, isAutoAssign: true, isProtected: true },
 ];
 
 export default function RoleBuilderPage() {

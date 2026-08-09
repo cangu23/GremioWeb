@@ -16,6 +16,14 @@ const userSelect = {
       isApproved: true,
     },
   },
+  streamerProfile: {
+    select: {
+      displayName: true,
+      avatarUrl: true,
+      isVerified: true,
+      isApproved: true,
+    },
+  },
   purchases: {
     where: { equipped: true },
     include: { item: true },

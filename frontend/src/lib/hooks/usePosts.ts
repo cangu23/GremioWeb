@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import type { Post } from '@gremio-estelar/shared';
 
@@ -46,9 +46,18 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
   const [loadingMore, setLoadingMore] = useState(false);
   const [feedMode, setFeedMode] = useState<FeedMode>(initialFeedMode);
 
+  // Guard de secuencia: SOLO los fetches frescos (carga inicial, cambio de
+  // feedMode, refetch) invalidan las respuestas en vuelo. Los append (loadMore)
+  // NO incrementan la secuencia — de lo contrario, un loadMore en carrera con
+  // la carga inicial descartaría la página base (feed mostrando solo pág. 2).
+  const requestSeq = useRef(0);
+
   const fetchFeed = useCallback(async (pageNum = 1, append = false) => {
+    if (!append) requestSeq.current += 1;
+    const seq = requestSeq.current;
     try {
       const data = await apiFetch(`/posts?limit=20&page=${pageNum}&mode=${feedMode}`, {});
+      if (seq !== requestSeq.current) return; // respuesta obsoleta
       if (append) {
         setPosts(prev => [...prev, ...data]);
       } else {
@@ -56,19 +65,25 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
       }
       setHasMore(data.length === 20);
     } catch (err: unknown) {
+      if (seq !== requestSeq.current) return;
       setError(err instanceof Error ? err.message : 'Error al cargar feed');
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (seq === requestSeq.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   }, [feedMode]);
 
   const loadMore = useCallback(() => {
+    // Guard contra llamadas concurrentes: evita fetchear la misma página dos
+    // veces (posts duplicados) con scroll rápido / doble clic.
+    if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     const nextPage = page + 1;
     setPage(nextPage);
     fetchFeed(nextPage, true);
-  }, [page, fetchFeed]);
+  }, [page, fetchFeed, loadingMore, hasMore]);
 
   const handleLike = useCallback(async (postId: string, isLiked: boolean) => {
     if (!user) return;

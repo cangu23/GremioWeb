@@ -38,6 +38,8 @@ export default function GlobalSearchModal({ isOpen, onClose }: { isOpen: boolean
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult>({ users: [], guilds: [], posts: [], events: [] });
   const inputRef = useRef<HTMLInputElement>(null);
+  // Discard stale responses: only the latest query may write results
+  const searchSeqRef = useRef(0);
 
   useEffect(() => {
     if (isOpen) {
@@ -50,20 +52,24 @@ export default function GlobalSearchModal({ isOpen, onClose }: { isOpen: boolean
 
   useEffect(() => {
     if (!query.trim()) {
+      searchSeqRef.current++; // invalidate any in-flight search
       setResults({ users: [], guilds: [], posts: [], events: [] });
       setLoading(false);
       return;
     }
 
     setLoading(true);
+    const seq = ++searchSeqRef.current;
     const timer = setTimeout(async () => {
       try {
         const data = await apiFetch(`/search?q=${encodeURIComponent(query.trim())}&limit=4`, {});
+        if (seq !== searchSeqRef.current) return; // a newer query superseded this one
         setResults(data);
       } catch {
+        if (seq !== searchSeqRef.current) return;
         setResults({ users: [], guilds: [], posts: [], events: [] });
       } finally {
-        setLoading(false);
+        if (seq === searchSeqRef.current) setLoading(false);
       }
     }, 300);
 

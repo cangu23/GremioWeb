@@ -20,6 +20,12 @@ interface MentionUser {
     isVerified?: boolean;
     isApproved?: boolean;
   } | null;
+  streamerProfile?: {
+    displayName: string;
+    avatarUrl: string | null;
+    isVerified?: boolean;
+    isApproved?: boolean;
+  } | null;
 }
 
 interface MentionInputProps {
@@ -245,50 +251,59 @@ export default function MentionInput({
               @{mentionSearch}
             </span>
           </div>
-          {mentionResults.map((user, idx) => (
-            <button
-              key={user.id}
-              type="button"
-              onClick={() => insertMention(user)}
-              onMouseEnter={() => setSelectedIndex(idx)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                width: '100%',
-                padding: '7px 10px',
-                border: 'none',
-                background: idx === selectedIndex ? 'rgba(139,92,246,0.15)' : 'transparent',
-                color: 'var(--text)',
-                cursor: 'pointer',
-                fontSize: '0.82rem',
-                borderRadius: '8px',
-                transition: 'background 0.1s',
-                textAlign: 'left',
-              }}
-            >
-              <UserAvatar
-                src={user.avatarUrl || user.vtuberProfile?.avatarUrl}
-                alt={user.username}
-                size={26}
-                user={user}
-                userId={user.id}
-              />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <span style={{ fontWeight: 600 }}>
-                  {user.displayName || user.vtuberProfile?.displayName || user.username}
-                </span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '4px' }}>
-                  @{user.username}
-                </span>
-              </div>
-              {(hasAnyRole(user.role, ['VTUBER']) || user.vtuberProfile?.isApproved) && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Oficial">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-              )}
-            </button>
-          ))}
+          {mentionResults.map((user, idx) => {
+            const isVtuber = hasAnyRole(user.role, ['VTUBER']) || !!user.vtuberProfile?.isApproved;
+            const isStreamer = hasAnyRole(user.role, ['STREAMER']) || !!user.streamerProfile?.isApproved;
+            return (
+              <button
+                key={user.id}
+                type="button"
+                onClick={() => insertMention(user)}
+                onMouseEnter={() => setSelectedIndex(idx)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '7px 10px',
+                  border: 'none',
+                  background: idx === selectedIndex ? 'rgba(139,92,246,0.15)' : 'transparent',
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  borderRadius: '8px',
+                  transition: 'background 0.1s',
+                  textAlign: 'left',
+                }}
+              >
+                <UserAvatar
+                  src={user.avatarUrl || user.vtuberProfile?.avatarUrl || user.streamerProfile?.avatarUrl}
+                  alt={user.username}
+                  size={26}
+                  user={user}
+                  userId={user.id}
+                />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <span style={{ fontWeight: 600 }}>
+                    {user.displayName || user.vtuberProfile?.displayName || user.streamerProfile?.displayName || user.username}
+                  </span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '4px' }}>
+                    @{user.username}
+                  </span>
+                </div>
+                {isVtuber && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Verificada">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                )}
+                {isStreamer && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#22D3EE" stroke="none" aria-label="Streamer Verificado">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                )}
+              </button>
+            );
+          })}
           <div style={{
             padding: '6px 10px 2px',
             fontSize: '0.65rem',

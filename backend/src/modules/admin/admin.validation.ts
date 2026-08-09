@@ -28,7 +28,7 @@ export const updateUserAdminSchema = z.object({
     role: z.string().refine((val) => {
       if (!val) return true;
       const validRoles = [
-        'USER', 'VTUBER', 'MAID', 'ARTIST', 'CLIPPER',
+        'USER', 'VTUBER', 'STREAMER', 'MAID', 'ARTIST', 'CLIPPER',
         'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR',
         'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN', 'BOT', 'OWNER', 'HELPER', 'MOD'
       ];
@@ -63,6 +63,35 @@ export const revokePlanSchema = z.object({
 // ========== VTUBER MANAGEMENT ==========
 
 export const updateVtuberAdminSchema = z.object({
+  body: z.object({
+    displayName: z.string().max(50).optional(),
+    description: z.string().max(2000).optional(),
+    lore: z.string().max(5000).optional(),
+    avatarUrl: z.string().url().optional().nullable().or(z.literal('')),
+    bannerUrl: z.string().url().optional().nullable().or(z.literal('')),
+    isVerified: z.boolean().optional(),
+    isApproved: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
+    isHidden: z.boolean().optional(),
+    contentType: z.string().max(100).optional(),
+    themeColor: z.string().max(20).optional(),
+    fanName: z.string().max(100).optional(),
+    oshiMark: z.string().max(20).optional(),
+    streamSchedule: z.string().max(500).optional(),
+    languages: z.string().max(200).optional(),
+    twitchUrl: z.string().url().optional().nullable().or(z.literal('')),
+    youtubeUrl: z.string().url().optional().nullable().or(z.literal('')),
+    kickUrl: z.string().url().optional().nullable().or(z.literal('')),
+    tiktokUrl: z.string().url().optional().nullable().or(z.literal('')),
+    twitterUrl: z.string().url().optional().nullable().or(z.literal('')),
+    discordUrl: z.string().url().optional().nullable().or(z.literal('')),
+    websiteUrl: z.string().url().optional().nullable().or(z.literal('')),
+  }),
+});
+
+// ========== STREAMER MANAGEMENT ==========
+
+export const updateStreamerAdminSchema = z.object({
   body: z.object({
     displayName: z.string().max(50).optional(),
     description: z.string().max(2000).optional(),

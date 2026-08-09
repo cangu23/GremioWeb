@@ -3,6 +3,7 @@ import {
   adminQuerySchema,
   updateUserAdminSchema,
   updateVtuberAdminSchema,
+  updateStreamerAdminSchema,
   updateEventAdminSchema,
   updateGuildAdminSchema,
   updatePostAdminSchema,
@@ -13,6 +14,7 @@ import {
 export type AdminQueryInput = z.infer<typeof adminQuerySchema>['query'];
 export type UpdateUserAdminInput = z.infer<typeof updateUserAdminSchema>['body'];
 export type UpdateVtuberAdminInput = z.infer<typeof updateVtuberAdminSchema>['body'];
+export type UpdateStreamerAdminInput = z.infer<typeof updateStreamerAdminSchema>['body'];
 export type UpdateEventAdminInput = z.infer<typeof updateEventAdminSchema>['body'];
 export type UpdateGuildAdminInput = z.infer<typeof updateGuildAdminSchema>['body'];
 export type UpdatePostAdminInput = z.infer<typeof updatePostAdminSchema>['body'];

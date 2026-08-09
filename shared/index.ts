@@ -9,6 +9,7 @@ export * from './plans';
 
 export * from './user';
 export * from './vtuber';
+export * from './streamer';
 
 export * from './contracts/auth';
 

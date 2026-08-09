@@ -86,6 +86,22 @@ export const updateVtuber = async (req: Request, res: Response, next: NextFuncti
   } catch (err) { next(err); }
 };
 
+// ========== STREAMERS ==========
+
+export const listStreamers = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AdminService.listStreamers(req.query as unknown as AdminQueryInput);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const updateStreamer = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AdminService.updateStreamer(String(req.params.id), req.body, req.user!.id, req.ip);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
 // ========== EVENTS ==========
 
 export const listEvents = async (req: Request, res: Response, next: NextFunction) => {

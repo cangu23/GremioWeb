@@ -11,7 +11,7 @@ export const create = async (payload: CreateEventPayload, creatorId: string, cre
   // Solo VTubers, Maids, Admins, Moderadores y staff pueden crear eventos.
   // hasAnyRole parsea roles múltiples ("ADMIN,MODERATOR") y da god mode a ADMIN/OWNER/SYSADMIN,
   // igual que el menú rápido del Navbar (Nuevo Evento).
-  const canCreateEvent = hasAnyRole(creatorRole, ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']);
+  const canCreateEvent = hasAnyRole(creatorRole, ['VTUBER', 'STREAMER', 'MAID', 'ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']);
   if (!canCreateEvent) {
     throw new AppError('Solo los VTubers y el equipo de la plataforma pueden crear eventos.', 403);
   }

@@ -63,7 +63,7 @@ export const getSpotifyEmbedHeight = (embedUrl?: string | null): number => {
 // Official plans (premium page): NOVA & STELLAR. Legacy plan
 // values (ESTELAR/PREMIUM/VIP) kept for backwards compatibility.
 const MUSIC_PLANS = ['NOVA', 'STELLAR', 'ESTELAR', 'PREMIUM', 'VIP'];
-const MUSIC_ROLES = ['VTUBER', 'MAID', 'ADMIN', 'MODERATOR'];
+const MUSIC_ROLES = ['VTUBER', 'STREAMER', 'MAID', 'ADMIN', 'MODERATOR'];
 
 /**
  * Unified rule for who can set profile music. Mirrors the previous

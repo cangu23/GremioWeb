@@ -58,52 +58,16 @@ const cleanupInterval = setInterval(() => {
 if (cleanupInterval.unref) cleanupInterval.unref();
 
 /**
- * Process an image through the Media Engine, then emit Socket.IO event
- * when ready. This runs asynchronously so the HTTP response returns fast.
+ * Inserta un upload pendiente acotando el tamaño del mapa: si ya hay
+ * PENDING_MAX_SIZE entradas, se descarta la más antigua para evitar un
+ * crecimiento de memoria sin límite si el cliente nunca hace poll.
  */
-async function processAndNotify(
-  uploadId: string,
-  buffer: Buffer,
-  userId: string,
-  folder: string,
-  options: { maxWidth?: number; quality?: number; keepAnimation?: boolean } = {}
-): Promise<void> {
-  try {
-    const result = await optimizeImage(buffer, { folder, ...options });
-
-    if (result.status === 'ok' && result.url) {
-      pendingUploads.set(uploadId, {
-        id: uploadId,
-        userId,
-        status: 'ready',
-        url: result.url,
-      });
-
-      // Emit Socket.IO event so the frontend can update instantly
-      ioContext.instance?.to(`user:${userId}`).emit('media:ready', {
-        id: uploadId,
-        url: result.url,
-        format: result.format,
-        size_bytes: result.size_bytes,
-        original_size_bytes: result.original_size_bytes,
-        animated: result.animated,
-      });
-    } else {
-      throw new Error(result.error || 'Optimization failed');
-    }
-  } catch (err: any) {
-    pendingUploads.set(uploadId, {
-      id: uploadId,
-      userId,
-      status: 'error',
-      error: err.message,
-    });
-
-    ioContext.instance?.to(`user:${userId}`).emit('media:error', {
-      id: uploadId,
-      error: err.message,
-    });
+function setPendingUpload(upload: PendingUpload) {
+  if (pendingUploads.size >= PENDING_MAX_SIZE) {
+    const oldest = pendingUploads.keys().next().value;
+    if (oldest !== undefined) pendingUploads.delete(oldest);
   }
+  pendingUploads.set(upload.id, upload);
 }
 
 // ─── Upload handlers ──────────────────────────────────
@@ -177,9 +141,9 @@ async function handleUpload(
     });
 
     if (result.status === 'ok' && result.url) {
-      pendingUploads.set(uploadId, {
+      setPendingUpload({
         id: uploadId,
-        userId: user?.id,
+        userId: user?.id ?? '',
         status: 'ready',
         url: result.url,
       });

@@ -3,6 +3,7 @@ import { prisma } from '../../database';
 import { CreateUserPayload } from './user.types';
 import { UpdateUserPayload } from '@gremio-estelar/shared';
 import { checkSingleVTuber } from '../vtubers/stream-monitor.service';
+import { checkSingleStreamer } from '../streamers/stream-monitor.service';
 
 export const findByEmail = async (email: string) => {
   return prisma.user.findUnique({
@@ -25,6 +26,10 @@ export const findByUsernameInsensitive = async (username: string) => {
 export const findById = async (id: string) => {
   return prisma.user.findUnique({
     where: { id },
+    include: {
+      vtuberProfile: true,
+      streamerProfile: true,
+    },
   });
 };
 
@@ -44,7 +49,9 @@ export const searchByUsernameForMention = async (query: string) => {
     ? {
         OR: [
           { username: insensitiveContains(query) },
+          { displayName: insensitiveContains(query) },
           { vtuberProfile: { displayName: insensitiveContains(query) } },
+          { streamerProfile: { displayName: insensitiveContains(query) } },
         ],
       }
     : {};
@@ -58,6 +65,7 @@ export const searchByUsernameForMention = async (query: string) => {
       avatarUrl: true,
       role: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+      streamerProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
       purchases: {
         where: { equipped: true },
         include: { item: true },
@@ -85,6 +93,7 @@ export const searchByUsername = async (query: string) => {
         { username: insensitiveContains(cleanQuery) },
         { displayName: insensitiveContains(cleanQuery) },
         { vtuberProfile: { displayName: insensitiveContains(cleanQuery) } },
+        { streamerProfile: { displayName: insensitiveContains(cleanQuery) } },
       ],
     };
   }
@@ -100,6 +109,7 @@ export const searchByUsername = async (query: string) => {
       plan: true,
       profileFrame: true,
       vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+      streamerProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
       purchases: {
         where: { equipped: true },
         include: { item: true },
@@ -132,6 +142,15 @@ export const findByRole = async (role: string) => {
           isApproved: true,
         },
       },
+      streamerProfile: {
+        select: {
+          displayName: true,
+          avatarUrl: true,
+          description: true,
+          isVerified: true,
+          isApproved: true,
+        },
+      },
     },
     orderBy: { username: 'asc' },
   });
@@ -149,6 +168,7 @@ export const getUserProfileById = async (id: string) => {
     where: { id },
     include: {
       vtuberProfile: true,
+      streamerProfile: true,
       purchases: {
         where: { equipped: true },
         include: { item: true },
@@ -254,6 +274,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       where: { id: userId },
       include: {
         vtuberProfile: true,
+        streamerProfile: true,
         purchases: {
           where: { equipped: true },
           include: { item: true },
@@ -263,6 +284,9 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
 
     if (result?.vtuberProfile?.id && result.vtuberProfile.twitchUrl) {
       checkSingleVTuber(result.vtuberProfile.id).catch(() => {});
+    }
+    if (result?.streamerProfile?.id && result.streamerProfile.twitchUrl) {
+      checkSingleStreamer(result.streamerProfile.id).catch(() => {});
     }
 
     return result;

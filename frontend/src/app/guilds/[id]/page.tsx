@@ -93,9 +93,13 @@ function GuildDetailContent() {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
+  // Guards against stale responses when switching channels quickly
+  const messagesSeqRef = useRef(0);
+  const activeChannelRef = useRef<string | null>(null);
   const [guild, setGuild] = useState<GuildDetail | null>(null);
   const [channels, setChannels] = useState<GuildChannel[]>([]);
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
+  activeChannelRef.current = activeChannel;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -160,10 +164,14 @@ function GuildDetailContent() {
   }, [id, user]);
 
   const fetchMessages = useCallback(async (channelId: string) => {
+    const seq = ++messagesSeqRef.current;
     try {
       const data = await apiFetch(`/guilds/${id}/channels/${channelId}/messages?limit=50`);
-      setMessages(data);
-    } catch { setMessages([]); }
+      // Discard the response if a newer channel switch happened meanwhile
+      if (seq === messagesSeqRef.current) setMessages(data);
+    } catch {
+      if (seq === messagesSeqRef.current) setMessages([]);
+    }
   }, [id]);
 
   // Initial load
@@ -213,7 +221,9 @@ function GuildDetailContent() {
     };
   }, [user, id]);
 
-  // Socket message & typing listener (separate effect to avoid re-joining guild on channel switch)
+  // Socket message & typing listener (registered once per user; reads the active
+  // channel from a ref so switching channels never drops realtime messages in the
+  // re-registration window)
   useEffect(() => {
     const sock = socketRef.current;
     if (!sock) return;
@@ -221,7 +231,7 @@ function GuildDetailContent() {
     const cleanup = typingCleanupRef.current;
 
     const onMessage = (msg: ChatMessage) => {
-      if (msg.channelId === activeChannel) {
+      if (msg.channelId === activeChannelRef.current) {
         setMessages(prev => [...prev, msg]);
       }
     };
@@ -240,7 +250,7 @@ function GuildDetailContent() {
 
     const onTyping = (data: { userId: string; username: string; displayName: string | null; channelId: string; isTyping: boolean }) => {
       // Only show typing indicator for the active channel
-      if (data.channelId !== activeChannel) return;
+      if (data.channelId !== activeChannelRef.current) return;
       // Don't show own typing
       if (data.userId === user?.id) return;
 
@@ -292,7 +302,7 @@ function GuildDetailContent() {
       cleanup.forEach(t => clearTimeout(t));
       cleanup.clear();
     };
-  }, [activeChannel, user?.id]);
+  }, [user?.id]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

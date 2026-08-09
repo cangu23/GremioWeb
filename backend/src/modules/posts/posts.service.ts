@@ -109,7 +109,7 @@ export const getAlgorithmicFeed = async (currentUserId?: string, page = 1, limit
     const isPinnedBonus = post.isPinned ? 50 : 0;
     const mediaBonus = post.mediaUrl || post.pollData ? 6 : 0;
     // Creator status bonus
-    const isVtuber = hasAnyRole(post.user?.role, ['VTUBER']) || !!post.user?.vtuberProfile?.isApproved;
+    const isVtuber = hasAnyRole(post.user?.role, ['VTUBER', 'STREAMER']) || !!post.user?.vtuberProfile?.isApproved || !!(post.user as any)?.streamerProfile?.isApproved;
     const isVerified = post.user?.vtuberProfile?.isVerified;
     const isMaid = hasAnyRole(post.user?.role, ['MAID']);
     const creatorBonus = isVerified ? 12 : isVtuber ? 8 : (isMaid ? 6 : 0);
@@ -587,8 +587,18 @@ export const getConversations = async (userId: string) => {
 };
 
 export const markAsRead = async (dmId: string, userId: string) => {
-  const dm = await PostsRepository.markDmAsRead(dmId);
-  return dm;
+  // Solo el RECEPTOR puede marcar un DM como leído: sin esta comprobación,
+  // cualquier usuario autenticado podía adivinar un dmId y alterar los
+  // recibos de lectura de una conversación ajena.
+  const dm = await prisma.directMessage.findUnique({
+    where: { id: dmId },
+    select: { receiverId: true },
+  });
+  if (!dm) throw new AppError('Mensaje no encontrado', 404);
+  if (dm.receiverId !== userId) {
+    throw new AppError('No tienes permiso para marcar este mensaje como leído', 403);
+  }
+  return PostsRepository.markDmAsRead(dmId);
 };
 
 export const markConversationAsRead = async (receiverId: string, senderId: string) => {

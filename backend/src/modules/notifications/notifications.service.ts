@@ -179,6 +179,27 @@ export const notifyNewVtuberRequest = async (requesterUsername: string, requeste
   await Promise.all(notifications);
 };
 
+export const notifyNewStreamerRequest = async (requesterUsername: string, requesterDisplayName: string, requestId: string) => {
+  // Find all admin users
+  const admins = await prisma.user.findMany({
+    where: { role: 'ADMIN' },
+    select: { id: true },
+  });
+
+  // Notify each admin
+  const notifications = admins.map((admin) =>
+    NotificationsRepository.createNotification({
+      userId: admin.id,
+      type: NOTIFICATION_TYPES.STREAMER_REQUEST,
+      title: 'Nueva solicitud Streamer',
+      message: `${requesterDisplayName} (@${requesterUsername}) quiere ser Streamer oficial. Revisa sus respuestas en el panel admin.`,
+      referenceId: requestId,
+    })
+  );
+
+  await Promise.all(notifications);
+};
+
 export const notifyDM = async (senderName: string, senderId: string, receiverId: string) => {
   const cleanName = senderName && senderName !== 'undefined' ? senderName : 'Un usuario';
   return NotificationsRepository.createNotification({

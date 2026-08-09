@@ -2,6 +2,7 @@ import { Role } from './role';
 import { AccountStatus } from './account-status';
 import { AuthProvider } from './auth-provider';
 import { VTuberProfile, UpdateVTuberProfilePayload } from './vtuber';
+import { StreamerProfile } from './streamer';
 
 export interface User {
   id: string;
@@ -27,6 +28,7 @@ export interface User {
 
 export interface UserProfile extends User {
   vtuberProfile?: VTuberProfile | null;
+  streamerProfile?: StreamerProfile | null;
 }
 
 export interface PublicUser {
@@ -39,6 +41,7 @@ export interface PublicUser {
   bio?: string | null;
   isVerified?: boolean;
   vtuberProfile?: VTuberProfile | null;
+  streamerProfile?: StreamerProfile | null;
 }
 
 export interface UpdateUserPayload {

@@ -5,6 +5,11 @@ const mockPrisma = vi.hoisted(() => ({
   dailyReward: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), count: vi.fn() },
   userPurchase: { findFirst: vi.fn(), delete: vi.fn(), update: vi.fn() },
   user: { update: vi.fn(), findUnique: vi.fn() },
+  // Mocks de mission/userMissionProgress: claim() llama a trackMissionProgress
+  // (DAILY_LOGIN) y sin ellos el mock crasheaba con
+  // "Cannot read properties of undefined (reading 'findMany')".
+  mission: { findMany: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn(), create: vi.fn(), update: vi.fn() },
+  userMissionProgress: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
   $connect: vi.fn(),
   $disconnect: vi.fn(),
 }));
@@ -39,6 +44,9 @@ describe('DailyRewardsService', () => {
     vi.clearAllMocks();
     // Free plan por defecto → multiplicador ×1 (no altera el XP esperado)
     mockPrisma.user.findUnique.mockResolvedValue({ plan: 'FREE', role: 'USER' });
+    // Sin misiones activas por defecto → trackMissionProgress no itera nada
+    mockPrisma.mission.findMany.mockResolvedValue([]);
+    mockPrisma.userMissionProgress.findFirst.mockResolvedValue(null);
   });
 
   // ── getStatus ──────────────────────────────────

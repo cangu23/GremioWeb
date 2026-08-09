@@ -20,6 +20,7 @@ interface RoleCode {
 
 const roleColors: Record<string, string> = {
   VTUBER: '#ff007f',
+  STREAMER: '#38bdf8',
   MODERATOR: '#2196f3',
   ADMIN: '#8a2be2',
 };
@@ -146,6 +147,7 @@ export default function AdminCodesPage() {
                       <label className="form-label">Rol</label>
                       <select className="input" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                         <option value="VTUBER">VTuber</option>
+                        <option value="STREAMER">Streamer</option>
                         <option value="MODERATOR">Moderador</option>
                         <option value="ADMIN">Admin</option>
                       </select>
@@ -172,6 +174,7 @@ export default function AdminCodesPage() {
             <select className="input" value={filterRole} onChange={e => { setFilterRole(e.target.value); setPage(1); }} style={{ marginTop: '6px', minWidth: '130px' }}>
               <option value="">Todos</option>
               <option value="VTUBER">VTuber</option>
+                        <option value="STREAMER">Streamer</option>
               <option value="MODERATOR">Moderador</option>
               <option value="ADMIN">Admin</option>
             </select>

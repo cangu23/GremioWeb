@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { Role } from '@gremio-estelar/shared';
 import { authenticate } from '../auth/authenticate';
 import { authorize } from '../auth/authorize';
@@ -9,6 +9,7 @@ import {
   grantPlanSchema,
   revokePlanSchema,
   updateVtuberAdminSchema,
+  updateStreamerAdminSchema,
   updateEventAdminSchema,
   updateGuildAdminSchema,
   updatePostAdminSchema,
@@ -48,6 +49,10 @@ router.post('/revoke-plan', adminOnly, validateRequest(revokePlanSchema), AdminC
 // ========== VTUBERS (Staff View, Admin Edit) ==========
 router.get('/vtubers', validateRequest(adminQuerySchema), AdminController.listVtubers);
 router.patch('/vtubers/:id', adminOnly, validateRequest(updateVtuberAdminSchema), AdminController.updateVtuber);
+
+// ========== STREAMERS (Staff View, Admin Edit) ==========
+router.get('/streamers', validateRequest(adminQuerySchema), AdminController.listStreamers);
+router.patch('/streamers/:id', adminOnly, validateRequest(updateStreamerAdminSchema), AdminController.updateStreamer);
 
 // ========== EVENTS (Staff View, Admin Edit) ==========
 router.get('/events', validateRequest(adminQuerySchema), AdminController.listEvents);
@@ -97,9 +102,23 @@ router.get('/codes', adminOnly, validateRequest(adminQuerySchema), CodesControll
 router.delete('/codes/:id', adminOnly, CodesController.revokeCode);
 
 // ========== VTUBER REQUESTS (Staff View & Approve) ==========
-router.get('/vtuber-requests', validateRequest(adminQuerySchema), RequestsController.listRequests);
+// Forzar el discriminador type para que cada panel solo vea sus solicitudes.
+const vtuberRequestFilter = (req: Request, _res: Response, next: NextFunction) => {
+  req.query.type = 'VTUBER';
+  next();
+};
+router.get('/vtuber-requests', vtuberRequestFilter, validateRequest(adminQuerySchema), RequestsController.listRequests);
 router.post('/vtuber-requests/:id/approve', RequestsController.approveRequest);
 router.post('/vtuber-requests/:id/reject', RequestsController.rejectRequest);
+
+// ========== STREAMER REQUESTS (Staff View & Approve) ==========
+const streamerRequestFilter = (req: Request, _res: Response, next: NextFunction) => {
+  req.query.type = 'STREAMER';
+  next();
+};
+router.get('/streamer-requests', streamerRequestFilter, validateRequest(adminQuerySchema), RequestsController.listRequests);
+router.post('/streamer-requests/:id/approve', RequestsController.approveRequest);
+router.post('/streamer-requests/:id/reject', RequestsController.rejectRequest);
 
 // ========== PET REQUESTS (Staff View & Approve) ==========
 router.get('/pet-requests', PetRequestsController.listPetRequestsAdmin);

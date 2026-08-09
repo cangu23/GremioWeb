@@ -33,33 +33,59 @@ function parseReactionsJson(raw: string | null | undefined): Record<string, stri
  */
 export const ioContext: { instance: Server | null } = { instance: null };
 
-// Track online users per guild for real-time member status
-const guildOnlineUsers = new Map<string, Set<string>>();
+// Presencia online CONTADA por número de sockets (no por Set de userIds): con
+// varias pestañas abiertas del mismo usuario, cerrar una NO lo marca offline
+// mientras otra siga conectada. Se emite offline solo cuando la última pestaña
+// se desconecta.
 
-// Track all online users globally for real-time friend presence
-const globalOnlineUsers = new Set<string>();
+// Online users per guild: guildId -> (userId -> socket count)
+const guildOnlineUsers = new Map<string, Map<string, number>>();
+
+// Online users globally: userId -> socket count
+const globalOnlineUsers = new Map<string, number>();
 
 function addOnlineUser(guildId: string, userId: string) {
-  if (!guildOnlineUsers.has(guildId)) {
-    guildOnlineUsers.set(guildId, new Set());
+  let users = guildOnlineUsers.get(guildId);
+  if (!users) {
+    users = new Map();
+    guildOnlineUsers.set(guildId, users);
   }
-  guildOnlineUsers.get(guildId)!.add(userId);
+  users.set(userId, (users.get(userId) || 0) + 1);
 }
 
-function removeOnlineUser(guildId: string, userId: string) {
+/** @returns true si el usuario salió del gremio por COMPLETO (ningún socket). */
+function removeOnlineUser(guildId: string, userId: string): boolean {
   const users = guildOnlineUsers.get(guildId);
-  if (users) {
+  if (!users) return false;
+  const count = (users.get(userId) || 1) - 1;
+  if (count <= 0) {
     users.delete(userId);
-    if (users.size === 0) {
-      guildOnlineUsers.delete(guildId);
-    }
+    if (users.size === 0) guildOnlineUsers.delete(guildId);
+    return true;
   }
+  users.set(userId, count);
+  return false;
 }
 
 function broadcastOnline(guildId: string) {
   const users = guildOnlineUsers.get(guildId);
-  const onlineIds = users ? Array.from(users) : [];
+  const onlineIds = users ? Array.from(users.keys()) : [];
   ioContext.instance?.to(`guild:${guildId}`).emit('guild:online', { onlineIds });
+}
+
+function addGlobalUser(userId: string) {
+  globalOnlineUsers.set(userId, (globalOnlineUsers.get(userId) || 0) + 1);
+}
+
+/** @returns true si el usuario quedó totalmente offline (última pestaña cerrada). */
+function removeGlobalUser(userId: string): boolean {
+  const count = (globalOnlineUsers.get(userId) || 1) - 1;
+  if (count <= 0) {
+    globalOnlineUsers.delete(userId);
+    return true;
+  }
+  globalOnlineUsers.set(userId, count);
+  return false;
 }
 
 export const createSocketServer = (httpServer: HttpServer) => {
@@ -80,6 +106,12 @@ export const createSocketServer = (httpServer: HttpServer) => {
   const messageLimiter = createSocketRateLimiter({ maxEvents: 10, windowMs: 5000 });
   // Rate limiter for reactions (more permissive: quick taps across emojis)
   const reactionLimiter = createSocketRateLimiter({ maxEvents: 20, windowMs: 5000 });
+  // Rate limiter para recibos de lectura (eventos de bajo riesgo pero muy
+  // frecuentes) y para indicadores de escritura. El cliente emite dm:typing por
+  // tecla (throttleado a ~1/400ms en el chat), así que 30/10s da margen real
+  // para teclistas rápidos sin abrir la puerta al spam.
+  const readLimiter = createSocketRateLimiter({ maxEvents: 30, windowMs: 10_000 });
+  const typingLimiter = createSocketRateLimiter({ maxEvents: 30, windowMs: 10_000 });
 
   // Authentication middleware
   io.use(async (socket: AuthenticatedSocket, next) => {
@@ -132,12 +164,12 @@ export const createSocketServer = (httpServer: HttpServer) => {
     // Join personal room for notifications & targeted events
     socket.join(`user:${userId}`);
 
-    // Global presence tracking
-    globalOnlineUsers.add(userId);
+    // Global presence tracking (conteo por socket: multi-pestaña seguro)
+    addGlobalUser(userId);
     // Broadcast to everyone that this user came online
     socket.broadcast.emit('user:online', { userId, username });
     // Send the current online user list to the newly connected client
-    socket.emit('user:online-list', { onlineIds: Array.from(globalOnlineUsers) });
+    socket.emit('user:online-list', { onlineIds: Array.from(globalOnlineUsers.keys()) });
 
     // Handle Direct Messages
     socket.on('dm:message', async (data: { receiverId: string; content: string }) => {
@@ -217,6 +249,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
 
     // Handle typing indicators for DMs
     socket.on('dm:typing', (data: { receiverId: string; isTyping: boolean }) => {
+      if (!typingLimiter.allow(userId)) return; // silencioso: evento efímero
       socket.to(`user:${data.receiverId}`).emit('dm:typing', {
         userId,
         username,
@@ -276,6 +309,10 @@ export const createSocketServer = (httpServer: HttpServer) => {
     // Handle read receipts for DMs
     socket.on('dm:read', async (data: { messageIds: string[] }) => {
       if (!data.messageIds?.length) return;
+      if (!readLimiter.allow(userId)) return; // silencioso: se reintentará solo
+      // Limita el tamaño del IN clause — un cliente abusivo podía mandar miles
+      // de IDs en un solo evento y generar consultas gigantes a la BD.
+      if (data.messageIds.length > 100) return;
       try {
         const updated = await prisma.directMessage.updateMany({
           where: {
@@ -342,13 +379,14 @@ export const createSocketServer = (httpServer: HttpServer) => {
       const room = `guild:${data.guildId}`;
       socket.leave(room);
       (socket.data.guilds as Set<string>).delete(data.guildId);
-      removeOnlineUser(data.guildId, userId);
-      broadcastOnline(data.guildId);
+      // Solo se propaga la baja si el usuario no tiene OTRA pestaña en el gremio
+      if (removeOnlineUser(data.guildId, userId)) broadcastOnline(data.guildId);
       console.log(`[Socket] ${username} left guild room: ${room}`);
     });
 
     // Handle guild typing events
     socket.on('guild:typing', (data: { guildId: string; channelId: string; isTyping: boolean }) => {
+      if (!typingLimiter.allow(userId)) return; // silencioso: evento efímero
       socket.to(`guild:${data.guildId}`).emit('guild:typing', {
         userId,
         username,
@@ -493,20 +531,22 @@ export const createSocketServer = (httpServer: HttpServer) => {
     });
 
     socket.on('disconnect', () => {
-      // Remove from global presence tracking
-      globalOnlineUsers.delete(userId);
-      socket.broadcast.emit('user:offline', { userId });
+      // Remove from global presence tracking (solo cuando cierra la ÚLTIMA pestaña)
+      if (removeGlobalUser(userId)) {
+        socket.broadcast.emit('user:offline', { userId });
+      }
 
       // Clean up rate limiter entries
       messageLimiter.remove(userId);
       reactionLimiter.remove(userId);
+      readLimiter.remove(userId);
+      typingLimiter.remove(userId);
 
       // Remove user from all guilds they were in
       const guilds = socket.data.guilds as Set<string> | undefined;
       if (guilds) {
         guilds.forEach(guildId => {
-          removeOnlineUser(guildId, userId);
-          broadcastOnline(guildId);
+          if (removeOnlineUser(guildId, userId)) broadcastOnline(guildId);
         });
         guilds.clear();
       }

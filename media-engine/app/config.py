@@ -1,11 +1,14 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
 class Settings(BaseSettings):
+    # Pydantic V2: ConfigDict sustituye a la sintaxis class Config (deprecada
+    # en V2.0 y eliminada en V3.0).
+    model_config = SettingsConfigDict(env_file="../.env", extra="ignore")
     # FastAPI
     APP_NAME: str = "Gremio Estelar — Media Engine"
     DEBUG: bool = False
@@ -40,10 +43,6 @@ class Settings(BaseSettings):
         "image/webp",
         "image/gif",
     ]
-
-    class Config:
-        env_file = "../.env"
-        extra = "ignore"
 
 
 settings = Settings()
