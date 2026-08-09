@@ -6,6 +6,7 @@ const mockUserRepository = vi.hoisted(() => ({
   findByUsername: vi.fn(),
   createUser: vi.fn(),
   findById: vi.fn(),
+  queryUserWithProfiles: vi.fn(),
 }));
 
 const mockAuthRepository = vi.hoisted(() => ({
@@ -28,6 +29,11 @@ vi.mock('../../database', () => ({
     },
   },
 }));
+
+// Fail-open guard: default to resolving like a normal findUnique (no P2021).
+mockUserRepository.queryUserWithProfiles.mockImplementation(
+  (_db: any, id: string) => Promise.resolve({ id, email: 'test@example.com', role: 'USER', username: 'testuser' })
+);
 
 import * as AuthService from './auth.service';
 import bcrypt from 'bcrypt';

@@ -23,14 +23,34 @@ export const findByUsernameInsensitive = async (username: string) => {
   });
 };
 
+// ── Guard fail-open para StreamerProfile ───────────────────────────────────
+// En DBs de producción legacy que aún no han corrido la migración
+// 20260809_add_streamer_role, la tabla "StreamerProfile" no existe y CUALQUIER
+// query con include: { streamerProfile } lanza P2021 (500) — rompiendo login,
+// registro, /users/me y los perfiles públicos. Este helper reintenta la
+// consulta sin ese include para que la autenticación y los perfiles sigan
+// funcionando mientras la DB se pone al día.
+export const queryUserWithProfiles = async (
+  db: any,
+  id: string,
+  extraInclude: Prisma.UserInclude = {},
+) => {
+  const include: Prisma.UserInclude = { vtuberProfile: true, streamerProfile: true, ...extraInclude };
+  try {
+    return await db.user.findUnique({ where: { id }, include });
+  } catch (err: any) {
+    if (err?.code === 'P2021' && String(err?.meta?.table ?? '').includes('StreamerProfile')) {
+      return await db.user.findUnique({
+        where: { id },
+        include: { vtuberProfile: true, ...extraInclude },
+      });
+    }
+    throw err;
+  }
+};
+
 export const findById = async (id: string) => {
-  return prisma.user.findUnique({
-    where: { id },
-    include: {
-      vtuberProfile: true,
-      streamerProfile: true,
-    },
-  });
+  return queryUserWithProfiles(prisma, id);
 };
 
 export const createUser = async (data: CreateUserPayload) => {
@@ -45,35 +65,50 @@ export const searchByUsernameForMention = async (query: string) => {
     mode: 'insensitive' as any,
   });
 
-  const where: Prisma.UserWhereInput = query
-    ? {
-        OR: [
-          { username: insensitiveContains(query) },
-          { displayName: insensitiveContains(query) },
-          { vtuberProfile: { displayName: insensitiveContains(query) } },
-          { streamerProfile: { displayName: insensitiveContains(query) } },
-        ],
-      }
-    : {};
+  // Fail-open igual que queryUserWithProfiles: sin la tabla StreamerProfile el
+  // WHERE/select de menciones lanzaría P2021 y el @autocomplete moriría.
+  const buildWhere = (includeStreamer: boolean): Prisma.UserWhereInput => {
+    const or: Prisma.UserWhereInput[] = [
+      { username: insensitiveContains(query) },
+      { displayName: insensitiveContains(query) },
+      { vtuberProfile: { displayName: insensitiveContains(query) } },
+    ];
+    if (includeStreamer) or.push({ streamerProfile: { displayName: insensitiveContains(query) } });
+    return query ? { OR: or } : {};
+  };
 
-  return prisma.user.findMany({
-    where,
-    select: {
-      id: true,
-      username: true,
-      displayName: true,
-      avatarUrl: true,
-      role: true,
-      vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
-      streamerProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
-      purchases: {
-        where: { equipped: true },
-        include: { item: true },
-      },
+  const buildSelect = (includeStreamer: boolean): Prisma.UserSelect => ({
+    id: true,
+    username: true,
+    displayName: true,
+    avatarUrl: true,
+    role: true,
+    vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+    ...(includeStreamer
+      ? { streamerProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } } }
+      : {}),
+    purchases: {
+      where: { equipped: true },
+      include: { item: true },
     },
-    take: 15,
-    orderBy: { username: 'asc' },
   });
+
+  const run = (includeStreamer: boolean) =>
+    prisma.user.findMany({
+      where: buildWhere(includeStreamer),
+      select: buildSelect(includeStreamer),
+      take: 15,
+      orderBy: { username: 'asc' },
+    });
+
+  try {
+    return await run(true);
+  } catch (err: any) {
+    if (err?.code === 'P2021' && String(err?.meta?.table ?? '').includes('StreamerProfile')) {
+      return run(false);
+    }
+    throw err;
+  }
 };
 
 export const searchByUsername = async (query: string) => {
@@ -164,15 +199,10 @@ export const updateUser = async (id: string, data: Record<string, unknown>) => {
 };
 
 export const getUserProfileById = async (id: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id },
-    include: {
-      vtuberProfile: true,
-      streamerProfile: true,
-      purchases: {
-        where: { equipped: true },
-        include: { item: true },
-      },
+  const user = await queryUserWithProfiles(prisma, id, {
+    purchases: {
+      where: { equipped: true },
+      include: { item: true },
     },
   });
 
@@ -270,15 +300,10 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       }
     }
 
-    const result = await tx.user.findUnique({
-      where: { id: userId },
-      include: {
-        vtuberProfile: true,
-        streamerProfile: true,
-        purchases: {
-          where: { equipped: true },
-          include: { item: true },
-        },
+    const result = await queryUserWithProfiles(tx, userId, {
+      purchases: {
+        where: { equipped: true },
+        include: { item: true },
       },
     });
 

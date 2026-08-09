@@ -115,10 +115,9 @@ export const login = async (input: LoginInput) => {
   await AuthRepository.createRefreshToken(hashedRefreshToken, user.id, expiresAt);
 
   // Fetch full user with creator profiles (so avatarUrl is available immediately after login)
-  const fullUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    include: { vtuberProfile: true, streamerProfile: true },
-  });
+  // Fail-open: si la tabla StreamerProfile aún no existe (P2021, migración
+  // pendiente en la DB), reintenta sin ese include para no tumbar login/registro.
+  const fullUser = await UserRepository.queryUserWithProfiles(prisma, user.id);
 
   if (!fullUser) {
     throw new AppError('User not found', 404);
