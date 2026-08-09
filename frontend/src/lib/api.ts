@@ -1,6 +1,15 @@
 let currentAccessToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
 
+// ── Cortafuegos anti-torrente de 401 ──────────────────────────────────────
+// Cuando la sesión expira (el refresh falla, o el token renovado también es
+// rechazado), entramos en un periodo de enfriamiento en el que las peticiones
+// autenticadas fallan al instante SIN golpear el servidor. Sin esto, los
+// polls huérfanos (dm/unread-count, notifications/unread-count, gamification,
+// etc.) martillean la API con 401 cada pocos segundos hasta el infinito.
+const AUTH_ENDPOINTS = ['/auth/login', '/auth/register', '/auth/google', '/auth/refresh', '/auth/logout'];
+let authCooldownUntil = 0;
+
 // In production, Next.js rewrites /api/* to the Express backend (port 4001).
 // In development, the Next.js dev server proxies to the Express backend (port 4000).
 // Set NEXT_PUBLIC_API_BASE_URL to '/api' for production, or the full URL for dev.
@@ -8,6 +17,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
 export const setAccessToken = (token: string | null) => {
   currentAccessToken = token;
+  if (token) authCooldownUntil = 0; // nueva sesión → reactivar peticiones
 };
 
 export const getAccessToken = () => currentAccessToken;
@@ -88,6 +98,12 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     apiCache.delete(endpoint);
   }
 
+  // Sesión expirada recientemente: cortar antes de hacer red (los endpoints
+  // de auth quedan exentos para permitir volver a iniciar sesión).
+  if (Date.now() < authCooldownUntil && !AUTH_ENDPOINTS.some(e => endpoint.startsWith(e))) {
+    throw new Error('Session expired');
+  }
+
   const headers = new Headers(options.headers || {});
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
@@ -121,7 +137,19 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
         headers,
         credentials: 'include',
       });
+      // Si el token recién renovado TAMBIÉN da 401 (usuario borrado/baneado
+      // o secreto rotado), la sesión está muerta: activar cortafuegos + emitir
+      // logout global. Sin esto el bucle 401 se repite infinitamente en cada poll.
+      if (response.status === 401) {
+        authCooldownUntil = Date.now() + 60_000;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('auth:unauthorized'));
+        }
+        throw new Error('Session expired');
+      }
     } else {
+      // performRefresh ya emitió 'auth:unauthorized'; aquí solo cortamos el grifo.
+      authCooldownUntil = Date.now() + 60_000;
       throw new Error('Session expired');
     }
   }

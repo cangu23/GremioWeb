@@ -52,9 +52,9 @@ export const connectSocket = (): Socket => {
     auth: { token },
     transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: Infinity,
+    reconnectionAttempts: 15, // antes Infinity: bucle infinito con token muerto
     reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
+    reconnectionDelayMax: 8000,
     timeout: 20000,
   });
 
@@ -83,6 +83,34 @@ export const disconnectSocket = () => {
     socket = null;
   }
 };
+
+// ── Sesión expirada → desconectar ─────────────────────────────────────────
+// Antes, un socket con token muerto reintentaba PARA SIEMPRE (Infinity),
+// llenando la consola de "[Socket] Connection error: timeout" tras el logout
+// o la expiración de sesión (auth:unauthorized). Tiramos el socket compartido;
+// los componentes que lo usan lo recrean al volver a iniciar sesión.
+if (typeof window !== 'undefined') {
+  window.addEventListener('auth:unauthorized', () => {
+    if (socket) {
+      socket.removeAllListeners();
+      socket.disconnect();
+      socket = null;
+    }
+  });
+
+  // Auto-reconexión al volver a la pestaña: con reintentos acotados (15), un
+  // cold start largo de Render (free tier) puede agotarlos; al recuperar el
+  // foco reintentamos en vez de quedarnos muertos hasta recargar la página.
+  const handleReconnect = () => {
+    if (socket && !socket.connected && getAccessToken()) {
+      socket.connect();
+    }
+  };
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') handleReconnect();
+  });
+  window.addEventListener('focus', handleReconnect);
+}
 
 export const NOTIFICATION_EVENTS = {
   NEW: 'notification:new',

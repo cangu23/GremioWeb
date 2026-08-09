@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/lib/ToastContext';
 import { useRouter } from 'next/navigation';
@@ -83,12 +83,11 @@ export default function GoogleLoginButton() {
     );
   }
 
-  // ⚡ OPTIMIZACIÓN: el provider se auto-contiene aquí (antes vivía en el
-  // layout global e inyectaba el script GSI de Google en TODAS las páginas).
-  // GoogleLoginButton solo se renderiza en /login y /register, así que el
-  // script de ~300KB solo se descarga donde de verdad se usa.
+  // ⚡ OPTIMIZACIÓN: el provider GSI vive en el layout del grupo (auth) — un
+  // único GoogleOAuthProvider compartido entre /login y /register. Antes cada
+  // montaje del botón llamaba google.accounts.id.initialize() de nuevo (doble
+  // init en consola). El script de ~300KB solo se descarga en las páginas de auth.
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <GoogleLogin
       onSuccess={async (credentialResponse) => {
         try {
@@ -130,6 +129,5 @@ export default function GoogleLoginButton() {
         },
       }}
     />
-    </GoogleOAuthProvider>
   );
 }
