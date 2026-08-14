@@ -69,22 +69,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isRefreshing.current) return true;
     isRefreshing.current = true;
     try {
-      const token = await performRefresh();
-      if (token) {
-        const profile = await apiFetch('/users/me');
-        if (profile?.dailyRewardClaimed?.message) {
-          showToast(`🔥 ${profile.dailyRewardClaimed.message}`, 'success');
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new Event('stardust-updated'));
+      const { accessToken, rejected } = await performRefresh();
+
+      if (accessToken) {
+        try {
+          const profile = await apiFetch('/users/me');
+          if (profile?.id) {
+            if (profile?.dailyRewardClaimed?.message) {
+              showToast(`🔥 ${profile.dailyRewardClaimed.message}`, 'success');
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('stardust-updated'));
+              }
+            }
+            setUser(profile);
+            setCachedUser(profile);
+          }
+        } catch (err) {
+          // El access token recién renovado también fue rechazado (usuario
+          // baneado/borrado, secreto rotado): la sesión está muerta → limpiar.
+          // Un fallo transitorio (red/cold start) conserva el user cacheado.
+          if (err instanceof Error && err.message === 'Session expired') {
+            setAccessToken(null);
+            setUser(null);
+            setCachedUser(null);
+            return false;
           }
         }
-        setUser(profile);
-        setCachedUser(profile);
         return true;
       }
-      return false;
+
+      if (rejected) {
+        // El servidor rechazó explícitamente el refresh token → sesión muerta.
+        setAccessToken(null);
+        setUser(null);
+        setCachedUser(null);
+        return false;
+      }
+
+      // Fallo transitorio (cold start, red): la sesión sigue viva; conservamos
+      // el user cacheado y el siguiente intento se recupera solo.
+      return true;
     } catch {
-      return false;
+      return true;
     } finally {
       isRefreshing.current = false;
     }
@@ -96,24 +122,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (initialCheckDone.current) return;
     initialCheckDone.current = true;
 
-    // Restaurar el usuario cacheado inmediatamente tras la hidratación,
-    // para que el navbar/UI logueados aparezcan sin esperar a refreshAuth.
-    const cached = getCachedUser();
-    if (cached) setUser(cached);
-
-    const loadUser = async () => {
-      const ok = await refreshAuth();
-      if (!ok) {
-        setAccessToken(null);
-        setUser(null);
-        setCachedUser(null);
-      }
-      setIsLoading(false);
-    };
-
-    loadUser();
-
     // ── 1. Handle 401 interceptor from api.ts  ─────────────────────────
+    // Se registra ANTES de lanzar loadUser: si el refresh de abajo es rechazado
+    // explícitamente, el evento 'auth:unauthorized' ya tiene quién lo escuche
+    // y limpia la sesión.
     const handleUnauthorized = () => {
       isRefreshing.current = false;
       setAccessToken(null);
@@ -135,6 +147,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener('stardust-updated', handleRefetchUser);
     window.addEventListener('stardust:updated', handleRefetchUser);
     window.addEventListener('user-refetched', handleRefetchUser);
+
+    // ── 2. Render inmediato ────────────────────────────────────────────
+    // Restaurar el user cacheado y DESBLOQUEAR el render de inmediato. Antes,
+    // `isLoading` seguía en true hasta completar refresh + /users/me (~2 round
+    // trips; con cold starts del backend, decenas de segundos) y la página
+    // entera (spinner del home) esperaba. Ahora el UI pinta al instante con el
+    // cache y la validación de sesión ocurre en segundo plano (loadUser).
+    const cached = getCachedUser();
+    if (cached) setUser(cached);
+    setIsLoading(false);
+
+    const loadUser = async () => {
+      const ok = await refreshAuth();
+      if (!ok) {
+        // refreshAuth ya limpió el estado ante rechazo explícito; esto es
+        // solo red de seguridad.
+        setAccessToken(null);
+        setUser(null);
+        setCachedUser(null);
+      }
+      setIsLoading(false);
+    };
+
+    loadUser();
 
     // ── 2. BFCache — browser back/forward cache  ───────────────────────
     // When the user navigates away and comes back via the browser's

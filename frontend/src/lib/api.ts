@@ -1,5 +1,21 @@
 let currentAccessToken: string | null = null;
-let refreshPromise: Promise<string | null> | null = null;
+let refreshPromise: Promise<RefreshResult> | null = null;
+
+// ── Resultado del refresh de sesión ────────────────────────────────────────
+// `rejected` indica si el servidor RECHAZÓ explícitamente el refresh token
+// (401/403 o "no hay sesión"). Si es false pero accessToken es null, fue un
+// fallo TRANSITORIO (red, timeout, cold start): la sesión sigue viva y no hay
+// que cerrarla.
+export type RefreshResult = {
+  accessToken: string | null;
+  rejected: boolean;
+};
+
+// Cuánto esperar a que el backend responda al refresh. En hosts que duermen
+// (Render free tier → cold start de decenas de segundos) es mejor no bloquear
+// la app ni tirar la sesión por una espera larga: un timeout se trata como
+// fallo transitorio y el siguiente intento se recupera solo.
+const REFRESH_TIMEOUT_MS = 20000;
 
 // ── Cortafuegos anti-torrente de 401 ──────────────────────────────────────
 // Cuando la sesión expira (el refresh falla, o el token renovado también es
@@ -22,39 +38,69 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => currentAccessToken;
 
-export async function performRefresh(): Promise<string | null> {
+export async function performRefresh(): Promise<RefreshResult> {
   if (refreshPromise) {
     return refreshPromise;
   }
 
-  refreshPromise = (async () => {
+  refreshPromise = (async (): Promise<RefreshResult> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
+
+    // Sesión muerta: el servidor rechazó explícitamente el token.
+    const markRejected = (): RefreshResult => {
+      setAccessToken(null);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth:unauthorized'));
+      }
+      return { accessToken: null, rejected: true };
+    };
+
     try {
-      const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-
-      if (refreshRes.ok) {
-        const data = await refreshRes.json();
-        if (data?.accessToken) {
-          setAccessToken(data.accessToken);
-          return data.accessToken;
+      const attempt = async (): Promise<{ status: number; accessToken: string | null }> => {
+        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        if (!refreshRes.ok) {
+          return { status: refreshRes.status, accessToken: null };
         }
+        const data = await refreshRes.json();
+        return { status: refreshRes.status, accessToken: data?.accessToken ?? null };
+      };
+
+      let result = await attempt();
+
+      // ── Rotación concurrente entre pestañas ──────────────────────────────
+      // El backend rota el refresh token en CADA refresh (borra el anterior y
+      // crea uno nuevo). Si dos pestañas refrescan a la vez (cookie compartida),
+      // la perdedora recibe 401 "Refresh token not found". Esperamos un instante
+      // para que llegue la cookie nueva del ganador y reintentamos UNA vez: la
+      // pestaña perdedora recupera la sesión en vez de cerrarse sola. Si el
+      // token estaba realmente expirado/revocado, el retry también falla →
+      // sesión cerrada (comportamiento correcto).
+      if ((result.status === 401 || result.status === 403) && !controller.signal.aborted) {
+        await new Promise((r) => setTimeout(r, 300));
+        result = await attempt();
       }
 
-      setAccessToken(null);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('auth:unauthorized'));
+      if (result.accessToken) {
+        setAccessToken(result.accessToken);
+        return { accessToken: result.accessToken, rejected: false };
       }
-      return null;
+
+      // 200 sin token = el servidor dice que no hay sesión (visitante).
+      // 401/403 tras el retry = token expirado o revocado. Ambos → sesión muerta.
+      return markRejected();
     } catch {
-      setAccessToken(null);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('auth:unauthorized'));
-      }
-      return null;
+      // Fallo TRANSITORIO (red, timeout, cold start del backend): NO cerramos
+      // la sesión ni tocamos el access token en memoria. El siguiente intento
+      // puede recuperarse sin que el usuario "se salga solo".
+      return { accessToken: null, rejected: false };
     } finally {
+      clearTimeout(timer);
       refreshPromise = null;
     }
   })();
@@ -127,11 +173,11 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
   // The refresh token is stored only in an HttpOnly cookie by the backend.
   if (response.status === 401 && endpoint !== '/auth/refresh' && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
-    const newAccessToken = await performRefresh();
+    const refreshResult = await performRefresh();
 
-    if (newAccessToken) {
+    if (refreshResult.accessToken) {
       // Retry original request with new access token
-      headers.set('Authorization', `Bearer ${newAccessToken}`);
+      headers.set('Authorization', `Bearer ${refreshResult.accessToken}`);
       response = await fetch(url, {
         ...options,
         headers,
@@ -148,7 +194,10 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
         throw new Error('Session expired');
       }
     } else {
-      // performRefresh ya emitió 'auth:unauthorized'; aquí solo cortamos el grifo.
+      // Si el refresh fue rechazado explícitamente, performRefresh ya emitió
+      // 'auth:unauthorized' (la sesión se limpia). Si fue un fallo transitorio
+      // (red/cold start) la sesión se conserva; aquí solo cortamos el grifo
+      // temporalmente para no martillear el servidor.
       authCooldownUntil = Date.now() + 60_000;
       throw new Error('Session expired');
     }

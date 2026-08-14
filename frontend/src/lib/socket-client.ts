@@ -63,7 +63,8 @@ export const connectSocket = (): Socket => {
     if (err.message.includes('token') || err.message.includes('Authentication') || err.message.includes('cuenta')) {
       try {
         const { performRefresh } = await import('./api');
-        const newToken = await performRefresh();
+        const result = await performRefresh();
+        const newToken = result?.accessToken;
         if (newToken && socket) {
           (socket as any).auth = { token: newToken };
           socket.connect();
