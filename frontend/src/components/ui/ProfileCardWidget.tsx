@@ -8,13 +8,14 @@ import { useAuth } from '@/lib/AuthContext';
 import UserAvatar, { getNoteBubbleStyle } from './UserAvatar';
 import PetWidget from './PetWidget';
 import RoleBadge from './RoleBadge';
-import { hasAnyRole } from '@gremio-estelar/shared';
+import { getPrimaryRole, hasAnyRole } from '@gremio-estelar/shared';
 
 // ── Types ──
 interface ProfileCardData {
   id: string;
   username: string;
   role: string;
+  displayedRole?: string | null;
   xp: number;
   level: number;
   displayName?: string | null;
@@ -223,6 +224,16 @@ function CardContent({
   const isOwnProfile = currentUser?.id === profile.id;
   const isVtubers = hasAnyRole(profile.role, ['VTUBER']) || (profile.vtuberProfile?.isApproved ?? false);
   const isStreamer = hasAnyRole(profile.role, ['STREAMER']) || ((profile as any).streamerProfile?.isApproved ?? false);
+  // Insignia: respeta la elección del usuario (displayedRole, ver Ajustes), y si su rol base
+  // es USER pero tiene perfil de creador aprobado, muestra VTUBER/STREAMER en su lugar.
+  const roleFromRoleField = getPrimaryRole(profile.role, profile.displayedRole);
+  const badgeRole = roleFromRoleField !== 'USER'
+    ? roleFromRoleField
+    : isVtubers
+      ? 'VTUBER'
+      : isStreamer
+        ? 'STREAMER'
+        : roleFromRoleField;
   const vtuber = profile.vtuberProfile;
   const streamer = (profile as any).streamerProfile;
   const parseItemData = (data: string | null) => {
@@ -419,7 +430,7 @@ function CardContent({
           </h3>
 
           <RoleBadge
-            role={profile.role || (isVtubers ? 'VTUBER' : isStreamer ? 'STREAMER' : 'USER')}
+            role={badgeRole}
             size="sm"
             isVerified={isVerified}
           />
