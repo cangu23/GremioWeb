@@ -518,47 +518,58 @@ function UserSettings() {
           </div>
         )}
 
-        {/* Preferred Display Badge (when user has multiple roles) */}
-        {user && parseUserRoles(user.role).length > 1 && (
-          <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>
-            <h3 style={{
-              fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px',
-              display: 'flex', alignItems: 'center', gap: '8px', color: '#f5e6d3'
-            }}>
-              🏷️ Insignia Principal Visible en Publicaciones
-            </h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              Tienes múltiples roles asignados. Selecciona cuál de ellos deseas mostrar al lado de tu nombre en el Feed y comentarios:
-            </p>
+        {/* Preferred Display Badge (when user has multiple roles or an approved creator profile) */}
+        {user && (() => {
+          const accountRoles = parseUserRoles(user.role);
+          const displayableRoles = Array.from(new Set([
+            ...accountRoles,
+            ...(user.vtuberProfile?.isApproved ? ['VTUBER'] : []),
+            ...((user as any).streamerProfile?.isApproved ? ['STREAMER'] : []),
+          ]));
+          if (displayableRoles.length < 2) return null;
+          const effectiveShownRole = displayedRole
+            || (user.vtuberProfile?.isApproved ? 'VTUBER' : (user as any).streamerProfile?.isApproved ? 'STREAMER' : getPrimaryRole(user.role, null));
+          return (
+            <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>
+              <h3 style={{
+                fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px',
+                display: 'flex', alignItems: 'center', gap: '8px', color: '#f5e6d3'
+              }}>
+                🏷️ Insignia Principal Visible en Publicaciones
+              </h3>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                Selecciona cuál de tus roles deseas mostrar al lado de tu nombre en el Feed, comentarios y el widget de perfil:
+              </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
-              {parseUserRoles(user.role).map((r) => {
-                const isSelected = (displayedRole || getPrimaryRole(user.role, null)) === r;
-                return (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setDisplayedRole(r)}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: '12px',
-                      border: isSelected ? '2px solid #d4a030' : '1px solid rgba(255,255,255,0.1)',
-                      background: isSelected ? 'rgba(212,160,48,0.15)' : 'rgba(255,255,255,0.03)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <RoleBadge role={r} size="sm" />
-                    {isSelected && <span style={{ color: '#d4a030', fontWeight: 800, fontSize: '0.9rem' }}>✓</span>}
-                  </button>
-                );
-              })}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+                {displayableRoles.map((r) => {
+                  const isSelected = effectiveShownRole === r;
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setDisplayedRole(r)}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '12px',
+                        border: isSelected ? '2px solid #d4a030' : '1px solid rgba(255,255,255,0.1)',
+                        background: isSelected ? 'rgba(212,160,48,0.15)' : 'rgba(255,255,255,0.03)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <RoleBadge role={r} size="sm" />
+                      {isSelected && <span style={{ color: '#d4a030', fontWeight: 800, fontSize: '0.9rem' }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Profile Background Music (Spotify — NOVA & STELLAR Premium Feature) — DISABLED (PROFILE_MUSIC_ENABLED = false) */}
         {PROFILE_MUSIC_ENABLED && (() => {
