@@ -45,6 +45,7 @@ interface CafeSettings {
   cafe_timezone: string;
   cafe_logo_url: string;
   cafe_banner_url: string;
+  cafe_carousel_images: string;
 }
 
 /* ─── Event config ─── */
@@ -81,6 +82,7 @@ const SETTING_FIELDS: SettingField[] = [
   // Images
   { key: 'cafe_logo_url', label: 'Logo del Café', type: 'image', section: 'images' },
   { key: 'cafe_banner_url', label: 'Banner del Café', type: 'image', section: 'images' },
+  { key: 'cafe_carousel_images', label: 'Fotos del Carrusel (URLs separadas por comas)', type: 'textarea', placeholder: 'https://ejemplo.com/foto1.png, https://ejemplo.com/foto2.png', section: 'images' },
   // Appearance
   { key: 'cafe_color_primary', label: 'Color Principal', type: 'color', section: 'appearance' },
   { key: 'cafe_color_secondary', label: 'Color Secundario', type: 'color', section: 'appearance' },

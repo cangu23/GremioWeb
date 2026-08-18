@@ -10,12 +10,12 @@ import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import { hasAnyRole } from '@gremio-estelar/shared';
 
-/* ─────────── Color Theme (café crema) ─────────── */
+/* ─────────── Color Theme (Estelar + Café Crema) ─────────── */
 const theme = {
-  bg: '#1a1410',
-  bgLight: '#2a221c',
-  bgCard: 'rgba(45, 38, 32, 0.85)',
-  bgCardHover: 'rgba(55, 48, 42, 0.9)',
+  bg: '#140f0c',
+  bgLight: '#221914',
+  bgCard: 'rgba(38, 29, 23, 0.85)',
+  bgCardHover: 'rgba(48, 38, 30, 0.95)',
   cream: '#f5e6d3',
   creamLight: '#faf0e6',
   creamDark: '#d4c4b0',
@@ -30,99 +30,134 @@ const theme = {
   textDark: '#7a6a5a',
   gold: '#d4a030',
   goldLight: '#e8c060',
-  border: 'rgba(180, 150, 120, 0.15)',
-  borderHover: 'rgba(180, 150, 120, 0.3)',
+  purple: '#c084fc',
+  purpleLight: '#e9d5ff',
+  border: 'rgba(212, 160, 48, 0.18)',
+  borderHover: 'rgba(212, 160, 48, 0.4)',
 };
 
 /* ─────────── SVG Icons ─────────── */
 const ICONS = {
-  coffee: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+  vrchat: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 10s3-4 10-4 10 4 10 4" />
+      <path d="M2 14s3 4 10 4 10-4 10-4" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   ),
   star: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill={theme.gold} stroke={theme.gold} strokeWidth="1">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   ),
   clock: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
     </svg>
   ),
   globe: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z" />
     </svg>
   ),
   discord: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3847-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.0371 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#5865F2">
+      <path d="M20.317 4.3698a19.7913 19.7913 0 0 0-4.8851-1.5152.0741.0741 0 0 0-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3847-.4058-.8742-.6177-1.2495a.077.077 0 0 0-.0785-.0371 19.7363 19.7363 0 0 0-4.8852 1.515.0699.0699 0 0 0-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 0 0 .0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 0 0 .0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 0 0-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 0 1-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 0 1 .0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 0 1 .0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 0 1-.0066.1276 12.2986 12.2986 0 0 1-1.873.8914.0766.0766 0 0 0-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 0 0 .0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 0 0 .0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 0 0-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" />
+    </svg>
   ),
-  heart: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill={theme.gold} stroke={theme.gold} strokeWidth="1">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  sparkles: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
+      <path d="M6 16l1 2.5L9.5 19l-2.5 1L6 22.5 5 20 2.5 19 5 18z" />
+      <path d="M16 4l.5 1.5L18 6l-1.5.5L16 8l-.5-1.5L14 6l1.5-.5z" />
     </svg>
   ),
   music: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-    </svg>
-  ),
-  cat: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 5c-4 0-7 3-7 7v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4c0-4-3-7-7-7z"/><path d="M8 12h.01M16 12h.01"/><circle cx="9" cy="11" r="0.5"/><circle cx="15" cy="11" r="0.5"/><path d="M9 16c1.5 1 4.5 1 6 0"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={theme.purple} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
     </svg>
   ),
   tea: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 8h.01M12 8h.01M7 8h.01"/><rect x="4" y="2" width="16" height="20" rx="3"/><line x1="12" y1="12" x2="12" y2="18"/><path d="M8 18h8"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 8h.01M12 8h.01M7 8h.01" />
+      <path d="M5 8h14v7a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8z" />
+      <path d="M19 11h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2" />
     </svg>
   ),
-  lounge: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 12h20"/><path d="M6 12v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M6 18h12"/><path d="M9 18v2"/><path d="M15 18v2"/>
+  heart: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill={theme.gold} stroke={theme.gold} strokeWidth="1">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
   ),
-  arrowRight: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  gamepad: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="6" y1="12" x2="10" y2="12" />
+      <line x1="8" y1="10" x2="8" y2="14" />
+      <circle cx="15" cy="11" r="1" />
+      <circle cx="17" cy="13" r="1" />
+      <rect x="2" y="6" width="20" height="12" rx="6" />
+    </svg>
+  ),
+  camera: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  ),
+  shield: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   ),
   check: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="8 12 11 15 16 9"/>
+      <polyline points="8 12 11 15 16 9" />
+    </svg>
+  ),
+  copy: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
     </svg>
   ),
   home: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
   ),
-  sparkles: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M6 16l1 2.5L9.5 19l-2.5 1L6 22.5 5 20 2.5 19 5 18z"/><path d="M16 4l.5 1.5L18 6l-1.5.5L16 8l-.5-1.5L14 6l1.5-.5z"/>
+  arrowRight: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
     </svg>
   ),
 };
 
 /* ─────────── Floating Stars Particle Component ─────────── */
-function FloatingStars({ count = 20 }: { count?: number }) {
-  const stars = useMemo(() =>
-    Array.from({ length: count }, (_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      size: Math.random() * 4 + 2,
-      delay: `${Math.random() * 5}s`,
-      duration: `${3 + Math.random() * 4}s`,
-      opacity: 0.2 + Math.random() * 0.4,
-    })),
-  [count]);
+function FloatingStars({ count = 25 }: { count?: number }) {
+  const stars = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        size: Math.random() * 4 + 2,
+        delay: `${Math.random() * 5}s`,
+        duration: `${3 + Math.random() * 4}s`,
+        opacity: 0.2 + Math.random() * 0.4,
+      })),
+    [count]
+  );
 
   return (
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-      {stars.map(star => (
+      {stars.map((star) => (
         <div
           key={star.id}
           style={{
@@ -157,42 +192,425 @@ function FloatingStars({ count = 20 }: { count?: number }) {
   );
 }
 
-/* ─────────── Menu data ─────────── */
-const menuItems = [
-  { name: 'Latte Estelar', desc: 'Espresso con leche cremosa y un toque de canela', price: '5.50', cat: 'drinks' },
-  { name: 'Matcha Starlight', desc: 'Té matcha premium con leche de almendras', price: '6.00', cat: 'drinks' },
-  { name: 'Café de la Galaxia', desc: 'Café cold brew con crema batida y estrellas comestibles', price: '7.50', cat: 'drinks' },
-  { name: 'Chocolate Caliente Celestial', desc: 'Chocolate belga con malvaviscos y crema batida', price: '5.00', cat: 'drinks' },
-  { name: 'Té de Luna Llena', desc: 'Infusión floral de jazmín y lavanda', price: '4.50', cat: 'drinks' },
-  { name: 'Frappé Nebulosa', desc: 'Frappé de vainilla con caramelo y crema', price: '6.50', cat: 'drinks' },
-  { name: 'Pastel de la Osa Mayor', desc: 'Pastel de zanahoria con glaseado de queso crema', price: '4.50', cat: 'desserts' },
-  { name: 'Galletas de la Vía Láctea', desc: 'Galletas de avena con chispas de chocolate blanco', price: '3.50', cat: 'desserts' },
-  { name: 'Macarons Estelares', desc: 'Macarons artesanales de frambuesa y pistacho', price: '5.00', cat: 'desserts' },
-  { name: 'Parfait Nebula', desc: 'Parfait de yogur con granola, frutas y miel de estrellas', price: '6.00', cat: 'desserts' },
+/* ─────────── Photo Carousel Component ─────────── */
+function PhotoCarousel({ images }: { images: { url: string; title?: string; caption?: string }[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // Fallback default images if user hasn't added photos yet
+  const slides = useMemo(() => {
+    if (images && images.length > 0) return images;
+    return [
+      {
+        url: '/hoshi.png',
+        title: 'Galería VRChat Hoshizora',
+        caption: 'Explora nuestros momentos especiales, eventos y reuniones en VRChat.',
+      },
+      {
+        url: '/hoshi.png',
+        title: 'Noches de Karaoke & Shows',
+        caption: 'Disfruta de la música en vivo y la compañía de nuestras maids.',
+      },
+      {
+        url: '/hoshi.png',
+        title: 'Instancias & Espacios VIP',
+        caption: 'Un ambiente acogedor preparado con cariño para toda la comunidad.',
+      },
+    ];
+  }, [images]);
+
+  useEffect(() => {
+    if (!isAutoPlaying || slides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isAutoPlaying, slides.length]);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % slides.length);
+  };
+
+  return (
+    <section id="galeria" style={{ padding: '60px 24px', position: 'relative', zIndex: 2 }}>
+      <div style={{ maxWidth: '1050px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <span
+            style={{
+              color: theme.gold,
+              fontWeight: 800,
+              fontSize: '0.78rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.15em',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            {ICONS.camera} Galería de Recuerdos VRChat {ICONS.sparkles}
+          </span>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', fontWeight: 800, color: theme.cream, marginTop: '8px' }}>
+            Galería <span style={{ color: theme.gold }}>Hoshizora</span>
+          </h2>
+          <p style={{ color: theme.textMuted, fontSize: '0.9rem', marginTop: '4px' }}>
+            Capturas y momentos especiales dentro de nuestro mundo en VRChat
+          </p>
+        </div>
+
+        {/* Main Carousel Frame */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '440px',
+            borderRadius: '24px',
+            overflow: 'hidden',
+            border: `1px solid ${theme.border}`,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(212,160,48,0.12)',
+            background: '#1a1410',
+          }}
+          onMouseEnter={() => setIsAutoPlaying(false)}
+          onMouseLeave={() => setIsAutoPlaying(true)}
+        >
+          {/* Slide items */}
+          {slides.map((slide, idx) => (
+            <div
+              key={idx}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: idx === currentIndex ? 1 : 0,
+                transform: `scale(${idx === currentIndex ? 1 : 1.05})`,
+                transition: 'all 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
+                pointerEvents: idx === currentIndex ? 'auto' : 'none',
+              }}
+            >
+              {/* Background Image / Blur backdrop */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundImage: `url(${slide.url})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  filter: 'brightness(0.7) contrast(1.05)',
+                }}
+              />
+
+              {/* Gradient overlays for cinematic contrast */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(to top, rgba(20,15,12,0.95) 0%, rgba(20,15,12,0.4) 40%, rgba(20,15,12,0.2) 100%)',
+                }}
+              />
+
+              {/* Slide Caption Box */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '36px',
+                  left: '36px',
+                  right: '36px',
+                  zIndex: 3,
+                  maxWidth: '650px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'inline-block',
+                    padding: '4px 12px',
+                    borderRadius: '8px',
+                    background: 'rgba(212,160,48,0.2)',
+                    border: '1px solid rgba(212,160,48,0.4)',
+                    color: theme.gold,
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    marginBottom: '8px',
+                  }}
+                >
+                  {idx + 1} / {slides.length} • Momento VRChat
+                </div>
+                <h3 style={{ fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', fontWeight: 800, color: theme.cream, marginBottom: '6px' }}>
+                  {slide.title || 'Hoshizora Maid Café'}
+                </h3>
+                <p style={{ fontSize: '0.92rem', color: theme.textMuted, lineHeight: 1.6, textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+                  {slide.caption || 'Recuerdos de nuestras aperturas y eventos en VRChat.'}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {/* Navigation Controls (Arrows) */}
+          {slides.length > 1 && (
+            <>
+              <button
+                onClick={handlePrev}
+                aria-label="Anterior foto"
+                style={{
+                  position: 'absolute',
+                  left: '20px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 5,
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '50%',
+                  background: 'rgba(38, 29, 23, 0.75)',
+                  border: `1px solid ${theme.border}`,
+                  color: theme.cream,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'all 0.25s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(212,160,48,0.3)';
+                  e.currentTarget.style.borderColor = theme.gold;
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(38, 29, 23, 0.75)';
+                  e.currentTarget.style.borderColor = theme.border;
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+
+              <button
+                onClick={handleNext}
+                aria-label="Siguiente foto"
+                style={{
+                  position: 'absolute',
+                  right: '20px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 5,
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '50%',
+                  background: 'rgba(38, 29, 23, 0.75)',
+                  border: `1px solid ${theme.border}`,
+                  color: theme.cream,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'all 0.25s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(212,160,48,0.3)';
+                  e.currentTarget.style.borderColor = theme.gold;
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(38, 29, 23, 0.75)';
+                  e.currentTarget.style.borderColor = theme.border;
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </>
+          )}
+
+          {/* Dots Indicators */}
+          {slides.length > 1 && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '18px',
+                right: '36px',
+                zIndex: 5,
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+              }}
+            >
+              {slides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentIndex(idx)}
+                  aria-label={`Ver foto ${idx + 1}`}
+                  style={{
+                    width: idx === currentIndex ? '28px' : '9px',
+                    height: '9px',
+                    borderRadius: '5px',
+                    background: idx === currentIndex ? theme.gold : 'rgba(255,255,255,0.3)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: idx === currentIndex ? '0 0 10px rgba(212,160,48,0.6)' : 'none',
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────── Experiencias VRChat Data ─────────── */
+interface VrExperience {
+  id: string;
+  name: string;
+  category: 'anfitrionia' | 'shows' | 'juegos';
+  desc: string;
+  badge: string;
+  icon: React.ReactNode;
+  highlights: string[];
+}
+
+const VR_EXPERIENCES: VrExperience[] = [
+  {
+    id: 'anfitrionia-1',
+    name: 'Anfitrionía & Reservados Privados',
+    category: 'anfitrionia',
+    desc: 'Atención dedicada de nuestras maids en los reservados del café en VRChat. Espacios tranquilos para platicar y pasar un momento acogedor.',
+    badge: 'Atención VRChat',
+    icon: ICONS.heart,
+    highlights: ['Conversación amena', 'Acompañamiento VIP', 'Ambiente relajado'],
+  },
+  {
+    id: 'shows-1',
+    name: 'Shows de Canto & Karaoke en Vivo',
+    category: 'shows',
+    desc: 'Presentaciones musicales en el escenario principal del mapa de VRChat. Disfruta de canciones interpretadas por las maids o únete a la tarima.',
+    badge: 'Espectáculo VR',
+    icon: ICONS.music,
+    highlights: ['Música en vivo', 'Karaoke grupal', 'Luces y escenario estelar'],
+  },
+  {
+    id: 'juegos-1',
+    name: 'Dinámicas & Mini-Juegos VR',
+    category: 'juegos',
+    desc: 'Juegos interactivos, trivias anime y competencias amistosas dentro del mundo virtual en VRChat.',
+    badge: 'Interactividad',
+    icon: ICONS.gamepad,
+    highlights: ['Trivias en equipo', 'Rallys virtuales', 'Premios del Gremio'],
+  },
+  {
+    id: 'anfitrionia-2',
+    name: 'Ceremonia del Té Virtual',
+    category: 'anfitrionia',
+    desc: 'Una experiencia guiada para compartir un momento de serenidad y charla tradicional alrededor de la mesa estelar.',
+    badge: 'Experiencia Kawaii',
+    icon: ICONS.tea,
+    highlights: ['Ritual de bienvenida', 'Charlas guiadas', 'Ambiente tradicional'],
+  },
+  {
+    id: 'anfitrionia-3',
+    name: 'Hechizo Estelar (Moe Moe Kyun! ✨)',
+    category: 'anfitrionia',
+    desc: 'Bendición kawaii y rituales de roleplay para animar tu día y desearte la mejor de las suertes en tus aventuras virtuales.',
+    badge: 'Roleplay Maid',
+    icon: ICONS.sparkles,
+    highlights: ['Encanto kawaii', 'Roleplay interactivo', 'Fotografía especial'],
+  },
+  {
+    id: 'shows-2',
+    name: 'Sesión Fotográfica & Recuerdos Estelares',
+    category: 'shows',
+    desc: 'Posa junto a tus maids favoritas en las zonas temáticas del mapa de VRChat para conservar un recuerdo fotográfico.',
+    badge: 'Fotografía VR',
+    icon: ICONS.camera,
+    highlights: ['Zonas temáticas', 'Fotos de recuerdo', 'Publicación en comunidad'],
+  },
 ];
 
 interface StaffMember {
   id: string;
   username: string;
   role: string;
+  status?: string;
   vtuberProfile?: {
     displayName: string;
     avatarUrl: string | null;
     description: string | null;
     isVerified: boolean;
     isApproved: boolean;
+    streamSchedule?: string | null;
+    twitchUrl?: string | null;
+    youtubeUrl?: string | null;
   } | null;
 }
 
 const fallbackStaff: StaffMember[] = [
-  { id: '1', username: 'hana_hoshizora', role: 'MAID', vtuberProfile: { displayName: 'Hoshizora Hana', avatarUrl: null, description: 'La estrella que guía este café con su calidez y dedicación.', isVerified: true, isApproved: true } },
-  { id: '2', username: 'luna_tsukino', role: 'MAID', vtuberProfile: { displayName: 'Luna Tsukino', avatarUrl: null, description: 'Especialista en postres celestiales y conversaciones acogedoras.', isVerified: true, isApproved: true } },
-  { id: '3', username: 'sora_aoi', role: 'MAID', vtuberProfile: { displayName: 'Sora Aoi', avatarUrl: null, description: 'Maestra del café y creadora de las bebidas más artísticas.', isVerified: true, isApproved: true } },
-  { id: '4', username: 'rin_kagamine', role: 'MAID', vtuberProfile: { displayName: 'Rin Kagamine', avatarUrl: null, description: 'La sonrisa que recibe a cada cliente al entrar.', isVerified: true, isApproved: true } },
+  {
+    id: '1',
+    username: 'hana_hoshizora',
+    role: 'MAID',
+    vtuberProfile: {
+      displayName: 'Hoshizora Hana',
+      avatarUrl: null,
+      description: 'Fundadora y Head Maid. Te da la bienvenida con calidez y dedicación a nuestra casa en VRChat.',
+      isVerified: true,
+      isApproved: true,
+    },
+  },
+  {
+    id: '2',
+    username: 'luna_tsukino',
+    role: 'MAID',
+    vtuberProfile: {
+      displayName: 'Luna Tsukino',
+      avatarUrl: null,
+      description: 'Anfitriona estelar especialista en dinámicas de canto, karaoke y charlas nocturnas acogedoras.',
+      isVerified: true,
+      isApproved: true,
+    },
+  },
+  {
+    id: '3',
+    username: 'sora_aoi',
+    role: 'MAID',
+    vtuberProfile: {
+      displayName: 'Sora Aoi',
+      avatarUrl: null,
+      description: 'Creadora de eventos interactivos y guías de bienvenida para los nuevos visitantes de VRChat.',
+      isVerified: true,
+      isApproved: true,
+    },
+  },
+  {
+    id: '4',
+    username: 'rin_kagamine',
+    role: 'MAID',
+    vtuberProfile: {
+      displayName: 'Rin Star',
+      avatarUrl: null,
+      description: 'La alegría del café. Siempre lista para hacer sonreír a cada cliente en el escenario.',
+      isVerified: true,
+      isApproved: true,
+    },
+  },
 ];
 
-/* ─────────── Glass Card Widget ─────────── */
-function GlassCard({ children, style, hoverable = true, delay = 0 }: {
+/* ─────────── Glass Card Container ─────────── */
+function GlassCard({
+  children,
+  style,
+  hoverable = true,
+  delay = 0,
+}: {
   children: React.ReactNode;
   style?: React.CSSProperties;
   hoverable?: boolean;
@@ -203,22 +621,22 @@ function GlassCard({ children, style, hoverable = true, delay = 0 }: {
       style={{
         background: theme.bgCard,
         border: `1px solid ${theme.border}`,
-        borderRadius: '18px',
+        borderRadius: '20px',
         padding: '28px',
         transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         animation: `floatUp 0.6s ease ${delay}s forwards`,
         opacity: 0,
         ...style,
       }}
-      onMouseEnter={e => {
+      onMouseEnter={(e) => {
         if (hoverable) {
           e.currentTarget.style.transform = 'translateY(-4px)';
           e.currentTarget.style.borderColor = theme.borderHover;
-          e.currentTarget.style.boxShadow = '0 16px 48px rgba(0,0,0,0.4), 0 0 20px rgba(212,160,48,0.05)';
+          e.currentTarget.style.boxShadow = '0 16px 48px rgba(0,0,0,0.5), 0 0 24px rgba(212,160,48,0.1)';
           e.currentTarget.style.background = theme.bgCardHover;
         }
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         if (hoverable) {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.borderColor = theme.border;
@@ -232,71 +650,113 @@ function GlassCard({ children, style, hoverable = true, delay = 0 }: {
   );
 }
 
-/* ─────────── Widget: Staff Card ─────────── */
+/* ─────────── Staff Member Card Widget ─────────── */
 function StaffCard({ member, index }: { member: StaffMember; index: number }) {
   const displayName = member.vtuberProfile?.displayName || member.username;
   const avatarUrl = member.vtuberProfile?.avatarUrl;
-  const description = member.vtuberProfile?.description || 'Miembro del equipo Hoshizora Maid.';
+  const description = member.vtuberProfile?.description || 'Anfitriona Maid en el espacio virtual de VRChat.';
   const isVerified = member.vtuberProfile?.isVerified || false;
-  const staffRoles: Record<string, string> = {
-    'hana_hoshizora': 'Head Maid / Fundadora',
-    'luna_tsukino': 'Maid de Sala',
-    'sora_aoi': 'Barista',
-    'rin_kagamine': 'Maid de Recepción',
-  };
-  const staffRole = staffRoles[member.username] || 'Maid';
   const isRealUser = member.id.length > 5;
 
   const card = (
-    <GlassCard key={member.id} delay={0.1 + index * 0.08} style={{ textAlign: 'center', padding: '32px 24px' }}>
-      <div style={{
-        position: 'relative',
-        width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 16px',
-        overflow: 'hidden',
-      }}>
+    <GlassCard delay={0.1 + index * 0.08} style={{ textAlign: 'center', padding: '32px 24px', position: 'relative' }}>
+      <div
+        style={{
+          position: 'relative',
+          width: '86px',
+          height: '86px',
+          borderRadius: '50%',
+          margin: '0 auto 16px',
+          overflow: 'hidden',
+          border: `2px solid ${theme.gold}`,
+          boxShadow: '0 0 20px rgba(212,160,48,0.2)',
+        }}
+      >
         {avatarUrl ? (
           <Image src={avatarUrl} alt={displayName} fill style={{ objectFit: 'cover' }} />
         ) : (
-          <div style={{
-            width: '100%', height: '100%',
-            background: 'linear-gradient(135deg, rgba(212,160,48,0.25), rgba(196,149,106,0.15))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.8rem', fontWeight: 'bold', color: theme.gold,
-          }}>
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(135deg, rgba(212,160,48,0.3), rgba(192,132,252,0.2))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2rem',
+              fontWeight: 'bold',
+              color: theme.gold,
+            }}
+          >
             {displayName.charAt(0).toUpperCase()}
           </div>
         )}
         {isVerified && (
-          <div style={{
-            position: 'absolute', bottom: '0', right: '0',
-            width: '22px', height: '22px',
-          }}>
-            <svg viewBox="0 0 24 24" fill="#1d9bf0">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '2px',
+              right: '2px',
+              width: '22px',
+              height: '22px',
+              borderRadius: '50%',
+              background: '#1d9bf0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '2px solid #140f0c',
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
         )}
       </div>
-      <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: theme.cream, marginBottom: '4px' }}>
+
+      <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme.cream, marginBottom: '4px' }}>
         {displayName}
       </h4>
-      <p style={{ fontSize: '0.78rem', color: theme.gold, fontWeight: 600, marginBottom: '10px', letterSpacing: '0.02em' }}>
-        {staffRole}
-      </p>
-      <p style={{ fontSize: '0.82rem', color: theme.textMuted, lineHeight: 1.7 }}>
+
+      <div
+        style={{
+          display: 'inline-block',
+          fontSize: '0.72rem',
+          color: theme.purpleLight,
+          fontWeight: 700,
+          marginBottom: '12px',
+          padding: '2px 10px',
+          borderRadius: '12px',
+          background: 'rgba(192,132,252,0.12)',
+          border: '1px solid rgba(192,132,252,0.25)',
+          letterSpacing: '0.04em',
+        }}
+      >
+        Maid Staff VRChat
+      </div>
+
+      <p style={{ fontSize: '0.84rem', color: theme.textMuted, lineHeight: 1.7, minHeight: '3.4em' }}>
         {description}
       </p>
+
       {isRealUser && (
-        <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'center' }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: '4px',
-            fontSize: '0.72rem', color: theme.gold, fontWeight: 600,
-            padding: '4px 12px', borderRadius: '8px',
-            background: 'rgba(212,160,48,0.1)',
-            border: `1px solid rgba(212,160,48,0.15)`,
-          }}>
-            {ICONS.arrowRight} Ver Perfil
+        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.78rem',
+              color: theme.gold,
+              fontWeight: 700,
+              padding: '6px 14px',
+              borderRadius: '10px',
+              background: 'rgba(212,160,48,0.1)',
+              border: `1px solid rgba(212,160,48,0.25)`,
+              transition: 'all 0.2s ease',
+            }}
+          >
+            Ver Perfil {ICONS.arrowRight}
           </span>
         </div>
       )}
@@ -304,97 +764,154 @@ function StaffCard({ member, index }: { member: StaffMember; index: number }) {
   );
 
   return isRealUser ? (
-    <Link key={member.id} href={`/profile/${member.id}`} style={{ textDecoration: 'none' }}>
+    <Link key={member.id} href={`/profile/${member.username}`} style={{ textDecoration: 'none' }}>
       {card}
     </Link>
-  ) : card;
+  ) : (
+    card
+  );
 }
 
-/* ─────────── Hoshizora Maid Page ─────────── */
+/* ─────────── Hoshizora Maid Content Component ─────────── */
 function HoshizoraMaidContent() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'anfitrionia' | 'shows' | 'juegos'>('all');
   const [now, setNow] = useState(() => Date.now());
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>(fallbackStaff);
   const [staffLoading, setStaffLoading] = useState(true);
+  const [copiedWorld, setCopiedWorld] = useState(false);
+
+  // Settings fetched from backend
+  const [cafeSettings, setCafeSettings] = useState({
+    cafe_tagline: 'Tu hogar estelar de convivencia, experiencias y magia maid en VRChat',
+    cafe_description:
+      'Un espacio acogedor en VRChat creado por el Gremio Estelar donde combinamos entretenimiento virtual, eventos kawaii y momentos mágicos junto a nuestras maids.',
+    cafe_welcome_message: '¡Bienvenido a Hoshizora Maid Café! ✨ Toma asiento en nuestras instancias virtuales y déjate consentir por nuestras maids.',
+    cafe_vrchat_world: 'Hoshizora Maid Café (VRChat)',
+    cafe_schedule: 'Instancias VRChat activas los fines de semana y eventos especiales programados.',
+    cafe_discord_url: 'https://discord.gg/hoshizora',
+    cafe_twitter_url: 'https://twitter.com/hoshizora_maid',
+    cafe_carousel_images: '',
+  });
+
   useEffect(() => {
-    const interval = setInterval(() => { setNow(Date.now()); }, 60000);
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
+  // Load real data from API
   useEffect(() => {
     (async () => {
       try {
-        const data = await apiFetch('/users/role/MAID', {});
-        if (Array.isArray(data) && data.length > 0) {
-          setStaffMembers(data);
+        const [maidsData, settingsData] = await Promise.allSettled([
+          apiFetch('/users/role/MAID', {}),
+          apiFetch('/admin/settings', {}),
+        ]);
+
+        if (maidsData.status === 'fulfilled' && Array.isArray(maidsData.value) && maidsData.value.length > 0) {
+          setStaffMembers(maidsData.value);
+        }
+
+        if (settingsData.status === 'fulfilled' && settingsData.value?.settings) {
+          const s = settingsData.value.settings;
+          setCafeSettings((prev) => ({
+            ...prev,
+            cafe_tagline: s.cafe_tagline || prev.cafe_tagline,
+            cafe_description: s.cafe_description || prev.cafe_description,
+            cafe_welcome_message: s.cafe_welcome_message || prev.cafe_welcome_message,
+            cafe_vrchat_world: s.cafe_vrchat_world || prev.cafe_vrchat_world,
+            cafe_schedule: s.cafe_schedule || prev.cafe_schedule,
+            cafe_discord_url: s.cafe_discord_url || prev.cafe_discord_url,
+            cafe_twitter_url: s.cafe_twitter_url || prev.cafe_twitter_url,
+            cafe_carousel_images: s.cafe_carousel_images || prev.cafe_carousel_images,
+          }));
         }
       } catch {
-        // fallback
+        // Fallback initialized
       } finally {
         setStaffLoading(false);
       }
     })();
   }, []);
 
-  const categories = [
-    { id: 'all', label: 'Todo el Menú' },
-    { id: 'drinks', label: 'Bebidas' },
-    { id: 'desserts', label: 'Postres' },
-  ];
+  const handleCopyWorld = () => {
+    navigator.clipboard.writeText(cafeSettings.cafe_vrchat_world);
+    setCopiedWorld(true);
+    setTimeout(() => setCopiedWorld(false), 2500);
+  };
 
-  const filteredItems = selectedCategory === 'all'
-    ? menuItems
-    : menuItems.filter(i => i.cat === selectedCategory);
+  const carouselImages = useMemo(() => {
+    if (!cafeSettings.cafe_carousel_images) return [];
+    return cafeSettings.cafe_carousel_images
+      .split(',')
+      .map((url) => url.trim())
+      .filter(Boolean)
+      .map((url, i) => ({
+        url,
+        title: `Foto ${i + 1} — VRChat Hoshizora`,
+        caption: 'Fotografía de nuestros eventos e instancias en VRChat.',
+      }));
+  }, [cafeSettings.cafe_carousel_images]);
+
+  const filteredExperiences =
+    selectedCategory === 'all'
+      ? VR_EXPERIENCES
+      : VR_EXPERIENCES.filter((exp) => exp.category === selectedCategory);
 
   const events = [
     {
-      day: 'Viernes', date: 'Cada semana',
-      title: 'Noche de Karaoke',
-      desc: 'Sube al escenario y canta tus canciones favoritas con nuestras maids. Todos los viernes a las 20:00 VRChat.',
+      day: 'Viernes',
+      date: 'Cada semana',
+      title: 'Noche de Karaoke & Canto',
+      desc: 'Sube a la tarima del mapa de VRChat o apoya a nuestras maids en vivo. Una noche llena de música anime, J-Pop y talento.',
       color: '#e040fb',
       bgColor: 'rgba(224,64,251,0.08)',
-      borderColor: 'rgba(224,64,251,0.2)',
+      borderColor: 'rgba(224,64,251,0.25)',
       icon: ICONS.music,
-      tags: ['Maid Cafe', 'Karaoke', 'Música'],
+      tags: ['VRChat', 'Karaoke', 'Música En Vivo'],
     },
     {
-      day: 'Sábado', date: '1 vez al mes',
-      title: 'Cat Café Day',
-      desc: 'Día temático con orejas de gato, bebidas especiales color crema y un ambiente super kawaii.',
+      day: 'Sábado',
+      date: 'Especial temático',
+      title: 'Cat Café & Noche Kawaii',
+      desc: 'Edición especial con avatares temáticos, diademas de orejitas y dinámicas exclusivas dentro del servidor VRChat.',
       color: '#ff9800',
       bgColor: 'rgba(255,152,0,0.08)',
-      borderColor: 'rgba(255,152,0,0.2)',
-      icon: ICONS.cat,
-      tags: ['Temático', 'Kawaii', 'Disfraces'],
+      borderColor: 'rgba(255,152,0,0.25)',
+      icon: ICONS.sparkles,
+      tags: ['Roleplay', 'Kawaii', 'VRChat'],
     },
     {
-      day: 'Jueves', date: 'Cada 2 semanas',
-      title: 'Ceremonia de Té Estelar',
-      desc: 'Una noche de tranquilidad y tradición. Disfruta de tés premium japoneses mientras aprendes sobre la cultura del té.',
+      day: 'Jueves',
+      date: 'Cada 2 semanas',
+      title: 'Ceremonia del Té & Charlas',
+      desc: 'Una velada serena para conversar, conocer a los miembros de la comunidad y relajarse en los reservados virtuales.',
       color: '#4caf50',
       bgColor: 'rgba(76,175,80,0.08)',
-      borderColor: 'rgba(76,175,80,0.2)',
+      borderColor: 'rgba(76,175,80,0.25)',
       icon: ICONS.tea,
-      tags: ['Cultural', 'Té', 'Tradición'],
+      tags: ['Charla', 'Relax', 'VIP Lounge'],
     },
     {
-      day: 'Domingo', date: 'Último domingo del mes',
-      title: 'Lounge Estelar',
-      desc: 'Una velada relajada con música ambiente, luces tenues y conversaciones acogedoras.',
+      day: 'Domingo',
+      date: 'Cierre de semana',
+      title: 'Lounge Estelar Nocturno',
+      desc: 'Luz tenue, música ambiente y momentos acogedores para cerrar el fin de semana junto al staff Maid.',
       color: '#64b5f6',
       bgColor: 'rgba(100,181,246,0.08)',
-      borderColor: 'rgba(100,181,246,0.2)',
-      icon: ICONS.lounge,
-      tags: ['Relax', 'Música', 'Social'],
+      borderColor: 'rgba(100,181,246,0.25)',
+      icon: ICONS.vrchat,
+      tags: ['Comunidad', 'Social', 'VRChat'],
     },
   ];
 
-  // Next event countdown
+  // Countdown calculations
   const nextEvent = useMemo(() => {
     const d = new Date(now);
     const today = d.getDay();
     const eventDays = [4, 5, 6, 0];
-    const eventNames = ['Ceremonia de Té', 'Noche de Karaoke', 'Cat Café Day', 'Lounge Estelar'];
+    const eventNames = ['Ceremonia del Té', 'Noche de Karaoke', 'Cat Café Kawaii', 'Lounge Estelar'];
     const eventColors = ['#4caf50', '#e040fb', '#ff9800', '#64b5f6'];
 
     let nextIdx = -1;
@@ -402,7 +919,10 @@ function HoshizoraMaidContent() {
     for (let i = 0; i < eventDays.length; i++) {
       let diff = eventDays[i] - today;
       if (diff <= 0) diff += 7;
-      if (diff < minDays) { minDays = diff; nextIdx = i; }
+      if (diff < minDays) {
+        minDays = diff;
+        nextIdx = i;
+      }
     }
 
     if (nextIdx === -1) return null;
@@ -415,239 +935,307 @@ function HoshizoraMaidContent() {
   });
 
   return (
-    <div style={{ background: theme.bg, minHeight: '100vh' }}>
-      {/* █████████████████████ HERO █████████████████████ */}
-      <section style={{
-        position: 'relative',
-        minHeight: '90vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: `linear-gradient(135deg, ${theme.bg} 0%, #2a1f18 30%, #3d2b1f 60%, ${theme.bgLight} 100%)`,
-        overflow: 'hidden',
-      }}>
-        <FloatingStars count={30} />
+    <div style={{ background: theme.bg, minHeight: '100vh', color: theme.text }}>
+      {/* █████████████████████ HERO SECTION █████████████████████ */}
+      <section
+        style={{
+          position: 'relative',
+          minHeight: '92vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: `linear-gradient(135deg, ${theme.bg} 0%, #261b14 35%, #3a271c 65%, ${theme.bgLight} 100%)`,
+          overflow: 'hidden',
+        }}
+      >
+        <FloatingStars count={35} />
 
-        {/* Decorative glow orbs */}
-        <div style={{
-          position: 'absolute', top: '5%', left: '3%',
-          width: '400px', height: '400px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(212,160,48,0.08), transparent 70%)',
-          pointerEvents: 'none',
-          animation: 'pulseGlow 4s ease-in-out infinite',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '10%', right: '5%',
-          width: '500px', height: '500px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(196,149,106,0.06), transparent 70%)',
-          pointerEvents: 'none',
-          animation: 'pulseGlow 5s ease-in-out 2s infinite',
-        }} />
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: '700px', height: '700px', borderRadius: '50%',
-          border: '1px solid rgba(212,160,48,0.05)',
-          pointerEvents: 'none',
-        }} />
+        {/* Ambient Glow Effects */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '8%',
+            left: '5%',
+            width: '450px',
+            height: '450px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(212,160,48,0.12), transparent 70%)',
+            pointerEvents: 'none',
+            animation: 'pulseGlow 4s ease-in-out infinite',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '8%',
+            right: '5%',
+            width: '500px',
+            height: '500px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(192,132,252,0.1), transparent 70%)',
+            pointerEvents: 'none',
+            animation: 'pulseGlow 5s ease-in-out 2s infinite',
+          }}
+        />
 
-        <div style={{
-          position: 'relative', zIndex: 1,
-          textAlign: 'center', padding: '0 24px',
-          maxWidth: '700px',
-          animation: 'floatUp 0.8s ease 0.2s forwards',
-          opacity: 0,
-        }}>
-          {/* Logo — hoshi.png */}
-          <div style={{
+        <div
+          style={{
             position: 'relative',
-            width: '140px', height: '140px',
-            margin: '0 auto 28px',
-            animation: 'pulseGlow 3s ease-in-out infinite',
-          }}>
+            zIndex: 1,
+            textAlign: 'center',
+            padding: '40px 24px',
+            maxWidth: '800px',
+            animation: 'floatUp 0.8s ease 0.2s forwards',
+            opacity: 0,
+          }}
+        >
+          {/* Logo Badge */}
+          <div
+            style={{
+              position: 'relative',
+              width: '140px',
+              height: '140px',
+              margin: '0 auto 24px',
+              animation: 'pulseGlow 3s ease-in-out infinite',
+            }}
+          >
             <Image
               src="/hoshi.png"
-              alt="Hoshizora Maid"
+              alt="Hoshizora Maid Logo"
               width={140}
               height={140}
               style={{ borderRadius: '50%', objectFit: 'cover' }}
               priority
             />
-            {/* Decorative ring */}
-            <div style={{
-              position: 'absolute', inset: '-6px',
-              borderRadius: '50%',
-              border: '2px solid rgba(212,160,48,0.2)',
-              animation: 'pulseGlow 3s ease-in-out infinite',
-            }} />
+            <div
+              style={{
+                position: 'absolute',
+                inset: '-6px',
+                borderRadius: '50%',
+                border: '2px solid rgba(212,160,48,0.3)',
+                animation: 'pulseGlow 3s ease-in-out infinite',
+              }}
+            />
           </div>
 
-          {/* Badge */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '6px 16px', borderRadius: '20px',
-            background: 'rgba(212,160,48,0.1)',
-            border: '1px solid rgba(212,160,48,0.2)',
-            marginBottom: '20px',
-            fontSize: '0.75rem', fontWeight: 600, color: theme.gold,
-            textTransform: 'uppercase', letterSpacing: '0.12em',
-          }}>
-            {ICONS.sparkles}
-            <span>Rama Oficial del Gremio Estelar</span>
+          {/* VRChat Official Badge */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 18px',
+              borderRadius: '20px',
+              background: 'rgba(212,160,48,0.12)',
+              border: '1px solid rgba(212,160,48,0.3)',
+              marginBottom: '24px',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              color: theme.gold,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+            }}
+          >
+            {ICONS.vrchat}
+            <span>Maid Café Oficial en VRChat</span>
           </div>
 
-          <h1 style={{
-            fontSize: 'clamp(2.8rem, 7vw, 5rem)', fontWeight: 800,
-            lineHeight: 1.05, letterSpacing: '-0.03em',
-            marginBottom: '20px',
-            color: theme.cream,
-          }}>
-            <span style={{
-              background: 'linear-gradient(135deg, #e8c060, #f5e6d3, #c4956a)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              Hoshizora Maid
+          {/* Main Title */}
+          <h1
+            style={{
+              fontSize: 'clamp(2.6rem, 6.5vw, 4.5rem)',
+              fontWeight: 900,
+              lineHeight: 1.08,
+              letterSpacing: '-0.03em',
+              marginBottom: '20px',
+              color: theme.cream,
+            }}
+          >
+            <span
+              style={{
+                background: 'linear-gradient(135deg, #e8c060, #f5e6d3, #c084fc)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Hoshizora Maid Café
             </span>
           </h1>
 
-          <p style={{
-            fontSize: 'clamp(1.05rem, 1.8vw, 1.2rem)',
-            color: theme.textMuted,
-            maxWidth: '560px', margin: '0 auto 36px',
-            lineHeight: 1.8,
-          }}>
-            Un espacio acogedor en VRChat donde el arte del café se encuentra con el encanto de una maid café japonesa. 
-            Bienvenido a tu hogar estelar.
+          {/* Subtitle / Tagline */}
+          <p
+            style={{
+              fontSize: 'clamp(1.05rem, 1.8vw, 1.25rem)',
+              color: theme.textMuted,
+              maxWidth: '640px',
+              margin: '0 auto 36px',
+              lineHeight: 1.8,
+            }}
+          >
+            {cafeSettings.cafe_tagline}
           </p>
 
-          {/* CTA buttons */}
-          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link
-              href="#menu"
-              scroll={false}
-              onClick={e => { e.preventDefault(); document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' }); }}
+          {/* VRChat World Quick Access Bar */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '10px 20px',
+              borderRadius: '16px',
+              background: 'rgba(38, 29, 23, 0.9)',
+              border: `1px solid ${theme.border}`,
+              marginBottom: '36px',
+              maxWidth: '100%',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            }}
+          >
+            <span style={{ fontSize: '0.85rem', color: theme.textMuted, fontWeight: 500 }}>Mundo VRChat:</span>
+            <strong style={{ fontSize: '0.92rem', color: theme.cream }}>{cafeSettings.cafe_vrchat_world}</strong>
+            <button
+              onClick={handleCopyWorld}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: '10px',
-                padding: '16px 36px', borderRadius: '14px', fontSize: '0.95rem', fontWeight: 700,
-                background: 'linear-gradient(135deg, #d4a030, #c4956a)', color: '#1a1410',
-                textDecoration: 'none', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 4px 24px rgba(212,160,48,0.3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                background: copiedWorld ? 'rgba(76,175,80,0.2)' : 'rgba(212,160,48,0.15)',
+                border: `1px solid ${copiedWorld ? 'rgba(76,175,80,0.4)' : 'rgba(212,160,48,0.3)'}`,
+                color: copiedWorld ? '#81c784' : theme.gold,
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)'; e.currentTarget.style.boxShadow = '0 8px 36px rgba(212,160,48,0.4)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(212,160,48,0.3)'; }}
             >
-              {ICONS.home} Ver Menú
-            </Link>
-            <Link
-              href="#events"
-              scroll={false}
-              onClick={e => { e.preventDefault(); document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' }); }}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '10px',
-                padding: '16px 36px', borderRadius: '14px', fontSize: '0.95rem', fontWeight: 600,
-                border: `2px solid ${theme.borderHover}`, color: theme.cream,
-                textDecoration: 'none', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                background: 'rgba(45,38,32,0.5)', backdropFilter: 'blur(8px)',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(55,48,42,0.7)'; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = theme.gold; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(45,38,32,0.5)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = theme.borderHover; }}
-            >
-              {ICONS.sparkles} Eventos
-            </Link>
+              {copiedWorld ? ICONS.check : ICONS.copy}
+              {copiedWorld ? '¡Copiado!' : 'Copiar Nombre'}
+            </button>
           </div>
 
-          {/* Scroll indicator */}
-          <div style={{
-            marginTop: '60px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-            color: theme.textMuted, fontSize: '0.7rem', fontWeight: 500,
-            letterSpacing: '0.1em', textTransform: 'uppercase',
-            animation: 'floatUp 0.6s ease 1s forwards', opacity: 0,
-          }}>
-            <span>Descubre más</span>
-            <div style={{
-              width: '1px', height: '30px',
-              background: `linear-gradient(180deg, ${theme.gold}80, transparent)`,
-              animation: 'starFloat 2s ease-in-out infinite',
-            }} />
+          {/* CTAs */}
+          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link
+              href="#galeria"
+              scroll={false}
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('galeria')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '16px 36px',
+                borderRadius: '16px',
+                fontSize: '0.95rem',
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #d4a030, #c4956a)',
+                color: '#140f0c',
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: '0 4px 24px rgba(212,160,48,0.35)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 8px 36px rgba(212,160,48,0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 24px rgba(212,160,48,0.35)';
+              }}
+            >
+              {ICONS.camera} Ver Galería de Fotos
+            </Link>
+
+            <a
+              href={cafeSettings.cafe_discord_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '16px 32px',
+                borderRadius: '16px',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                border: '1px solid rgba(88,101,242,0.4)',
+                background: 'rgba(88,101,242,0.18)',
+                color: '#ffffff',
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                backdropFilter: 'blur(8px)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(88,101,242,0.35)';
+                e.currentTarget.style.transform = 'translateY(-3px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(88,101,242,0.18)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              {ICONS.discord} Comunidad en Discord
+            </a>
           </div>
         </div>
       </section>
 
-      {/* █████████████████████ STATS WIDGETS █████████████████████ */}
-      <section style={{
-        padding: '0 24px',
-        marginTop: '-60px',
-        position: 'relative', zIndex: 2,
-      }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+      {/* █████████████████████ STATS / SUMMARY BAR █████████████████████ */}
+      <section style={{ padding: '0 24px', marginTop: '-50px', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
           {[
-            { icon: ICONS.coffee, value: '15+', label: 'Bebidas Especiales' },
-            { icon: (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="5" r="2"/><path d="M3 21h18"/><path d="M4 21V13a8 8 0 0 1 16 0v8"/><line x1="12" y1="7" x2="12" y2="11"/><path d="M7 13c0 2 2 3 5 3s5-1 5-3"/><path d="M7 17c0 2 2 3 5 3s5-1 5-3"/>
-              </svg>
-            ), value: '10+', label: 'Postres Artesanales' },
-            { icon: ICONS.star, value: '4.9★', label: 'Calificación Estelar' },
-            { icon: (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            ), value: '500+', label: 'Visitantes Felices' },
+            { icon: ICONS.vrchat, value: 'VRChat', label: 'Plataforma Virtual Oficial' },
+            { icon: ICONS.heart, value: `${staffMembers.length} Maids`, label: 'Staff Reales Activas' },
+            { icon: ICONS.music, value: 'Semanales', label: 'Eventos & Karaoke en Vivo' },
+            { icon: ICONS.globe, value: 'Comunidad', label: 'Acceso por Discord Oficial' },
           ].map((stat, i) => (
-            <GlassCard key={i} delay={0.3 + i * 0.1} style={{ textAlign: 'center', padding: '24px 16px' }}>
-              <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>{stat.icon}</div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: theme.gold, marginBottom: '2px' }}>{stat.value}</div>
+            <GlassCard key={i} delay={0.2 + i * 0.1} style={{ textAlign: 'center', padding: '24px 18px' }}>
+              <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>{stat.icon}</div>
+              <div style={{ fontSize: '1.7rem', fontWeight: 900, color: theme.gold, marginBottom: '2px' }}>{stat.value}</div>
               <div style={{ fontSize: '0.82rem', color: theme.textMuted }}>{stat.label}</div>
             </GlassCard>
           ))}
         </div>
       </section>
 
-      {/* █████████████████████ ABOUT █████████████████████ */}
+      {/* █████████████████████ PHOTO CAROUSEL / BANNER DE FOTOS █████████████████████ */}
+      <PhotoCarousel images={carouselImages} />
+
+      {/* █████████████████████ SOBRE EL CAFÉ VIRTUAL █████████████████████ */}
       <section id="about" style={getSectionStyle(theme.bg, theme.bgLight)}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <span style={{ color: theme.gold, fontWeight: 600, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-              Bienvenido a
+            <span style={{ color: theme.gold, fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+              Experiencia Virtual
             </span>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 700, color: theme.cream, marginBottom: '16px', marginTop: '8px' }}>
-              Nuestro <span style={{ color: theme.gold }}>Espacio Estelar</span>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, color: theme.cream, marginBottom: '16px', marginTop: '8px' }}>
+              Bienvenido a <span style={{ color: theme.gold }}>Hoshizora Maid Café</span>
             </h2>
-            <p style={{ color: theme.textMuted, fontSize: '0.95rem', maxWidth: '620px', margin: '0 auto', lineHeight: 1.9 }}>
-              Un espacio acogedor dentro de VRChat donde combinamos el arte del café con el encanto de una maid café japonesa. 
-              Somos parte del Gremio Estelar, dedicados a brindar entretenimiento y servicio al cliente de primera calidad.
+            <p style={{ color: theme.textMuted, fontSize: '0.98rem', maxWidth: '680px', margin: '0 auto', lineHeight: 1.8 }}>
+              {cafeSettings.cafe_description}
             </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
             {[
               {
-                icon: (
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                ),
-                title: 'Ambiente Acogedor',
-                desc: 'Un espacio virtual diseñado para que te sientas como en casa, con una decoración cálida y atención personalizada.',
+                icon: ICONS.vrchat,
+                title: 'Instancias & Mapa en VRChat',
+                desc: 'Un mundo diseñado para el roleplay, con zonas privadas, escenario musical, barra de acompañamiento y decoración estelar.',
               },
               {
-                icon: (
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
-                  </svg>
-                ),
-                title: 'Comunidad Activa',
-                desc: 'Más de 500 miembros activos que comparten su amor por el café, la cultura maid y los espacios sociales en VRChat.',
+                icon: ICONS.heart,
+                title: 'Anfitrionía & Atención Cálida',
+                desc: 'Nuestras maids están preparadas para brindarte momentos agradables, pláticas amables y actividades dentro del servidor.',
               },
               {
-                icon: (
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                ),
-                title: 'Servicio Estelar',
-                desc: 'Nuestras maids están entrenadas para brindar la mejor experiencia, combinando carisma, profesionalismo y calidez.',
+                icon: ICONS.shield,
+                title: 'Espacio Seguro & Respetuoso',
+                desc: 'Garantizamos una convivencia sana bajo normas de respeto, consentimiento y cordialidad en todas las aperturas.',
               },
             ].map((item, i) => (
               <GlassCard key={i} delay={0.2 + i * 0.08}>
@@ -660,65 +1248,105 @@ function HoshizoraMaidContent() {
         </div>
       </section>
 
-      {/* █████████████████████ MENU █████████████████████ */}
-      <section id="menu" style={getSectionStyle(theme.bgLight, theme.bg)}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      {/* █████████████████████ EXPERIENCIAS & ATENCIONES (Sin bebidas físicas) █████████████████████ */}
+      <section id="experiencias" style={getSectionStyle(theme.bgLight, theme.bg)}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <span style={{ color: theme.gold, fontWeight: 600, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-              {ICONS.sparkles} Nuestro Menú {ICONS.sparkles}
+            <span style={{ color: theme.gold, fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+              {ICONS.sparkles} Atenciones en VRChat {ICONS.sparkles}
             </span>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 700, color: theme.cream, marginTop: '8px', marginBottom: '8px' }}>
-              Delicias Estelares
+            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, color: theme.cream, marginTop: '8px', marginBottom: '8px' }}>
+              Experiencias & Dinámicas
             </h2>
-            <p style={{ color: theme.textMuted, fontSize: '0.9rem' }}>
-              Preparado con cariño por nuestras maids para ti
+            <p style={{ color: theme.textMuted, fontSize: '0.92rem' }}>
+              Todas nuestras actividades están diseñadas para disfrutarse dentro del mundo virtual en VRChat
             </p>
           </div>
 
-          {/* Category filter */}
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '32px', flexWrap: 'wrap' }}>
-            {categories.map(cat => (
-              <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
+          {/* Categorías */}
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '36px', flexWrap: 'wrap' }}>
+            {[
+              { id: 'all', label: 'Todas las Experiencias' },
+              { id: 'anfitrionia', label: 'Anfitrionía & Reservados' },
+              { id: 'shows', label: 'Shows & Fotografía' },
+              { id: 'juegos', label: 'Dinámicas VR' },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id as any)}
                 style={{
-                  padding: '10px 24px', borderRadius: '12px', fontSize: '0.82rem', fontWeight: 600,
+                  padding: '10px 22px',
+                  borderRadius: '12px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
                   border: selectedCategory === cat.id ? `2px solid ${theme.gold}` : `1px solid ${theme.border}`,
-                  background: selectedCategory === cat.id ? 'rgba(212,160,48,0.12)' : 'rgba(45,38,32,0.5)',
+                  background: selectedCategory === cat.id ? 'rgba(212,160,48,0.15)' : 'rgba(38,29,23,0.6)',
                   color: selectedCategory === cat.id ? theme.gold : theme.textMuted,
-                  cursor: 'pointer', transition: 'all 0.25s ease',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
                   backdropFilter: 'blur(8px)',
                 }}
-                onMouseEnter={e => { if (selectedCategory !== cat.id) { e.currentTarget.style.background = 'rgba(55,48,42,0.7)'; e.currentTarget.style.color = theme.cream; } }}
-                onMouseLeave={e => { if (selectedCategory !== cat.id) { e.currentTarget.style.background = 'rgba(45,38,32,0.5)'; e.currentTarget.style.color = theme.textMuted; } }}
               >
                 {cat.label}
               </button>
             ))}
           </div>
 
-          {/* Menu grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '14px' }}>
-            {filteredItems.map((item, i) => (
-              <GlassCard key={i} delay={0.1 + i * 0.04} style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: theme.cream, marginBottom: '4px' }}>{item.name}</h4>
-                    <p style={{ fontSize: '0.8rem', color: theme.textMuted, lineHeight: 1.6 }}>{item.desc}</p>
+          {/* Grilla de Experiencias */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '18px' }}>
+            {filteredExperiences.map((exp, i) => (
+              <GlassCard key={exp.id} delay={0.1 + i * 0.05} style={{ padding: '26px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '14px' }}>
+                  <div
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '12px',
+                      background: 'rgba(212,160,48,0.12)',
+                      border: '1px solid rgba(212,160,48,0.25)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {exp.icon}
                   </div>
-                  <span style={{
-                    fontSize: '1rem', fontWeight: 800, color: theme.gold,
-                    whiteSpace: 'nowrap', flexShrink: 0,
-                    padding: '2px 10px', borderRadius: '8px',
-                    background: 'rgba(212,160,48,0.08)',
-                  }}>
-                    ${item.price}
-                  </span>
+                  <div style={{ flex: 1 }}>
+                    <span
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        color: theme.gold,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        background: 'rgba(212,160,48,0.1)',
+                      }}
+                    >
+                      {exp.badge}
+                    </span>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: theme.cream, marginTop: '4px' }}>{exp.name}</h4>
+                  </div>
                 </div>
-                <div style={{ marginTop: '12px', display: 'flex', gap: '3px' }}>
-                  {[...Array(5)].map((_, s) => (
-                    <span key={s}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill={theme.gold} stroke={theme.gold} strokeWidth="1">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                      </svg>
+
+                <p style={{ fontSize: '0.86rem', color: theme.textMuted, lineHeight: 1.7, marginBottom: '16px' }}>{exp.desc}</p>
+
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {exp.highlights.map((h, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        fontSize: '0.72rem',
+                        color: theme.creamDark,
+                        padding: '3px 9px',
+                        borderRadius: '8px',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                      }}
+                    >
+                      • {h}
                     </span>
                   ))}
                 </div>
@@ -728,29 +1356,37 @@ function HoshizoraMaidContent() {
         </div>
       </section>
 
-      {/* █████████████████████ STAFF █████████████████████ */}
+      {/* █████████████████████ STAFF MAIDS REALES █████████████████████ */}
       <section style={getSectionStyle(theme.bg, theme.bgLight)}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <span style={{ color: theme.gold, fontWeight: 600, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-              {ICONS.sparkles} Conoce a Nuestro Staff {ICONS.sparkles}
+            <span style={{ color: theme.gold, fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+              {ICONS.sparkles} Staff de la Comunidad {ICONS.sparkles}
             </span>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 700, color: theme.cream, marginTop: '8px', marginBottom: '8px' }}>
-              Las Estrellas del Café
+            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, color: theme.cream, marginTop: '8px', marginBottom: '8px' }}>
+              Nuestras Maids Reales
             </h2>
-            <p style={{ color: theme.textMuted, fontSize: '0.9rem' }}>
-              Conoce a las maids que hacen de Hoshizora Maid un lugar especial
+            <p style={{ color: theme.textMuted, fontSize: '0.92rem' }}>
+              Conoce al equipo de anfitrionas que hacen posible cada apertura en VRChat
             </p>
           </div>
 
           {staffLoading ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-              {[1, 2, 3, 4].map(i => (
+              {[1, 2, 3, 4].map((i) => (
                 <GlassCard key={i} delay={0.1 * i} hoverable={false} style={{ textAlign: 'center', padding: '32px 24px' }}>
-                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 16px', background: 'rgba(255,255,255,0.03)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                  <div
+                    style={{
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '50%',
+                      margin: '0 auto 16px',
+                      background: 'rgba(255,255,255,0.03)',
+                      animation: 'pulse 1.5s ease-in-out infinite',
+                    }}
+                  />
                   <div style={{ height: '16px', width: '120px', margin: '0 auto 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.04)' }} />
                   <div style={{ height: '12px', width: '80px', margin: '0 auto 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)' }} />
-                  <div style={{ height: '32px', width: '160px', margin: '0 auto', borderRadius: '6px', background: 'rgba(255,255,255,0.03)' }} />
                 </GlassCard>
               ))}
             </div>
@@ -764,273 +1400,257 @@ function HoshizoraMaidContent() {
         </div>
       </section>
 
-      {/* █████████████████████ EVENTS █████████████████████ */}
+      {/* █████████████████████ EVENTOS EN VRCHAT █████████████████████ */}
       <section id="events" style={getSectionStyle(theme.bgLight, theme.bg)}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <span style={{ color: theme.gold, fontWeight: 600, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-              Eventos Especiales
+            <span style={{ color: theme.gold, fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+              Calendario Virtual
             </span>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 700, color: theme.cream, marginTop: '8px', marginBottom: '8px' }}>
-              Experiencias Únicas
+            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, color: theme.cream, marginTop: '8px', marginBottom: '8px' }}>
+              Eventos en VRChat
             </h2>
-            <p style={{ color: theme.textMuted, fontSize: '0.9rem' }}>
-              Cada semana traemos algo nuevo y especial para ti
+            <p style={{ color: theme.textMuted, fontSize: '0.92rem' }}>
+              Revisa nuestras actividades semanales en el mundo del café
             </p>
 
-            {/* Next event widget */}
             {nextEvent && (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                marginTop: '16px', padding: '8px 18px', borderRadius: '12px',
-                background: `${nextEvent.color}15`,
-                border: `1px solid ${nextEvent.color}30`,
-                fontSize: '0.8rem', fontWeight: 700, color: nextEvent.color,
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-                <span>Próximo:</span>
-                <span style={{ fontWeight: 800 }}>{nextEvent.name}</span>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '16px',
+                  padding: '8px 20px',
+                  borderRadius: '14px',
+                  background: `${nextEvent.color}15`,
+                  border: `1px solid ${nextEvent.color}35`,
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  color: nextEvent.color,
+                }}
+              >
+                {ICONS.clock}
+                <span>Próximo Evento:</span>
+                <span>{nextEvent.name}</span>
                 <span style={{ opacity: 0.5 }}>·</span>
-                <span style={{ fontWeight: 800 }}>
-                  {nextEvent.days === 0 ? '¡Hoy!' : nextEvent.days === 1 ? 'Mañana' : `En ${nextEvent.days} días`}
-                </span>
+                <span>{nextEvent.days === 0 ? '¡Hoy!' : nextEvent.days === 1 ? 'Mañana' : `En ${nextEvent.days} días`}</span>
               </div>
             )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {events.map((event, i) => (
-              <GlassCard key={i} delay={0.1 + i * 0.08}
+              <GlassCard
+                key={i}
+                delay={0.1 + i * 0.08}
                 style={{
-                  display: 'flex', gap: '20px', padding: '28px',
+                  display: 'flex',
+                  gap: '20px',
+                  padding: '28px',
                   background: event.bgColor,
                   border: `1px solid ${event.borderColor}`,
                 }}
               >
-                {/* Date column */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '72px', padding: '6px 0' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: event.color, marginBottom: '4px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: event.color, marginBottom: '6px' }}>
                     {event.day}
                   </span>
-                  <div style={{
-                    width: '48px', height: '48px', borderRadius: '14px',
-                    background: `${event.color}15`,
-                    border: `2px solid ${event.borderColor}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
+                  <div
+                    style={{
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '14px',
+                      background: `${event.color}20`,
+                      border: `2px solid ${event.borderColor}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     {event.icon}
                   </div>
-                  <span style={{ fontSize: '0.6rem', color: theme.textMuted, marginTop: '6px', textAlign: 'center', lineHeight: 1.3 }}>
-                    {event.date}
-                  </span>
+                  <span style={{ fontSize: '0.65rem', color: theme.textMuted, marginTop: '8px', textAlign: 'center' }}>{event.date}</span>
                 </div>
 
-                {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: theme.cream }}>{event.title}</h3>
-                    <span style={{
-                      padding: '2px 10px', borderRadius: '8px',
-                      background: `${event.color}20`,
-                      border: `1px solid ${event.borderColor}`,
-                      fontSize: '0.68rem', fontWeight: 600, color: event.color,
-                      textTransform: 'uppercase', letterSpacing: '0.04em',
-                    }}>
-                      {event.day}
-                    </span>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme.cream }}>{event.title}</h3>
                   </div>
-                  <p style={{ fontSize: '0.88rem', color: theme.textMuted, lineHeight: 1.8 }}>
-                    {event.desc}
-                  </p>
+                  <p style={{ fontSize: '0.88rem', color: theme.textMuted, lineHeight: 1.7 }}>{event.desc}</p>
                   <div style={{ display: 'flex', gap: '6px', marginTop: '12px', flexWrap: 'wrap' }}>
-                    {event.tags.map(tag => (
-                      <span key={tag} style={{
-                        padding: '2px 10px', borderRadius: '6px',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: `1px solid ${theme.border}`,
-                        fontSize: '0.68rem', color: theme.textMuted,
-                      }}>
+                    {event.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        style={{
+                          padding: '3px 10px',
+                          borderRadius: '6px',
+                          background: 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${theme.border}`,
+                          fontSize: '0.7rem',
+                          color: theme.textMuted,
+                        }}
+                      >
                         {tag}
                       </span>
                     ))}
                   </div>
                 </div>
-
-                {/* Arrow */}
-                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, color: event.color, opacity: 0.5 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                  </svg>
-                </div>
               </GlassCard>
             ))}
           </div>
+        </div>
+      </section>
 
-          {/* Suggest event CTA */}
-          <GlassCard delay={0.5} style={{ textAlign: 'center', marginTop: '32px', padding: '32px' }}>
-            <p style={{ fontSize: '0.9rem', color: theme.textMuted, marginBottom: '16px' }}>
-              ¿Tienes una idea para un evento especial? ¡Queremos escucharla!
+      {/* █████████████████████ REGLAS DE CONVIVENCIA VRCHAT █████████████████████ */}
+      <section style={{ padding: '80px 24px', background: theme.bg }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <span style={{ color: theme.gold, fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+              Convivencia Sana
+            </span>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, color: theme.cream, marginTop: '8px', marginBottom: '8px' }}>
+              Reglas de Respeto en VRChat
+            </h2>
+            <p style={{ color: theme.textMuted, fontSize: '0.92rem' }}>
+              Para asegurar una experiencia cómoda para todos nuestros visitantes y maids
             </p>
-            <a href="#" style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              padding: '12px 28px', borderRadius: '12px', fontSize: '0.88rem', fontWeight: 700,
-              background: 'linear-gradient(135deg, #d4a030, #c4956a)', color: '#1a1410',
-              textDecoration: 'none', transition: 'all 0.3s ease',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(212,160,48,0.3)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px' }}>
+            {[
+              {
+                title: '1. Respeto al Espacio Personal',
+                desc: 'Evita acosar, invadir el espacio virtual sin consentimiento o realizar gestos inapropiados en VRChat.',
+              },
+              {
+                title: '2. Tono de Voz Cordial',
+                desc: 'Mantén un volumen moderado en el micrófono para permitir que todos puedan platicar y disfrutar la velada.',
+              },
+              {
+                title: '3. Magia del Roleplay',
+                desc: 'Disfruta la temática del café con buena actitud y respeta el trabajo de las maids y moderadores.',
+              },
+            ].map((rule, idx) => (
+              <GlassCard key={idx} delay={0.1 * idx} style={{ padding: '24px' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: theme.gold, marginBottom: '8px' }}>{rule.title}</h3>
+                <p style={{ fontSize: '0.86rem', color: theme.textMuted, lineHeight: 1.7 }}>{rule.desc}</p>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* █████████████████████ ÚNETE COMO MAID / POSTULACIÓN █████████████████████ */}
+      <section style={{ padding: '80px 24px', background: theme.bgLight }}>
+        <div style={{ maxWidth: '850px', margin: '0 auto' }}>
+          <GlassCard style={{ textAlign: 'center', padding: '44px 32px', background: 'linear-gradient(135deg, rgba(38,29,23,0.9), rgba(192,132,252,0.08))' }}>
+            <div
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                margin: '0 auto 20px',
+                background: 'rgba(192,132,252,0.15)',
+                border: '2px solid rgba(192,132,252,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-              </svg>
-              Sugerir Evento
+              {ICONS.heart}
+            </div>
+
+            <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: theme.cream, marginBottom: '12px' }}>
+              ¿Te gustaría unirte como Maid en VRChat?
+            </h3>
+            <p style={{ color: theme.textMuted, fontSize: '0.94rem', lineHeight: 1.8, maxWidth: '600px', margin: '0 auto 28px' }}>
+              Si eres VTuber, creadora de contenido o apasionada de la cultura Maid Café y VRChat, únete a nuestro equipo de anfitrionas oficiales.
+            </p>
+
+            <a
+              href={cafeSettings.cafe_discord_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '14px 32px',
+                borderRadius: '14px',
+                fontSize: '0.92rem',
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #c084fc, #a0782c)',
+                color: '#ffffff',
+                textDecoration: 'none',
+                boxShadow: '0 4px 20px rgba(192,132,252,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 30px rgba(192,132,252,0.45)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(192,132,252,0.3)';
+              }}
+            >
+              {ICONS.discord} Postularse en Discord
             </a>
           </GlassCard>
         </div>
       </section>
 
-      {/* █████████████████████ SCHEDULE / INFO WIDGETS █████████████████████ */}
-      <section style={{ padding: '80px 24px', background: theme.bgLight }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <h2 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)', fontWeight: 700, color: theme.cream, marginBottom: '8px' }}>
-              Información
-            </h2>
-            <p style={{ color: theme.textMuted, fontSize: '0.9rem' }}>
-              Todo lo que necesitas saber para visitarnos
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-            {/* Hours */}
-            <GlassCard delay={0.1}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '12px',
-                  background: 'rgba(212,160,48,0.1)',
-                  border: `1px solid rgba(212,160,48,0.2)`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {ICONS.clock}
-                </div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: theme.cream }}>Horario</h3>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {[
-                  { day: 'Lunes - Viernes', hours: '18:00 - 23:00 VRChat' },
-                  { day: 'Sábado', hours: '16:00 - 01:00 VRChat' },
-                  { day: 'Domingo', hours: '14:00 - 22:00 VRChat' },
-                ].map((s, i) => (
-                  <div key={i} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '8px 12px', borderRadius: '10px',
-                    background: 'rgba(255,255,255,0.02)',
-                  }}>
-                    <span style={{ color: theme.cream, fontSize: '0.85rem', fontWeight: 500 }}>{s.day}</span>
-                    <span style={{ color: theme.gold, fontSize: '0.82rem', fontWeight: 600 }}>{s.hours}</span>
-                  </div>
-                ))}
-              </div>
-            </GlassCard>
-
-            {/* Location */}
-            <GlassCard delay={0.2}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '12px',
-                  background: 'rgba(212,160,48,0.1)',
-                  border: `1px solid rgba(212,160,48,0.2)`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {ICONS.globe}
-                </div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: theme.cream }}>Ubicación</h3>
-              </div>
-              <p style={{ color: theme.textMuted, fontSize: '0.88rem', lineHeight: 1.8, marginBottom: '16px' }}>
-                Nos encontramos en VRChat, mundo: <strong style={{ color: theme.cream }}>Hoshizora Maid Café</strong>
-              </p>
-              <div style={{
-                padding: '12px 16px', borderRadius: '10px',
-                background: 'rgba(212,160,48,0.06)',
-                border: `1px solid rgba(212,160,48,0.12)`,
-              }}>
-                <p style={{ fontSize: '0.78rem', color: theme.gold, fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {ICONS.check} Abierto todos los días, ven a visitarnos
-                </p>
-              </div>
-            </GlassCard>
-
-            {/* Discord */}
-            <GlassCard delay={0.3} style={{ textAlign: 'center' }}>
-              <div style={{
-                width: '56px', height: '56px', borderRadius: '50%', margin: '0 auto 16px',
-                background: 'rgba(88,101,242,0.15)',
-                border: '2px solid rgba(88,101,242,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {ICONS.discord}
-              </div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: theme.cream, marginBottom: '8px' }}>Únete a nuestro Discord</h3>
-              <p style={{ color: theme.textMuted, fontSize: '0.85rem', marginBottom: '20px', lineHeight: 1.7 }}>
-                Sé parte de la comunidad, entérate de eventos especiales y horarios.
-              </p>
-              <a href="#" style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                padding: '12px 28px', borderRadius: '12px', fontSize: '0.88rem', fontWeight: 700,
-                background: '#5865F2', color: '#fff', textDecoration: 'none',
-                transition: 'all 0.25s ease',
-              }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#4752c4'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(88,101,242,0.4)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#5865F2'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
-              >
-                {ICONS.discord} Unirse al Discord
-              </a>
-            </GlassCard>
-          </div>
-        </div>
-      </section>
-
-      {/* █████████████████████ FINAL CTA █████████████████████ */}
-      <section style={{
-        padding: '120px 24px',
-        background: `linear-gradient(135deg, ${theme.bg} 0%, ${theme.bgLight} 50%, ${theme.bg} 100%)`,
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+      {/* █████████████████████ FOOTER FINAL CTA █████████████████████ */}
+      <section
+        style={{
+          padding: '100px 24px',
+          background: `linear-gradient(135deg, ${theme.bg} 0%, ${theme.bgLight} 50%, ${theme.bg} 100%)`,
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         <FloatingStars count={15} />
         <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          {/* Big logo */}
-          <div style={{
-            width: '100px', height: '100px', margin: '0 auto 24px',
-            borderRadius: '50%', overflow: 'hidden',
-            boxShadow: '0 0 40px rgba(212,160,48,0.2)',
-            animation: 'pulseGlow 3s ease-in-out infinite',
-          }}>
-            <Image src="/hoshi.png" alt="Hoshizora Maid" width={100} height={100} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+          <div
+            style={{
+              width: '90px',
+              height: '90px',
+              margin: '0 auto 20px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              boxShadow: '0 0 40px rgba(212,160,48,0.25)',
+            }}
+          >
+            <Image src="/hoshi.png" alt="Hoshizora Maid" width={90} height={90} style={{ borderRadius: '50%', objectFit: 'cover' }} />
           </div>
 
-          <h2 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: 700, color: theme.cream, marginBottom: '16px' }}>
-            Te Esperamos con una Taza de <span style={{ color: theme.gold }}>Estrellas</span>
+          <h2 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: 800, color: theme.cream, marginBottom: '16px' }}>
+            Te Esperamos en el Mundo Virtual ✨
           </h2>
-          <p style={{ color: theme.textMuted, fontSize: '0.95rem', lineHeight: 1.9, marginBottom: '32px', maxWidth: '500px', margin: '0 auto 32px' }}>
-            Ya sea para disfrutar un café, conocer nuevas amistades o simplemente relajarte en un ambiente acogedor, 
-            Hoshizora Maid es tu hogar estelar en VRChat.
+          <p style={{ color: theme.textMuted, fontSize: '0.95rem', lineHeight: 1.8, marginBottom: '28px' }}>
+            {cafeSettings.cafe_welcome_message}
           </p>
+
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/" style={{
-              display: 'inline-flex', alignItems: 'center', gap: '10px',
-              padding: '14px 32px', borderRadius: '14px', fontSize: '0.9rem', fontWeight: 700,
-              background: 'linear-gradient(135deg, #d4a030, #c4956a)', color: '#1a1410',
-              textDecoration: 'none', transition: 'all 0.3s ease',
-              boxShadow: '0 4px 20px rgba(212,160,48,0.3)',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(212,160,48,0.4)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(212,160,48,0.3)'; }}
+            <Link
+              href="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '14px 30px',
+                borderRadius: '14px',
+                fontSize: '0.9rem',
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #d4a030, #c4956a)',
+                color: '#140f0c',
+                textDecoration: 'none',
+                transition: 'all 0.3s ease',
+              }}
             >
-              {ICONS.home} Ir al Inicio
+              {ICONS.home} Volver al Inicio
             </Link>
           </div>
         </div>
@@ -1039,141 +1659,114 @@ function HoshizoraMaidContent() {
   );
 }
 
-/* ─────────── Coming Soon Component (Normal Users) ─────────── */
+/* ─────────── Coming Soon Component (Normal Users when under construction) ─────────── */
 function ComingSoonContent() {
   return (
-    <div style={{
-      minHeight: '85vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '100px 20px 60px',
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      {/* Ambient Glows */}
-      <div style={{
-        position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
-        width: '500px', height: '500px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(212,160,48,0.18) 0%, rgba(139,92,246,0.12) 40%, transparent 70%)',
-        filter: 'blur(70px)', pointerEvents: 'none', zIndex: 0,
-      }} />
-
-      <div style={{
+    <div
+      style={{
+        minHeight: '85vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '100px 20px 60px',
         position: 'relative',
-        zIndex: 1,
-        maxWidth: '680px',
-        width: '100%',
-        textAlign: 'center',
-        background: 'rgba(26, 20, 16, 0.75)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(212, 160, 48, 0.3)',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(212, 160, 48, 0.15)',
-        borderRadius: '32px',
-        padding: '48px 32px',
-      }}>
-        {/* Top Badge */}
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 18px',
-          borderRadius: '20px',
-          background: 'rgba(212, 160, 48, 0.12)',
-          border: '1px solid rgba(212, 160, 48, 0.35)',
-          color: '#e8c060',
-          fontSize: '0.82rem',
-          fontWeight: 800,
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          marginBottom: '28px',
-        }}>
-          <span>✨ PRÓXIMAMENTE ✨</span>
-        </div>
-
-        {/* Logo / Mascot Image */}
-        <div style={{
-          position: 'relative',
-          width: '140px',
-          height: '140px',
-          margin: '0 auto 28px',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: '20%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '500px',
+          height: '500px',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, rgba(212,160,48,0.25), rgba(139,92,246,0.25))',
-          border: '2px solid rgba(212, 160, 48, 0.5)',
-          boxShadow: '0 0 35px rgba(212, 160, 48, 0.35)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}>
-          <Image
-            src="/hoshi.png"
-            alt="Hoshizora Maid Logo"
-            width={130}
-            height={130}
-            style={{ objectFit: 'contain', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.4))' }}
-            priority
-          />
+          background: 'radial-gradient(circle, rgba(212,160,48,0.18) 0%, rgba(192,132,252,0.12) 40%, transparent 70%)',
+          filter: 'blur(70px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          maxWidth: '680px',
+          width: '100%',
+          textAlign: 'center',
+          background: 'rgba(20, 15, 12, 0.85)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(212, 160, 48, 0.3)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(212, 160, 48, 0.15)',
+          borderRadius: '32px',
+          padding: '48px 32px',
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 18px',
+            borderRadius: '20px',
+            background: 'rgba(212, 160, 48, 0.12)',
+            border: '1px solid rgba(212, 160, 48, 0.35)',
+            color: '#e8c060',
+            fontSize: '0.82rem',
+            fontWeight: 800,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            marginBottom: '28px',
+          }}
+        >
+          <span>✨ PRÓXIMAMENTE VRCHAT ✨</span>
         </div>
 
-        {/* Main Title */}
-        <h1 style={{
-          fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
-          fontWeight: 900,
-          color: '#f5e6d3',
-          marginBottom: '16px',
-          lineHeight: 1.2,
-          textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-        }}>
-          Estamos trabajando arduamente por aquí... ☕🌸
+        <div
+          style={{
+            position: 'relative',
+            width: '140px',
+            height: '140px',
+            margin: '0 auto 28px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, rgba(212,160,48,0.25), rgba(192,132,252,0.25))',
+            border: '2px solid rgba(212, 160, 48, 0.5)',
+            boxShadow: '0 0 35px rgba(212, 160, 48, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          <Image src="/hoshi.png" alt="Hoshizora Maid Logo" width={130} height={130} style={{ objectFit: 'contain' }} priority />
+        </div>
+
+        <h1
+          style={{
+            fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
+            fontWeight: 900,
+            color: '#f5e6d3',
+            marginBottom: '16px',
+            lineHeight: 1.2,
+          }}
+        >
+          Preparando el Espacio Virtual ☕🌸
         </h1>
 
-        {/* Subtitle */}
-        <p style={{
-          color: '#b8a898',
-          fontSize: '1.05rem',
-          lineHeight: 1.6,
-          maxWidth: '520px',
-          margin: '0 auto 36px',
-        }}>
-          El equipo del <strong>Hoshizora Maid Café</strong> está horneando una experiencia especial, llena de magia, eventos VRChat, atenciones exclusivas y sorpresas para toda la comunidad.
+        <p
+          style={{
+            color: '#b8a898',
+            fontSize: '1.05rem',
+            lineHeight: 1.7,
+            maxWidth: '520px',
+            margin: '0 auto 36px',
+          }}
+        >
+          El equipo del <strong>Hoshizora Maid Café</strong> está preparando una experiencia única en VRChat, llena de eventos en vivo, atenciones exclusivas y momentos mágicos para la comunidad.
         </p>
 
-        {/* Feature Teasers */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '12px',
-          flexWrap: 'wrap',
-          marginBottom: '36px',
-        }}>
-          {[
-            { icon: '☕', label: 'Maid Café VRChat' },
-            { icon: '🎀', label: 'Anfitriones & Menú Mágico' },
-            { icon: '⭐', label: 'Eventos & VIP Lounge' },
-          ].map((f, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                borderRadius: '14px',
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(212, 160, 48, 0.2)',
-                color: '#e8c060',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-              }}
-            >
-              <span>{f.icon}</span>
-              <span>{f.label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Action Buttons */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
           <Link
             href="/"
@@ -1184,12 +1777,11 @@ function ComingSoonContent() {
               padding: '12px 26px',
               borderRadius: '16px',
               background: 'linear-gradient(135deg, #d4a030, #a0782c)',
-              color: '#1a1410',
+              color: '#140f0c',
               fontWeight: 800,
               fontSize: '0.92rem',
               textDecoration: 'none',
               boxShadow: '0 4px 20px rgba(212, 160, 48, 0.35)',
-              transition: 'transform 0.2s, box-shadow 0.2s',
             }}
           >
             🏠 Volver al Inicio
@@ -1209,10 +1801,9 @@ function ComingSoonContent() {
               fontWeight: 700,
               fontSize: '0.92rem',
               textDecoration: 'none',
-              transition: 'background 0.2s',
             }}
           >
-            ✨ Explorar Creadores
+            ✨ Creadores de Contenido
           </Link>
         </div>
       </div>
@@ -1220,7 +1811,7 @@ function ComingSoonContent() {
   );
 }
 
-/* ─────────── Export wrapper ─────────── */
+/* ─────────── Export Wrapper ─────────── */
 export default function HoshizoraMaidPage() {
   const { user } = useAuth();
 
@@ -1230,20 +1821,22 @@ export default function HoshizoraMaidPage() {
     <ClientOnly fallback={<div style={{ minHeight: '100vh', background: theme.bg }} />}>
       {isAuthorized ? (
         <>
-          <div style={{
-            background: 'linear-gradient(90deg, #8a2be2, #d4a030)',
-            color: '#fff',
-            textAlign: 'center',
-            padding: '10px 16px',
-            fontSize: '0.85rem',
-            fontWeight: 800,
-            letterSpacing: '0.05em',
-            position: 'sticky',
-            top: '70px',
-            zIndex: 90,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-          }}>
-            🛡️ VISTA PREVIA EXCLUSIVA ADMIN / BETA TESTER: Estás viendo la página completa del Hoshizora Maid Café.
+          <div
+            style={{
+              background: 'linear-gradient(90deg, #8a2be2, #d4a030)',
+              color: '#fff',
+              textAlign: 'center',
+              padding: '10px 16px',
+              fontSize: '0.85rem',
+              fontWeight: 800,
+              letterSpacing: '0.05em',
+              position: 'sticky',
+              top: '70px',
+              zIndex: 90,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            }}
+          >
+            🛡️ VISTA PREVIA EXCLUSIVA ADMIN / BETA TESTER: Estás viendo la versión completa remodelada de Hoshizora Maid Café VRChat.
           </div>
           <HoshizoraMaidContent />
         </>
