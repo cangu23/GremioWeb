@@ -192,6 +192,43 @@ function FloatingStars({ count = 25 }: { count?: number }) {
   );
 }
 
+/* ─────────── Fast & Resilient Image Component ─────────── */
+function SafeImage({
+  src,
+  alt,
+  fallbackSrc = '/hoshi.png',
+  style,
+  className,
+}: {
+  src?: string | null;
+  alt: string;
+  fallbackSrc?: string;
+  style?: React.CSSProperties;
+  className?: string;
+}) {
+  const [currentSrc, setCurrentSrc] = useState<string>(() => src || fallbackSrc);
+
+  useEffect(() => {
+    setCurrentSrc(src || fallbackSrc);
+  }, [src, fallbackSrc]);
+
+  return (
+    <img
+      src={currentSrc}
+      alt={alt}
+      onError={() => {
+        if (currentSrc !== fallbackSrc) {
+          setCurrentSrc(fallbackSrc);
+        }
+      }}
+      loading="lazy"
+      decoding="async"
+      style={style}
+      className={className}
+    />
+  );
+}
+
 /* ─────────── Photo Carousel Component ─────────── */
 function PhotoCarousel({ images }: { images: { url: string; title?: string; caption?: string }[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -289,17 +326,20 @@ function PhotoCarousel({ images }: { images: { url: string; title?: string; capt
                 pointerEvents: idx === currentIndex ? 'auto' : 'none',
               }}
             >
-              {/* Background Image / Blur backdrop */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundImage: `url(${slide.url})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  filter: 'brightness(0.7) contrast(1.05)',
-                }}
-              />
+              {/* Background Image with Safe Fallback */}
+              <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+                <SafeImage
+                  src={slide.url}
+                  alt={slide.title || 'Foto de Galería'}
+                  fallbackSrc="/hoshi.png"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    filter: 'brightness(0.75) contrast(1.05)',
+                  }}
+                />
+              </div>
 
               {/* Gradient overlays for cinematic contrast */}
               <div
@@ -676,25 +716,7 @@ function StaffCard({ member, index }: { member: StaffMember; index: number }) {
           boxShadow: '0 0 20px rgba(212,160,48,0.2)',
         }}
       >
-        {avatarUrl ? (
-          <Image src={avatarUrl} alt={displayName} fill style={{ objectFit: 'cover' }} />
-        ) : (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(135deg, rgba(212,160,48,0.3), rgba(192,132,252,0.2))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '2rem',
-              fontWeight: 'bold',
-              color: theme.gold,
-            }}
-          >
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <SafeImage src={avatarUrl} alt={displayName} fallbackSrc="/hoshi.png" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         {isVerified && (
           <div
             style={{
@@ -1329,11 +1351,12 @@ function HoshizoraMaidContent() {
                           color: '#fff',
                         }}
                       >
-                        {m.vtuberProfile?.avatarUrl ? (
-                          <Image src={m.vtuberProfile.avatarUrl} alt={m.username} width={32} height={32} style={{ objectFit: 'cover' }} />
-                        ) : (
-                          m.username.charAt(0).toUpperCase()
-                        )}
+                        <SafeImage
+                          src={m.vtuberProfile?.avatarUrl || m.avatarUrl}
+                          alt={m.username}
+                          fallbackSrc="/hoshi.png"
+                          style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+                        />
                       </div>
                     ))}
                   </div>
