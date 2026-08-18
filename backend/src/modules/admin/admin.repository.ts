@@ -783,7 +783,15 @@ export const getDashboardStats = async () => {
     prisma.user.count(),
     prisma.user.count({ where: { status: 'ACTIVE' } }),
     prisma.vTuberProfile.count(),
-    prisma.user.count({ where: { role: 'MAID' } }),
+    prisma.user.count({
+      where: {
+        OR: [
+          { role: { contains: 'MAID' } },
+          { role: { contains: 'maid' } },
+          { displayedRole: { contains: 'MAID' } },
+        ],
+      },
+    }),
     prisma.vTuberProfile.count({ where: { isLive: true } }),
     prisma.guild.count(),
     prisma.event.count(),

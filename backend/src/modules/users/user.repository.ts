@@ -159,22 +159,40 @@ export const searchByUsername = async (query: string) => {
 };
 
 export const findByRole = async (role: string) => {
+  const roleUpper = role.toUpperCase();
+  const roleLower = role.toLowerCase();
   return prisma.user.findMany({
-    where: { role },
+    where: {
+      OR: [
+        { role: { contains: roleUpper } },
+        { role: { contains: roleLower } },
+        { displayedRole: { contains: roleUpper } },
+        { displayedRole: { contains: roleLower } },
+      ],
+    },
     select: {
       id: true,
       username: true,
       displayName: true,
       avatarUrl: true,
+      bio: true,
       role: true,
+      displayedRole: true,
+      status: true,
       note: true,
       vtuberProfile: {
         select: {
+          id: true,
           displayName: true,
           avatarUrl: true,
           description: true,
           isVerified: true,
           isApproved: true,
+          isFeatured: true,
+          isHidden: true,
+          streamSchedule: true,
+          twitchUrl: true,
+          youtubeUrl: true,
         },
       },
       streamerProfile: {
@@ -185,6 +203,9 @@ export const findByRole = async (role: string) => {
           isVerified: true,
           isApproved: true,
         },
+      },
+      _count: {
+        select: { followers: true, following: true, posts: true },
       },
     },
     orderBy: { username: 'asc' },

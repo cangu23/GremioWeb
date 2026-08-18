@@ -539,7 +539,11 @@ const VR_EXPERIENCES: VrExperience[] = [
 interface StaffMember {
   id: string;
   username: string;
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
   role: string;
+  displayedRole?: string;
   status?: string;
   vtuberProfile?: {
     displayName: string;
@@ -652,9 +656,9 @@ function GlassCard({
 
 /* ─────────── Staff Member Card Widget ─────────── */
 function StaffCard({ member, index }: { member: StaffMember; index: number }) {
-  const displayName = member.vtuberProfile?.displayName || member.username;
-  const avatarUrl = member.vtuberProfile?.avatarUrl;
-  const description = member.vtuberProfile?.description || 'Anfitriona Maid en el espacio virtual de VRChat.';
+  const displayName = member.vtuberProfile?.displayName || member.displayName || member.username;
+  const avatarUrl = member.vtuberProfile?.avatarUrl || member.avatarUrl;
+  const description = member.vtuberProfile?.description || member.bio || 'Anfitriona Maid en el espacio virtual de VRChat.';
   const isVerified = member.vtuberProfile?.isVerified || false;
   const isRealUser = member.id.length > 5;
 
@@ -936,250 +940,426 @@ function HoshizoraMaidContent() {
 
   return (
     <div style={{ background: theme.bg, minHeight: '100vh', color: theme.text }}>
-      {/* █████████████████████ HERO SECTION █████████████████████ */}
+      {/* █████████████████████ HERO SECTION (2-Column Split) █████████████████████ */}
       <section
         style={{
           position: 'relative',
-          minHeight: '92vh',
+          minHeight: '90vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${theme.bg} 0%, #261b14 35%, #3a271c 65%, ${theme.bgLight} 100%)`,
+          background: `radial-gradient(ellipse at top left, #2c1a3b 0%, #1c1319 55%, #100b08 100%)`,
           overflow: 'hidden',
+          padding: '60px 24px',
         }}
       >
         <FloatingStars count={35} />
 
-        {/* Ambient Glow Effects */}
+        {/* Dynamic Glow Nebulas */}
         <div
           style={{
             position: 'absolute',
-            top: '8%',
-            left: '5%',
-            width: '450px',
-            height: '450px',
+            top: '10%',
+            left: '-5%',
+            width: '600px',
+            height: '600px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(212,160,48,0.12), transparent 70%)',
+            background: 'radial-gradient(circle, rgba(192,132,252,0.14), transparent 70%)',
             pointerEvents: 'none',
-            animation: 'pulseGlow 4s ease-in-out infinite',
+            filter: 'blur(40px)',
           }}
         />
         <div
           style={{
             position: 'absolute',
-            bottom: '8%',
-            right: '5%',
-            width: '500px',
-            height: '500px',
+            bottom: '5%',
+            right: '-5%',
+            width: '600px',
+            height: '600px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(192,132,252,0.1), transparent 70%)',
+            background: 'radial-gradient(circle, rgba(212,160,48,0.14), transparent 70%)',
             pointerEvents: 'none',
-            animation: 'pulseGlow 5s ease-in-out 2s infinite',
+            filter: 'blur(40px)',
           }}
         />
 
         <div
           style={{
             position: 'relative',
-            zIndex: 1,
-            textAlign: 'center',
-            padding: '40px 24px',
-            maxWidth: '800px',
-            animation: 'floatUp 0.8s ease 0.2s forwards',
-            opacity: 0,
+            zIndex: 2,
+            maxWidth: '1200px',
+            width: '100%',
+            margin: '0 auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '48px',
+            alignItems: 'center',
           }}
         >
-          {/* Logo Badge */}
+          {/* LEFT COLUMN: Main Copy & Actions */}
+          <div
+            style={{
+              animation: 'floatUp 0.8s ease 0.2s forwards',
+              opacity: 0,
+            }}
+          >
+            {/* Top Badges */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 16px',
+                  borderRadius: '20px',
+                  background: 'rgba(212,160,48,0.12)',
+                  border: '1px solid rgba(212,160,48,0.3)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  color: theme.gold,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                {ICONS.sparkles}
+                <span>Gremio Estelar Oficial</span>
+              </div>
+
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  background: 'rgba(76,175,80,0.12)',
+                  border: '1px solid rgba(76,175,80,0.3)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  color: '#81c784',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4caf50', display: 'inline-block', boxShadow: '0 0 8px #4caf50' }} />
+                <span>Instancia VRChat Activa</span>
+              </div>
+            </div>
+
+            {/* Main Heading */}
+            <h1
+              style={{
+                fontSize: 'clamp(2.5rem, 5vw, 4.2rem)',
+                fontWeight: 900,
+                lineHeight: 1.1,
+                letterSpacing: '-0.03em',
+                marginBottom: '20px',
+                color: theme.cream,
+              }}
+            >
+              <span
+                style={{
+                  background: 'linear-gradient(135deg, #f5e6d3 0%, #e8c060 50%, #c084fc 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Hoshizora Maid Café
+              </span>
+            </h1>
+
+            {/* Subtitle / Tagline */}
+            <p
+              style={{
+                fontSize: 'clamp(1.05rem, 1.6vw, 1.25rem)',
+                color: theme.textMuted,
+                lineHeight: 1.8,
+                marginBottom: '32px',
+                maxWidth: '560px',
+              }}
+            >
+              {cafeSettings.cafe_tagline}
+            </p>
+
+            {/* VRChat World Name Copy Card */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 20px',
+                borderRadius: '16px',
+                background: 'rgba(38, 29, 23, 0.85)',
+                border: `1px solid ${theme.border}`,
+                marginBottom: '36px',
+                maxWidth: '100%',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {ICONS.vrchat}
+                <span style={{ fontSize: '0.82rem', color: theme.textMuted, fontWeight: 600 }}>Mundo:</span>
+                <strong style={{ fontSize: '0.92rem', color: theme.cream }}>{cafeSettings.cafe_vrchat_world}</strong>
+              </div>
+              <button
+                onClick={handleCopyWorld}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  borderRadius: '10px',
+                  background: copiedWorld ? 'rgba(76,175,80,0.25)' : 'rgba(212,160,48,0.18)',
+                  border: `1px solid ${copiedWorld ? 'rgba(76,175,80,0.5)' : 'rgba(212,160,48,0.35)'}`,
+                  color: copiedWorld ? '#81c784' : theme.gold,
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {copiedWorld ? ICONS.check : ICONS.copy}
+                {copiedWorld ? '¡Copiado!' : 'Copiar'}
+              </button>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+              <Link
+                href="#galeria"
+                scroll={false}
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('galeria')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '16px 36px',
+                  borderRadius: '16px',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #d4a030, #c4956a)',
+                  color: '#140f0c',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: '0 4px 24px rgba(212,160,48,0.35)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 8px 36px rgba(212,160,48,0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 24px rgba(212,160,48,0.35)';
+                }}
+              >
+                {ICONS.camera} Explorar Galería
+              </Link>
+
+              <a
+                href={cafeSettings.cafe_discord_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '16px 32px',
+                  borderRadius: '16px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  border: '1px solid rgba(88,101,242,0.4)',
+                  background: 'rgba(88,101,242,0.18)',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  backdropFilter: 'blur(8px)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(88,101,242,0.35)';
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(88,101,242,0.18)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                {ICONS.discord} Comunidad en Discord
+              </a>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Interactive Feature Showcase Card */}
           <div
             style={{
               position: 'relative',
-              width: '140px',
-              height: '140px',
-              margin: '0 auto 24px',
-              animation: 'pulseGlow 3s ease-in-out infinite',
+              animation: 'floatUp 0.8s ease 0.4s forwards',
+              opacity: 0,
             }}
           >
-            <Image
-              src="/hoshi.png"
-              alt="Hoshizora Maid Logo"
-              width={140}
-              height={140}
-              style={{ borderRadius: '50%', objectFit: 'cover' }}
-              priority
-            />
+            {/* Ambient Card Shadow Ring */}
             <div
               style={{
                 position: 'absolute',
-                inset: '-6px',
-                borderRadius: '50%',
-                border: '2px solid rgba(212,160,48,0.3)',
-                animation: 'pulseGlow 3s ease-in-out infinite',
+                inset: '-10px',
+                borderRadius: '32px',
+                background: 'linear-gradient(135deg, rgba(212,160,48,0.25), rgba(192,132,252,0.25))',
+                filter: 'blur(20px)',
+                zIndex: 0,
               }}
             />
-          </div>
 
-          {/* VRChat Official Badge */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 18px',
-              borderRadius: '20px',
-              background: 'rgba(212,160,48,0.12)',
-              border: '1px solid rgba(212,160,48,0.3)',
-              marginBottom: '24px',
-              fontSize: '0.78rem',
-              fontWeight: 800,
-              color: theme.gold,
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-            }}
-          >
-            {ICONS.vrchat}
-            <span>Maid Café Oficial en VRChat</span>
-          </div>
-
-          {/* Main Title */}
-          <h1
-            style={{
-              fontSize: 'clamp(2.6rem, 6.5vw, 4.5rem)',
-              fontWeight: 900,
-              lineHeight: 1.08,
-              letterSpacing: '-0.03em',
-              marginBottom: '20px',
-              color: theme.cream,
-            }}
-          >
-            <span
+            <div
               style={{
-                background: 'linear-gradient(135deg, #e8c060, #f5e6d3, #c084fc)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                position: 'relative',
+                zIndex: 1,
+                background: 'rgba(30, 22, 17, 0.85)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(212,160,48,0.3)',
+                borderRadius: '28px',
+                padding: '32px',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
               }}
             >
-              Hoshizora Maid Café
-            </span>
-          </h1>
+              {/* Top Maid Avatar & Title */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '74px',
+                    height: '74px',
+                    borderRadius: '50%',
+                    border: '2px solid #d4a030',
+                    boxShadow: '0 0 20px rgba(212,160,48,0.3)',
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Image src="/hoshi.png" alt="Hoshizora Maid" fill style={{ objectFit: 'cover' }} priority />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: theme.cream, marginBottom: '4px' }}>
+                    Hoshizora Maid Café
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', color: theme.gold, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {ICONS.sparkles} VRChat Roleplay & Entertainment
+                  </span>
+                </div>
+              </div>
 
-          {/* Subtitle / Tagline */}
-          <p
-            style={{
-              fontSize: 'clamp(1.05rem, 1.8vw, 1.25rem)',
-              color: theme.textMuted,
-              maxWidth: '640px',
-              margin: '0 auto 36px',
-              lineHeight: 1.8,
-            }}
-          >
-            {cafeSettings.cafe_tagline}
-          </p>
+              {/* Live Info Grid */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
+                {nextEvent && (
+                  <div
+                    style={{
+                      padding: '14px 18px',
+                      borderRadius: '16px',
+                      background: `${nextEvent.color}15`,
+                      border: `1px solid ${nextEvent.color}30`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: nextEvent.color, fontWeight: 800, textTransform: 'uppercase' }}>
+                        Próxima Noche de Evento
+                      </span>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: theme.cream, marginTop: '2px' }}>
+                        {nextEvent.name}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        padding: '4px 12px',
+                        borderRadius: '10px',
+                        background: `${nextEvent.color}25`,
+                        color: nextEvent.color,
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {nextEvent.days === 0 ? '¡Hoy!' : nextEvent.days === 1 ? 'Mañana' : `En ${nextEvent.days} días`}
+                    </span>
+                  </div>
+                )}
 
-          {/* VRChat World Quick Access Bar */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px 20px',
-              borderRadius: '16px',
-              background: 'rgba(38, 29, 23, 0.9)',
-              border: `1px solid ${theme.border}`,
-              marginBottom: '36px',
-              maxWidth: '100%',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            }}
-          >
-            <span style={{ fontSize: '0.85rem', color: theme.textMuted, fontWeight: 500 }}>Mundo VRChat:</span>
-            <strong style={{ fontSize: '0.92rem', color: theme.cream }}>{cafeSettings.cafe_vrchat_world}</strong>
-            <button
-              onClick={handleCopyWorld}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                borderRadius: '10px',
-                background: copiedWorld ? 'rgba(76,175,80,0.2)' : 'rgba(212,160,48,0.15)',
-                border: `1px solid ${copiedWorld ? 'rgba(76,175,80,0.4)' : 'rgba(212,160,48,0.3)'}`,
-                color: copiedWorld ? '#81c784' : theme.gold,
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {copiedWorld ? ICONS.check : ICONS.copy}
-              {copiedWorld ? '¡Copiado!' : 'Copiar Nombre'}
-            </button>
-          </div>
+                {/* Staff Highlights */}
+                <div
+                  style={{
+                    padding: '14px 18px',
+                    borderRadius: '16px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${theme.border}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: theme.textMuted, fontWeight: 700, textTransform: 'uppercase' }}>
+                      Staff Anfitrionas
+                    </span>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: theme.cream, marginTop: '2px' }}>
+                      {staffMembers.length} Maids Registradas
+                    </div>
+                  </div>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link
-              href="#galeria"
-              scroll={false}
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('galeria')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '16px 36px',
-                borderRadius: '16px',
-                fontSize: '0.95rem',
-                fontWeight: 800,
-                background: 'linear-gradient(135deg, #d4a030, #c4956a)',
-                color: '#140f0c',
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 4px 24px rgba(212,160,48,0.35)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 8px 36px rgba(212,160,48,0.5)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 24px rgba(212,160,48,0.35)';
-              }}
-            >
-              {ICONS.camera} Ver Galería de Fotos
-            </Link>
+                  {/* Avatars Stack */}
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {staffMembers.slice(0, 4).map((m, idx) => (
+                      <div
+                        key={m.id}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          border: '2px solid #1e1611',
+                          marginLeft: idx > 0 ? '-10px' : '0',
+                          overflow: 'hidden',
+                          background: 'linear-gradient(135deg, #d4a030, #c084fc)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          color: '#fff',
+                        }}
+                      >
+                        {m.vtuberProfile?.avatarUrl ? (
+                          <Image src={m.vtuberProfile.avatarUrl} alt={m.username} width={32} height={32} style={{ objectFit: 'cover' }} />
+                        ) : (
+                          m.username.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-            <a
-              href={cafeSettings.cafe_discord_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '16px 32px',
-                borderRadius: '16px',
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                border: '1px solid rgba(88,101,242,0.4)',
-                background: 'rgba(88,101,242,0.18)',
-                color: '#ffffff',
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                backdropFilter: 'blur(8px)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(88,101,242,0.35)';
-                e.currentTarget.style.transform = 'translateY(-3px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(88,101,242,0.18)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              {ICONS.discord} Comunidad en Discord
-            </a>
+              {/* Tags bar */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {['#VRChatWorld', '#LiveKaraoke', '#MaidRoleplay', '#GremioEstelar'].map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: theme.purpleLight,
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      background: 'rgba(192,132,252,0.1)',
+                      border: '1px solid rgba(192,132,252,0.2)',
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
