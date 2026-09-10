@@ -22,6 +22,7 @@ const FeaturedVtubersSection = dynamic(() => import('@/components/landing/Featur
 const PricingSection = dynamic(() => import('@/components/landing/PricingSection'), { ssr: false });
 const RecentActivitySection = dynamic(() => import('@/components/landing/RecentActivitySection'), { ssr: false });
 const CTASection = dynamic(() => import('@/components/landing/CTASection'), { ssr: false });
+const PlatformsStrip = dynamic(() => import('@/components/landing/PlatformsStrip'), { ssr: false });
 
 // Authenticated feed: también lazy, porque solo se renderiza para usuarios
 // logueados (antes su chunk pesado viajaba en el bundle inicial para todos).
@@ -58,6 +59,8 @@ function LandingPage() {
   return (
     <>
       <HeroSection />
+      <SectionDivider />
+      <LazyMount minHeight={160}><PlatformsStrip /></LazyMount>
       <SectionDivider />
       <LazyMount minHeight={420}><LiveNowSection /></LazyMount>
       <SectionDivider />
