@@ -4,7 +4,7 @@ import * as AdminRepository from './admin.repository';
 import AppError from '../../errors/AppError';
 import { AdminQueryInput, PaginatedResponse } from './admin.types';
 import { UpdateUserAdminInput, UpdateVtuberAdminInput, UpdateStreamerAdminInput, UpdateEventAdminInput, UpdateGuildAdminInput, UpdatePostAdminInput, UpdateCommentAdminInput } from './admin.types';
-import { NOTIFICATION_TYPES, isStaffRole, hasAnyRole } from '@gremio-estelar/shared';
+import { NOTIFICATION_TYPES, isStaffRole, hasAnyRole, getLevelFromXp, parseUserRoles } from '@gremio-estelar/shared';
 import { activatePlatformPlan, PLATFORM_PLANS } from '../subscriptions/platform-subscriptions.service';
 import { hardDeleteUser } from '../users/user.service';
 
@@ -104,16 +104,39 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     changes.push(`username: ${user.username} → ${data.username}`);
   }
 
+  // Consistencia nivel/XP: el ranking ordena por XP pero muestra el nivel,
+  // así que `level` se deriva SIEMPRE de `xp` con la curva oficial de shared.
+  // Si el admin envía un nivel que contradice el XP resultante, se corrige y
+  // queda registrado en el log; para subir de nivel a alguien, se le otorga XP.
+  const payload = { ...data } as UpdateUserAdminInput & Record<string, unknown>;
+  if (payload.xp !== undefined || payload.level !== undefined) {
+    const effectiveXp = payload.xp !== undefined ? (payload.xp as number) : (user.xp ?? 0);
+    const derivedLevel = getLevelFromXp(effectiveXp);
+    if (payload.level !== undefined && (payload.level as number) !== derivedLevel) {
+      changes.push(`nivel solicitado: ${payload.level} → ajustado a ${derivedLevel} (derivado de ${Number(effectiveXp).toLocaleString()} XP)`);
+    }
+    payload.level = derivedLevel;
+  }
+
   // isVerified NO es columna de User (es del VTuberProfile). Si se pasa en el
   // update directo, Prisma lanza "Unknown argument isVerified" → 500. Se extrae
   // aquí y se aplica abajo vía el upsert del VTuberProfile.
-  const userUpdateData = { ...data } as Record<string, unknown>;
+  const userUpdateData = { ...payload } as Record<string, unknown>;
   delete userUpdateData.isVerified;
   const updated = await AdminRepository.updateUser(id, userUpdateData as Prisma.UserUpdateInput);
 
-  // Sync VTuber profile automatically (creates profile if missing)
-  const targetRole = data.role || user.role;
-  if (hasAnyRole(targetRole, ['VTUBER']) || data.isVerified !== undefined) {
+  // Sync de perfiles de creador — SOLO si el usuario tiene el rol real.
+  // ⚠️ No usar hasAnyRole aquí: otorga "God Mode" a ADMIN/OWNER (pasa CUALQUIER
+  // check de rol), lo que hacía que editar cualquier cuenta admin/owner creara
+  // un VTuberProfile/StreamerProfile aprobado sin ser creador → falsos badges.
+  // Tampoco la verificación (isVerified, check azul) debe fabricar un perfil:
+  // verificarse ≠ ser VTuber. Solo se crea el perfil si hay rol real; si el
+  // perfil ya existe, se puede actualizar isVerified pero nunca aprobarlo.
+  const targetRoles = parseUserRoles(data.role || user.role);
+  const isVtuberRole = targetRoles.includes('VTUBER');
+  const isStreamerRole = targetRoles.includes('STREAMER');
+
+  if (isVtuberRole || (data.isVerified !== undefined && user.vtuberProfile)) {
     const isVer = data.isVerified !== undefined ? data.isVerified : true;
     await prisma.vTuberProfile.upsert({
       where: { userId: id },
@@ -121,25 +144,24 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
         userId: id,
         displayName: user.displayName || user.username,
         avatarUrl: user.avatarUrl || null,
-        isApproved: true,
+        isApproved: isVtuberRole,
         isHidden: false,
         isVerified: isVer,
       },
       update: {
-        isApproved: true,
-        isHidden: false,
+        ...(isVtuberRole ? { isApproved: true, isHidden: false } : {}),
         isVerified: isVer,
       },
     });
-  } else if (data.role && !hasAnyRole(data.role, ['VTUBER']) && user.vtuberProfile) {
+  } else if (data.role && !isVtuberRole && user.vtuberProfile) {
     await prisma.vTuberProfile.update({
       where: { userId: id },
       data: { isApproved: false, isHidden: true },
     });
   }
 
-  // Sync Streamer profile automatically (mirror of the VTuber sync)
-  if (hasAnyRole(targetRole, ['STREAMER']) || data.isVerified !== undefined) {
+  // Sync Streamer profile (mismo criterio: rol real o perfil preexistente)
+  if (isStreamerRole || (data.isVerified !== undefined && (user as any).streamerProfile)) {
     const isVer = data.isVerified !== undefined ? data.isVerified : true;
     await prisma.streamerProfile.upsert({
       where: { userId: id },
@@ -147,17 +169,16 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
         userId: id,
         displayName: user.displayName || user.username,
         avatarUrl: user.avatarUrl || null,
-        isApproved: true,
+        isApproved: isStreamerRole,
         isHidden: false,
         isVerified: isVer,
       },
       update: {
-        isApproved: true,
-        isHidden: false,
+        ...(isStreamerRole ? { isApproved: true, isHidden: false } : {}),
         isVerified: isVer,
       },
     });
-  } else if (data.role && !hasAnyRole(data.role, ['STREAMER']) && (user as any).streamerProfile) {
+  } else if (data.role && !isStreamerRole && (user as any).streamerProfile) {
     await prisma.streamerProfile.update({
       where: { userId: id },
       data: { isApproved: false, isHidden: true },

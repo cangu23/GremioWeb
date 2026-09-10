@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic';
 import MentionInput, { renderContentWithMentions } from './MentionInput';
 import { useStickersCache } from '@/lib/content-renderer';
 import RoleBadge from '@/components/ui/RoleBadge';
-import { getPrimaryRole, isStaffRole, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
+import { getPrimaryRole, isStaffRole, getEffectivePlan, planMeetsOrExceeds, parseUserRoles } from '@gremio-estelar/shared';
 import type { PostCardData, CommentData } from '@gremio-estelar/shared';
 
 // Lazy-loaded modals to shrink initial bundle & boost rendering speed
@@ -536,13 +536,23 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
               {(() => {
                 const isVerified = !!(post.user.vtuberProfile?.isVerified || (post.user as any).streamerProfile?.isVerified || (post.user as any).isVerified);
-                // Badge del autor basado en perfiles de creador aprobados, no solo
-                // en el rol: un streamer con streamerProfile (sin vtuberProfile)
-                // debe lucir el badge STREAMER aunque su rol principal sea USER.
+                // Badge del autor: 1º la elección del usuario (displayedRole) si es
+                // válida en su cadena de roles; 2º perfiles de creador aprobados;
+                // 3º el rol principal. Un perfil aprobado no debe tapar un rol de
+                // staff elegido explícitamente, ni un perfil fabricado debe dar un
+                // badge de creador a quien no lo es.
+                const chosenRole = ((post.user as any).displayedRole || '').toUpperCase();
+                const chosenIsValid = !!chosenRole && parseUserRoles(post.user.role).includes(chosenRole);
                 const vtuberApproved = !!(post.user.vtuberProfile?.isApproved || post.user.vtuberProfile?.isVerified);
                 const streamerApproved = !!(post.user.streamerProfile?.isApproved || post.user.streamerProfile?.isVerified);
                 const roleFromRoleField = getPrimaryRole(post.user.role, (post.user as any).displayedRole);
-                const badgeRole = vtuberApproved ? 'VTUBER' : (streamerApproved ? 'STREAMER' : roleFromRoleField);
+                const badgeRole = chosenIsValid
+                  ? chosenRole
+                  : vtuberApproved
+                    ? 'VTUBER'
+                    : streamerApproved
+                      ? 'STREAMER'
+                      : roleFromRoleField;
                 // Mismas condiciones que el avatar: solo se usa el nombre del perfil
                 // de creador si el perfil está aprobado/verificado (fuente única).
                 const displayName =

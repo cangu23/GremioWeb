@@ -8,7 +8,7 @@ import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import { ShimmerBlock } from '@/components/ui/Skeleton';
 import RoleBadge from '@/components/ui/RoleBadge';
-import { getPrimaryRole } from '@gremio-estelar/shared';
+import { getPrimaryRole, getXpProgress, MAX_LEVEL } from '@gremio-estelar/shared';
 
 interface LeaderboardEntry {
   id: string;
@@ -80,11 +80,6 @@ function LeaderboardContent() {
     if (rank === 2) return <span style={{ fontSize: '1.4rem' }} title="Segundo Lugar (Plata)">🥈</span>;
     if (rank === 3) return <span style={{ fontSize: '1.4rem' }} title="Tercer Lugar (Bronce)">🥉</span>;
     return <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>#{rank}</span>;
-  };
-
-  const getXpForNextLevel = (level: number) => {
-    const thresholds = [0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 4000, 5200, 6600, 8200, 10000, 12000];
-    return thresholds[Math.min(level, thresholds.length - 1)] || thresholds[thresholds.length - 1];
   };
 
   const top3 = entries.slice(0, 3);
@@ -225,11 +220,8 @@ function LeaderboardContent() {
               </thead>
               <tbody>
                 {entries.map((entry) => {
-                  const nextLevelXp = getXpForNextLevel(entry.level);
-                  const prevLevelXp = getXpForNextLevel(entry.level - 1);
-                  const progress = nextLevelXp - prevLevelXp > 0
-                    ? Math.min(100, Math.round(((entry.xp - prevLevelXp) / (nextLevelXp - prevLevelXp)) * 100))
-                    : 100;
+                  const progress = getXpProgress(entry.xp, entry.level).percentage;
+                  const isMaxLevel = entry.level >= MAX_LEVEL;
                   const primaryRole = getPrimaryRole(entry.role, entry.displayedRole);
 
                   return (
@@ -329,7 +321,7 @@ function LeaderboardContent() {
                           />
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
-                          {progress}% → Lv.{entry.level + 1}
+                          {isMaxLevel ? 'Nivel máximo alcanzado' : `${progress}% → Lv.${entry.level + 1}`}
                         </div>
                       </td>
                     </tr>

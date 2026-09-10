@@ -54,7 +54,15 @@ describe('AdminService.updateUser — verificación (isVerified)', () => {
     mockPrisma.streamerProfile.upsert.mockResolvedValue({ userId: 'user-1', isVerified: true });
   });
 
-  it("verifica a un usuario: isVerified va al VTuberProfile, NO al update de User", async () => {
+  it("verifica a un VTuber existente: isVerified va al perfil, NO al update de User", async () => {
+    (AdminRepository.findUserById as any).mockResolvedValue({
+      id: 'user-1',
+      username: 'testuser',
+      role: 'VTUBER',
+      status: 'ACTIVE',
+      vtuberProfile: { userId: 'user-1', isApproved: true },
+    });
+
     await AdminService.updateUser('user-1', { isVerified: true }, 'admin-1');
 
     // isVerified no es columna de User: pasarla al update directo lanzaba
@@ -63,15 +71,44 @@ describe('AdminService.updateUser — verificación (isVerified)', () => {
       'user-1',
       expect.not.objectContaining({ isVerified: expect.anything() })
     );
-    // El upsert del perfil VTuber sí recibe isVerified
     expect(mockPrisma.vTuberProfile.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        update: expect.objectContaining({ isVerified: true, isApproved: true }),
+        update: expect.objectContaining({ isVerified: true }),
       })
     );
   });
 
-  it("quita la verificación (isVerified: false) sin romper el update de User", async () => {
+  it("NO fabrica un perfil VTuber al verificar a un USER sin perfil (anti falsos badges)", async () => {
+    await AdminService.updateUser('user-1', { isVerified: true }, 'admin-1');
+
+    expect(mockPrisma.vTuberProfile.upsert).not.toHaveBeenCalled();
+    expect(mockPrisma.streamerProfile.upsert).not.toHaveBeenCalled();
+  });
+
+  it("NO crea perfiles de creador al editar un ADMIN sin rol VTUBER/STREAMER", async () => {
+    (AdminRepository.findUserById as any).mockResolvedValue({
+      id: 'user-1',
+      username: 'testuser',
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    });
+
+    await AdminService.updateUser('user-1', { displayName: 'Nuevo Nombre' }, 'admin-1');
+
+    // Antes: hasAnyRole daba "God Mode" a ADMIN → se creaba VTuberProfile
+    // aprobado en cada edición de una cuenta admin → falsos badges VTUBER.
+    expect(mockPrisma.vTuberProfile.upsert).not.toHaveBeenCalled();
+    expect(mockPrisma.streamerProfile.upsert).not.toHaveBeenCalled();
+  });
+
+  it("quita la verificación (isVerified: false) de un VTuber sin desaprobar su perfil", async () => {
+    (AdminRepository.findUserById as any).mockResolvedValue({
+      id: 'user-1',
+      username: 'testuser',
+      role: 'VTUBER',
+      status: 'ACTIVE',
+      vtuberProfile: { userId: 'user-1', isApproved: true },
+    });
     mockPrisma.vTuberProfile.upsert.mockResolvedValue({ userId: 'user-1', isVerified: false });
 
     await AdminService.updateUser('user-1', { isVerified: false }, 'admin-1');
@@ -80,6 +117,7 @@ describe('AdminService.updateUser — verificación (isVerified)', () => {
       'user-1',
       expect.not.objectContaining({ isVerified: expect.anything() })
     );
+    // El rol VTUBER se mantiene: el perfil sigue aprobado, solo cambia isVerified
     expect(mockPrisma.vTuberProfile.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         update: expect.objectContaining({ isVerified: false, isApproved: true }),
