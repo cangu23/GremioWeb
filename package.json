@@ -22,7 +22,13 @@
     "prisma:generate:sqlite": "prisma generate --schema backend/prisma/schema.sqlite.prisma",
     "prisma:push:sqlite": "prisma db push --schema backend/prisma/schema.sqlite.prisma",
     "db:setup": "npm run prisma:push",
-    "db:seed": "echo 'Seed script pending — add your seed logic here'"
+    "db:seed:minimum": "cd backend && npx ts-node src/scripts/seed-minimum.ts",
+    "db:seed:admin": "cd backend && npx ts-node src/scripts/seed-admin.ts",
+    "check:local": "npm run check:types && npm run check:frontend && npm run check:backend",
+    "check:types": "npm run build:shared && cd backend && npx tsc --noEmit && cd ../frontend && npx tsc --noEmit",
+    "check:frontend": "cd frontend && npm run lint -- --max-warnings 0 && npm run build -- --no-lint",
+    "check:backend": "cd backend && npm run build && npm run test -- --run",
+    "restore:backup": "node scripts/restore-backup.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

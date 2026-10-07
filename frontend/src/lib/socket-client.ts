@@ -4,21 +4,38 @@ import { io, Socket } from 'socket.io-client';
 import { getAccessToken } from './api';
 
 // URL del servidor Socket.IO.
-// 1º) NEXT_PUBLIC_SOCKET_URL explícita (recomendada en producción cuando el
-//     backend vive en un servicio/host distinto del frontend).
-// 2º) Derivada de NEXT_PUBLIC_API_BASE_URL (quita el sufijo /api).
-// 3º) Misma origin que la página (funciona en el monolito Next+Express si el
-//     rewrite /socket.io está configurado, y en desarrollo con el proxy).
+// Esta función elige la URL del socket según la estrategia oficial de
+// despliegue. No adivina en función del contexto: en producción el
+// frontend y el backend suelen vivir en orígenes distintos, y el socket
+// NO debe pasar por la reescritura de Next (/socket.io -> Express interno)
+// porque esa reescritura NO realiza upgrade de WebSocket.
+//
+// Reglas de despliegue (documentadas también en frontend/next.config.mjs):
+//  1. BACKEND_SEPARADO: el frontend y backend están en servicios distintos
+//     (p.ej. Render: frontend + backend). En este caso, el socket conecta
+//     directamente al backend público.
+//     -> Obligatorio: NEXT_PUBLIC_SOCKET_URL = https://gremioweb.onrender.com
+//        (sin /api, sin barra final).
+//  2. MONOLITO: frontend y backend corren en el mismo contenedor/host y el
+//     socket está expuesto públicamente en la misma origin que Next.
+//     -> Puedes usar la origin del frontend, pero SIEMPRE que el socket
+//        esté accesible desde el navegador directamente, no a través del
+//        rewrite de Next.
+//
+// IMPORTANTE: si usas BACKEND_SEPARADO, no relies en derivar desde
+// NEXT_PUBLIC_API_BASE_URL. Ese valor apunta a /api y el socket no
+// debería ir por ahí.
 const deriveSocketUrl = () => {
   const explicit = process.env.NEXT_PUBLIC_SOCKET_URL;
   if (explicit) return explicit.replace(/\/+$/, '');
+  // Si NEXT_PUBLIC_API_BASE_URL está definido, en BACKEND_SEPARADO suele ser
+  // algo como https://gremioweb.onrender.com/api. El socket NO va por ahí.
+  // No derivamos a menos que sepamos que en ese entorno el backend está en la
+  // misma origin que Next y expone socket públicamente.
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (apiBase) {
-    // Quita el sufijo /api (o /api/) para obtener el host del socket.
-    // Si el resultado queda vacío (p.ej. apiBase='/api' en el monolito),
-    // cae al siguiente fallback en vez de devolver ''.
     const derived = apiBase.replace(/\/api\/?$/, '');
-    if (derived) return derived;
+    if (derived && derived !== '') return derived;
   }
   if (typeof window !== 'undefined') return window.location.origin;
   return '';
@@ -99,18 +116,26 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // Auto-reconexión al volver a la pestaña: con reintentos acotados (15), un
-  // cold start largo de Render (free tier) puede agotarlos; al recuperar el
-  // foco reintentamos en vez de quedarnos muertos hasta recargar la página.
-  const handleReconnect = () => {
-    if (socket && !socket.connected && getAccessToken()) {
-      socket.connect();
-    }
+  // Auto-reconexión al volver a la pestaña / visibilidad.
+  // Con reintentos acotados (15), un cold start largo de Render (free tier)
+  // puede agotarlos antes de que el usuario vuelva a interactuar; al recuperar
+  // el foco reintentamos en vez de quedarnos muertos hasta recargar la página.
+  // Usamos un backoff simple para no saturar el servidor tras reconexiones
+  // rápidas (p.ej. varios tabs volviendo a la vez).
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  const scheduleReconnect = () => {
+    if (reconnectTimer) return; // una sola cola para toda la página
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      if (socket && !socket.connected && getAccessToken()) {
+        socket.connect();
+      }
+    }, 400);
   };
   window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') handleReconnect();
+    if (document.visibilityState === 'visible') scheduleReconnect();
   });
-  window.addEventListener('focus', handleReconnect);
+  window.addEventListener('focus', scheduleReconnect);
 }
 
 export const NOTIFICATION_EVENTS = {

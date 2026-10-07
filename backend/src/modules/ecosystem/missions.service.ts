@@ -82,6 +82,12 @@ export const DEFAULT_MISSIONS = [
 // corría en CADA GET de misiones, provocando escrituras en BD por petición
 // (updateMany + 9 × findFirst/create).
 let hasSeededMissions = false;
+let missionListCache: { data: any; timestamp: number } | null = null;
+const MISSION_LIST_CACHE_TTL_MS = 60 * 1000;
+
+export const invalidateMissionListCache = () => {
+  missionListCache = null;
+};
 
 export const seedDefaultMissions = async () => {
   if (hasSeededMissions) return;
@@ -117,10 +123,12 @@ export const seedDefaultMissions = async () => {
     }
 
     hasSeededMissions = true;
+    missionListCache = null;
   } catch (err) {
     // Si falla (p. ej. la BD aún no está lista), reintentar en la próxima
     // petición en vez de quedarse sin seed para siempre.
     console.error('Error seeding default missions:', err);
+    hasSeededMissions = false;
   }
 };
 
@@ -169,10 +177,16 @@ export const getUserMissions = async (userId: string) => {
   await seedDefaultMissions();
   await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
 
-  const missions = await prisma.mission.findMany({
-    where: { active: true },
-    orderBy: { createdAt: 'asc' },
-  });
+  let missions: any[];
+  if (missionListCache && Date.now() - missionListCache.timestamp < MISSION_LIST_CACHE_TTL_MS) {
+    missions = missionListCache.data as any[];
+  } else {
+    missions = await prisma.mission.findMany({
+      where: { active: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    missionListCache = { data: missions, timestamp: Date.now() };
+  }
 
   const progressRecords = await prisma.userMissionProgress.findMany({
     where: {

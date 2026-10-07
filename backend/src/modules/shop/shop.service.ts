@@ -29,14 +29,21 @@ export const listItems = async () => {
     return shopItemsCache.data;
   }
 
-  // Asynchronously seed default items once in background if not done yet.
-  // Si el seed falla, se resetea hasSeeded para reintentarlo en la próxima
-  // petición (antes quedaba marcado como hecho para siempre).
+  // Asegurar que existen items base antes de responder: en prod esto
+  // debería garantizarse en el arranque del servidor, pero en entornos desplegados
+  // por primera vez o tras resets puntuales, esperamos con timeout corto para
+  // no responder vacío sin querer.
   if (!hasSeeded) {
     hasSeeded = true;
-    seedDefaultItems().catch(() => {
+    try {
+      await Promise.race([
+        seedDefaultItems(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('shop seed timeout')), 5000)),
+      ]);
+    } catch (err) {
+      console.warn('[Shop] Seed o timeout al asegurar items base:', err);
       hasSeeded = false;
-    });
+    }
   }
 
   const items = await ShopRepository.findActiveItems();
@@ -62,6 +69,7 @@ export const buyItem = async (userId: string, itemId: string) => {
   const item = await ShopRepository.findItemById(itemId);
   if (!item) throw new AppError('Ítem no encontrado', 404);
   if (!item.active) throw new AppError('Este ítem ya no está disponible', 400);
+  if (item.price <= 0) throw new AppError('Este ítem no tiene precio', 400);
 
   // Calculate effective price with discount if set by admin
   let effectivePrice = item.price;

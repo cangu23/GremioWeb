@@ -4,7 +4,20 @@ import { addStardust } from './stardust.service';
 import { awardCustomXp } from '../gamification/gamification.service';
 import { PASS_TIERS, getTierForLevel, getTierProgress, isTierRevealed } from '@gremio-estelar/shared';
 
+// Caché ligero por proceso de temporada activa y niveles del pase. Evita
+// leer season.findFirst + passLevel.findMany(50) en cada request.
+let activeSeasonCache: { season: any; levels: any[]; timestamp: number } | null = null;
+const ACTIVE_SEASON_CACHE_TTL_MS = 60 * 1000;
+
+export const invalidateActiveSeasonCache = () => {
+  activeSeasonCache = null;
+};
+
 export const getOrCreateActiveSeason = async () => {
+  if (activeSeasonCache && Date.now() - activeSeasonCache.timestamp < ACTIVE_SEASON_CACHE_TTL_MS) {
+    return activeSeasonCache.season;
+  }
+
   let season = await prisma.season.findFirst({
     where: { active: true },
   });
@@ -28,6 +41,12 @@ export const getOrCreateActiveSeason = async () => {
     await seedPassLevels(season.id);
   }
 
+  const passLevels = await prisma.passLevel.findMany({
+    where: { seasonId: season.id },
+    orderBy: { level: 'asc' },
+  });
+
+  activeSeasonCache = { season, levels: passLevels, timestamp: Date.now() };
   return season;
 };
 
@@ -95,6 +114,7 @@ export const seedPassLevels = async (seasonId: string) => {
       });
     }
   }
+  activeSeasonCache = null;
 };
 
 import { hasAnyRole, isStaffRole } from '@gremio-estelar/shared';
@@ -153,7 +173,8 @@ export const getUserSeasonPass = async (userId: string) => {
     }
   }
 
-  const passLevels = await prisma.passLevel.findMany({
+  const cachedLevels = activeSeasonCache?.levels ?? [];
+  const passLevels = cachedLevels.length > 0 ? cachedLevels : await prisma.passLevel.findMany({
     where: { seasonId: season.id },
     orderBy: { level: 'asc' },
   });

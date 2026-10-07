@@ -53,4 +53,31 @@ prisma.$connect()
     }
   });
 
+/* ========================================================
+ * REGLA DE ESQUEMA Y SEED (fuente única)
+ * ========================================================
+ * - En desarrollo local y entornos nuevos, la forma oficial de
+ *   crear/actualizar tablas es Prisma Migrate.
+ *   Comandos típicos:
+ *     npx prisma migrate dev --schema backend/prisma/schema.prisma --name <name>
+ *     npx prisma migrate deploy --schema backend/prisma/schema.prisma
+ *
+ * - En producción histórica, el esquema llegó con `prisma db push`
+ *   (sin historial de migraciones). En ese caso el servidor usa un
+ *   mecanismo de compatibilidad en `start.sh` (baseline + migrate
+ *   deploy + fallback db push) para no romper el boot.
+ *
+ * - Seed mínimo oficial: `npx ts-node backend/src/scripts/seed-minimum.ts`
+ *   (o `npm run db:seed:minimum` si se añade al package.json).
+ *   Garantiza admin mínimo, shop items mínimos, logros mínimos,
+ *   misiones mínimas y temporada + niveles mínimos del pase.
+ *   Está pensado para resets/entornos nuevos, no para correr en
+ *   producción continua.
+ *
+ * - Regla práctica: si creas una tabla/modelo nuevo, usa Migrate
+ *   y documenta en el commit qué endpoints lo usan. Mantén el seed
+ *   mínimo actualizado si el nuevo elemento es indispensable para
+ *   que la app no quede rota tras un reset (ej. un item de tienda,
+ *   un logro, una misión o niveles de pase que la UI liste).
+ */
 export default prisma;
