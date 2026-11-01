@@ -56,7 +56,7 @@ const GUREN_DEFAULT: FeaturedVTuber = {
   avatarUrl: '/images/guren-avatar.jpg',
   bannerUrl: '/images/guren-banner.jpg',
   description: 'Soy Christend Guren Tatsumaki クリステンド 紅蓮 竜巻, Emperador del Imperio CARMESI. ¡Únete a mis tropas en el Gremio Estelar!',
-  isLive: true,
+  isLive: false,
   isVerified: true,
   twitchUrl: 'https://www.twitch.tv/gurenvt_',
   youtubeUrl: null,

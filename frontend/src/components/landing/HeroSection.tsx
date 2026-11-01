@@ -89,7 +89,7 @@ export default function HeroSection() {
           userId: 'gurenvt_',
           displayName: 'Guren Tatsumaki',
           avatarUrl: '/images/guren-avatar.jpg',
-          isLive: true,
+          isLive: false,
           user: { _count: { followers: 366 } },
         };
 
