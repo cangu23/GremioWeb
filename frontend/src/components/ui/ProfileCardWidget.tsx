@@ -135,9 +135,9 @@ export default function ProfileCardWidget({ userId, onClose }: ProfileCardWidget
         style={{
           width: '92%', maxWidth: '380px',
           borderRadius: '20px',
-          background: '#1a1a2e',
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.5), 0 0 40px rgba(139,92,246,0.06)',
+          background: (profile as any)?.profileBg || '#1a1a2e',
+          border: `1px solid ${(profile as any)?.bannerColor ? (profile as any)?.bannerColor + '40' : 'rgba(255,255,255,0.08)'}`,
+          boxShadow: `0 32px 80px rgba(0,0,0,0.6), 0 0 50px ${(profile as any)?.bannerColor ? (profile as any)?.bannerColor + '30' : 'rgba(139,92,246,0.1)'}`,
           animation: 'pcfZoomIn 0.25s ease-out',
           overflow: 'hidden',
           position: 'relative',

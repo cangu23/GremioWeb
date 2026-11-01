@@ -43,5 +43,9 @@ export const updateUserSchema = z.object({
     isLive: z.boolean().optional(),
     // Marco premium del plan: 'OFF' lo oculta, 'PLAN'/null lo muestra
     profileFrame: z.enum(['PLAN', 'OFF']).nullable().optional(),
+    // Personalización de tarjeta VIP
+    profileBg: z.string().max(250).nullable().optional(),
+    profileTheme: z.string().max(50).nullable().optional(),
+    profileParticles: z.string().max(50).nullable().optional(),
   }),
 });

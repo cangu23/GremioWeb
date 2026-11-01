@@ -5,7 +5,8 @@ import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpoti
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
-import { getMyPlatformPlan, getEffectivePlan } from '../subscriptions/platform-subscriptions.service';
+import { getMyPlatformPlan, getEffectivePlan, planMeetsOrExceeds } from '../subscriptions/platform-subscriptions.service';
+import { invalidateUserAuthCache } from '../auth/authenticate';
 
 // Plan efectivo (rol VIP puede tener plan gratis pero ser tratado como premium)
 const getEffectivePlanFromUser = (user: { plan?: string | null; role?: string | null }): string =>
@@ -82,6 +83,22 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
     }
   }
 
+  if (payload.profileBg !== undefined && payload.profileBg) {
+    const me = await UserRepository.findById(userId);
+    const effective = getEffectivePlan(me?.plan, me?.role);
+    if (!planMeetsOrExceeds(effective, 'NOVA')) {
+      throw new AppError('Los fondos de tarjeta son exclusivos de Nova Pro y Stellar Elite.', 403);
+    }
+  }
+
+  if (payload.profileParticles !== undefined && payload.profileParticles && payload.profileParticles !== 'OFF') {
+    const me = await UserRepository.findById(userId);
+    const effective = getEffectivePlan(me?.plan, me?.role);
+    if (!planMeetsOrExceeds(effective, 'STELLAR')) {
+      throw new AppError('Las partículas cósmicas son exclusivas de Stellar Elite.', 403);
+    }
+  }
+
   if (payload.username) {
     const existingUser = await UserRepository.findByUsername(payload.username);
     if (existingUser && existingUser.id !== userId) {
@@ -90,6 +107,9 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
   }
 
   const updatedProfile = await UserRepository.updateUserProfile(userId, payload);
+  if (updatedProfile) {
+    invalidateUserAuthCache(userId);
+  }
   if (!updatedProfile) {
     throw new AppError('Failed to update user profile', 500);
   }

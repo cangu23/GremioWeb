@@ -24,6 +24,10 @@ export interface User {
   // Marco premium del plan (STELLAR dorado / NOVA morado / ASTRO azul):
   // 'OFF' lo oculta; cualquier otro valor o null lo muestra (fallback del avatar).
   profileFrame?: string | null;
+  // Personalización avanzada de tarjeta VIP
+  profileBg?: string | null;
+  profileTheme?: string | null;
+  profileParticles?: string | null;
 }
 
 export interface UserProfile extends User {
@@ -42,6 +46,10 @@ export interface PublicUser {
   isVerified?: boolean;
   vtuberProfile?: VTuberProfile | null;
   streamerProfile?: StreamerProfile | null;
+  profileBg?: string | null;
+  profileTheme?: string | null;
+  profileParticles?: string | null;
+  bannerColor?: string | null;
 }
 
 export interface UpdateUserPayload {
@@ -51,6 +59,7 @@ export interface UpdateUserPayload {
   bio?: string;
   // VTuber-specific fields (handled by VTuberProfile)
   bannerUrl?: string | null;
+  bannerColor?: string | null;
   description?: string;
   lore?: string;
   socialLinks?: Record<string, string>;
@@ -73,4 +82,8 @@ export interface UpdateUserPayload {
   isLive?: boolean;
   // Profile music (Spotify link) — premium feature
   profileMusic?: string | null;
+  profileFrame?: string | null;
+  profileBg?: string | null;
+  profileTheme?: string | null;
+  profileParticles?: string | null;
 }
