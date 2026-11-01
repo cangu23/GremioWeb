@@ -22,10 +22,14 @@ export const metadata: Metadata = {
   keywords: [
     'VTuber',
     'Streamer',
-    'comunidad',
+    'agencia VTuber',
+    'grupo VTuber',
+    'agencia de VTubers en español',
+    'talentos virtuales',
+    'comunidad VTuber',
     'streaming',
-    'gremio',
-    'creadores de contenido',
+    'gremio estelar',
+    'creadores de contenido virtual',
     'Twitch',
     'YouTube',
     'Kick',
@@ -86,6 +90,30 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Gremio Estelar',
+  alternateName: ['Gremio Estelar VTuber Group', 'GremioEstelar'],
+  url: 'https://gremioestelar.com',
+  logo: 'https://gremioestelar.com/logo.png',
+  description:
+    'Agencia, red y comunidad de talentos virtuales y creadores de contenido VTuber en español.',
+  founder: [
+    { '@type': 'Person', name: 'Guren Tatsumaki' },
+    { '@type': 'Person', name: 'Meiro' },
+    { '@type': 'Person', name: 'Alesha' },
+  ],
+  knowsAbout: [
+    'VTuber',
+    'Virtual Talents',
+    'Agencia VTuber',
+    'Streaming',
+    'Live2D',
+    '3D VRM',
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -93,6 +121,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body suppressHydrationWarning>
         <ClientOnly fallback={null}>
           <ParticlesBackground />
