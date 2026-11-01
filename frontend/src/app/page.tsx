@@ -9,6 +9,7 @@ import LazyMount from '@/components/ui/LazyMount';
 // - HeroSection queda eager porque es lo primero que ve el usuario y los motores de búsqueda.
 import HeroSection from '@/components/landing/HeroSection';
 
+const FoundersSection = dynamic(() => import('@/components/landing/FoundersSection'), { ssr: false });
 const LiveNowSection = dynamic(() => import('@/components/landing/LiveNowSection'), { ssr: false });
 const HowItWorksSection = dynamic(() => import('@/components/landing/HowItWorksSection'), { ssr: false });
 const StatsSection = dynamic(() => import('@/components/landing/StatsSection'), { ssr: false });
@@ -76,6 +77,10 @@ function LandingPage() {
       <SectionDivider />
       <LazyMount minHeight={160}>
         <PlatformsStrip />
+      </LazyMount>
+      <SectionDivider />
+      <LazyMount minHeight={500}>
+        <FoundersSection />
       </LazyMount>
       <SectionDivider />
       <LazyMount minHeight={420}>
