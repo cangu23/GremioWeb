@@ -1,104 +1,213 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FourPointStar, Twitch, Youtube, Twitter, ExternalLink, Sparkles } from '@/components/ui/Icons';
+import { apiFetch } from '@/lib/api';
+import { FourPointStar, Twitch, Youtube, Twitter, ExternalLink } from '@/components/ui/Icons';
 
-export interface FounderData {
+export interface FounderConfig {
   id: string;
+  username: string;
+  alternateUsernames?: string[];
   name: string;
-  handle?: string;
   role: string;
   badge: string;
   isIncoming?: boolean;
-  avatarUrl?: string;
-  bannerUrl?: string;
+  fallbackAvatar?: string;
+  fallbackBanner?: string;
   themeColor: string;
-  description: string;
-  socials?: {
+  fallbackDescription: string;
+  fallbackSocials?: {
     twitch?: string;
     youtube?: string;
     twitter?: string;
   };
-  profileUrl?: string;
 }
 
-const FOUNDERS: FounderData[] = [
+export interface ResolvedFounder {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
+  badge: string;
+  isIncoming?: boolean;
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
+  themeColor: string;
+  description: string;
+  isLive?: boolean;
+  socials?: {
+    twitch?: string | null;
+    youtube?: string | null;
+    twitter?: string | null;
+  };
+  profileUrl: string;
+}
+
+const FOUNDERS_CONFIG: FounderConfig[] = [
   {
     id: 'guren',
+    username: 'gurenvt_',
+    alternateUsernames: ['guren', 'canguvt', 'gurenvt'],
     name: 'Guren Tatsumaki',
-    handle: '@gurenvt_',
     role: 'Emperador del Imperio Carmesí',
     badge: 'Fundador Principal',
-    avatarUrl: '/images/guren-avatar.jpg',
-    bannerUrl: '/images/guren-banner.jpg',
+    fallbackAvatar: '/images/guren-avatar.jpg',
+    fallbackBanner: '/images/guren-banner.jpg',
     themeColor: '#E63946',
-    description:
+    fallbackDescription:
       'Soy Christend Guren Tatsumaki クリステンド 紅蓮 竜巻, Emperador del Imperio CARMESI. Fundador del Gremio Estelar, creador de contenido, directos en VRChat y líder de la comunidad astral.',
-    socials: {
+    fallbackSocials: {
       twitch: 'https://www.twitch.tv/gurenvt_',
     },
-    profileUrl: '/vtuber/gurenvt_',
   },
   {
     id: 'meiro',
+    username: 'meiro',
+    alternateUsernames: ['Meiro', 'meiro_stelar'],
     name: 'Meiro',
-    handle: '@meiro_stelar',
     role: 'Talento Fundador',
     badge: 'Fundadora',
     themeColor: '#9D4EDD',
-    description:
+    fallbackDescription:
       'Pilar estelar y cofundadora del Gremio Estelar. Transmisiones mágicas, directos cautivadores y creadora fundamental en la expansión de nuestra constelación.',
-    socials: {
-      twitch: 'https://www.twitch.tv',
-    },
-    profileUrl: '/vtubers',
   },
   {
     id: 'alesha',
+    username: 'aleshaW',
+    alternateUsernames: ['Alesha', 'alesha', 'AleshaWeasleyVT'],
     name: 'Alesha',
-    handle: '@alesha_stelar',
     role: 'Talento Fundador',
     badge: 'Fundadora',
     themeColor: '#3A86FF',
-    description:
+    fallbackDescription:
       'Pilar estelar y cofundadora del Gremio Estelar. Voz cósmica, talento artístico y chispa creadora que dio vida a los primeros pasos de nuestra comunidad.',
-    socials: {
-      twitch: 'https://www.twitch.tv',
-    },
-    profileUrl: '/vtubers',
   },
   {
     id: 'chemy',
+    username: 'chemy',
+    alternateUsernames: ['Chemy', 'chemy_vt'],
     name: 'Chemy',
-    handle: '@chemy_vt',
     role: 'En Proceso de Integración',
     badge: 'Próximamente',
     isIncoming: true,
     themeColor: '#06D6A0',
-    description:
+    fallbackDescription:
       'Futura estrella del santuario astral. Preparando su aterrizaje estelar en el Gremio para unirse a las filas de talentos principales.',
-    profileUrl: '/vtubers',
   },
   {
     id: 'shinku',
+    username: 'shinku',
+    alternateUsernames: ['Shinku', 'shinku_vt'],
     name: 'Shinku',
-    handle: '@shinku_vt',
     role: 'En Proceso de Integración',
     badge: 'Próximamente',
     isIncoming: true,
     themeColor: '#FF70A6',
-    description:
+    fallbackDescription:
       'Futura estrella del santuario astral. Alistando motores y afinando su debut en las transmisiones y proyectos del Gremio.',
-    profileUrl: '/vtubers',
   },
 ];
 
 export default function FoundersSection() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [founders, setFounders] = useState<ResolvedFounder[]>(() =>
+    FOUNDERS_CONFIG.map((c) => ({
+      id: c.id,
+      username: c.username,
+      name: c.name,
+      role: c.role,
+      badge: c.badge,
+      isIncoming: c.isIncoming,
+      avatarUrl: c.fallbackAvatar || null,
+      bannerUrl: c.fallbackBanner || null,
+      themeColor: c.themeColor,
+      description: c.fallbackDescription,
+      socials: c.fallbackSocials || {},
+      profileUrl: `/profile/${c.username}`,
+    }))
+  );
 
-  const activeFounders = FOUNDERS.filter((f) => !f.isIncoming);
-  const incomingFounders = FOUNDERS.filter((f) => f.isIncoming);
+  // Sync real profile data from the database for each founder
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchProfiles = async () => {
+      const updated = await Promise.all(
+        FOUNDERS_CONFIG.map(async (cfg) => {
+          const usernamesToTry = [cfg.username, ...(cfg.alternateUsernames || [])];
+          let profileData: any = null;
+          let matchedUsername = cfg.username;
+
+          for (const u of usernamesToTry) {
+            try {
+              const res = await apiFetch(`/social/profile/${encodeURIComponent(u)}`, {});
+              if (res && res.id) {
+                profileData = res;
+                matchedUsername = res.username || u;
+                break;
+              }
+            } catch {
+              // try next alternate username
+            }
+          }
+
+          if (!profileData) {
+            return {
+              id: cfg.id,
+              username: cfg.username,
+              name: cfg.name,
+              role: cfg.role,
+              badge: cfg.badge,
+              isIncoming: cfg.isIncoming,
+              avatarUrl: cfg.fallbackAvatar || null,
+              bannerUrl: cfg.fallbackBanner || null,
+              themeColor: cfg.themeColor,
+              description: cfg.fallbackDescription,
+              socials: cfg.fallbackSocials || {},
+              profileUrl: `/profile/${cfg.username}`,
+            };
+          }
+
+          const vt = profileData.vtuberProfile;
+          const st = profileData.streamerProfile;
+          const isLive = Boolean(vt?.isLive || st?.isLive);
+
+          return {
+            id: cfg.id,
+            username: matchedUsername,
+            name: profileData.displayName || vt?.displayName || st?.displayName || cfg.name,
+            role: cfg.role,
+            badge: cfg.badge,
+            isIncoming: cfg.isIncoming,
+            avatarUrl: profileData.avatarUrl || vt?.avatarUrl || st?.avatarUrl || cfg.fallbackAvatar || null,
+            bannerUrl: profileData.bannerUrl || vt?.bannerUrl || st?.bannerUrl || cfg.fallbackBanner || null,
+            themeColor: vt?.themeColor || st?.themeColor || cfg.themeColor,
+            description: profileData.bio || vt?.description || st?.description || cfg.fallbackDescription,
+            isLive,
+            socials: {
+              twitch: vt?.twitchUrl || st?.twitchUrl || cfg.fallbackSocials?.twitch || null,
+              youtube: vt?.youtubeUrl || st?.youtubeUrl || cfg.fallbackSocials?.youtube || null,
+              twitter: vt?.twitterUrl || st?.twitterUrl || cfg.fallbackSocials?.twitter || null,
+            },
+            profileUrl: `/profile/${encodeURIComponent(matchedUsername)}`,
+          };
+        })
+      );
+
+      if (!cancelled) {
+        setFounders(updated);
+      }
+    };
+
+    fetchProfiles();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeFounders = founders.filter((f) => !f.isIncoming);
+  const incomingFounders = founders.filter((f) => f.isIncoming);
 
   return (
     <section
@@ -222,15 +331,47 @@ export default function FoundersSection() {
                     }}
                   />
 
-                  {/* Top Badge: Fundador */}
+                  {/* Top Badges: Fundador & Live status */}
                   <div
                     style={{
                       position: 'absolute',
                       top: '14px',
                       right: '14px',
                       zIndex: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
                     }}
                   >
+                    {founder.isLive && (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '3px 10px',
+                          borderRadius: '999px',
+                          background: '#EF4444',
+                          color: '#FFFFFF',
+                          fontSize: '0.62rem',
+                          fontWeight: 800,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          boxShadow: '0 0 12px rgba(239, 68, 68, 0.6)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '5px',
+                            height: '5px',
+                            borderRadius: '50%',
+                            background: '#FFFFFF',
+                          }}
+                        />
+                        EN VIVO
+                      </span>
+                    )}
+
                     <span
                       style={{
                         display: 'inline-flex',
@@ -527,7 +668,9 @@ export default function FoundersSection() {
                     width: '48px',
                     height: '48px',
                     borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${incoming.themeColor} 0%, #0d122b 100%)`,
+                    background: incoming.avatarUrl
+                      ? `url(${incoming.avatarUrl}) center/cover`
+                      : `linear-gradient(135deg, ${incoming.themeColor} 0%, #0d122b 100%)`,
                     border: '1.5px solid rgba(232, 199, 122, 0.4)',
                     boxShadow: `0 0 16px ${incoming.themeColor}33`,
                     display: 'flex',
@@ -537,9 +680,10 @@ export default function FoundersSection() {
                     fontWeight: 800,
                     fontSize: '1.15rem',
                     flexShrink: 0,
+                    overflow: 'hidden',
                   }}
                 >
-                  {incoming.name.charAt(0).toUpperCase()}
+                  {!incoming.avatarUrl && incoming.name.charAt(0).toUpperCase()}
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
