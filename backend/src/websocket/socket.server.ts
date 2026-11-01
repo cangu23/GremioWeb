@@ -199,7 +199,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
                 username: true,
                 avatarUrl: true,
                 role: true,
-                vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+                vtuberProfile: { select: { displayName: true, avatarUrl: true, isApproved: true, isVerified: true } },
+                streamerProfile: { select: { displayName: true, avatarUrl: true, isApproved: true, isVerified: true } },
                 purchases: {
                   where: { equipped: true },
                   include: { item: true },
@@ -212,7 +213,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
                 username: true,
                 avatarUrl: true,
                 role: true,
-                vtuberProfile: { select: { displayName: true, avatarUrl: true } },
+                vtuberProfile: { select: { displayName: true, avatarUrl: true, isApproved: true, isVerified: true } },
+                streamerProfile: { select: { displayName: true, avatarUrl: true, isApproved: true, isVerified: true } },
                 purchases: {
                   where: { equipped: true },
                   include: { item: true },
@@ -444,7 +446,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
                 username: true,
                 avatarUrl: true,
                 role: true,
-                vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
+                vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+                streamerProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
                 purchases: {
                   where: { equipped: true },
                   include: { item: true },

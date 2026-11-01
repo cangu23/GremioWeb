@@ -26,29 +26,23 @@ interface UserInfo {
   role?: string | null;
   displayName?: string | null;
   avatarUrl?: string | null;
-  vtuberProfile: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
-  streamerProfile?: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
+  vtuberProfile?: { displayName?: string; avatarUrl?: string | null; isVerified?: boolean; isApproved?: boolean } | null;
+  streamerProfile?: { displayName?: string; avatarUrl?: string | null; isVerified?: boolean; isApproved?: boolean } | null;
 }
 
 function isVtuberUser(user: UserInfo | null | undefined): boolean {
   if (!user) return false;
-  if (user.vtuberProfile || user.streamerProfile) return true;
-  if (user.role) {
-    const roles = user.role.split(',').map(r => r.trim().toUpperCase());
-    return roles.includes('VTUBER') || roles.includes('STREAMER');
-  }
+  const roles = (user.role || '').split(',').map(r => r.trim().toUpperCase());
+  if (roles.includes('STREAMER') || user.streamerProfile?.isApproved) return true;
+  if (roles.includes('VTUBER') || user.vtuberProfile?.isApproved) return true;
   return false;
 }
 
 function getCreatorLabel(user: UserInfo | null | undefined): string | null {
   if (!user) return null;
-  if (user.role) {
-    const roles = user.role.split(',').map(r => r.trim().toUpperCase());
-    if (roles.includes('STREAMER')) return 'Streamer';
-    if (roles.includes('VTUBER')) return 'VTuber';
-  }
-  if (user.streamerProfile) return 'Streamer';
-  if (user.vtuberProfile) return 'VTuber';
+  const roles = (user.role || '').split(',').map(r => r.trim().toUpperCase());
+  if (roles.includes('STREAMER') || user.streamerProfile?.isApproved) return 'Streamer';
+  if (roles.includes('VTUBER') || user.vtuberProfile?.isApproved) return 'VTuber';
   return null;
 }
 
@@ -159,7 +153,21 @@ function formatTimeFull(dateStr: string): string {
 }
 
 function getUsername(user: UserInfo): string {
-  return user.displayName || user.vtuberProfile?.displayName || user.streamerProfile?.displayName || user.username;
+  const isCreator = isVtuberUser(user);
+  return (
+    user.displayName ||
+    (isCreator ? user.vtuberProfile?.displayName || user.streamerProfile?.displayName : null) ||
+    user.username
+  );
+}
+
+function getUserAvatar(user: UserInfo | null | undefined): string | null {
+  if (!user) return null;
+  if (user.avatarUrl) return user.avatarUrl;
+  if (isVtuberUser(user)) {
+    return user.vtuberProfile?.avatarUrl || user.streamerProfile?.avatarUrl || null;
+  }
+  return null;
 }
 
 function getInitial(user: UserInfo): string {
@@ -986,13 +994,13 @@ function MessengerContent() {
                       >
                         <div style={{
                           width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
-                          background: (u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl)
-                            ? `url(${u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl}) center/cover`
+                          background: getUserAvatar(u)
+                            ? `url(${getUserAvatar(u)}) center/cover`
                             : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           color: '#fff', fontSize: '0.7rem', fontWeight: 700,
                         }}>
-                          {!(u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl) && getInitial(u)}
+                          {!getUserAvatar(u) && getInitial(u)}
                         </div>
                         <span style={{ fontWeight: 600 }}>{getUsername(u)}</span>
                         <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -1117,15 +1125,15 @@ function MessengerContent() {
                       <div style={{ position: 'relative', width: '38px', height: '38px', flexShrink: 0 }}>
                         <div style={{
                           width: '100%', height: '100%', borderRadius: '50%',
-                          background: (friend.avatarUrl || friend.vtuberProfile?.avatarUrl || friend.streamerProfile?.avatarUrl)
-                            ? `url(${friend.avatarUrl || friend.vtuberProfile?.avatarUrl || friend.streamerProfile?.avatarUrl}) center/cover`
+                          background: getUserAvatar(friend)
+                            ? `url(${getUserAvatar(friend)}) center/cover`
                             : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           color: '#fff', fontSize: '0.75rem', fontWeight: 700,
                           boxShadow: isSelected ? '0 0 0 2px var(--primary)' : 'none',
                           overflow: 'hidden',
                         }}>
-                          {!(friend.avatarUrl || friend.vtuberProfile?.avatarUrl || friend.streamerProfile?.avatarUrl) && getInitial(friend)}
+                          {!getUserAvatar(friend) && getInitial(friend)}
                         </div>
                         {isVtuberUser(friend) && <CreatorCheck user={friend} size={11} corner="top-left" />}
                         {friendUnread > 0 && (
@@ -1232,7 +1240,7 @@ function MessengerContent() {
                     {/* Avatar with online dot + creator check */}
                     <div style={{ position: 'relative', flexShrink: 0 }}>
                       <UserAvatar
-                        src={other.avatarUrl || other.vtuberProfile?.avatarUrl || other.streamerProfile?.avatarUrl}
+                        src={getUserAvatar(other) || undefined}
                         alt={getUsername(other)}
                         size={40}
                         user={other}
@@ -1406,7 +1414,7 @@ function MessengerContent() {
                         {showAvatar && (
                           <div style={{ position: 'relative', flexShrink: 0 }}>
                             <UserAvatar
-                              src={msg.sender.avatarUrl || msg.sender.vtuberProfile?.avatarUrl || msg.sender.streamerProfile?.avatarUrl}
+                              src={getUserAvatar(msg.sender) || undefined}
                               alt={getUsername(msg.sender)}
                               size={28}
                               user={msg.sender}
@@ -1479,13 +1487,13 @@ function MessengerContent() {
                     <div style={{
                       position: 'relative',
                       width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-                      background: (activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl)
-                        ? `url(${activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl}) center/cover`
+                      background: getUserAvatar(activeUserInfo)
+                        ? `url(${getUserAvatar(activeUserInfo)}) center/cover`
                         : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: '#fff', fontSize: '0.85rem', fontWeight: 700,
                     }}>
-                      {!(activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl) && getInitial(activeUserInfo)}
+                      {!getUserAvatar(activeUserInfo) && getInitial(activeUserInfo)}
                       <div style={{
                         position: 'absolute', bottom: '0', right: '0',
                         width: '11px', height: '11px', borderRadius: '50%',
@@ -1542,14 +1550,14 @@ function MessengerContent() {
                   }}>
                     <div style={{
                       width: '72px', height: '72px', borderRadius: '50%',
-                      background: (activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl)
-                        ? `url(${activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl}) center/cover`
+                      background: getUserAvatar(activeUserInfo)
+                        ? `url(${getUserAvatar(activeUserInfo)}) center/cover`
                         : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: '#fff', fontSize: '1.6rem', fontWeight: 700,
                       boxShadow: '0 0 24px rgba(138,43,226,0.3)',
                     }}>
-                      {!(activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl) && getInitial(activeUserInfo)}
+                      {!getUserAvatar(activeUserInfo) && getInitial(activeUserInfo)}
                     </div>
                     <div>
                       <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>{getUsername(activeUserInfo)}</h4>
@@ -1605,7 +1613,7 @@ function MessengerContent() {
                         {showAvatar && (
                           <div style={{ position: 'relative', flexShrink: 0 }}>
                             <UserAvatar
-                              src={activeUserInfo.avatarUrl || activeUserInfo.vtuberProfile?.avatarUrl || activeUserInfo.streamerProfile?.avatarUrl}
+                              src={getUserAvatar(activeUserInfo) || undefined}
                               alt={getUsername(activeUserInfo)}
                               size={28}
                               user={activeUserInfo}
@@ -2023,10 +2031,10 @@ function MessengerContent() {
                     >
                       <div style={{
                         width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-                        background: (u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl) ? `url(${u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        background: getUserAvatar(u) ? `url(${getUserAvatar(u)}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.65rem', fontWeight: 700,
                       }}>
-                        {!(u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl) && getInitial(u)}
+                        {!getUserAvatar(u) && getInitial(u)}
                       </div>
                       <span style={{ fontWeight: 600 }}>{getUsername(u)}</span>
                       <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--primary)' }}>Agregar +</span>

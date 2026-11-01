@@ -75,6 +75,14 @@ fi
 # otro host de Render): Socket.IO escucha en el puerto público y el cliente
 # conecta directo — los rewrites de Next.js NO proxean WebSocket upgrades, así
 # que el monolito siempre deja el chat "desconectado".
+#
+# Detección automática: si FRONTEND_URL apunta a un host remoto (no localhost),
+# activamos modo API-only automáticamente para que Socket.IO escuche en el puerto público.
+if [ -n "$FRONTEND_URL" ] && [ "$FRONTEND_URL" != "http://localhost:3000" ] && [ "$FRONTEND_URL" != "http://127.0.0.1:3000" ]; then
+  echo "[BOOT] FRONTEND_URL detectada ($FRONTEND_URL) — auto-activando RUN_BACKEND_ONLY=1"
+  RUN_BACKEND_ONLY=1
+fi
+
 if [ "$RUN_BACKEND_ONLY" = "1" ] || [ "$RUN_BACKEND_ONLY" = "true" ]; then
   echo "[BOOT] RUN_BACKEND_ONLY=1 — API-only mode (Express + Socket.IO on public port $RENDER_PORT)"
   exec node /app/backend/dist/server.js

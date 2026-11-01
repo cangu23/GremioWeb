@@ -249,6 +249,17 @@ export const createMention = (postId: string, userId: string) => {
 
 // ========== DIRECT MESSAGES ==========
 
+const chatUserSelect = {
+  id: true,
+  username: true,
+  displayName: true,
+  avatarUrl: true,
+  role: true,
+  displayedRole: true,
+  vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+  streamerProfile: { select: { displayName: true, avatarUrl: true, isVerified: true, isApproved: true } },
+};
+
 export const sendDirectMessage = (data: {
   content: string;
   senderId: string;
@@ -257,20 +268,8 @@ export const sendDirectMessage = (data: {
   return prisma.directMessage.create({
     data,
     include: {
-      sender: {
-        select: {
-          id: true,
-          username: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
-        },
-      },
-      receiver: {
-        select: {
-          id: true,
-          username: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
-        },
-      },
+      sender: { select: chatUserSelect },
+      receiver: { select: chatUserSelect },
     },
   });
 };
@@ -286,13 +285,7 @@ export const findConversation = (user1Id: string, user2Id: string, limit = 50) =
     orderBy: { createdAt: 'asc' },
     take: limit,
     include: {
-      sender: {
-        select: {
-          id: true,
-          username: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true } },
-        },
-      },
+      sender: { select: chatUserSelect },
     },
   });
 };
@@ -304,28 +297,8 @@ export const findUserConversations = async (userId: string) => {
     },
     orderBy: { createdAt: 'desc' },
     include: {
-      sender: {
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
-          avatarUrl: true,
-          role: true,
-          displayedRole: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
-        },
-      },
-      receiver: {
-        select: {
-          id: true,
-          username: true,
-          displayName: true,
-          avatarUrl: true,
-          role: true,
-          displayedRole: true,
-          vtuberProfile: { select: { displayName: true, avatarUrl: true, isVerified: true } },
-        },
-      },
+      sender: { select: chatUserSelect },
+      receiver: { select: chatUserSelect },
     },
   });
   
