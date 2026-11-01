@@ -12,14 +12,76 @@ import ParticlesBackground from '@/components/landing/ParticlesBackground';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Gremio Estelar — El Hogar de los VTubers',
+  metadataBase: new URL('https://gremioestelar.com'),
+  title: {
+    default: 'Gremio Estelar — La Red & Comunidad de VTubers y Streamers',
+    template: '%s | Gremio Estelar',
+  },
   description:
-    'Gremio Estelar es la plataforma definitiva para conectar creadores de contenido virtual. Gestiona tu perfil, interactúa con la comunidad y lleva tu carrera al siguiente nivel.',
-  keywords: ['VTuber', 'comunidad', 'streaming', 'gremio', 'creadores de contenido'],
+    'Gremio Estelar es la plataforma definitiva para conectar creadores de contenido virtual en español. Gestiona tu perfil, interactúa con la comunidad, descubre directos y lleva tu carrera al siguiente nivel.',
+  keywords: [
+    'VTuber',
+    'Streamer',
+    'comunidad',
+    'streaming',
+    'gremio',
+    'creadores de contenido',
+    'Twitch',
+    'YouTube',
+    'Kick',
+    'Live2D',
+    '3D VRM',
+  ],
+  authors: [{ name: 'Gremio Estelar' }],
+  creator: 'Gremio Estelar',
+  publisher: 'Gremio Estelar',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    title: 'Gremio Estelar — La Red & Comunidad de VTubers y Streamers',
+    description:
+      'Descubre, conecta y apoya a creadores virtuales, VTubers y streamers en español. Perfiles verificados, directos en vivo, pases y comunidad.',
+    url: 'https://gremioestelar.com',
+    siteName: 'Gremio Estelar',
+    images: [
+      {
+        url: '/logo.png',
+        width: 512,
+        height: 512,
+        alt: 'Gremio Estelar',
+      },
+    ],
+    locale: 'es_ES',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Gremio Estelar — La Red & Comunidad de VTubers y Streamers',
+    description:
+      'Descubre, conecta y apoya a creadores virtuales, VTubers y streamers en español. Perfiles verificados, directos en vivo y comunidad.',
+    images: ['/logo.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/logo.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/logo.png' },
     ],
   },
 };

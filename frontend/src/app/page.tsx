@@ -6,12 +6,7 @@ import ClientOnly from '@/lib/ClientOnly';
 import LazyMount from '@/components/ui/LazyMount';
 
 // ⚡ OPTIMIZACIÓN DE CARGA:
-// - next/dynamic: las secciones bajo el pliegue van en chunks separados
-//   (el bundle inicial del landing se reduce mucho).
-// - LazyMount: además se montan solo cuando se acercan al viewport, así que
-//   sus fetches (/vtubers/live, /activity, /stats…) no compiten con el
-//   render del Hero.
-// HeroSection queda eager porque es lo primero que ve el usuario.
+// - HeroSection queda eager porque es lo primero que ve el usuario y los motores de búsqueda.
 import HeroSection from '@/components/landing/HeroSection';
 
 const LiveNowSection = dynamic(() => import('@/components/landing/LiveNowSection'), { ssr: false });
@@ -25,8 +20,7 @@ const RecentActivitySection = dynamic(() => import('@/components/landing/RecentA
 const CTASection = dynamic(() => import('@/components/landing/CTASection'), { ssr: false });
 const PlatformsStrip = dynamic(() => import('@/components/landing/PlatformsStrip'), { ssr: false });
 
-// Authenticated feed: también lazy, porque solo se renderiza para usuarios
-// logueados (antes su chunk pesado viajaba en el bundle inicial para todos).
+// Authenticated feed: lazy para usuarios logueados
 const HomeContent = dynamic(() => import('@/components/feed/FeedPage'), { ssr: false });
 
 // ==========================================================================
@@ -73,7 +67,7 @@ function SectionDivider() {
 }
 
 // ==========================================================================
-// Landing Page (public, non-authenticated)
+// Landing Page (public, non-authenticated & SSR fallback for SEO)
 // ==========================================================================
 function LandingPage() {
   return (
@@ -126,72 +120,21 @@ function LandingPage() {
 function MainContent() {
   const { user, isLoading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div
-        className="container"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-          color: 'var(--text-muted)',
-          flexDirection: 'column',
-          gap: '16px',
-        }}
-      >
-        <span
-          style={{
-            width: '32px',
-            height: '32px',
-            border: '3px solid rgba(255,255,255,0.1)',
-            borderTopColor: 'var(--primary)',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
-          }}
-        />
-        <p>Espera estamos trabajando en ello...</p>
-      </div>
-    );
+  // Mientras valida sesión o si no está autenticado, muestra la Landing Page
+  if (isLoading || !user) {
+    return <LandingPage />;
   }
 
-  if (!user) return <LandingPage />;
   return <HomeContent />;
 }
 
 // ==========================================================================
 // Page Entry Point — routes to Landing or Feed based on auth state
+// SSR renders LandingPage directly for crawlers, SEO, and fast first paint
 // ==========================================================================
 export default function HomePage() {
   return (
-    <ClientOnly
-      fallback={
-        <div
-          className="container"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '60vh',
-            color: 'var(--text-muted)',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
-          <span
-            style={{
-              width: '32px',
-              height: '32px',
-              border: '3px solid rgba(255,255,255,0.1)',
-              borderTopColor: 'var(--primary)',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
-          <p>Espera estamos trabajando en ello...</p>
-        </div>
-      }
-    >
+    <ClientOnly fallback={<LandingPage />}>
       <MainContent />
     </ClientOnly>
   );

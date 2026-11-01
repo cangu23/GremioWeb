@@ -1,3 +1,16 @@
+export class ApiError extends Error {
+  status: number;
+  data: any;
+
+  constructor(message: string, status: number, data?: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 let currentAccessToken: string | null = null;
 let refreshPromise: Promise<RefreshResult> | null = null;
 
@@ -212,7 +225,8 @@ export async function apiFetch<T = any>(endpoint: string, options: RequestInit =
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.message || 'Something went wrong');
+    const errorMsg = data?.message || (response.status === 404 ? 'Recurso no encontrado' : response.status === 403 ? 'Acceso denegado' : 'Ocurrió un error en la solicitud');
+    throw new ApiError(errorMsg, response.status, data);
   }
 
   // Cache GET responses

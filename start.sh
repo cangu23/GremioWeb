@@ -47,7 +47,7 @@ if [ -f /app/backend/prisma/schema.prisma ]; then
     fi
 
     echo "[BOOT] migrate deploy failed — trying prisma db push fallback..."
-    if npx prisma db push --schema "$SCHEMA" --skip-generate --accept-data-loss; then
+    if npx prisma db push --schema "$SCHEMA" --skip-generate; then
       echo "[BOOT] Database sync via db push successful!"
       db_synced=true
       break

@@ -44,17 +44,33 @@ export const getProfileStats = async (viewerId: string, targetUserId: string) =>
   const startOfToday = new Date(now); startOfToday.setUTCHours(0, 0, 0, 0);
   const startOfWeek = new Date(now); startOfWeek.setDate(startOfWeek.getDate() - 7);
 
-  const [viewsTotal, viewsToday, viewsWeek, uniqueViewers, posts, comments, likes, followers, following] = await Promise.all([
+  // Consulta optimizada: consolida conteos de usuario (posts, comments, followers, following)
+  // en una única sub-query con _count en lugar de lanzar múltiples count() independientes.
+  const [userCounts, viewsTotal, viewsToday, viewsWeek, uniqueViewers, likes] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: {
+        _count: {
+          select: {
+            posts: true,
+            comments: true,
+            followers: true,
+            following: true,
+          },
+        },
+      },
+    }),
     prisma.profileView.count({ where: { viewedUserId: targetUserId } }),
     prisma.profileView.count({ where: { viewedUserId: targetUserId, createdAt: { gte: startOfToday } } }),
     prisma.profileView.count({ where: { viewedUserId: targetUserId, createdAt: { gte: startOfWeek } } }),
     prisma.profileView.groupBy({ by: ['viewerId'], where: { viewedUserId: targetUserId, viewerId: { not: null } } }),
-    prisma.post.count({ where: { userId: targetUserId } }),
-    prisma.comment.count({ where: { userId: targetUserId } }),
     prisma.like.count({ where: { post: { userId: targetUserId } } }),
-    prisma.follow.count({ where: { followingId: targetUserId } }),
-    prisma.follow.count({ where: { followerId: targetUserId } }),
   ]);
+
+  const posts = userCounts?._count?.posts ?? 0;
+  const comments = userCounts?._count?.comments ?? 0;
+  const followers = userCounts?._count?.followers ?? 0;
+  const following = userCounts?._count?.following ?? 0;
 
   return {
     views: { total: viewsTotal, today: viewsToday, last7Days: viewsWeek, uniqueViewers: uniqueViewers.length },

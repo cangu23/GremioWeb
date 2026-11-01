@@ -84,7 +84,12 @@ export const getFeed = async (currentUserId?: string, page = 1, limit = 20) => {
  * Algorithmic "Para Ti" feed ranking algorithm
  */
 export const getAlgorithmicFeed = async (currentUserId?: string, page = 1, limit = 20) => {
-  const candidates = await PostsRepository.findRecentPostsForAlgorithmicFeed(150);
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.max(1, Math.min(limit, 50));
+  const candidateSkip = (safePage - 1) * safeLimit;
+  const candidateTake = safePage === 1 ? Math.max(safeLimit * 3, 60) : Math.max(safeLimit * 2, 40);
+
+  const candidates = await PostsRepository.findRecentPostsForAlgorithmicFeed(candidateTake, candidateSkip);
   if (candidates.length === 0) return [];
 
   // Get set of followed creator IDs if user is logged in
@@ -128,9 +133,8 @@ export const getAlgorithmicFeed = async (currentUserId?: string, page = 1, limit
   // Sort candidates by algorithmic score descending
   scoredPosts.sort((a, b) => b.score - a.score);
 
-  // Paginate
-  const skip = (page - 1) * limit;
-  const paginated = scoredPosts.slice(skip, skip + limit).map(sp => sp.post);
+  // Paginate from ranked candidate window
+  const paginated = scoredPosts.slice(0, safeLimit).map(sp => sp.post);
 
   // Check liked status for current user
   let likedPostIds = new Set<string>();

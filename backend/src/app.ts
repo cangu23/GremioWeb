@@ -44,7 +44,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     
     if (res.statusCode >= 400) {
       console.warn(logLine);
-    } else {
+    } else if (process.env.NODE_ENV !== 'production') {
       console.log(logLine);
     }
   });
@@ -148,14 +148,14 @@ console.log(`${BOOT} Configuring body parsers...`);
 // (necesita el payload original para verificar la firma con el CRC32).
 // Evita retener buffers extra en el resto de peticiones JSON.
 app.use(express.json({
-  limit: '10mb',
+  limit: '2mb',
   verify: (req: Request, _res, buf: Buffer) => {
     if (req.path === '/api/payments/paypal/webhook') {
       (req as any).rawBody = buf;
     }
   },
 }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(cookieParser());
 console.log(`${BOOT} Body parsers configured`);
 

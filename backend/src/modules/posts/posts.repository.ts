@@ -76,10 +76,11 @@ export const findAllPosts = (page = 1, limit = 20) => {
   });
 };
 
-export const findRecentPostsForAlgorithmicFeed = (takeCount = 100) => {
+export const findRecentPostsForAlgorithmicFeed = (takeCount = 60, skipCount = 0) => {
   return prisma.post.findMany({
     where: { isHidden: false },
     orderBy: { createdAt: 'desc' },
+    skip: skipCount,
     take: takeCount,
     include: postIncludes,
   });

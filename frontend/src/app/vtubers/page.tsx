@@ -43,6 +43,33 @@ function VtubersContent() {
   // Discard stale directory responses (filter/page changes or keystrokes)
   const dirSeqRef = useRef(0);
 
+  // URL sync: restore state from URL query on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    const type = params.get('type');
+    const live = params.get('live');
+    const p = params.get('page');
+    if (q) setSearch(q);
+    if (type) setContentType(type);
+    if (live === 'true') setOnlyLive(true);
+    if (p && !isNaN(parseInt(p, 10)) && parseInt(p, 10) > 0) setPage(parseInt(p, 10));
+  }, []);
+
+  // URL sync: persist state to URL query on filter/page change
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('q', search.trim());
+    if (contentType) params.set('type', contentType);
+    if (onlyLive) params.set('live', 'true');
+    if (page > 1) params.set('page', String(page));
+    const qs = params.toString();
+    const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    window.history.replaceState(null, '', newUrl);
+  }, [search, contentType, onlyLive, page]);
+
   // Initial fetch overview data
   const fetchOverview = useCallback(async () => {
     try {
