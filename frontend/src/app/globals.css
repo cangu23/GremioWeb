@@ -1233,41 +1233,41 @@ img, svg {
   animation: authFormFadeSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Auth Specific Glass Card & Input Enhancements — Genshin-style gold theme */
+/* Auth Specific Glass Card & Input Enhancements — Celestial luxury gold theme */
 .auth-glass-card {
-  background: linear-gradient(160deg, rgba(13, 17, 32, 0.92) 0%, rgba(9, 12, 24, 0.9) 100%);
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7), 0 0 50px rgba(212, 175, 55, 0.12), inset 0 1px 0 rgba(255, 244, 210, 0.08);
+  background: linear-gradient(165deg, rgba(10, 14, 28, 0.88) 0%, rgba(6, 9, 20, 0.92) 100%);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid rgba(232, 199, 122, 0.22);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(212, 175, 55, 0.1), inset 0 1px 0 rgba(255, 248, 225, 0.12);
   transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .auth-glass-card:hover {
-  border-color: rgba(232, 199, 122, 0.55);
-  box-shadow: 0 35px 80px rgba(0, 0, 0, 0.8), 0 0 70px rgba(212, 175, 55, 0.2);
+  border-color: rgba(232, 199, 122, 0.45);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.82), 0 0 55px rgba(212, 175, 55, 0.18), inset 0 1px 0 rgba(255, 248, 225, 0.18);
 }
 
 .auth-input {
   width: 100%;
   padding: 11px 16px;
-  background: rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(232, 199, 122, 0.18);
   border-radius: 10px;
-  color: var(--text-primary);
+  color: #FAF6EE;
   font-size: 0.9rem;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
 }
 
 .auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(245, 239, 225, 0.32);
 }
 
 .auth-input:focus {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
   border-color: #E8C77A;
-  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.22), 0 0 28px rgba(212, 175, 55, 0.28);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2), 0 0 24px rgba(212, 175, 55, 0.22);
   transform: translateY(-1px);
 }
 
@@ -1275,37 +1275,37 @@ img, svg {
   width: 100%;
   padding: 13px 20px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 240, 200, 0.4);
-  font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: 0.06em;
+  border: 1px solid rgba(255, 248, 225, 0.5);
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #2b1e05;
-  background: linear-gradient(135deg, #F5E7B0 0%, #E8C77A 30%, #D4AF37 65%, #B8860B 100%);
+  color: #1a1303;
+  background: linear-gradient(135deg, #FAF4E4 0%, #E8CA7C 32%, #D4AF37 70%, #A67C1E 100%);
   background-size: 200% 200%;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .auth-btn-primary:hover {
   background-position: 100% 0%;
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(212, 175, 55, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .auth-btn-primary:active {
-  transform: translateY(0) scale(0.99);
+  transform: translateY(0);
 }
 
 .auth-tab-container {
   position: relative;
   display: flex;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(4, 7, 18, 0.6);
   padding: 4px;
   border-radius: 12px;
   margin-bottom: 14px;
-  border: 1px solid rgba(212, 175, 55, 0.22);
+  border: 1px solid rgba(232, 199, 122, 0.18);
 }
 
 .auth-tab-slider {
@@ -1313,11 +1313,11 @@ img, svg {
   top: 4px;
   bottom: 4px;
   width: calc(50% - 4px);
-  background: linear-gradient(135deg, rgba(232, 199, 122, 0.9), rgba(212, 175, 55, 0.9));
-  border: 1px solid rgba(255, 244, 210, 0.45);
+  background: linear-gradient(135deg, #F8F1DE 0%, #E8CA7C 40%, #D4AF37 100%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.45);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.35);
 }
 
 .auth-tab-btn {
@@ -1327,8 +1327,8 @@ img, svg {
   padding: 9px 14px;
   text-align: center;
   font-weight: 700;
-  font-size: 0.88rem;
-  letter-spacing: 0.04em;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   border-radius: 8px;
   color: rgba(245, 239, 220, 0.55);
@@ -1339,7 +1339,7 @@ img, svg {
 }
 
 .auth-tab-btn.active {
-  color: #2b1e05;
+  color: #1a1303;
 }
 
 /* Character Idle & Aura Animations */

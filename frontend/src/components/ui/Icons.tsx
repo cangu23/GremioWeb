@@ -308,3 +308,8 @@ export const Copy = (props: IconProps) => withDefaults(
 export const Clock = (props: IconProps) => withDefaults(
   <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>, props
 );
+
+export const FourPointStar = (props: IconProps) => withDefaults(
+  <path d="M12 0 C12 7.2 16.8 12 24 12 C16.8 12 12 16.8 12 24 C12 16.8 7.2 12 0 12 C7.2 12 12 7.2 12 0 Z" />,
+  { ...props, fill: props.fill || props.color || 'currentColor', strokeWidth: props.strokeWidth ?? 0 }
+);

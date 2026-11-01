@@ -33,7 +33,7 @@ export default function GoogleLoginButton() {
           width: '100%',
           padding: '10px 14px',
           fontSize: '0.85rem',
-          borderRadius: '12px',
+          borderRadius: '10px',
           border: '1px solid rgba(232, 199, 122, 0.2)',
           background: 'rgba(255, 255, 255, 0.04)',
           color: 'rgba(255, 255, 255, 0.5)',
@@ -62,7 +62,7 @@ export default function GoogleLoginButton() {
           width: '100%',
           padding: '10px 14px',
           fontSize: '0.85rem',
-          borderRadius: '12px',
+          borderRadius: '10px',
           border: '1px solid rgba(255,77,79,0.3)',
           background: 'rgba(255,77,79,0.08)',
           color: '#ff4d4f',
@@ -110,7 +110,8 @@ export default function GoogleLoginButton() {
       }}
       theme="filled_black"
       size="large"
-      text="continue_with"
+      text="signin"
+      width="100%"
       shape="rectangular"
       containerProps={{
         className: 'google-login-wrap',
@@ -121,7 +122,7 @@ export default function GoogleLoginButton() {
           justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
-          borderRadius: '12px',
+          borderRadius: '10px',
           border: '1px solid rgba(232, 199, 122, 0.2)',
           boxShadow: '0 4px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
           background: 'rgba(255, 255, 255, 0.045)',

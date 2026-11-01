@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
 import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
 import DiscordLoginButton from '@/components/auth/DiscordLoginButton';
+import { AlertCircle, FourPointStar } from '@/components/ui/Icons';
 
 export default function LoginForm() {
   const { user, isLoading, login } = useAuth();
@@ -54,7 +55,7 @@ export default function LoginForm() {
             gap: '8px',
           }}
         >
-          <span>⚠️</span>
+          <AlertCircle size={15} color="#FCA5A5" />
           <span>{error}</span>
         </div>
       )}
@@ -151,8 +152,10 @@ export default function LoginForm() {
         }}
       >
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
-        <span style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: '0.72rem', color: 'rgba(245, 239, 223, 0.55)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+          <FourPointStar size={8} color="rgba(232, 199, 122, 0.7)" />
           o ingresa con
+          <FourPointStar size={8} color="rgba(232, 199, 122, 0.7)" />
         </span>
         <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
       </div>

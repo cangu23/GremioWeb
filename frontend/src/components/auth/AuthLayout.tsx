@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import LoginForm from '@/components/auth/LoginForm';
 import RegisterForm from '@/components/auth/RegisterForm';
 import ClientOnly from '@/lib/ClientOnly';
+import { FourPointStar } from '@/components/ui/Icons';
 
 interface AuthLayoutProps {
   activeTab?: 'login' | 'register';
@@ -18,6 +19,7 @@ const STARS = Array.from({ length: 46 }, (_, i) => ({
   top: (i * 53 + 7) % 100,
   size: 1 + ((i * 13) % 3),
   delay: (i % 8) * 0.4,
+  isFourPoint: i % 4 === 0,
 }));
 
 /* Rising golden embers / stardust particles */
@@ -120,52 +122,49 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
     ? 'Accede a tu cuenta y continúa tu aventura estelar'
     : 'Crea tu cuenta y emprende tu leyenda entre las estrellas';
 
-  // Gold constellation ornament behind the character (Teyvat-style)
-  const constellation = useMemo(
+  // Fine celestial astrolabe halo centered behind the character
+  const celestialHalo = useMemo(
     () => (
       <svg
-        viewBox="0 0 500 640"
+        viewBox="0 0 500 500"
         className="auth-constellation"
         style={{
           position: 'absolute',
-          width: '115%',
-          height: '115%',
-          left: '50%',
+          width: '100%',
+          height: '100%',
+          left: '46%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
           pointerEvents: 'none',
-          opacity: 0.5,
+          opacity: 0.65,
         }}
         aria-hidden="true"
       >
-        <g stroke="rgba(232,199,122,0.4)" strokeWidth="1" fill="none">
-          <path d="M90 120 L180 70 L260 130 L330 90" />
-          <path d="M180 70 L210 180 L330 90" />
-          <path d="M210 180 L120 260 L90 120" />
-          <path d="M330 90 L420 170 L350 260" />
-          <path d="M420 170 L470 300" />
-          <path d="M120 260 L210 180 L280 300 L180 380 L120 260" />
-          <path d="M350 260 L280 300" />
-          <path d="M280 300 L380 390 L470 300" />
-          <path d="M380 390 L300 480" />
+        <g stroke="rgba(232, 199, 122, 0.28)" strokeWidth="1" fill="none">
+          <circle cx="250" cy="250" r="215" strokeDasharray="4 6" opacity={0.6} />
+          <circle cx="250" cy="250" r="175" opacity={0.8} />
+          <circle cx="250" cy="250" r="135" strokeDasharray="2 4" opacity={0.5} />
+          <circle cx="250" cy="250" r="95" opacity={0.7} />
+          <line x1="35" y1="250" x2="465" y2="250" strokeDasharray="3 7" opacity={0.4} />
+          <line x1="250" y1="35" x2="250" y2="465" strokeDasharray="3 7" opacity={0.4} />
         </g>
         <g fill="#F5E7B0">
           {[
-            [90, 120],
-            [180, 70],
-            [260, 130],
-            [330, 90],
-            [210, 180],
-            [120, 260],
-            [420, 170],
-            [470, 300],
-            [280, 300],
-            [180, 380],
-            [350, 260],
-            [380, 390],
-            [300, 480],
+            [250, 35],
+            [465, 250],
+            [250, 465],
+            [35, 250],
+            [126, 126],
+            [374, 126],
+            [126, 374],
+            [374, 374],
           ].map(([cx, cy], i) => (
-            <circle key={i} cx={cx} cy={cy} r={i % 3 === 0 ? 3.5 : 2.2} opacity={0.9} />
+            <path
+              key={i}
+              transform={`translate(${cx - 7}, ${cy - 7})`}
+              d="M7 0 C7 4.2 9.8 7 14 7 C9.8 7 7 9.8 7 14 C7 9.8 4.2 7 0 7 C4.2 7 7 4.2 7 0 Z"
+              opacity={i < 4 ? 0.95 : 0.65}
+            />
           ))}
         </g>
       </svg>
@@ -240,7 +239,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(115deg, rgba(5,7,15,0.88) 0%, rgba(10,14,30,0.62) 38%, rgba(5,7,15,0.72) 100%)',
+            'radial-gradient(circle at 45% 45%, rgba(16, 22, 54, 0.62) 0%, rgba(5, 7, 18, 0.9) 58%, #03050c 100%)',
           zIndex: 1,
         }}
       />
@@ -293,7 +292,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
         </div>
       ))}
 
-      {/* Twinkling starfield */}
+      {/* Twinkling celestial starfield */}
       {STARS.map((s) => (
         <div
           key={s.id}
@@ -302,16 +301,31 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
             position: 'absolute',
             left: `${s.left}%`,
             top: `${s.top}%`,
-            width: `${s.size}px`,
-            height: `${s.size}px`,
-            borderRadius: '50%',
-            background: s.size > 2 ? '#F5E7B0' : '#cfd8ff',
-            boxShadow: s.size > 2 ? '0 0 6px rgba(245,231,176,0.9)' : '0 0 4px rgba(207,216,255,0.7)',
-            animationDelay: `${s.delay}s`,
             pointerEvents: 'none',
+            animationDelay: `${s.delay}s`,
             zIndex: 1,
           }}
-        />
+        >
+          {s.isFourPoint ? (
+            <FourPointStar
+              size={s.size * 3 + 4}
+              color="#F5E7B0"
+              style={{
+                filter: 'drop-shadow(0 0 6px rgba(245,231,176,0.85)) drop-shadow(0 0 12px rgba(212,175,55,0.4))',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: `${s.size}px`,
+                height: `${s.size}px`,
+                borderRadius: '50%',
+                background: s.size > 2 ? '#F5E7B0' : '#cfd8ff',
+                boxShadow: s.size > 2 ? '0 0 6px rgba(245,231,176,0.9)' : '0 0 4px rgba(207,216,255,0.7)',
+              }}
+            />
+          )}
+        </div>
       ))}
 
       {/* Ambient vignette */}
@@ -413,14 +427,14 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
               justifyContent: 'center',
               // Stronger Genshin-style overlap: the character leans onto the
               // card. pointerEvents: none keeps every click on the card working.
-              marginRight: '-62px',
+              marginRight: '-28px',
               pointerEvents: 'none',
               transform: `translate3d(${mouseOffset.x * 0.45}px, ${mouseOffset.y * 0.45}px, 0)`,
               transition: 'transform 0.25s cubic-bezier(0.1, 1, 0.1, 1)',
             }}
           >
-            {/* Constellation map behind the character */}
-            {constellation}
+            {/* Celestial astrolabe halo */}
+            {celestialHalo}
 
             {/* Rotating golden aura (also gently breathes) */}
             <div
@@ -450,32 +464,6 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
               }}
             />
 
-            {/* Soft shadow cast ONTO the card (character overlaps the panel) */}
-            <div
-              style={{
-                position: 'absolute',
-                right: '-76px',
-                top: '6%',
-                bottom: '2%',
-                width: '110px',
-                background: 'linear-gradient(to left, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.22) 45%, transparent 100%)',
-                filter: 'blur(7px)',
-                pointerEvents: 'none',
-              }}
-            />
-            {/* Golden rim-light where the character meets the card */}
-            <div
-              style={{
-                position: 'absolute',
-                right: '-46px',
-                top: '8%',
-                bottom: '6%',
-                width: '26px',
-                background: 'linear-gradient(to left, rgba(245,231,176,0.16) 0%, transparent 100%)',
-                filter: 'blur(4px)',
-                pointerEvents: 'none',
-              }}
-            />
             {/* Contact shadow grounding the character */}
             <div
               style={{
@@ -573,64 +561,6 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                 zIndex: 1,
               }}
             />
-            {/* Ornamental gold corners */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 8,
-                left: 8,
-                width: 22,
-                height: 22,
-                borderTop: '2px solid #D4AF37',
-                borderLeft: '2px solid #D4AF37',
-                borderTopLeftRadius: 12,
-                opacity: 0.75,
-                pointerEvents: 'none',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                width: 22,
-                height: 22,
-                borderTop: '2px solid #D4AF37',
-                borderRight: '2px solid #D4AF37',
-                borderTopRightRadius: 12,
-                opacity: 0.75,
-                pointerEvents: 'none',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 8,
-                left: 8,
-                width: 22,
-                height: 22,
-                borderBottom: '2px solid #D4AF37',
-                borderLeft: '2px solid #D4AF37',
-                borderBottomLeftRadius: 12,
-                opacity: 0.75,
-                pointerEvents: 'none',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 8,
-                right: 8,
-                width: 22,
-                height: 22,
-                borderBottom: '2px solid #D4AF37',
-                borderRight: '2px solid #D4AF37',
-                borderBottomRightRadius: 12,
-                opacity: 0.75,
-                pointerEvents: 'none',
-              }}
-            />
-
             {/* Top gold shimmer edge */}
             <div
               style={{
@@ -645,14 +575,14 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
               }}
             />
 
-            {/* Kicker: star + gold rule */}
+            {/* Celestial Portal Header */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '12px',
-                marginBottom: '2px',
+                marginBottom: '14px',
                 flexShrink: 0,
               }}
             >
@@ -660,28 +590,32 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                 style={{
                   flex: 1,
                   height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.55))',
-                  maxWidth: '64px',
+                  background: 'linear-gradient(90deg, transparent, rgba(232,199,122,0.45))',
+                  maxWidth: '72px',
                 }}
               />
               <span
-                className="auth-kicker-star"
                 style={{
-                  fontSize: '0.85rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.68rem',
+                  letterSpacing: '0.24em',
+                  textTransform: 'uppercase',
                   color: '#E8C77A',
-                  letterSpacing: '0.3em',
-                  textIndent: '0.3em',
+                  fontWeight: 600,
                 }}
-                aria-hidden="true"
               >
-                ✦
+                <FourPointStar size={9} color="#F5E7B0" />
+                PORTAL ASTRAL
+                <FourPointStar size={9} color="#F5E7B0" />
               </span>
               <div
                 style={{
                   flex: 1,
                   height: '1px',
-                  background: 'linear-gradient(90deg, rgba(212,175,55,0.55), transparent)',
-                  maxWidth: '64px',
+                  background: 'linear-gradient(90deg, rgba(232,199,122,0.45), transparent)',
+                  maxWidth: '72px',
                 }}
               />
             </div>
@@ -726,7 +660,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
                     fontWeight: 700,
                     letterSpacing: '0.04em',
                     color: '#F5EFDF',
-                    fontFamily: 'Georgia, "Times New Roman", serif',
+                    fontFamily: 'var(--font-sans)',
                     lineHeight: 1.25,
                   }}
                 >
