@@ -48,13 +48,15 @@ function CountUpStat({ target, label }: { target: number; label: string }) {
   const value = useCountUp(target);
   return (
     <div style={{ textAlign: 'center', position: 'relative', padding: '0 6px' }}>
-      <div style={{
-        fontSize: '1.35rem',
-        fontWeight: 800,
-        lineHeight: 1.1,
-        fontVariantNumeric: 'tabular-nums',
-        letterSpacing: '-0.02em',
-      }}>
+      <div
+        style={{
+          fontSize: '1.35rem',
+          fontWeight: 800,
+          lineHeight: 1.1,
+          fontVariantNumeric: 'tabular-nums',
+          letterSpacing: '-0.02em',
+        }}
+      >
         <span className="landing-gradient-text">{value.toLocaleString('es-ES')}+</span>
       </div>
       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', letterSpacing: '0.03em', fontWeight: 500 }}>
@@ -87,7 +89,9 @@ export default function HeroSection() {
             setFloating(featured.slice(0, 3));
           }
         }
-      } catch { /* silent */ }
+      } catch {
+        /* silent */
+      }
     })();
   }, []);
 
@@ -125,61 +129,128 @@ export default function HeroSection() {
       }}
     >
       {/* Glow orbs */}
-      <div className="landing-orb" style={{
-        width: 480, height: 480, left: '-120px', top: '-80px',
-        background: 'radial-gradient(circle, rgba(139,92,246,0.16), transparent 65%)',
-        animation: 'landingFloat 9s ease-in-out infinite',
-      }} />
-      <div className="landing-orb" style={{
-        width: 420, height: 420, right: '-100px', top: '20%',
-        background: 'radial-gradient(circle, rgba(108,180,238,0.12), transparent 65%)',
-        animation: 'landingFloat 11s ease-in-out infinite reverse',
-      }} />
-      <div className="landing-orb" style={{
-        width: 380, height: 380, left: '30%', bottom: '-140px',
-        background: 'radial-gradient(circle, rgba(245,158,11,0.08), transparent 65%)',
-        animation: 'landingFloat 13s ease-in-out infinite',
-      }} />
+      <div
+        className="landing-orb"
+        style={{
+          width: 480,
+          height: 480,
+          left: '-120px',
+          top: '-80px',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.16), transparent 65%)',
+          animation: 'landingFloat 9s ease-in-out infinite',
+        }}
+      />
+      <div
+        className="landing-orb"
+        style={{
+          width: 420,
+          height: 420,
+          right: '-100px',
+          top: '20%',
+          background: 'radial-gradient(circle, rgba(108,180,238,0.12), transparent 65%)',
+          animation: 'landingFloat 11s ease-in-out infinite reverse',
+        }}
+      />
+      <div
+        className="landing-orb"
+        style={{
+          width: 380,
+          height: 380,
+          left: '30%',
+          bottom: '-140px',
+          background: 'radial-gradient(circle, rgba(245,158,11,0.08), transparent 65%)',
+          animation: 'landingFloat 13s ease-in-out infinite',
+        }}
+      />
 
       {/* Subtle background texture */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        backgroundImage:
-          'radial-gradient(circle at 25% 25%, rgba(139,92,246,0.03) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(108,180,238,0.02) 0%, transparent 50%)',
-        pointerEvents: 'none', zIndex: -1,
-      }} />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage:
+            'radial-gradient(circle at 25% 25%, rgba(139,92,246,0.03) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(108,180,238,0.02) 0%, transparent 50%)',
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+      />
 
       {/* Thin accent line at top */}
-      <div style={{
-        position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-        width: 110, height: 2, borderRadius: 2,
-        background: 'linear-gradient(90deg, transparent, var(--primary), transparent)',
-        opacity: visible ? 0.9 : 0,
-        transition: 'opacity 1s ease 0.3s',
-      }} />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 110,
+          height: 2,
+          borderRadius: 2,
+          background: 'linear-gradient(90deg, transparent, var(--primary), transparent)',
+          opacity: visible ? 0.9 : 0,
+          transition: 'opacity 1s ease 0.3s',
+        }}
+      />
 
       {/* Floating mini-cards (desktop only) */}
       {!isMobile && leftCard && (
-        <div className="landing-float-card" style={{
-          left: '6%', top: '26%', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px',
-          animationDelay: '0.5s', zIndex: 2,
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%', flexShrink: 0, overflow: 'hidden',
-            background: leftCard.avatarUrl
-              ? `url(${leftCard.avatarUrl}) center/cover`
-              : 'linear-gradient(135deg, var(--primary), var(--warm))',
-            border: '2px solid rgba(139,92,246,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: '0.7rem',
-          }}>
+        <div
+          className="landing-float-card"
+          style={{
+            left: '6%',
+            top: '26%',
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            animationDelay: '0.5s',
+            zIndex: 2,
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              flexShrink: 0,
+              overflow: 'hidden',
+              background: leftCard.avatarUrl
+                ? `url(${leftCard.avatarUrl}) center/cover`
+                : 'linear-gradient(135deg, var(--primary), var(--warm))',
+              border: '2px solid rgba(139,92,246,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '0.7rem',
+            }}
+          >
             {!leftCard.avatarUrl && leftCard.displayName.charAt(0).toUpperCase()}
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-primary)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                maxWidth: 110,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {leftCard.displayName}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', color: leftCard.isLive ? '#ff4757' : 'var(--text-muted)', fontWeight: 600 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                fontSize: '0.62rem',
+                color: leftCard.isLive ? '#ff4757' : 'var(--text-muted)',
+                fontWeight: 600,
+              }}
+            >
               {leftCard.isLive && <span className="landing-live-dot" style={{ width: 5, height: 5 }} />}
               {leftCard.isLive ? 'EN VIVO' : 'En la plataforma'}
             </div>
@@ -188,23 +259,52 @@ export default function HeroSection() {
       )}
 
       {!isMobile && rightCard && (
-        <div className="landing-float-card" style={{
-          right: '6%', top: '34%', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px',
-          animationDelay: '1.6s', zIndex: 2,
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%', flexShrink: 0, overflow: 'hidden',
-            background: rightCard.avatarUrl
-              ? `url(${rightCard.avatarUrl}) center/cover`
-              : 'linear-gradient(135deg, var(--accent), var(--primary))',
-            border: '2px solid rgba(108,180,238,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: '0.7rem',
-          }}>
+        <div
+          className="landing-float-card"
+          style={{
+            right: '6%',
+            top: '34%',
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            animationDelay: '1.6s',
+            zIndex: 2,
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              flexShrink: 0,
+              overflow: 'hidden',
+              background: rightCard.avatarUrl
+                ? `url(${rightCard.avatarUrl}) center/cover`
+                : 'linear-gradient(135deg, var(--accent), var(--primary))',
+              border: '2px solid rgba(108,180,238,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '0.7rem',
+            }}
+          >
             {!rightCard.avatarUrl && rightCard.displayName.charAt(0).toUpperCase()}
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-primary)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                maxWidth: 110,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {rightCard.displayName}
             </div>
             <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 500 }}>
@@ -215,10 +315,16 @@ export default function HeroSection() {
       )}
 
       {!isMobile && sideCard && (
-        <div className="landing-float-card" style={{
-          left: '11%', bottom: '22%', padding: '10px 14px',
-          animationDelay: '2.4s', zIndex: 2,
-        }}>
+        <div
+          className="landing-float-card"
+          style={{
+            left: '11%',
+            bottom: '22%',
+            padding: '10px 14px',
+            animationDelay: '2.4s',
+            zIndex: 2,
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -261,7 +367,7 @@ export default function HeroSection() {
         }}
       >
         <span className="landing-eyebrow">
-          Comunidad para Creadores Virtuales
+          Comunidad & Red VTuber en Español
         </span>
       </div>
 
@@ -289,13 +395,14 @@ export default function HeroSection() {
           animation: visible ? 'fadeInUp 0.6s ease 0.35s forwards' : 'none',
           fontSize: 'clamp(0.95rem, 1.5vw, 1.12rem)',
           color: 'var(--text-muted)',
-          maxWidth: '640px',
+          maxWidth: '680px',
           lineHeight: 1.75,
           marginBottom: '38px',
         }}
       >
-        La plataforma definitiva para creadores de contenido virtual. Gestiona tu perfil,
-        organiza eventos, colabora en gremios y haz crecer tu comunidad en un solo lugar.
+        La plataforma definitiva para creadores de contenido virtual y su comunidad.
+        Sigue transmisiones en directo, apoya a tus talentos favoritos con Códigos de Creador,
+        completa misiones y desbloquea recompensas exclusivas.
       </p>
 
       {/* CTA Buttons */}
@@ -323,8 +430,8 @@ export default function HeroSection() {
             <Link href="/register" className="btn btn--lg btn--shine">
               ✦ Unirse al Gremio
             </Link>
-            <Link href="/login" className="btn btn--outline btn--lg">
-              Ya soy miembro
+            <Link href="/vtubers" className="btn btn--outline btn--lg">
+              Explorar VTubers
             </Link>
           </>
         )}
@@ -372,20 +479,26 @@ export default function HeroSection() {
         <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           Descubre más
         </span>
-        <div style={{
-          width: '16px', height: '26px',
-          border: '1.5px solid rgba(139,92,246,0.3)',
-          borderRadius: '8px',
-          display: 'flex',
-          justifyContent: 'center',
-          paddingTop: '5px',
-        }}>
-          <div style={{
-            width: '2px', height: '6px',
-            background: 'var(--primary)',
-            borderRadius: '2px',
-            animation: 'scrollDown 1.5s ease-in-out infinite',
-          }} />
+        <div
+          style={{
+            width: '16px',
+            height: '26px',
+            border: '1.5px solid rgba(139,92,246,0.3)',
+            borderRadius: '8px',
+            display: 'flex',
+            justifyContent: 'center',
+            paddingTop: '5px',
+          }}
+        >
+          <div
+            style={{
+              width: '2px',
+              height: '6px',
+              background: 'var(--primary)',
+              borderRadius: '2px',
+              animation: 'scrollDown 1.5s ease-in-out infinite',
+            }}
+          />
         </div>
       </div>
 

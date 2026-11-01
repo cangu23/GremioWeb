@@ -18,6 +18,7 @@ const LiveNowSection = dynamic(() => import('@/components/landing/LiveNowSection
 const HowItWorksSection = dynamic(() => import('@/components/landing/HowItWorksSection'), { ssr: false });
 const StatsSection = dynamic(() => import('@/components/landing/StatsSection'), { ssr: false });
 const FeaturesSection = dynamic(() => import('@/components/landing/FeaturesSection'), { ssr: false });
+const CreatorEconomySection = dynamic(() => import('@/components/landing/CreatorEconomySection'), { ssr: false });
 const FeaturedVtubersSection = dynamic(() => import('@/components/landing/FeaturedVtubersSection'), { ssr: false });
 const PricingSection = dynamic(() => import('@/components/landing/PricingSection'), { ssr: false });
 const RecentActivitySection = dynamic(() => import('@/components/landing/RecentActivitySection'), { ssr: false });
@@ -33,21 +34,40 @@ const HomeContent = dynamic(() => import('@/components/feed/FeedPage'), { ssr: f
 // ==========================================================================
 function SectionDivider() {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: '12px', padding: '0 20px', opacity: 0.2,
-    }}>
-      <div style={{
-        flex: 1, maxWidth: '120px', height: '1px',
-        background: 'linear-gradient(90deg, transparent, var(--glass-border))',
-      }} />
-      <div style={{
-        width: '3px', height: '3px', borderRadius: '50%', background: 'var(--primary)',
-      }} />
-      <div style={{
-        flex: 1, maxWidth: '120px', height: '1px',
-        background: 'linear-gradient(90deg, var(--glass-border), transparent)',
-      }} />
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '12px',
+        padding: '0 20px',
+        opacity: 0.2,
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          maxWidth: '120px',
+          height: '1px',
+          background: 'linear-gradient(90deg, transparent, var(--glass-border))',
+        }}
+      />
+      <div
+        style={{
+          width: '3px',
+          height: '3px',
+          borderRadius: '50%',
+          background: 'var(--primary)',
+        }}
+      />
+      <div
+        style={{
+          flex: 1,
+          maxWidth: '120px',
+          height: '1px',
+          background: 'linear-gradient(90deg, var(--glass-border), transparent)',
+        }}
+      />
     </div>
   );
 }
@@ -60,23 +80,45 @@ function LandingPage() {
     <>
       <HeroSection />
       <SectionDivider />
-      <LazyMount minHeight={160}><PlatformsStrip /></LazyMount>
+      <LazyMount minHeight={160}>
+        <PlatformsStrip />
+      </LazyMount>
       <SectionDivider />
-      <LazyMount minHeight={420}><LiveNowSection /></LazyMount>
+      <LazyMount minHeight={420}>
+        <LiveNowSection />
+      </LazyMount>
       <SectionDivider />
-      <LazyMount minHeight={500}><HowItWorksSection /></LazyMount>
+      <LazyMount minHeight={500}>
+        <HowItWorksSection />
+      </LazyMount>
       <SectionDivider />
-      <LazyMount minHeight={300}><StatsSection /></LazyMount>
+      <LazyMount minHeight={300}>
+        <StatsSection />
+      </LazyMount>
       <SectionDivider />
-      <LazyMount minHeight={500}><FeaturesSection /></LazyMount>
+      <LazyMount minHeight={500}>
+        <FeaturesSection />
+      </LazyMount>
       <SectionDivider />
-      <LazyMount minHeight={500}><FeaturedVtubersSection /></LazyMount>
+      <LazyMount minHeight={500}>
+        <CreatorEconomySection />
+      </LazyMount>
       <SectionDivider />
-      <LazyMount minHeight={600}><PricingSection /></LazyMount>
+      <LazyMount minHeight={500}>
+        <FeaturedVtubersSection />
+      </LazyMount>
       <SectionDivider />
-      <LazyMount minHeight={450}><RecentActivitySection /></LazyMount>
+      <LazyMount minHeight={600}>
+        <PricingSection />
+      </LazyMount>
       <SectionDivider />
-      <LazyMount minHeight={300}><CTASection /></LazyMount>
+      <LazyMount minHeight={450}>
+        <RecentActivitySection />
+      </LazyMount>
+      <SectionDivider />
+      <LazyMount minHeight={300}>
+        <CTASection />
+      </LazyMount>
     </>
   );
 }
@@ -86,8 +128,28 @@ function MainContent() {
 
   if (isLoading) {
     return (
-      <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: 'var(--text-muted)', flexDirection: 'column', gap: '16px' }}>
-        <span style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <div
+        className="container"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+          color: 'var(--text-muted)',
+          flexDirection: 'column',
+          gap: '16px',
+        }}
+      >
+        <span
+          style={{
+            width: '32px',
+            height: '32px',
+            border: '3px solid rgba(255,255,255,0.1)',
+            borderTopColor: 'var(--primary)',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
         <p>Espera estamos trabajando en ello...</p>
       </div>
     );
@@ -102,12 +164,34 @@ function MainContent() {
 // ==========================================================================
 export default function HomePage() {
   return (
-    <ClientOnly fallback={
-      <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: 'var(--text-muted)', flexDirection: 'column', gap: '16px' }}>
-        <span style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <p>Espera estamos trabajando en ello...</p>
-      </div>
-    }>
+    <ClientOnly
+      fallback={
+        <div
+          className="container"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '60vh',
+            color: 'var(--text-muted)',
+            flexDirection: 'column',
+            gap: '16px',
+          }}
+        >
+          <span
+            style={{
+              width: '32px',
+              height: '32px',
+              border: '3px solid rgba(255,255,255,0.1)',
+              borderTopColor: 'var(--primary)',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <p>Espera estamos trabajando en ello...</p>
+        </div>
+      }
+    >
       <MainContent />
     </ClientOnly>
   );

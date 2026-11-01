@@ -1,6 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import {
+  User,
+  LiveDot,
+  Crown,
+  Tag,
+  Sparkles,
+  Users,
+  Shield,
+  MessageCircle,
+} from '@/components/ui/Icons';
 
 interface Feature {
   icon: React.ReactNode;
@@ -10,90 +20,56 @@ interface Feature {
 
 const FEATURES: Feature[] = [
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
-    title: 'Perfiles VTuber',
-    description: 'Crea un perfil único con tu personaje. Añade lore, modelo, enlaces y horarios de streams.',
+    icon: <User size={22} color="var(--primary-hover)" />,
+    title: 'Perfiles VTuber & Lore',
+    description:
+      'Crea una ficha interactiva para tu personaje 2D o 3D. Añade historia, biografía, redes sociales, horarios de directo y galería de arte.',
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <LiveDot size={10} color="#ff4757" pulse />
+      </div>
     ),
-    title: 'Eventos',
-    description: 'Organiza y descubre eventos de la comunidad. Colaboraciones, streams especiales y más.',
+    title: 'Monitor de Streams en Vivo',
+    description:
+      'Conexión automática con Twitch y YouTube. Tu audiencia sabe en tiempo real cuándo estás en directo directamente desde la portada.',
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-    title: 'Gremios',
-    description: 'Forma o únete a gremios de VTubers. Colabora, comparte recursos y construye comunidad.',
+    icon: <Crown size={22} color="#f59e0b" />,
+    title: 'Pase Estelar de Temporada',
+    description:
+      'Completa misiones diarias y semanales con tu comunidad para subir de nivel y desbloquear cosméticos, marcos dinámicos y títulos únicos.',
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        <line x1="12" y1="9" x2="12" y2="13" />
-        <line x1="9" y1="11" x2="15" y2="11" />
-      </svg>
-    ),
-    title: 'Chat en Vivo',
-    description: 'Chatea con la comunidad en tiempo real con Socket.IO. Salas globales y mensajes directos.',
+    icon: <Tag size={22} color="var(--primary-hover)" />,
+    title: 'Códigos de Creador',
+    description:
+      'Monetización justa con 35% de comisión neta directa para el streamer y +10% de Stardust extra de regalo para el fan en cada compra.',
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    ),
-    title: 'Gamificación',
-    description: 'Gana XP, sube de nivel, desbloquea logros y compite en el ranking de la comunidad.',
+    icon: <Sparkles size={22} color="#f59e0b" />,
+    title: 'Stickers Gigantes HD',
+    description:
+      'Expresa emociones con stickers de alta definición de 128px creados por artistas de la comunidad para chats y publicaciones del feed.',
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-        <line x1="9" y1="9" x2="9.01" y2="9" />
-        <line x1="15" y1="9" x2="15.01" y2="9" />
-      </svg>
-    ),
-    title: 'Monetización',
-    description: 'Recibe apoyo de tus seguidores. Suscripciones con beneficios exclusivos para tu comunidad.',
+    icon: <Users size={22} color="#34d399" />,
+    title: 'Gremios & Colaboraciones',
+    description:
+      'Forma alianzas entre streamers, artistas y fans. Organiza eventos colaborativos, comparte audiencia y construye proyectos conjuntos.',
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-        <line x1="4" y1="22" x2="4" y2="15" />
-      </svg>
-    ),
-    title: 'Feed Social',
-    description: 'Publica actualizaciones, comparte medios y crea encuestas. Comenta y reacciona.',
+    icon: <Shield size={22} color="#60a5fa" />,
+    title: 'Feed sin Algoritmos Opacos',
+    description:
+      'Tus seguidores ven lo que publicas sin intermediarios que penalicen tu alcance. Un muro social limpio, cronológico y comunitario.',
   },
   {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        <polyline points="9 12 11 14 15 10" />
-      </svg>
-    ),
-    title: 'Moderación',
-    description: 'Sistema completo de reportes para mantener un ambiente seguro y acogedor.',
+    icon: <MessageCircle size={22} color="var(--primary-hover)" />,
+    title: 'Chat en Vivo & Salas Globales',
+    description:
+      'Salas temáticas en tiempo real con Socket.IO para interactuar antes, durante y después de los streams con la comunidad hispanohablante.',
   },
 ];
 
@@ -109,7 +85,7 @@ export default function FeaturesSection() {
             const index = Number(entry.target.getAttribute('data-index'));
             setTimeout(() => {
               setVisibleCards((prev) => new Set(prev).add(index));
-            }, index * 70);
+            }, index * 60);
           }
         }
       },
@@ -135,41 +111,59 @@ export default function FeaturesSection() {
       id="features"
       style={{ position: 'relative', zIndex: 1, overflow: 'hidden' }}
     >
-      <div className="landing-orb" style={{
-        width: 420, height: 420, right: '-180px', top: '10%',
-        background: 'radial-gradient(circle, rgba(139,92,246,0.1), transparent 65%)',
-        animation: 'landingFloat 12s ease-in-out infinite',
-      }} />
+      <div
+        className="landing-orb"
+        style={{
+          width: 420,
+          height: 420,
+          right: '-180px',
+          top: '10%',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.1), transparent 65%)',
+          animation: 'landingFloat 12s ease-in-out infinite',
+        }}
+      />
       <div className="container" style={{ position: 'relative' }}>
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          opacity: visibleCards.size > 0 ? 1 : 0,
-          transform: visibleCards.size > 0 ? 'translateY(0)' : 'translateY(15px)',
-          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            opacity: visibleCards.size > 0 ? 1 : 0,
+            transform: visibleCards.size > 0 ? 'translateY(0)' : 'translateY(15px)',
+            transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
           <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>Funcionalidades</span>
         </div>
-        <h2 className="section-title" style={{
-          opacity: visibleCards.size > 0 ? 1 : 0,
-          transform: visibleCards.size > 0 ? 'translateY(0)' : 'translateY(15px)',
-          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s',
-        }}>
-          Todo lo que <span className="landing-gradient-text">necesitas</span>
+        <h2
+          className="section-title"
+          style={{
+            opacity: visibleCards.size > 0 ? 1 : 0,
+            transform: visibleCards.size > 0 ? 'translateY(0)' : 'translateY(15px)',
+            transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s',
+          }}
+        >
+          Todo lo que la comunidad <span className="landing-gradient-text">necesita</span>
         </h2>
-        <p className="section-subtitle" style={{
-          opacity: visibleCards.size > 0 ? 1 : 0,
-          transform: visibleCards.size > 0 ? 'translateY(0)' : 'translateY(15px)',
-          transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s',
-        }}>
-          Una plataforma completa diseñada para VTubers, con todas las herramientas para gestionar tu
-          presencia digital y conectar con tu audiencia.
+        <p
+          className="section-subtitle"
+          style={{
+            opacity: visibleCards.size > 0 ? 1 : 0,
+            transform: visibleCards.size > 0 ? 'translateY(0)' : 'translateY(15px)',
+            transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s',
+          }}
+        >
+          Diseñado a la medida para streamers, VTubers, artistas y fans. Herramientas reales para conectar,
+          hacer crecer tu canal y formar una comunidad sólida.
         </p>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '18px',
-        }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '18px',
+          }}
+        >
           {FEATURES.map((feature, index) => (
             <div
               key={index}
@@ -203,39 +197,30 @@ export default function FeaturesSection() {
                   transition: 'all 0.3s ease',
                   boxShadow: '0 0 0 rgba(139,92,246,0)',
                 }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget;
-                  el.style.color = '#fff';
-                  el.style.background = 'linear-gradient(135deg, var(--secondary), var(--primary))';
-                  el.style.boxShadow = '0 8px 24px rgba(139,92,246,0.35)';
-                  el.style.transform = 'translateY(-2px) scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget;
-                  el.style.color = 'var(--primary-hover)';
-                  el.style.background = 'linear-gradient(135deg, var(--primary-muted), rgba(108,180,238,0.06))';
-                  el.style.boxShadow = '0 0 0 rgba(139,92,246,0)';
-                  el.style.transform = 'translateY(0) scale(1)';
-                }}
               >
                 {feature.icon}
               </div>
 
-              <h3 style={{
-                fontSize: '1.02rem',
-                fontWeight: 700,
-                marginBottom: '8px',
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.01em',
-              }}>
+              <h3
+                style={{
+                  fontSize: '1.02rem',
+                  fontWeight: 700,
+                  marginBottom: '8px',
+                  color: 'var(--text-primary)',
+                  letterSpacing: '-0.01em',
+                }}
+              >
                 {feature.title}
               </h3>
 
-              <p style={{
-                fontSize: '0.85rem',
-                color: 'var(--text-muted)',
-                lineHeight: 1.7,
-              }}>
+              <p
+                style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--text-muted)',
+                  lineHeight: 1.7,
+                  margin: 0,
+                }}
+              >
                 {feature.description}
               </p>
             </div>
