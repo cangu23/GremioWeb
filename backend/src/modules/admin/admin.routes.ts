@@ -135,6 +135,7 @@ router.patch('/settings', adminOnly, SettingsController.updateSettings);
 // ========== STICKERS / EMOJIS (Admin Only) ==========
 router.get('/stickers', adminOnly, validateRequest(adminQuerySchema), StickersController.listStickers);
 router.post('/stickers', adminOnly, StickersController.createSticker);
+router.post('/stickers/batch-delete', adminOnly, StickersController.batchDeleteStickers);
 router.delete('/stickers/:id', adminOnly, StickersController.deleteSticker);
 
 export default router;

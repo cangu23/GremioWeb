@@ -333,7 +333,8 @@ export default function CreatePost({
                       <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: '8px', zIndex: 100 }}>
                         <StickerPicker
                           onSelect={(sticker) => {
-                            setContent(prev => (prev ? `${prev} :${sticker.name}: ` : `:${sticker.name}: `));
+                            const ins = sticker.isNativeEmoji || !sticker.imageUrl ? sticker.name : `:${sticker.name}:`;
+                            setContent(prev => (prev ? `${prev} ${ins} ` : `${ins} `));
                             setShowStickerPicker(false);
                           }}
                           onClose={() => setShowStickerPicker(false)}

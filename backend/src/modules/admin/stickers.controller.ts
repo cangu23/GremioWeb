@@ -9,12 +9,15 @@ const PLAN_RANK: Record<string, number> = { FREE: 0, ASTRO: 1, NOVA: 2, STELLAR:
 
 export const listStickers = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { type, category, page = '1', limit = '50' } = req.query;
+    const { type, category, search, page = '1', limit = '100' } = req.query;
     const skip = (Math.max(1, Number(page)) - 1) * Math.min(100, Math.max(1, Number(limit)));
 
     const where: Record<string, unknown> = {};
     if (type) where.type = String(type);
     if (category) where.category = String(category);
+    if (search && String(search).trim()) {
+      where.name = { contains: String(search).trim().toLowerCase() };
+    }
 
     const [data, total] = await Promise.all([
       prisma.sticker.findMany({
@@ -84,6 +87,24 @@ export const deleteSticker = async (req: Request, res: Response, next: NextFunct
 
     await prisma.sticker.delete({ where: { id } });
     res.json({ message: 'Sticker eliminado', id });
+  } catch (err) { next(err); }
+};
+
+// ========== BATCH DELETE STICKERS ==========
+
+export const batchDeleteStickers = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({ status: 'error', message: 'ids debe ser un arreglo de IDs no vacío' });
+      return;
+    }
+
+    const result = await prisma.sticker.deleteMany({
+      where: { id: { in: ids.map(String) } },
+    });
+
+    res.json({ message: `${result.count} elementos eliminados`, count: result.count });
   } catch (err) { next(err); }
 };
 

@@ -1,104 +1,160 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 
 // ==========================================================================
 // Types
 // ==========================================================================
-interface StickerData {
+export interface StickerData {
   id: string;
   name: string;
   imageUrl: string;
   category: string;
   type: 'emoji' | 'sticker';
+  minPlan?: string;
+  isNativeEmoji?: boolean;
 }
 
 interface StickerPickerProps {
-  /** Called when a sticker is selected */
+  /** Called when a sticker or emoji is selected */
   onSelect: (sticker: StickerData) => void;
-  /** Optional: close handler (e.g. to close parent modal) */
+  /** Optional: close handler */
   onClose?: () => void;
-  /** Optional: filter by type (emoji, sticker, or both) */
+  /** Optional: filter by type */
   filterType?: 'emoji' | 'sticker' | 'all';
 }
 
 // ==========================================================================
-// SVG Icons
-// ==========================================================================
-const SearchIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-  </svg>
-);
-
-const StickerIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-  </svg>
-);
-
-const EmojiIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
-  </svg>
-);
-
-// ==========================================================================
-// Category icon mapping
+// Category icon mapping for custom stickers
 // ==========================================================================
 const CATEGORY_ICONS: Record<string, string> = {
   general: '📌',
   anime: '🎌',
   meme: '😂',
   hearts: '❤️',
+  reaction: '🔥',
   reactions: '🔥',
   celebration: '🎉',
   gremio: '✨',
   kawaii: '🌸',
   funny: '🤣',
+  gaming: '🎮',
+  love: '💖',
+  sad: '😢',
+  angry: '💢',
 };
 
 // ==========================================================================
-// StickerPicker Component
+// Standard Native Unicode Emojis Grouped
 // ==========================================================================
+const NATIVE_EMOJI_GROUPS: Record<string, { label: string; icon: string; emojis: string[] }> = {
+  faces: {
+    label: 'Caritas',
+    icon: '😊',
+    emojis: [
+      '😀','😃','😄','😁','😆','😅','😂','🤣','🥲','🥹','😊','😇','🙂','😉','😌',
+      '😍','🥰','😘','😋','😛','😜','🤪','😎','🤩','🥳','😏','😒','😞','😔','🥺',
+      '😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','🤔','🤫','🫠','😴',
+    ],
+  },
+  hearts: {
+    label: 'Amor',
+    icon: '❤️',
+    emojis: [
+      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','❣️','💕','💞',
+      '💓','💗','💖','💘','💝','💟','💌','💋','🫂',
+    ],
+  },
+  gestures: {
+    label: 'Gestos',
+    icon: '👍',
+    emojis: [
+      '👍','👎','👊','✊','👏','🙌','🤲','🤝','🙏','💪','👋','👌','🤌','✌️','🤞',
+      '🫰','🤟','🤘','🤙','👈','👉','👆','👇','👀','💯',
+    ],
+  },
+  anime_fun: {
+    label: 'Anime & Ocio',
+    icon: '🎌',
+    emojis: [
+      '🌸','✨','⭐','🌟','💫','⚡','🔥','💥','🎉','🎊','🎮','🕹️','🎲','🎯','🎨',
+      '🎤','🎧','🎵','🎶','🧹','👑','💎','🍙','🍣','🍜','🍡','🧋','🐱','🦊','🐰',
+      '🦄','👻','💀','👽','🤖',
+    ],
+  },
+};
+
+// In-memory cache for public stickers so reopening the picker is instant
+let cachedStickers: StickerData[] | null = null;
+let lastCacheTime = 0;
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
+
 export default function StickerPicker({ onSelect, onClose, filterType = 'all' }: StickerPickerProps) {
-  const [stickers, setStickers] = useState<StickerData[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Main Tab: 'stickers' | 'emojis' | 'recent'
+  const [activeTab, setActiveTab] = useState<'stickers' | 'emojis' | 'recent'>('stickers');
+
+  // Custom stickers data
+  const [stickers, setStickers] = useState<StickerData[]>(cachedStickers || []);
+  const [loading, setLoading] = useState(!cachedStickers);
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [categories, setCategories] = useState<string[]>([]);
+
+  // Sub-categories
+  const [stickerCategory, setStickerCategory] = useState<string>('all');
+  const [emojiGroup, setEmojiGroup] = useState<string>('faces');
+
+  // Recently used items
+  const [recentItems, setRecentItems] = useState<StickerData[]>([]);
+
   const pickerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch stickers from public API
+  // Load recently used from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('gremio_recent_stickers');
+      if (stored) {
+        setRecentItems(JSON.parse(stored));
+      }
+    } catch {
+      // ignore JSON errors
+    }
+  }, []);
+
+  // Fetch stickers with caching
   useEffect(() => {
     let cancelled = false;
+    const now = Date.now();
+
+    if (cachedStickers && now - lastCacheTime < CACHE_TTL_MS) {
+      setStickers(cachedStickers);
+      setLoading(false);
+      return;
+    }
+
     const fetchStickers = async () => {
       try {
         const data = await apiFetch('/stickers', {});
         if (cancelled) return;
         const list = (Array.isArray(data) ? data : data?.data || data?.stickers || []) as StickerData[];
+        cachedStickers = list;
+        lastCacheTime = Date.now();
         setStickers(list);
-
-        // Extract unique categories
-        const uniqueCategories = Array.from(new Set(list.map(s => s.category)));
-        const cats = ['all', ...uniqueCategories] as string[];
-        setCategories(cats);
-        if (cats.length > 1) setActiveCategory(cats[0]);
       } catch {
-        // Silently fail — picker just won't show anything
+        // fail gracefully
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
+
     fetchStickers();
     return () => { cancelled = true; };
   }, []);
 
   // Focus search input on open
   useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 100);
+    const timer = setTimeout(() => inputRef.current?.focus(), 80);
+    return () => clearTimeout(timer);
   }, []);
 
   // Close on outside click
@@ -109,7 +165,6 @@ export default function StickerPicker({ onSelect, onClose, filterType = 'all' }:
         onClose();
       }
     };
-    // Delay to avoid immediate close from the opening click
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
     }, 0);
@@ -129,60 +184,109 @@ export default function StickerPicker({ onSelect, onClose, filterType = 'all' }:
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
-  // Filter stickers based on search, category, and type
-  const filteredStickers = stickers.filter(s => {
-    if (filterType !== 'all' && s.type !== filterType) return false;
-    if (activeCategory !== 'all' && s.category !== activeCategory) return false;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      return s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
+  // Save selected item to recents
+  const saveToRecents = useCallback((item: StickerData) => {
+    try {
+      setRecentItems(prev => {
+        const filtered = prev.filter(r => r.name !== item.name);
+        const updated = [item, ...filtered].slice(0, 24);
+        localStorage.setItem('gremio_recent_stickers', JSON.stringify(updated));
+        return updated;
+      });
+    } catch {
+      // ignore storage quota
     }
-    return true;
-  });
+  }, []);
 
-  const handleSelect = (sticker: StickerData) => {
-    onSelect(sticker);
+  const handleSelectSticker = (item: StickerData) => {
+    saveToRecents(item);
+    onSelect(item);
     onClose?.();
   };
+
+  const handleSelectNativeEmoji = (emoji: string) => {
+    const item: StickerData = {
+      id: `native-${emoji}`,
+      name: emoji,
+      imageUrl: '',
+      category: 'native',
+      type: 'emoji',
+      isNativeEmoji: true,
+    };
+    saveToRecents(item);
+    onSelect(item);
+    onClose?.();
+  };
+
+  // Unique categories for custom stickers
+  const stickerCategories = useMemo(() => {
+    const cats = Array.from(new Set(stickers.map(s => s.category)));
+    return ['all', ...cats];
+  }, [stickers]);
+
+  // Filtered custom stickers
+  const filteredStickers = useMemo(() => {
+    return stickers.filter(s => {
+      if (filterType !== 'all' && s.type !== filterType) return false;
+      if (stickerCategory !== 'all' && s.category !== stickerCategory) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        return s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [stickers, filterType, stickerCategory, search]);
+
+  // Filtered native emojis if searching
+  const filteredNativeEmojis = useMemo(() => {
+    if (!search.trim()) {
+      return NATIVE_EMOJI_GROUPS[emojiGroup]?.emojis || [];
+    }
+    // Search across all native emoji groups
+    const q = search.toLowerCase().trim();
+    const allEmojis: string[] = [];
+    Object.values(NATIVE_EMOJI_GROUPS).forEach(group => {
+      allEmojis.push(...group.emojis);
+    });
+    // Return all if query, or unique list
+    return Array.from(new Set(allEmojis));
+  }, [emojiGroup, search]);
 
   return (
     <div
       ref={pickerRef}
       style={{
         width: '340px',
-        maxHeight: '380px',
-        background: '#1a1a2e',
-        border: '1px solid rgba(255,255,255,0.12)',
-        borderRadius: '14px',
-        boxShadow: '0 16px 64px rgba(0,0,0,0.6)',
+        maxWidth: '92vw',
+        maxHeight: '430px',
+        background: 'rgba(18, 16, 28, 0.98)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(138,43,226,0.3)',
+        borderRadius: '16px',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.6), 0 0 20px rgba(138,43,226,0.15)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        animation: 'fadeInUp 0.15s ease-out',
+        zIndex: 1000,
+        userSelect: 'none',
       }}
     >
-      {/* ── Search bar ── */}
-      <div style={{ padding: '10px 12px 6px' }}>
+      {/* ── Header: Search bar ── */}
+      <div style={{ padding: '10px 12px 6px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(255,255,255,0.06)',
-          borderRadius: '8px',
-          padding: '8px 10px',
-          border: '1px solid rgba(255,255,255,0.06)',
-          transition: 'border-color 0.15s',
+          background: 'rgba(255,255,255,0.05)', borderRadius: '10px',
+          padding: '6px 10px', border: '1px solid rgba(255,255,255,0.08)',
         }}>
-          <SearchIcon />
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>🔍</span>
           <input
             ref={inputRef}
-            type="text"
-            placeholder="Buscar stickers..."
             value={search}
             onChange={e => setSearch(e.target.value)}
+            placeholder={activeTab === 'emojis' ? 'Buscar emojis...' : 'Buscar stickers (:pepe_dance:)...'}
             style={{
-              flex: 1, border: 'none', background: 'none',
-              color: 'var(--text)', fontSize: '0.82rem',
-              outline: 'none',
-              fontFamily: 'inherit',
+              background: 'transparent', border: 'none', color: '#fff',
+              fontSize: '0.84rem', outline: 'none', width: '100%',
             }}
           />
           {search && (
@@ -190,8 +294,7 @@ export default function StickerPicker({ onSelect, onClose, filterType = 'all' }:
               onClick={() => setSearch('')}
               style={{
                 background: 'none', border: 'none', color: 'var(--text-muted)',
-                cursor: 'pointer', padding: '2px', fontSize: '0.9rem',
-                lineHeight: 1,
+                cursor: 'pointer', fontSize: '0.75rem', padding: '0 2px',
               }}
             >
               ✕
@@ -200,155 +303,274 @@ export default function StickerPicker({ onSelect, onClose, filterType = 'all' }:
         </div>
       </div>
 
-      {/* ── Category tabs ── */}
-      {categories.length > 1 && !search && (
+      {/* ── Tabs: Stickers / Emojis / Recientes ── */}
+      <div style={{
+        display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(0,0,0,0.2)', padding: '4px 8px', gap: '4px',
+      }}>
+        <button
+          onClick={() => setActiveTab('stickers')}
+          style={{
+            flex: 1, padding: '6px 8px', borderRadius: '8px', border: 'none',
+            background: activeTab === 'stickers' ? 'rgba(138,43,226,0.25)' : 'transparent',
+            color: activeTab === 'stickers' ? '#c084fc' : 'var(--text-muted)',
+            fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer',
+            transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+          }}
+        >
+          <span>🏷️</span> Stickers ({stickers.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('emojis')}
+          style={{
+            flex: 1, padding: '6px 8px', borderRadius: '8px', border: 'none',
+            background: activeTab === 'emojis' ? 'rgba(0,212,255,0.2)' : 'transparent',
+            color: activeTab === 'emojis' ? '#38bdf8' : 'var(--text-muted)',
+            fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer',
+            transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+          }}
+        >
+          <span>😊</span> Emojis
+        </button>
+
+        {recentItems.length > 0 && (
+          <button
+            onClick={() => setActiveTab('recent')}
+            style={{
+              padding: '6px 10px', borderRadius: '8px', border: 'none',
+              background: activeTab === 'recent' ? 'rgba(234,179,8,0.2)' : 'transparent',
+              color: activeTab === 'recent' ? '#facc15' : 'var(--text-muted)',
+              fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer',
+              transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
+            }}
+          >
+            <span>⭐</span> Recientes
+          </button>
+        )}
+      </div>
+
+      {/* ── Sub-category pill bar ── */}
+      {activeTab === 'stickers' && stickerCategories.length > 1 && !search && (
         <div style={{
-          display: 'flex', gap: '4px', padding: '8px 12px',
-          overflowX: 'auto', flexShrink: 0,
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          scrollbarWidth: 'thin',
+          display: 'flex', gap: '6px', overflowX: 'auto', padding: '6px 10px',
+          borderBottom: '1px solid rgba(255,255,255,0.04)', scrollbarWidth: 'none',
         }}>
-          {categories.map(cat => {
-            const isActive = activeCategory === cat;
-            const icon = cat === 'all' ? '🔮' : CATEGORY_ICONS[cat] || '📁';
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '4px',
-                  padding: '5px 10px', borderRadius: '8px',
-                  border: 'none',
-                  background: isActive ? 'rgba(138,43,226,0.2)' : 'rgba(255,255,255,0.04)',
-                  color: isActive ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer', fontSize: '0.75rem', fontWeight: isActive ? 600 : 400,
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.12s',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-              >
-                <span style={{ fontSize: '0.85rem' }}>{icon}</span>
-                {cat === 'all' ? 'Todos' : cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            );
-          })}
+          {stickerCategories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setStickerCategory(cat)}
+              style={{
+                padding: '3px 10px', borderRadius: '12px', border: 'none',
+                background: stickerCategory === cat ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                color: stickerCategory === cat ? '#fff' : 'var(--text-muted)',
+                fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer',
+                whiteSpace: 'nowrap', transition: 'all 0.15s',
+              }}
+            >
+              {CATEGORY_ICONS[cat] ? `${CATEGORY_ICONS[cat]} ` : ''}{cat === 'all' ? 'Todos' : cat}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* ── Sticker grid ── */}
+      {activeTab === 'emojis' && !search && (
+        <div style={{
+          display: 'flex', gap: '6px', overflowX: 'auto', padding: '6px 10px',
+          borderBottom: '1px solid rgba(255,255,255,0.04)', scrollbarWidth: 'none',
+        }}>
+          {Object.entries(NATIVE_EMOJI_GROUPS).map(([key, group]) => (
+            <button
+              key={key}
+              onClick={() => setEmojiGroup(key)}
+              style={{
+                padding: '3px 10px', borderRadius: '12px', border: 'none',
+                background: emojiGroup === key ? 'rgba(0,212,255,0.25)' : 'rgba(255,255,255,0.05)',
+                color: emojiGroup === key ? '#38bdf8' : 'var(--text-muted)',
+                fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer',
+                whiteSpace: 'nowrap', transition: 'all 0.15s',
+              }}
+            >
+              {group.icon} {group.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Content Grid View ── */}
       <div style={{
-        flex: 1, overflowY: 'auto', padding: '10px 12px',
-        scrollbarWidth: 'thin',
+        flex: 1,
+        overflowY: 'auto',
+        padding: '10px',
+        maxHeight: '290px',
       }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '30px' }}>
-            <div style={{
-              width: '24px', height: '24px',
-              border: '2px solid rgba(255,255,255,0.08)',
-              borderTopColor: 'var(--primary)',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }} />
-          </div>
-        ) : filteredStickers.length === 0 ? (
-          <div style={{
-            textAlign: 'center', padding: '30px 10px',
-            color: 'var(--text-muted)', fontSize: '0.85rem',
-          }}>
-            {search ? (
-              <>
-                <p style={{ margin: '0 0 6px', fontSize: '1.5rem' }}>🔍</p>
-                <p style={{ margin: 0 }}>No se encontraron stickers para &quot;{search}&quot;</p>
-              </>
-            ) : (
-              <>
-                <p style={{ margin: '0 0 6px', fontSize: '1.5rem' }}>📦</p>
-                <p style={{ margin: 0 }}>No hay stickers disponibles</p>
-                <p style={{ margin: '4px 0 0', fontSize: '0.75rem', opacity: 0.6 }}>
-                  El staff puede agregarlos desde el panel de administración
-                </p>
-              </>
-            )}
-          </div>
-        ) : (
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', gap: '6px',
-            justifyContent: 'flex-start',
-          }}>
-            {filteredStickers.map(sticker => {
-              const isEmoji = sticker.type === 'emoji';
-              const size = isEmoji ? '32px' : '80px';
-              return (
-                <button
-                  key={sticker.id}
-                  onClick={() => handleSelect(sticker)}
-                  title={sticker.name}
-                  style={{
-                    width: isEmoji ? '38px' : '88px',
-                    height: isEmoji ? '38px' : '88px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    borderRadius: '10px',
-                    border: '1px solid transparent',
-                    background: 'rgba(255,255,255,0.03)',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    transition: 'all 0.12s',
-                    overflow: 'hidden',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'rgba(138,43,226,0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(138,43,226,0.2)';
-                    e.currentTarget.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                    e.currentTarget.style.borderColor = 'transparent';
-                    e.currentTarget.style.transform = 'none';
-                  }}
-                >
-                  <img
-                    src={sticker.imageUrl}
-                    alt={sticker.name}
+        {/* Recents tab */}
+        {activeTab === 'recent' && (
+          <div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
+              Usados recientemente ({recentItems.length})
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px' }}>
+              {recentItems.map((item, idx) => {
+                if (item.isNativeEmoji || !item.imageUrl) {
+                  return (
+                    <button
+                      key={`rec-${item.name}-${idx}`}
+                      onClick={() => handleSelectNativeEmoji(item.name)}
+                      title={item.name}
+                      style={{
+                        padding: '6px', borderRadius: '8px', border: 'none',
+                        background: 'rgba(255,255,255,0.03)', cursor: 'pointer',
+                        fontSize: '1.4rem', lineHeight: 1, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        transition: 'transform 0.1s, background 0.1s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.2)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    >
+                      {item.name}
+                    </button>
+                  );
+                }
+
+                return (
+                  <button
+                    key={`rec-${item.id}-${idx}`}
+                    onClick={() => handleSelectSticker(item)}
+                    title={`:${item.name}:`}
                     style={{
-                      width: size,
-                      height: size,
-                      objectFit: 'contain',
-                      borderRadius: isEmoji ? '4px' : '6px',
-                      pointerEvents: 'none',
+                      padding: '4px', borderRadius: '8px', border: 'none',
+                      background: 'rgba(255,255,255,0.03)', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'transform 0.1s, background 0.1s',
                     }}
-                    loading="lazy"
-                    onError={e => {
-                      // Fallback: show name initial on error
-                      const target = e.currentTarget;
-                      target.style.display = 'none';
-                      (target.parentElement as HTMLElement).innerText = sticker.name.charAt(0).toUpperCase();
-                      (target.parentElement as HTMLElement).style.fontSize = isEmoji ? '1rem' : '1.5rem';
-                      (target.parentElement as HTMLElement).style.fontWeight = 'bold';
-                      (target.parentElement as HTMLElement).style.color = 'var(--text-muted)';
-                    }}
-                  />
-                </button>
-              );
-            })}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.2)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                  >
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+                      loading="lazy"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Native Emojis Tab */}
+        {activeTab === 'emojis' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+            {filteredNativeEmojis.map((emoji, idx) => (
+              <button
+                key={`${emoji}-${idx}`}
+                onClick={() => handleSelectNativeEmoji(emoji)}
+                title={emoji}
+                style={{
+                  padding: '7px 4px', borderRadius: '8px', border: 'none',
+                  background: 'transparent', cursor: 'pointer',
+                  fontSize: '1.45rem', lineHeight: 1, display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  transition: 'transform 0.1s, background 0.1s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.25)'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'transparent'; }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Custom Stickers Tab */}
+        {activeTab === 'stickers' && (
+          <div>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                Cargando stickers...
+              </div>
+            ) : filteredStickers.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                No se encontraron stickers
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '8px',
+              }}>
+                {filteredStickers.map(sticker => {
+                  const isEmoji = sticker.type === 'emoji';
+                  const isVip = sticker.minPlan && sticker.minPlan !== 'FREE';
+
+                  return (
+                    <button
+                      key={sticker.id}
+                      onClick={() => handleSelectSticker(sticker)}
+                      title={`:${sticker.name}: ${isVip ? `(${sticker.minPlan})` : ''}`}
+                      style={{
+                        padding: '6px', borderRadius: '10px',
+                        border: isVip ? '1px solid rgba(234,179,8,0.4)' : '1px solid rgba(255,255,255,0.05)',
+                        background: 'rgba(255,255,255,0.03)',
+                        cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        gap: '4px',
+                        position: 'relative',
+                        transition: 'transform 0.12s, background 0.12s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'scale(1.12)';
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                      }}
+                    >
+                      {isVip && (
+                        <span style={{
+                          position: 'absolute', top: '2px', right: '3px',
+                          fontSize: '0.55rem', fontWeight: 800, color: '#facc15',
+                        }}>
+                          ⭐
+                        </span>
+                      )}
+                      <img
+                        src={sticker.imageUrl}
+                        alt={sticker.name}
+                        loading="lazy"
+                        style={{
+                          width: isEmoji ? '32px' : '52px',
+                          height: isEmoji ? '32px' : '52px',
+                          objectFit: 'contain',
+                        }}
+                      />
+                      <span style={{
+                        fontSize: '0.65rem', color: 'var(--text-muted)',
+                        maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        :{sticker.name}:
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* ── Footer hint ── */}
-      {filteredStickers.length > 0 && (
-        <div style={{
-          padding: '6px 12px',
-          borderTop: '1px solid rgba(255,255,255,0.04)',
-          fontSize: '0.65rem',
-          color: 'var(--text-muted)',
-          textAlign: 'center',
-          flexShrink: 0,
-        }}>
-          {filteredStickers.length} sticker{filteredStickers.length !== 1 ? 's' : ''} · Esc para cerrar
-        </div>
-      )}
+      {/* ── Footer ── */}
+      <div style={{
+        padding: '6px 12px', borderTop: '1px solid rgba(255,255,255,0.05)',
+        background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        fontSize: '0.68rem', color: 'var(--text-muted)',
+      }}>
+        <span>Gremio Estelar Emojis</span>
+        <span>Esc para cerrar</span>
+      </div>
     </div>
   );
 }

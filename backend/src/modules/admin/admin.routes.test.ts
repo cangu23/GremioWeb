@@ -88,6 +88,7 @@ vi.mock('./stickers.controller', () => ({
   createSticker: vi.fn(),
   updateSticker: vi.fn(mockJson),
   deleteSticker: vi.fn(),
+  batchDeleteStickers: vi.fn(),
 }));
 vi.mock('../ecosystem/pet-requests.controller', () => ({
   listPetRequestsAdmin: vi.fn(),

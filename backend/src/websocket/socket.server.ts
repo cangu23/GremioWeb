@@ -267,7 +267,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
       }
       if (!data.messageId || !isValidCuid(data.messageId)) return;
       const emoji = String(data.emoji || '').trim();
-      if (!emoji || emoji.length > 16) return;
+      if (!emoji || emoji.length > 48) return;
 
       try {
         const message = await prisma.directMessage.findUnique({ where: { id: data.messageId } });

@@ -228,6 +228,7 @@ function MessengerContent() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [showChatStickerPicker, setShowChatStickerPicker] = useState(false);
+  const [customReactionMsgId, setCustomReactionMsgId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1592,6 +1593,7 @@ function MessengerContent() {
                     const isMine = msg.senderId === currentUser.id;
                     const showAvatar = !isMine && (idx === 0 || messages[idx - 1]?.senderId !== msg.senderId);
                     const isImage = msg.content.startsWith('http') && (msg.content.includes('/uploads/') || /\.(webp|png|jpg|jpeg|gif)$/i.test(msg.content));
+                    const isSingleSticker = /^:[a-zA-Z0-9_.-]+:$/.test(msg.content.trim());
                     const recs = messageReactions[msg.id] || {};
 
                     return (
@@ -1625,16 +1627,18 @@ function MessengerContent() {
                         {!showAvatar && !isMine && <div style={{ width: '28px', flexShrink: 0 }} />}
                         
                         <div style={{
-                          background: isMine
-                            ? 'linear-gradient(135deg, var(--primary), #7c6aff)'
-                            : 'rgba(255,255,255,0.06)',
-                          padding: isImage ? '4px' : '10px 14px',
+                          background: isSingleSticker
+                            ? 'transparent'
+                            : isMine
+                              ? 'linear-gradient(135deg, var(--primary), #7c6aff)'
+                              : 'rgba(255,255,255,0.06)',
+                          padding: isSingleSticker ? '2px' : isImage ? '4px' : '10px 14px',
                           borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                           maxWidth: '100%',
-                          boxShadow: isMine ? '0 4px 16px rgba(138,43,226,0.25)' : 'none',
+                          boxShadow: isSingleSticker ? 'none' : isMine ? '0 4px 16px rgba(138,43,226,0.25)' : 'none',
                           position: 'relative',
                         }}>
-                          {!isMine && showAvatar && activeUserInfo && (
+                          {!isMine && showAvatar && activeUserInfo && !isSingleSticker && (
                             <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '4px', opacity: 0.9 }}>
                               {getUsername(activeUserInfo)} <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 400 }}>@{activeUserInfo.username}</span>
                             </div>
@@ -1651,6 +1655,10 @@ function MessengerContent() {
                                 border: '1px solid rgba(255,255,255,0.1)',
                               }}
                             />
+                          ) : isSingleSticker ? (
+                            <div style={{ display: 'inline-block', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.35))' }}>
+                              {renderFormattedContent(msg.content, { stickerSize: 128 })}
+                            </div>
                           ) : (
                             <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.45, wordBreak: 'break-word' }}>
                               {renderFormattedContent(msg.content)}
@@ -1770,6 +1778,40 @@ function MessengerContent() {
                                   </button>
                                 );
                               })}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCustomReactionMsgId(customReactionMsgId === msg.id ? null : msg.id);
+                                }}
+                                title="Más emojis y stickers..."
+                                style={{
+                                  border: 'none', background: 'transparent', cursor: 'pointer',
+                                  fontSize: '0.82rem', padding: '1px 4px', borderRadius: '4px',
+                                  color: 'var(--text-muted)', lineHeight: 1,
+                                  transition: 'transform 0.1s',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.25)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                              >
+                                ➕
+                              </button>
+                            </div>
+                          )}
+
+                          {customReactionMsgId === msg.id && (
+                            <div style={{
+                              position: 'absolute', bottom: '100%', right: isMine ? 0 : 'auto', left: isMine ? 'auto' : 0,
+                              marginBottom: '8px', zIndex: 120,
+                            }}>
+                              <StickerPicker
+                                onSelect={(selected) => {
+                                  const emojiVal = selected.isNativeEmoji || !selected.imageUrl ? selected.name : `:${selected.name}:`;
+                                  handleAddReaction(msg.id, emojiVal);
+                                  setCustomReactionMsgId(null);
+                                }}
+                                onClose={() => setCustomReactionMsgId(null)}
+                              />
                             </div>
                           )}
                         </div>
@@ -1882,7 +1924,8 @@ function MessengerContent() {
                     <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: '8px', zIndex: 100 }}>
                       <StickerPicker
                         onSelect={(sticker) => {
-                          setInput(prev => prev + ` :${sticker.name}: `);
+                          const ins = sticker.isNativeEmoji || !sticker.imageUrl ? sticker.name : `:${sticker.name}:`;
+                          setInput(prev => prev ? `${prev} ${ins} ` : `${ins} `);
                           setShowChatStickerPicker(false);
                           setTimeout(() => inputRef.current?.focus(), 50);
                         }}

@@ -1241,7 +1241,8 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
                     <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: '8px', zIndex: 100 }}>
                       <StickerPicker
                         onSelect={(sticker) => {
-                          setCommentText(prev => prev + ` :${sticker.name}: `);
+                          const ins = sticker.isNativeEmoji || !sticker.imageUrl ? sticker.name : `:${sticker.name}:`;
+                          setCommentText(prev => prev ? `${prev} ${ins} ` : `${ins} `);
                           setShowCommentStickerPicker(false);
                         }}
                         onClose={() => setShowCommentStickerPicker(false)}

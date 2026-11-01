@@ -118,6 +118,7 @@ export function renderFormattedContent(
   options?: {
     hashtagLink?: string;
     mentionLinkPrefix?: string;
+    stickerSize?: string | number;
   }
 ): React.ReactNode[] {
   if (!text) return [];
@@ -177,6 +178,9 @@ export function renderFormattedContent(
       if (globalStickersMap && globalStickersMap[code]) {
         const custom = globalStickersMap[code];
         const isEmoji = custom.type === 'emoji';
+        const customSize = options?.stickerSize
+          ? (typeof options.stickerSize === 'number' ? `${options.stickerSize}px` : options.stickerSize)
+          : (isEmoji ? '1.5em' : '72px');
         return (
           <img
             key={i}
@@ -184,11 +188,11 @@ export function renderFormattedContent(
             alt={part}
             title={`:${custom.name}:`}
             style={{
-              width: isEmoji ? '1.5em' : '72px',
-              height: isEmoji ? '1.5em' : '72px',
+              width: customSize,
+              height: customSize,
               verticalAlign: isEmoji ? '-0.25em' : 'middle',
               objectFit: 'contain',
-              display: isEmoji ? 'inline-block' : 'inline-block',
+              display: 'inline-block',
               margin: isEmoji ? '0 2px' : '4px 6px',
             }}
           />

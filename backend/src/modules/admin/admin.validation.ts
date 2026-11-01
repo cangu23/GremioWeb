@@ -16,6 +16,8 @@ export const adminQuerySchema = z.object({
     isHidden: z.string().optional(),
     isFeatured: z.string().optional(),
     isSuspended: z.string().optional(),
+    type: z.string().optional(),
+    category: z.string().optional(),
   }),
 });
 
