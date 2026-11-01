@@ -29,7 +29,7 @@ export const getDonationStats = async (req: Request, res: Response, next: NextFu
 // PayPal Gateway Integration
 export const preparePayPal = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { amount, type, planKey, recipientId, message, anonymous } = req.body;
+    const { amount, type, planKey, recipientId, message, anonymous, creatorCode } = req.body;
     const result = await PayPalService.createPayPalOrder({
       userId: req.user!.id,
       amount: Number(amount),
@@ -38,6 +38,7 @@ export const preparePayPal = async (req: Request, res: Response, next: NextFunct
       recipientId,
       message,
       anonymous,
+      creatorCode: creatorCode ? String(creatorCode).trim() : undefined,
     });
     res.json({ success: true, ...result });
   } catch (err) { next(err); }

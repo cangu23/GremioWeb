@@ -7,6 +7,7 @@ import { useToast } from '@/lib/ToastContext';
 import Link from 'next/link';
 import ClientOnly from '@/lib/ClientOnly';
 import GiftPlanModal from '@/components/ui/GiftPlanModal';
+import CreatorCodeInput from '@/components/ui/CreatorCodeInput';
 import { Gift } from '@/components/ui/Icons';
 
 interface PlanInfo {
@@ -29,6 +30,7 @@ export default function PremiumPage() {
   const [loadingVerified, setLoadingVerified] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
+  const [creatorCode, setCreatorCode] = useState('');
 
   const handleBuyVerified = async () => {
     if (!user) {
@@ -40,7 +42,7 @@ export default function PremiumPage() {
       showToast('Abriendo pasarela segura de PayPal para tu insignia de verificación...', 'info');
       const res = await apiFetch('/payments/paypal/create-order', {
         method: 'POST',
-        body: JSON.stringify({ amount: 1.5, type: 'VERIFICATION' }),
+        body: JSON.stringify({ amount: 1.5, type: 'VERIFICATION', creatorCode: creatorCode?.trim() || undefined }),
       });
       if (res?.approveUrl) {
         window.location.href = res.approveUrl;
@@ -278,6 +280,23 @@ export default function PremiumPage() {
               </>
             )}
           </div>
+        </div>
+
+        {/* CREATOR CODE SECTION */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: '16px',
+          padding: '18px 22px',
+          marginBottom: '28px',
+          maxWidth: '560px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}>
+          <CreatorCodeInput
+            value={creatorCode}
+            onChange={setCreatorCode}
+          />
         </div>
 
         {/* PLAN CARDS GRID */}

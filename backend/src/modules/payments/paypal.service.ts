@@ -3,6 +3,7 @@ import AppError from '../../errors/AppError';
 import { PLATFORM_PLANS } from '../subscriptions/platform-subscriptions.service';
 import { VERIFICATION_PRICE, VERIFICATION_DURATION_DAYS, hasAnyRole } from '@gremio-estelar/shared';
 import prisma from '../../database/prisma';
+import { validateCreatorCode, recordCreatorPurchase } from '../creators/creator-codes.service';
 
 const PAYPAL_SANDBOX_BASE = 'https://api-m.sandbox.paypal.com';
 const PAYPAL_LIVE_BASE = 'https://api-m.paypal.com';
@@ -62,18 +63,19 @@ const getPayPalAccessToken = async () => {
 interface CreatePayPalOrderParams {
   userId: string;
   amount: number;
-  type: 'PLAN_SUSCRIPTION' | 'GIFT_PLAN' | 'DONATION' | 'VERIFICATION';
+  type: 'PLAN_SUSCRIPTION' | 'GIFT_PLAN' | 'DONATION' | 'VERIFICATION' | 'SEASON_PASS' | 'SEASON_PASS_BOOST';
   planKey?: string;
   recipientId?: string;
   message?: string;
   anonymous?: boolean;
+  creatorCode?: string;
 }
 
 /**
  * Crea una orden de pago en PayPal y devuelve la URL de aprobación
  */
 export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
-  const { userId, amount, type, planKey, recipientId, message, anonymous } = params;
+  const { userId, amount, type, planKey, recipientId, message, anonymous, creatorCode } = params;
 
   if (amount <= 0) {
     throw new AppError('El monto debe ser mayor a 0 USD', 400);
@@ -94,6 +96,14 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
     // Insignia de verificación: precio fijo de $1.50 USD / mes (server-side).
     if (Math.abs(amount - VERIFICATION_PRICE) > 0.01) {
       throw new AppError('El monto no coincide con el precio de la verificación ($1.50 USD)', 400);
+    }
+  } else if (type === 'SEASON_PASS') {
+    if (Math.abs(amount - 3.99) > 0.01) {
+      throw new AppError('El monto no coincide con el precio del Pase Estelar ($3.99 USD)', 400);
+    }
+  } else if (type === 'SEASON_PASS_BOOST') {
+    if (Math.abs(amount - 7.99) > 0.01) {
+      throw new AppError('El monto no coincide con el precio del Pase Estelar + Impulso ($7.99 USD)', 400);
     }
   } else if (type === 'DONATION') {
     if (amount < 1 || amount > 5000) {
@@ -140,6 +150,7 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
           recipientId,
           message,
           anonymous,
+          creatorCode: creatorCode ? creatorCode.trim().toUpperCase() : undefined,
           createdAt: new Date().toISOString(),
         }),
       },
@@ -180,6 +191,10 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
     ? `Membresía Plan ${planKey} en Gremio Estelar`
     : type === 'VERIFICATION'
     ? 'Insignia de Verificación (1 mes) en Gremio Estelar'
+    : type === 'SEASON_PASS'
+    ? 'Pase Estelar de Temporada en Gremio Estelar'
+    : type === 'SEASON_PASS_BOOST'
+    ? 'Pase Estelar de Temporada + Impulso de 10 Niveles en Gremio Estelar'
     : `Donación a VTuber en Gremio Estelar`;
 
   try {
@@ -254,14 +269,14 @@ export const createPayPalOrder = async (params: CreatePayPalOrderParams) => {
  */
 async function processPayPalPayment(clientTxId: string, txLog: { id: string; context: string | null }) {
   const payload = JSON.parse(txLog.context || '{}');
-  const { userId, amount, type, planKey, recipientId, message, anonymous } = payload;
+  const { userId, amount, type, planKey, recipientId, message, anonymous, creatorCode } = payload;
   const planName = planKey as string;
 
   // Guard atómico + entrega de beneficios en UNA transacción: si algo falla a
   // mitad de camino, la intención de pago sigue PENDING y PayPal reintenta el
   // webhook (o el usuario reintenta la captura). La concurrencia la resuelve
   // el updateMany con filtro PENDING (un solo ganador; los demás reciben 409).
-  return prisma.$transaction(async (tx) => {
+  const txResult = await prisma.$transaction(async (tx) => {
     const marked = await tx.systemLog.updateMany({
       where: { id: txLog.id, message: `PAYPAL_PENDING:${clientTxId}` },
       data: { message: `PAYPAL_COMPLETED:${clientTxId}` },
@@ -295,7 +310,10 @@ async function processPayPalPayment(clientTxId: string, txLog: { id: string; con
       });
 
       const bonusMap: Record<string, number> = { ASTRO: 500, NOVA: 1500, STELLAR: 5000 };
-      const bonusStardust = bonusMap[planName] || 500;
+      let bonusStardust = bonusMap[planName] || 500;
+      if (creatorCode) {
+        bonusStardust += Math.round(bonusStardust * 0.10); // +10% extra por apoyar creador
+      }
 
       await tx.user.update({
         where: { id: targetUserId },
@@ -307,8 +325,8 @@ async function processPayPalPayment(clientTxId: string, txLog: { id: string; con
           userId: targetUserId,
           amount: bonusStardust,
           reason: isGift
-            ? `Bono por regalo de Plan ${planName} vía PayPal ($${amount} USD)`
-            : `Bono por activar Plan ${planName} vía PayPal ($${amount} USD)`,
+            ? `Bono por regalo de Plan ${planName} vía PayPal (${amount} USD)`
+            : `Bono por activar Plan ${planName}${creatorCode ? ` (Código: ${creatorCode} +10%)` : ''} vía PayPal (${amount} USD)`,
         },
       });
 
@@ -430,12 +448,86 @@ async function processPayPalPayment(clientTxId: string, txLog: { id: string; con
         type: 'DONATION',
         donation,
         amount,
-        message: `¡Donación de $${amount} USD enviada con éxito mediante PayPal!`,
+        message: `¡Donación de ${amount} USD enviada con éxito mediante PayPal!`,
+      };
+    }
+
+    if (type === 'SEASON_PASS' || type === 'SEASON_PASS_BOOST') {
+      const activeSeason = await tx.season.findFirst({ where: { active: true } });
+      if (!activeSeason) {
+        throw new AppError('No hay una temporada activa en este momento', 400);
+      }
+
+      const isBoost = type === 'SEASON_PASS_BOOST';
+      const levelsToBoost = isBoost ? 10 : 0;
+
+      const existingPass = await tx.userSeasonPass.findUnique({
+        where: { userId_seasonId: { userId, seasonId: activeSeason.id } },
+      });
+
+      if (existingPass) {
+        await tx.userSeasonPass.update({
+          where: { id: existingPass.id },
+          data: {
+            isPremium: true,
+            level: { increment: levelsToBoost },
+          },
+        });
+      } else {
+        await tx.userSeasonPass.create({
+          data: {
+            userId,
+            seasonId: activeSeason.id,
+            level: 1 + levelsToBoost,
+            isPremium: true,
+            claimedLevels: '[]',
+          },
+        });
+      }
+
+      let bonusStardust = isBoost ? 2500 : 1000;
+      if (creatorCode) {
+        bonusStardust += Math.round(bonusStardust * 0.10); // +10% extra por apoyar creador
+      }
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { stardust: { increment: bonusStardust } },
+      });
+
+      await tx.stardustTransaction.create({
+        data: {
+          userId,
+          amount: bonusStardust,
+          reason: `Bono por activar ${isBoost ? 'Pase de Temporada + Impulso 10 Niveles' : 'Pase Estelar de Temporada'}${creatorCode ? ` (Código ${creatorCode})` : ''} vía PayPal`,
+        },
+      });
+
+      return {
+        status: 'SUCCESS',
+        type,
+        amount,
+        seasonName: activeSeason.name,
+        bonusStardust,
+        message: `¡Pase Estelar VIP activado con éxito para ${activeSeason.name}!`,
       };
     }
 
     throw new AppError('Tipo de pago no soportado', 400);
   });
+
+  // Acreditar comisión del 35% a la creadora si se utilizó su código
+  if (creatorCode) {
+    recordCreatorPurchase({
+      code: creatorCode,
+      totalAmount: amount,
+      buyerId: userId,
+      orderId: clientTxId,
+      itemType: type,
+    }).catch(err => console.error('[CreatorCode Error] Fallo al acreditar comisión:', err));
+  }
+
+  return txResult;
 }
 
 /**

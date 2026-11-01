@@ -12,6 +12,7 @@ import { useToast } from '@/lib/ToastContext';
 import RecentActivity from '@/components/landing/RecentActivity';
 import UserAvatar from '@/components/ui/UserAvatar';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import CreatorEarningsCard from '@/components/creators/CreatorEarningsCard';
 import { hasAnyRole } from '@gremio-estelar/shared';
 
 interface GamificationData {
@@ -300,6 +301,9 @@ function DashboardContent() {
           ].map(renderQuickCard)}
         </div>
       </div>
+
+      {/* ===== PANEL DE GANANCIAS CREADORA ===== */}
+      {isCreator && <CreatorEarningsCard />}
 
       {/* ===== ACTIVIDAD RECIENTE ===== */}
       <div style={{ marginBottom: '40px' }}>

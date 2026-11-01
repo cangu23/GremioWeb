@@ -6,6 +6,7 @@ import { createSocketServer } from './websocket/socket.server';
 import { startStreamMonitor, stopStreamMonitor } from './modules/vtubers/stream-monitor.service';
 import { startStreamMonitor as startStreamerMonitor, stopStreamMonitor as stopStreamerMonitor } from './modules/streamers/stream-monitor.service';
 import { seedAchievements } from './modules/gamification/gamification.service';
+import { expireOutdatedSubscriptions } from './modules/subscriptions/platform-subscriptions.service';
 import { createLogger } from './utils/logger';
 
 const log = createLogger('BOOT');
@@ -37,6 +38,13 @@ log.info('HTTP server + Socket.IO initialized');// Start automatic live stream d
 
 // Seed achievements in DB
 seedAchievements().catch((err) => log.error({ err }, 'Error seeding achievements'));
+// Expiración periódica de suscripciones e insignias (cada hora)
+expireOutdatedSubscriptions().catch((err) => log.error({ err }, 'Error checking expired subscriptions on startup'));
+const expirationTimer = setInterval(() => {
+  expireOutdatedSubscriptions().catch((err) => log.error({ err }, 'Error in periodic expiration check'));
+}, 60 * 60 * 1000);
+expirationTimer.unref();
+
 
 server.listen(env.PORT, '0.0.0.0', () => {
   log.info(`Server running on port ${env.PORT} — http://127.0.0.1:${env.PORT}/api/health`);

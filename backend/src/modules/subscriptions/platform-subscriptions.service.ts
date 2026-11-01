@@ -281,3 +281,54 @@ export const cancelPlatformPlan = async (userId: string) => {
     subscription: updatedSub,
   };
 };
+
+/**
+ * Tarea periódica de expiración de suscripciones e insignias VIP caducadas.
+ */
+export const expireOutdatedSubscriptions = async () => {
+  try {
+    const now = new Date();
+    const expiredSubs = await prisma.platformSubscription.findMany({
+      where: {
+        status: 'ACTIVE',
+        currentPeriodEnd: { lt: now },
+      },
+      include: {
+        user: {
+          select: { id: true, role: true, plan: true, verifiedUntil: true },
+        },
+      },
+    });
+
+    for (const sub of expiredSubs) {
+      await prisma.platformSubscription.update({
+        where: { id: sub.id },
+        data: { status: 'EXPIRED' },
+      });
+
+      const isStaff = isStaffRole(sub.user.role);
+      const hasStellarVip = userHasRole(sub.user.role, 'VIP_STELLAR');
+      if (!isStaff && !hasStellarVip) {
+        const verifiedIncluded = sub.plan === 'STELLAR' && !!sub.user.verifiedUntil;
+        await prisma.user.update({
+          where: { id: sub.userId },
+          data: {
+            plan: 'FREE',
+            ...(verifiedIncluded ? { verifiedUntil: null } : {}),
+          },
+        });
+      }
+    }
+
+    // Limpiar verifiedUntil vencido si no tiene plan STELLAR activo
+    await prisma.user.updateMany({
+      where: {
+        verifiedUntil: { lt: now },
+        plan: { not: 'STELLAR' },
+      },
+      data: { verifiedUntil: null },
+    });
+  } catch (error) {
+    console.error('[Subscriptions] Error al expirar suscripciones:', error);
+  }
+};

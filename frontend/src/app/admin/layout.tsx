@@ -75,6 +75,7 @@ const adminNavItems = [
   {
     section: 'Operaciones & Economía',
     items: [
+      { href: '/admin/finanzas', label: 'Finanzas (35/35/30)', icon: 'economy', color: '#10b981' },
       { href: '/admin/economy', label: 'Economía Stardust', icon: 'economy', color: '#fbbf24' },
       { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: 'requests', color: '#d4af37' },
       { href: '/admin/streamer-requests', label: 'Solicitudes Streamer', icon: 'requests', color: '#00e5ff' },

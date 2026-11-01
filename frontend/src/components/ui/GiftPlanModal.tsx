@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
+import CreatorCodeInput from '@/components/ui/CreatorCodeInput';
 
 interface GiftPlanModalProps {
   isOpen: boolean;
@@ -62,6 +63,7 @@ export default function GiftPlanModal({
   const [message, setMessage] = useState<string>('');
   const [anonymous, setAnonymous] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [creatorCode, setCreatorCode] = useState<string>('');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -404,6 +406,14 @@ export default function GiftPlanModal({
             />
             <span>Regalar de forma anónima (ocultar mi nombre)</span>
           </label>
+        </div>
+
+        {/* CREATOR CODE */}
+        <div style={{ marginBottom: '20px' }}>
+          <CreatorCodeInput
+            value={creatorCode}
+            onChange={setCreatorCode}
+          />
         </div>
 
         {/* SUBMIT BUTTON */}

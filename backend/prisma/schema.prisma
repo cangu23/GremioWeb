@@ -129,6 +129,11 @@ model User {
   donationsReceived Donation[] @relation("recipient")
   platformSubscription PlatformSubscription?
 
+  // Creator Economy
+  creatorCode           CreatorCode?
+  creatorPayouts        CreatorPayout[]
+  creatorPurchasesMade  CreatorEarningsLog[] @relation("earningsBuyer")
+
   // Ecosystem & Gamification
   stardustTransactions StardustTransaction[]
   userMissions         UserMissionProgress[]
@@ -839,6 +844,63 @@ model Donation {
 
   @@index([donorId])
   @@index([recipientId])
+  @@index([createdAt])
+}
+
+// ========== CREATOR ECONOMY (Creator Codes & Payouts) ==========
+
+model CreatorCode {
+  id            String               @id @default(cuid())
+  userId        String               @unique
+  code          String               @unique
+  status        String               @default("ACTIVE") // ACTIVE, PAUSED
+  totalEarnings Float                @default(0) // USD histórico
+  balance       Float                @default(0) // USD disponible para retiro
+  usesCount     Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payouts       CreatorPayout[]
+  earningsLogs  CreatorEarningsLog[]
+
+  @@index([code])
+}
+
+model CreatorPayout {
+  id            String      @id @default(cuid())
+  creatorCodeId String
+  userId        String
+  amount        Float       // USD
+  paypalEmail   String
+  status        String      @default("PENDING") // PENDING, PAID, REJECTED
+  paidAt        DateTime?
+  adminNotes    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  creatorCode   CreatorCode @relation(fields: [creatorCodeId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model CreatorEarningsLog {
+  id                String      @id @default(cuid())
+  creatorCodeId     String
+  buyerId           String
+  orderId           String?
+  itemType          String      // "SEASON_PASS", "SEASON_PASS_BOOST", "PLAN_ASTRO", etc.
+  totalAmount       Float       // USD
+  creatorCommission Float       // USD (35%)
+  createdAt         DateTime    @default(now())
+
+  creatorCode       CreatorCode @relation(fields: [creatorCodeId], references: [id], onDelete: Cascade)
+  buyer             User        @relation("earningsBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@index([creatorCodeId])
+  @@index([buyerId])
   @@index([createdAt])
 }
 

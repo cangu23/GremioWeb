@@ -7,6 +7,7 @@ import { useToast } from '@/lib/ToastContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
+import SeasonPassCheckoutModal from '@/components/ui/SeasonPassCheckoutModal';
 import { PASS_TIERS, type PassTier } from '@gremio-estelar/shared';
 
 // ─── Interfaces ───────────────────────────────────────────────
@@ -703,6 +704,20 @@ export default function StellarPassPage() {
   // Chest lootbox modal state
   const [chestModalOpen, setChestModalOpen] = useState(false);
   const [chestReward, setChestReward] = useState<{ message: string; stardustAmount?: number; xpAmount?: number; frameGranted?: string | null } | null>(null);
+
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [creatorRef, setCreatorRef] = useState<string>('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref') || params.get('creator');
+      if (ref) {
+        setCreatorRef(ref.toUpperCase().replace(/[^A-Z0-9_]/g, ''));
+        setCheckoutModalOpen(true);
+      }
+    }
+  }, []);
 
   // FOMO Countdown Timer to UTC Midnight
   const [timeToReset, setTimeToReset] = useState<string>('');

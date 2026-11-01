@@ -131,7 +131,7 @@ export const clearApiCache = () => {
   apiCache.clear();
 };
 
-export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+export async function apiFetch<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const method = (options.method || 'GET').toUpperCase();
   const url = `${API_BASE_URL}${endpoint}`;
   
@@ -206,7 +206,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   // Handle empty responses (like 204 No Content for logout)
   if (response.status === 204) {
     if (method !== 'GET') clearApiCache();
-    return null;
+    return null as T;
   }
 
   const data = await response.json().catch(() => null);
