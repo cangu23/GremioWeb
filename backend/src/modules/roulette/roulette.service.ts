@@ -11,15 +11,15 @@ import { addStardust, spendStardust, getStardustBalance } from '../ecosystem/sta
 // infinitely via /roulette/spin-stardust. Current EV ≈ 24 ⭐ < 50 even at ×2.
 const PRIZES = [
   { id: 'xp_50', label: '50 XP', value: 50, stardust: 3, weight: 24, color: '#8B5CF6', type: 'XP' },
-  { id: 'stardust_25', label: '⭐ 15 Stardust', value: 15, stardust: 15, weight: 20, color: '#F59E0B', type: 'STARDUST' },
+  { id: 'stardust_25', label: '15 Stardust', value: 15, stardust: 15, weight: 20, color: '#F59E0B', type: 'STARDUST' },
   { id: 'xp_200', label: '200 XP', value: 200, stardust: 10, weight: 15, color: '#7C3AED', type: 'XP' },
-  { id: 'chest_bronze', label: '🥉 Cofre Bronce', value: 150, stardust: 15, weight: 12, color: '#CD7F32', type: 'CHEST', chestType: 'BRONZE' },
-  { id: 'stardust_100', label: '⭐ 35 Stardust', value: 35, stardust: 35, weight: 10, color: '#3B82F6', type: 'STARDUST' },
-  { id: 'chest_silver', label: '🥈 Cofre Plata', value: 400, stardust: 25, weight: 8, color: '#C0C0C0', type: 'CHEST', chestType: 'SILVER' },
+  { id: 'chest_bronze', label: 'Cofre Bronce', value: 150, stardust: 15, weight: 12, color: '#CD7F32', type: 'CHEST', chestType: 'BRONZE' },
+  { id: 'stardust_100', label: '35 Stardust', value: 35, stardust: 35, weight: 10, color: '#3B82F6', type: 'STARDUST' },
+  { id: 'chest_silver', label: 'Cofre Plata', value: 400, stardust: 25, weight: 8, color: '#C0C0C0', type: 'CHEST', chestType: 'SILVER' },
   { id: 'xp_1000', label: '1,000 XP', value: 1000, stardust: 30, weight: 5, color: '#EC4899', type: 'XP' },
-  { id: 'chest_gold', label: '🥇 Cofre Oro', value: 1200, stardust: 50, weight: 3, color: '#FFD700', type: 'CHEST', chestType: 'GOLD' },
-  { id: 'badge_lucky', label: '🍀 Insignia Mítica', value: 500, stardust: 60, weight: 2, color: '#10B981', type: 'BADGE' },
-  { id: 'chest_cosmic', label: '🌌 Cofre Cósmico', value: 5000, stardust: 100, weight: 1, color: '#9333EA', type: 'CHEST', chestType: 'COSMIC' },
+  { id: 'chest_gold', label: 'Cofre Oro', value: 1200, stardust: 50, weight: 3, color: '#FFD700', type: 'CHEST', chestType: 'GOLD' },
+  { id: 'badge_lucky', label: 'Insignia Mítica', value: 500, stardust: 60, weight: 2, color: '#10B981', type: 'BADGE' },
+  { id: 'chest_cosmic', label: 'Cofre Cósmico', value: 5000, stardust: 100, weight: 1, color: '#9333EA', type: 'CHEST', chestType: 'COSMIC' },
 ];
 
 const TOTAL_WEIGHT = PRIZES.reduce((sum, p) => sum + p.weight, 0);

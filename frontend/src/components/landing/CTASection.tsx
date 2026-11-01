@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
-import { Sparkles } from '@/components/ui/Icons';
+import { Sparkles, Star } from '@/components/ui/Icons';
 
 export default function CTASection() {
   const { user } = useAuth();
@@ -28,83 +28,79 @@ export default function CTASection() {
     <section
       ref={sectionRef}
       className="section"
+      id="auditions"
       style={{ position: 'relative', zIndex: 1 }}
     >
       <div className="container">
         <div
           style={{
-            padding: '64px 40px',
-            borderRadius: '22px',
+            padding: '64px 36px',
+            borderRadius: '24px',
             textAlign: 'center',
             position: 'relative',
             overflow: 'hidden',
-            border: '1px solid rgba(139,92,246,0.22)',
-            background: 'linear-gradient(150deg, rgba(139,92,246,0.12), rgba(108,180,238,0.05) 45%, rgba(245,158,11,0.05))',
+            border: '1px solid rgba(139,92,246,0.3)',
+            background: 'linear-gradient(155deg, rgba(20,20,30,0.95), rgba(12,12,18,0.98))',
             transform: visible ? 'translateY(0)' : 'translateY(20px)',
             opacity: visible ? 1 : 0,
             transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.4), 0 0 60px rgba(139,92,246,0.08)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 60px rgba(139,92,246,0.1)',
           }}
         >
-          {/* Animated aurora glow border */}
+          {/* Animated Glow Border */}
           <div className="landing-price-glow" />
 
-          {/* Decorative elements */}
+          {/* Background Japanese Agency Monogram / Watermark */}
           <div
             style={{
               position: 'absolute',
-              top: '-80px',
-              right: '-80px',
-              width: '260px',
-              height: '260px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(139,92,246,0.18), transparent 70%)',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              fontSize: 'clamp(5rem, 15vw, 11rem)',
+              fontWeight: 900,
+              color: 'rgba(255,255,255,0.015)',
+              userSelect: 'none',
               pointerEvents: 'none',
-              animation: 'landingFloat 10s ease-in-out infinite',
+              fontFamily: 'monospace',
+              letterSpacing: '0.1em',
+              whiteSpace: 'nowrap',
             }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-80px',
-              left: '-80px',
-              width: '220px',
-              height: '220px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(108,180,238,0.14), transparent 70%)',
-              pointerEvents: 'none',
-              animation: 'landingFloat 12s ease-in-out infinite reverse',
-            }}
-          />
+          >
+            GREMIO ESTELAR
+          </div>
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <span className="landing-eyebrow" style={{ marginBottom: '20px' }}>
-              Comunidad de Creadores & Fans
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '18px' }}>
+              <span className="landing-eyebrow">
+                AUDITION & RECRUIT // オーディション・参加募集
+              </span>
+            </div>
 
             <h2
               style={{
-                fontSize: 'clamp(1.7rem, 3.5vw, 2.6rem)',
-                fontWeight: 800,
-                marginBottom: '14px',
+                fontSize: 'clamp(1.8rem, 3.8vw, 2.8rem)',
+                fontWeight: 900,
+                marginBottom: '16px',
                 lineHeight: 1.15,
-                letterSpacing: '-0.025em',
+                letterSpacing: '-0.03em',
               }}
             >
-              ¿Listo para formar parte del <span className="landing-gradient-text">Gremio Estelar</span>?
+              ¿Creas contenido o eres VTuber?{' '}
+              <span className="landing-gradient-text">El Gremio abre sus puertas</span>
             </h2>
 
             <p
               style={{
                 fontSize: '1rem',
                 color: 'var(--text-muted)',
-                maxWidth: '540px',
+                maxWidth: '620px',
                 margin: '0 auto 34px',
                 lineHeight: 1.75,
               }}
             >
-              Únete a la red VTuber hispanohablante. Descubre transmisiones en vivo, comparte tu contenido,
-              apoya a tus talentos favoritos con Códigos de Creador y desbloquea el Pase Estelar.
+              Extendiendo la cultura virtual a través de la creación. Únete a la red VTuber en español:
+              recibe soporte oficial, alertas en directo, Códigos de Creador con 35% de comisión y una comunidad activa.
             </p>
 
             <div
@@ -116,17 +112,36 @@ export default function CTASection() {
               }}
             >
               {user ? (
-                <Link href="/dashboard" className="btn btn--lg btn--shine">
-                  Ir al Dashboard
+                <Link href="/dashboard" className="btn btn--lg btn--shine" style={{ padding: '12px 28px', fontWeight: 800 }}>
+                  Ir a mi Panel // DASHBOARD
                 </Link>
               ) : (
-                <Link href="/register" className="btn btn--lg btn--shine">
-                  ✦ Crear cuenta gratis
-                </Link>
+                <>
+                  <Link href="/register" className="btn btn--lg btn--shine" style={{ padding: '12px 28px', fontWeight: 800 }}>
+                    ✦ Registrarme como Creador // APPLY
+                  </Link>
+                  <Link href="/register" className="btn btn--outline btn--lg" style={{ padding: '12px 26px', fontWeight: 700 }}>
+                    Unirse como Fan // JOIN AS FAN
+                  </Link>
+                </>
               )}
-              <Link href="/vtubers" className="btn btn--outline btn--lg">
-                Explorar VTubers
-              </Link>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '24px',
+                marginTop: '36px',
+                fontSize: '0.78rem',
+                color: 'var(--text-muted)',
+                flexWrap: 'wrap',
+              }}
+            >
+              <span>✓ 100% Gratuito</span>
+              <span>✓ 35% Comisión con Código</span>
+              <span>✓ Sin Algoritmos Ocultos</span>
+              <span>✓ Comunidad Hispana</span>
             </div>
           </div>
         </div>

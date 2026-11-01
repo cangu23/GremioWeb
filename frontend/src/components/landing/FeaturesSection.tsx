@@ -133,7 +133,7 @@ export default function FeaturesSection() {
             transition: 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
           }}
         >
-          <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>Funcionalidades</span>
+          <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>FEATURES // システム</span>
         </div>
         <h2
           className="section-title"

@@ -44,13 +44,16 @@ function useCountUp(target: number, duration = 1600) {
   return value;
 }
 
-function CountUpStat({ target, label }: { target: number; label: string }) {
+function AgencyStat({ target, label, sublabel }: { target: number; label: string; sublabel: string }) {
   const value = useCountUp(target);
   return (
-    <div style={{ textAlign: 'center', position: 'relative', padding: '0 6px' }}>
+    <div style={{ textAlign: 'center', position: 'relative', padding: '0 12px' }}>
+      <div style={{ fontSize: '0.62rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(139,92,246,0.85)', fontWeight: 700, marginBottom: '2px' }}>
+        {sublabel}
+      </div>
       <div
         style={{
-          fontSize: '1.35rem',
+          fontSize: '1.45rem',
           fontWeight: 800,
           lineHeight: 1.1,
           fontVariantNumeric: 'tabular-nums',
@@ -59,7 +62,7 @@ function CountUpStat({ target, label }: { target: number; label: string }) {
       >
         <span className="landing-gradient-text">{value.toLocaleString('es-ES')}+</span>
       </div>
-      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', letterSpacing: '0.03em', fontWeight: 500 }}>
+      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '4px', letterSpacing: '0.04em', fontWeight: 600 }}>
         {label}
       </div>
     </div>
@@ -99,7 +102,7 @@ export default function HeroSection() {
   const totalEvents = stats?.totalEvents ?? 0;
   const totalUsers = stats?.totalUsers ?? 0;
 
-  // Mobile: hide floating cards (they need horizontal space)
+  // Mobile: hide floating cards
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 860px)');
@@ -122,137 +125,101 @@ export default function HeroSection() {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: '56px 20px 72px',
+        padding: '52px 20px 76px',
         position: 'relative',
         overflow: 'hidden',
         zIndex: 1,
       }}
     >
-      {/* Glow orbs */}
-      <div
-        className="landing-orb"
-        style={{
-          width: 480,
-          height: 480,
-          left: '-120px',
-          top: '-80px',
-          background: 'radial-gradient(circle, rgba(139,92,246,0.16), transparent 65%)',
-          animation: 'landingFloat 9s ease-in-out infinite',
-        }}
-      />
-      <div
-        className="landing-orb"
-        style={{
-          width: 420,
-          height: 420,
-          right: '-100px',
-          top: '20%',
-          background: 'radial-gradient(circle, rgba(108,180,238,0.12), transparent 65%)',
-          animation: 'landingFloat 11s ease-in-out infinite reverse',
-        }}
-      />
-      <div
-        className="landing-orb"
-        style={{
-          width: 380,
-          height: 380,
-          left: '30%',
-          bottom: '-140px',
-          background: 'radial-gradient(circle, rgba(245,158,11,0.08), transparent 65%)',
-          animation: 'landingFloat 13s ease-in-out infinite',
-        }}
-      />
-
-      {/* Subtle background texture */}
+      {/* Background Japanese Agency Subtle Grid & Cyber Gradients */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage:
-            'radial-gradient(circle at 25% 25%, rgba(139,92,246,0.03) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(108,180,238,0.02) 0%, transparent 50%)',
+          backgroundImage: `
+            linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)
+          `,
+          backgroundSize: '48px 48px',
+          maskImage: 'radial-gradient(ellipse 65% 65% at 50% 45%, #000 35%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 65% 65% at 50% 45%, #000 35%, transparent 100%)',
           pointerEvents: 'none',
           zIndex: -1,
         }}
       />
 
-      {/* Thin accent line at top */}
+      {/* Atmospheric Glow Orbs */}
       <div
+        className="landing-orb"
         style={{
-          position: 'absolute',
-          top: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 110,
-          height: 2,
-          borderRadius: 2,
-          background: 'linear-gradient(90deg, transparent, var(--primary), transparent)',
-          opacity: visible ? 0.9 : 0,
-          transition: 'opacity 1s ease 0.3s',
+          width: 520,
+          height: 520,
+          left: '-140px',
+          top: '-100px',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.18), transparent 65%)',
+          animation: 'landingFloat 10s ease-in-out infinite',
+        }}
+      />
+      <div
+        className="landing-orb"
+        style={{
+          width: 460,
+          height: 460,
+          right: '-120px',
+          top: '18%',
+          background: 'radial-gradient(circle, rgba(56,189,248,0.12), transparent 65%)',
+          animation: 'landingFloat 12s ease-in-out infinite reverse',
         }}
       />
 
-      {/* Floating mini-cards (desktop only) */}
+      {/* Floating mini-cards (desktop agency highlights) */}
       {!isMobile && leftCard && (
         <div
           className="landing-float-card"
           style={{
-            left: '6%',
-            top: '26%',
+            left: '5%',
+            top: '24%',
             padding: '10px 14px',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            animationDelay: '0.5s',
+            animationDelay: '0.4s',
             zIndex: 2,
+            border: '1px solid rgba(139,92,246,0.25)',
+            background: 'rgba(15,15,22,0.85)',
           }}
         >
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: '50%',
               flexShrink: 0,
               overflow: 'hidden',
               background: leftCard.avatarUrl
                 ? `url(${leftCard.avatarUrl}) center/cover`
                 : 'linear-gradient(135deg, var(--primary), var(--warm))',
-              border: '2px solid rgba(139,92,246,0.3)',
+              border: '2px solid rgba(139,92,246,0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#fff',
               fontWeight: 700,
-              fontSize: '0.7rem',
+              fontSize: '0.72rem',
             }}
           >
             {!leftCard.avatarUrl && leftCard.displayName.charAt(0).toUpperCase()}
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                maxWidth: 110,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.08em', color: 'rgba(139,92,246,0.9)', textTransform: 'uppercase', fontWeight: 700 }}>
+              TALENT // 所属
+            </div>
+            <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-primary)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {leftCard.displayName}
             </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-                fontSize: '0.62rem',
-                color: leftCard.isLive ? '#ff4757' : 'var(--text-muted)',
-                fontWeight: 600,
-              }}
-            >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.62rem', color: leftCard.isLive ? '#ff4757' : 'var(--text-muted)', fontWeight: 700 }}>
               {leftCard.isLive && <span className="landing-live-dot" style={{ width: 5, height: 5 }} />}
-              {leftCard.isLive ? 'EN VIVO' : 'En la plataforma'}
+              {leftCard.isLive ? 'ON AIR' : 'OFFLINE'}
             </div>
           </div>
         </div>
@@ -262,53 +229,48 @@ export default function HeroSection() {
         <div
           className="landing-float-card"
           style={{
-            right: '6%',
-            top: '34%',
+            right: '5%',
+            top: '32%',
             padding: '10px 14px',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            animationDelay: '1.6s',
+            animationDelay: '1.4s',
             zIndex: 2,
+            border: '1px solid rgba(56,189,248,0.25)',
+            background: 'rgba(15,15,22,0.85)',
           }}
         >
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: '50%',
               flexShrink: 0,
               overflow: 'hidden',
               background: rightCard.avatarUrl
                 ? `url(${rightCard.avatarUrl}) center/cover`
                 : 'linear-gradient(135deg, var(--accent), var(--primary))',
-              border: '2px solid rgba(108,180,238,0.3)',
+              border: '2px solid rgba(56,189,248,0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#fff',
               fontWeight: 700,
-              fontSize: '0.7rem',
+              fontSize: '0.72rem',
             }}
           >
             {!rightCard.avatarUrl && rightCard.displayName.charAt(0).toUpperCase()}
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                maxWidth: 110,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            <div style={{ fontSize: '0.62rem', letterSpacing: '0.08em', color: '#38bdf8', textTransform: 'uppercase', fontWeight: 700 }}>
+              CREATOR // 配信者
+            </div>
+            <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-primary)', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {rightCard.displayName}
             </div>
-            <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-              {rightCard.isLive ? 'En vivo ahora' : `${rightCard.user?._count?.followers ?? 0} seguidores`}
+            <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+              {rightCard.isLive ? 'Transmitiendo' : `${rightCard.user?._count?.followers ?? 0} fans`}
             </div>
           </div>
         </div>
@@ -318,28 +280,33 @@ export default function HeroSection() {
         <div
           className="landing-float-card"
           style={{
-            left: '11%',
+            left: '10%',
             bottom: '22%',
-            padding: '10px 14px',
-            animationDelay: '2.4s',
+            padding: '8px 14px',
+            animationDelay: '2.2s',
             zIndex: 2,
+            border: '1px solid var(--glass-border)',
+            background: 'rgba(15,15,22,0.85)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            {sideCard.displayName}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em' }}>
+            <span style={{ color: 'var(--primary)' }}>✦</span>
+            <span>{sideCard.displayName}</span>
+            <span style={{ fontSize: '0.58rem', padding: '1px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>GEN 0</span>
           </div>
         </div>
       )}
 
-      {/* Logo */}
+      {/* Agency Brand Header with Japanese Typography Sublabel (Inspired by LeFolk) */}
       <div
         style={{
           opacity: 0,
           animation: visible ? 'fadeInUp 0.6s ease 0.05s forwards' : 'none',
-          marginBottom: '22px',
+          marginBottom: '18px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px',
         }}
       >
         <Image
@@ -350,15 +317,25 @@ export default function HeroSection() {
           sizes="100vw"
           priority
           style={{
-            height: '84px',
+            height: '86px',
             width: 'auto',
-            opacity: 0.95,
-            filter: 'drop-shadow(0 0 24px rgba(139,92,246,0.35))',
+            opacity: 0.96,
+            filter: 'drop-shadow(0 0 28px rgba(139,92,246,0.38))',
           }}
         />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+          <span style={{ fontSize: '0.72rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
+            GREMIO ESTELAR
+          </span>
+          <span style={{ color: 'rgba(139,92,246,0.6)', fontSize: '0.75rem' }}>/</span>
+          <span style={{ fontSize: '0.72rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>
+            グレミオ・エステラール
+          </span>
+        </div>
       </div>
 
-      {/* Tagline badge */}
+      {/* LeFolk-style Badge: Virtual Talent Group & Motto */}
       <div
         style={{
           opacity: 0,
@@ -366,46 +343,59 @@ export default function HeroSection() {
           marginBottom: '20px',
         }}
       >
-        <span className="landing-eyebrow">
-          Comunidad & Red VTuber en Español
-        </span>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '5px 16px',
+            borderRadius: '999px',
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(56,189,248,0.08))',
+            border: '1px solid rgba(139,92,246,0.28)',
+            boxShadow: '0 4px 18px rgba(139,92,246,0.12)',
+          }}
+        >
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38BDF8', boxShadow: '0 0 8px #38BDF8' }} />
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-primary)' }}>
+            VIRTUAL TALENT GROUP & CREATOR NETWORK // バーチャルタレント
+          </span>
+        </div>
       </div>
 
-      {/* Title */}
+      {/* Main Title: Japanese Agency Philosophy Headline */}
       <h1
         style={{
           opacity: 0,
           animation: visible ? 'fadeInUp 0.6s ease 0.25s forwards' : 'none',
-          fontSize: 'clamp(2.3rem, 7vw, 4.6rem)',
-          fontWeight: 800,
-          lineHeight: 1.06,
-          marginBottom: '18px',
+          fontSize: 'clamp(2.4rem, 6.5vw, 4.4rem)',
+          fontWeight: 900,
+          lineHeight: 1.08,
+          marginBottom: '20px',
           letterSpacing: '-0.035em',
-          maxWidth: '820px',
+          maxWidth: '880px',
         }}
       >
-        El <span className="landing-gradient-text">Hogar</span> de los{' '}
-        <span className="landing-gradient-text">VTubers</span>
+        Extendiendo la <span className="landing-gradient-text">cultura virtual</span> a través de la{' '}
+        <span className="landing-gradient-text">creación</span>
       </h1>
 
-      {/* Subtitle */}
+      {/* Subtitle with agency focus */}
       <p
         style={{
           opacity: 0,
           animation: visible ? 'fadeInUp 0.6s ease 0.35s forwards' : 'none',
-          fontSize: 'clamp(0.95rem, 1.5vw, 1.12rem)',
+          fontSize: 'clamp(0.95rem, 1.45vw, 1.12rem)',
           color: 'var(--text-muted)',
           maxWidth: '680px',
           lineHeight: 1.75,
           marginBottom: '38px',
         }}
       >
-        La plataforma definitiva para creadores de contenido virtual y su comunidad.
-        Sigue transmisiones en directo, apoya a tus talentos favoritos con Códigos de Creador,
-        completa misiones y desbloquea recompensas exclusivas.
+        El hogar y red de VTubers, streamers y su comunidad en español. Perfiles con lore e historia,
+        sincronización de streams en directo, Pase Estelar y un modelo económico transparente con 35% de comisión neta para creadores.
       </p>
 
-      {/* CTA Buttons */}
+      {/* CTA Buttons in sleek agency aesthetic */}
       <div
         style={{
           opacity: 0,
@@ -418,50 +408,51 @@ export default function HeroSection() {
       >
         {user ? (
           <>
-            <Link href="/dashboard" className="btn btn--lg btn--shine">
-              Ir al Dashboard
+            <Link href="/dashboard" className="btn btn--lg btn--shine" style={{ padding: '12px 28px', fontWeight: 800 }}>
+              Panel de Miembro // DASHBOARD
             </Link>
-            <Link href="/vtubers" className="btn btn--outline btn--lg">
-              Explorar VTubers
+            <Link href="/vtubers" className="btn btn--outline btn--lg" style={{ padding: '12px 26px', fontWeight: 700 }}>
+              Explorar Talentos // TALENTS
             </Link>
           </>
         ) : (
           <>
-            <Link href="/register" className="btn btn--lg btn--shine">
-              ✦ Unirse al Gremio
+            <Link href="/register" className="btn btn--lg btn--shine" style={{ padding: '12px 28px', fontWeight: 800 }}>
+              ✦ Unirse al Gremio // JOIN US
             </Link>
-            <Link href="/vtubers" className="btn btn--outline btn--lg">
-              Explorar VTubers
+            <Link href="/vtubers" className="btn btn--outline btn--lg" style={{ padding: '12px 26px', fontWeight: 700 }}>
+              Talentos & Streams // TALENTS
             </Link>
           </>
         )}
       </div>
 
-      {/* Real stats */}
+      {/* LeFolk-style Technical Agency Stats Bar */}
       <div
         style={{
           opacity: 0,
           animation: visible ? 'fadeInUp 0.6s ease 0.6s forwards' : 'none',
           display: 'flex',
-          gap: 'clamp(20px, 5vw, 48px)',
+          gap: 'clamp(16px, 4vw, 44px)',
           alignItems: 'center',
           marginTop: '52px',
-          padding: '18px 32px',
+          padding: '18px 36px',
           borderRadius: '16px',
-          background: 'rgba(255,255,255,0.025)',
-          border: '1px solid var(--glass-border)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
+          background: 'rgba(15,15,22,0.7)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
         }}
       >
-        <CountUpStat target={totalVtubers} label="VTubers registrados" />
-        <div style={{ width: 1, height: 30, background: 'var(--glass-border)' }} />
-        <CountUpStat target={totalEvents} label="Eventos realizados" />
-        <div style={{ width: 1, height: 30, background: 'var(--glass-border)' }} />
-        <CountUpStat target={totalUsers} label="Miembros" />
+        <AgencyStat target={totalVtubers} sublabel="[01] // TALENTS" label="VTubers Registrados" />
+        <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)' }} />
+        <AgencyStat target={totalEvents} sublabel="[02] // EVENTS" label="Eventos Realizados" />
+        <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)' }} />
+        <AgencyStat target={totalUsers} sublabel="[03] // MEMBERS" label="Miembros de la Red" />
       </div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator with Japanese agency flair */}
       <div
         style={{
           position: 'absolute',
@@ -476,8 +467,8 @@ export default function HeroSection() {
           animation: visible ? 'fadeIn 0.6s ease 1.2s forwards' : 'none',
         }}
       >
-        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Descubre más
+        <span style={{ fontSize: '0.58rem', color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          SCROLL // スクロール
         </span>
         <div
           style={{

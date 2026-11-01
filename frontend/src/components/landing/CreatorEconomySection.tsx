@@ -113,7 +113,7 @@ export default function CreatorEconomySection() {
           }}
         >
           <span className="landing-eyebrow" style={{ marginBottom: '16px' }}>
-            Economía de Creadores & Pase Estelar
+            ECONOMY & PASS // 経済圏・パス
           </span>
           <h2 className="section-title" style={{ maxWidth: '780px', marginBottom: '14px' }}>
             Un Modelo <span className="landing-gradient-text">Justo y Transparente</span> para Creadores y Fans
@@ -481,3 +481,4 @@ export default function CreatorEconomySection() {
     </section>
   );
 }
+

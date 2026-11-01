@@ -101,10 +101,10 @@ export default function LiveNowSection() {
         }}>
           <span className="landing-eyebrow landing-eyebrow--live" style={{ marginBottom: '16px' }}>
             <span className="landing-live-dot" />
-            En Vivo Ahora
+            ON AIR // ライブ配信
           </span>
           <h2 className="section-title" style={{ marginBottom: 0 }}>
-            Transmitiendo <span className="landing-gradient-text">Ahora</span>
+            Transmitiendo en <span className="landing-gradient-text">Directo</span>
           </h2>
           <p className="section-subtitle" style={{ marginTop: '8px', marginBottom: 0 }}>
             {liveVtubers.length === 1 ? '1 VTuber está transmitiendo' : `${liveVtubers.length} VTubers están transmitiendo`}

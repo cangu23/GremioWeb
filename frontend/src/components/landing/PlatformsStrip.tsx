@@ -110,7 +110,7 @@ export default function PlatformsStrip() {
             textAlign: 'center',
           }}
         >
-          Nuestros talentos transmiten y crecen en
+          PLATFORMS // Nuestros talentos transmiten y crecen en
         </span>
 
         <div

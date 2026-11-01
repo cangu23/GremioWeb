@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import ChestOpeningModal, { ChestData } from '@/components/ui/ChestOpeningModal';
+import { Clock, Sparkles, Star, Zap } from '@/components/ui/Icons';
 
 interface Prize {
   id: string;
@@ -69,16 +70,20 @@ const PRIZE_META: Record<string, { rarity: string; icon: string; badgeBg: string
   chest_cosmic: { rarity: 'JACKPOT CÓSMICO', icon: '🌌', badgeBg: 'rgba(147, 51, 234, 0.35)', pct: '1%' },
 };
 
-// Helper to format wheel prize labels into 1 or 2 clean lines
+function stripEmojis(str: string): string {
+  return str.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]/g, '').trim();
+}
+
 function getWheelLabelLines(label: string): string[] {
-  if (label.length <= 10) return [label];
-  if (label.includes(' ')) {
-    const words = label.split(' ');
+  const clean = stripEmojis(label);
+  if (clean.length <= 8) return [clean];
+  if (clean.includes(' ')) {
+    const words = clean.split(' ');
     if (words.length === 2) return words;
     const mid = Math.ceil(words.length / 2);
     return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
   }
-  return [label];
+  return [clean];
 }
 
 // Canvas confetti component for celebratory win modal
@@ -490,8 +495,11 @@ function RouletteContent() {
             borderRadius: '12px',
             background: 'rgba(245,158,11,0.2)',
             border: '1px solid rgba(245,158,11,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}>
-            🔥
+            <Zap size={22} color="#F59E0B" fill="#F59E0B" />
           </div>
           <div>
             <div style={{ fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -530,7 +538,7 @@ function RouletteContent() {
             fontWeight: 700,
             color: '#38BDF8',
           }}>
-            <span>🪙</span> {status?.userStardust || 0} Polvo Estelar
+            <Star size={14} color="#38BDF8" fill="#38BDF8" style={{ display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '4px' }} /> {status?.userStardust || 0} Polvo Estelar
           </div>
 
           <button
@@ -644,7 +652,6 @@ function RouletteContent() {
 
                 const radStart = (startAngle * Math.PI) / 180;
                 const radEnd = (endAngle * Math.PI) / 180;
-                const radMid = (midAngle * Math.PI) / 180;
 
                 const x1 = cx + radius * Math.cos(radStart);
                 const y1 = cy + radius * Math.sin(radStart);
@@ -653,24 +660,8 @@ function RouletteContent() {
 
                 const pathData = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
 
-                // Calculate center positions for icon & text labels along mid-angle bisector
-                const iconRadius = radius * 0.74;
-                const textRadius = radius * 0.44;
-
-                const iconX = cx + iconRadius * Math.cos(radMid);
-                const iconY = cy + iconRadius * Math.sin(radMid);
-                const textX = cx + textRadius * Math.cos(radMid);
-                const textY = cy + textRadius * Math.sin(radMid);
-
                 const meta = PRIZE_META[prize.id] || { icon: '🎁' };
                 const labelLines = getWheelLabelLines(prize.label);
-
-                // Tangent rotation for text label so it stays readable & non-inverted
-                let rotText = midAngle + 90;
-                const normRot = ((rotText % 360) + 360) % 360;
-                if (normRot > 90 && normRot < 270) {
-                  rotText += 180;
-                }
 
                 return (
                   <g key={prize.id}>
@@ -681,56 +672,55 @@ function RouletteContent() {
                       strokeWidth="1.5"
                     />
 
-                    {/* Icon */}
-                    <g transform={`rotate(${midAngle + 90}, ${iconX}, ${iconY})`}>
+                    {/* Uniform radial alignment for every wedge: no inverted flips or duplicate emojis */}
+                    <g transform={`rotate(${midAngle + 90}, ${cx}, ${cy})`}>
+                      {/* Outer Icon */}
                       <text
-                        x={iconX}
-                        y={iconY}
+                        x={cx}
+                        y={cy - radius * 0.74}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize="18"
+                        fontSize="20"
                         style={{ userSelect: 'none', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}
                       >
                         {meta.icon}
                       </text>
-                    </g>
 
-                    {/* Text Label */}
-                    <g transform={`rotate(${rotText}, ${textX}, ${textY})`}>
+                      {/* Clean Text Label */}
                       {labelLines.length === 1 ? (
                         <text
-                          x={textX}
-                          y={textY}
+                          x={cx}
+                          y={cy - radius * 0.44}
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill="#FFFFFF"
-                          fontSize="11.5"
+                          fontSize="11"
                           fontWeight="800"
                           style={{
                             userSelect: 'none',
                             fontFamily: 'system-ui, sans-serif',
-                            textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                            textShadow: '0 1px 4px rgba(0,0,0,0.95)',
                           }}
                         >
                           {labelLines[0]}
                         </text>
                       ) : (
                         <text
-                          x={textX}
-                          y={textY - 5}
+                          x={cx}
+                          y={cy - radius * 0.44}
                           textAnchor="middle"
                           dominantBaseline="central"
                           fill="#FFFFFF"
                           fontSize="9.5"
-                          fontWeight="700"
+                          fontWeight="800"
                           style={{
                             userSelect: 'none',
                             fontFamily: 'system-ui, sans-serif',
-                            textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                            textShadow: '0 1px 4px rgba(0,0,0,0.95)',
                           }}
                         >
-                          <tspan x={textX} dy="0">{labelLines[0]}</tspan>
-                          <tspan x={textX} dy="11">{labelLines[1]}</tspan>
+                          <tspan x={cx} dy="-6">{labelLines[0]}</tspan>
+                          <tspan x={cx} dy="13">{labelLines[1]}</tspan>
                         </text>
                       )}
                     </g>
@@ -741,16 +731,11 @@ function RouletteContent() {
               <circle cx={cx} cy={cy} r="34" fill="url(#hub-grad)" stroke="#FBBF24" strokeWidth="3" filter="drop-shadow(0 0 10px rgba(251,191,36,0.3))" />
               <circle cx={cx} cy={cy} r="22" fill="#0F172A" />
 
-              <text
-                x={cx}
-                y={cy}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize="18"
-                style={{ userSelect: 'none' }}
-              >
-                ⭐
-              </text>
+              <polygon
+                points={`${cx},${cy - 12} ${cx + 3.5},${cy - 4} ${cx + 12},${cy - 3.5} ${cx + 5.5},${cy + 2} ${cx + 8},${cy + 10.5} ${cx},${cy + 5.5} ${cx - 8},${cy + 10.5} ${cx - 5.5},${cy + 2} ${cx - 12},${cy - 3.5} ${cx - 3.5},${cy - 4}`}
+                fill="#FBBF24"
+                filter="drop-shadow(0 0 6px rgba(251,191,36,0.6))"
+              />
             </svg>
           </div>
 
@@ -788,7 +773,7 @@ function RouletteContent() {
                   fontSize: '0.85rem',
                   color: 'var(--text-muted)',
                 }}>
-                  ⏳ Próximo giro gratis en: <strong style={{ color: '#FFF' }}>{timeLeft}</strong>
+                  <Clock size={15} color="var(--primary)" style={{ display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Próximo giro gratis en: <strong style={{ color: '#FFF' }}>{timeLeft}</strong>
                 </div>
 
                 <button
@@ -807,7 +792,7 @@ function RouletteContent() {
                     cursor: spinning || (status?.userStardust || 0) < (status?.stardustCostForExtraSpin || 50) ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  🪙 Giro Extra (50 Polvo Estelar)
+                  <Sparkles size={16} color="#FFF" style={{ display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Giro Extra (50 Polvo Estelar)
                 </button>
               </div>
             )}
