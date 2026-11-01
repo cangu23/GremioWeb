@@ -79,11 +79,17 @@ export default function HeroSection() {
     setVisible(true);
     (async () => {
       try {
-        const [s, live] = await Promise.all([
+        const [s, vtLive, stLive] = await Promise.all([
           apiFetch('/stats', {}),
           apiFetch('/vtubers/live', {}).catch(() => []),
+          apiFetch('/streamers/live', {}).catch(() => []),
         ]);
         setStats(s || null);
+        const live = [
+          ...(Array.isArray(vtLive) ? vtLive : []),
+          ...(Array.isArray(stLive) ? stLive : []),
+        ];
+
         const gurenDefault: FloatingVTuber = {
           id: 'guren-lead',
           userId: 'gurenvt_',
@@ -93,11 +99,18 @@ export default function HeroSection() {
           user: { _count: { followers: 366 } },
         };
 
-        if (Array.isArray(live) && live.length > 0) {
+        if (live.length > 0) {
           setFloating(live.slice(0, 3));
         } else {
-          const featured = await apiFetch('/vtubers/featured', {}).catch(() => []);
-          if (Array.isArray(featured) && featured.length > 0) {
+          const [vtFeatured, stFeatured] = await Promise.all([
+            apiFetch('/vtubers/featured', {}).catch(() => []),
+            apiFetch('/streamers/featured', {}).catch(() => []),
+          ]);
+          const featured = [
+            ...(Array.isArray(vtFeatured) ? vtFeatured : []),
+            ...(Array.isArray(stFeatured) ? stFeatured : []),
+          ];
+          if (featured.length > 0) {
             setFloating(featured.slice(0, 3));
           } else {
             setFloating([gurenDefault]);

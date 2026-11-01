@@ -25,7 +25,7 @@ const DEFAULT_ROLES: CustomRoleConfig[] = [
   { id: 'STAFF', name: 'Staff de Operaciones', color: '#10b981', description: 'Administración de eventos y comunidad', priority: 3, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
   { id: 'MOD', name: 'Moderador', color: '#fb7185', description: 'Control de contenidos y reportes', priority: 4, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
   { id: 'HELPER', name: 'Helper / Asistente', color: '#34d399', description: 'Soporte a miembros y guía', priority: 5, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
-  { id: 'VTUBER', name: 'VTuber / Streamer', color: '#ec4899', description: 'Perfil de creador y alertas live', priority: 6, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
+  { id: 'VTUBER', name: 'VTuber', color: '#ec4899', description: 'Creador virtual con modelo Live2D/3D y alertas live', priority: 6, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
   { id: 'STREAMER', name: 'Streamer', color: '#38bdf8', description: 'Creador de contenido en directo con perfil propio', priority: 7, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
   { id: 'ARTIST', name: 'Artista / Ilustrador', color: '#a78bfa', description: 'Portafolio de arte y comisiones', priority: 8, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
   { id: 'CLIPPER', name: 'Clipper', color: '#fbbf24', description: 'Edits y recortes destacados', priority: 9, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },

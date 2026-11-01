@@ -152,7 +152,7 @@ export default function AdminUsersPage() {
       stardust: user.stardust || 0,
       status: user.status,
       level: user.level || 1,
-      isVerified: !!user.vtuberProfile?.isVerified,
+      isVerified: !!(user.vtuberProfile?.isVerified || (user as any).streamerProfile?.isVerified || (user as any).isVerified),
     });
   };
 
@@ -170,7 +170,7 @@ export default function AdminUsersPage() {
       if (editData.stardust !== (selectedUser.stardust || 0)) payload.stardust = Number(editData.stardust);
       if (editData.status !== selectedUser.status) payload.status = editData.status;
       if (editData.level !== selectedUser.level) payload.level = Number(editData.level);
-      if (editData.isVerified !== !!selectedUser.vtuberProfile?.isVerified) payload.isVerified = editData.isVerified;
+      if (editData.isVerified !== !!(selectedUser.vtuberProfile?.isVerified || (selectedUser as any).streamerProfile?.isVerified || (selectedUser as any).isVerified)) payload.isVerified = editData.isVerified;
 
       await apiFetch(`/admin/users/${selectedUser.id}`, {
         method: 'PATCH',

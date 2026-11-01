@@ -242,6 +242,7 @@ function CardContent({
         : getPrimaryRole(profile.role, null);
   const vtuber = profile.vtuberProfile;
   const streamer = (profile as any).streamerProfile;
+  const creator = vtuber || streamer;
   const parseItemData = (data: string | null) => {
     try { return data ? JSON.parse(data) : {}; } catch { return {}; }
   };
@@ -268,25 +269,26 @@ function CardContent({
   const bannerData = equippedBanner ? parseItemData(equippedBanner.item.data) : null;
   const colorData = equippedColor ? parseItemData(equippedColor.item.data) : null;
 
-  const displayName = profile.displayName || vtuber?.displayName || profile.username;
-  const avatarUrl = profile.avatarUrl || vtuber?.avatarUrl;
+  const displayName = profile.displayName || creator?.displayName || profile.username;
+  const avatarUrl = profile.avatarUrl || creator?.avatarUrl;
   const activeFrameUrl = equippedFrame?.item?.imageUrl || frameData?.frameUrl || frameData?.imageUrl || frameData?.url;
   const activeEquippedFrame = frameData?.gradient || frameData?.borderColor || frameData?.color || frameData?.style || (typeof equippedFrame?.item?.data === 'string' ? equippedFrame.item.data : null);
 
-  const rawBannerUrl = bannerData?.bannerUrl || vtuber?.bannerUrl;
+  const rawBannerUrl = bannerData?.bannerUrl || creator?.bannerUrl;
   const bannerUrl = rawBannerUrl ? rawBannerUrl.replace(/"/g, '\\"') : null;
-  const themeColor = colorData?.color || colorData?.gradient || vtuber?.themeColor || (profile as any).bannerColor || 'var(--primary)';
+  const themeColor = colorData?.color || colorData?.gradient || creator?.themeColor || (profile as any).bannerColor || 'var(--primary)';
   const hasCustomBanner = !!bannerUrl || !!(profile as any).bannerColor;
-  const isVerified = vtuber?.isVerified || vtuber?.isApproved;
-  const isFeatured = vtuber?.isFeatured;
-  const isLive = vtuber?.isLive;
+  const isVerified = creator?.isVerified || creator?.isApproved || (profile as any).isVerified;
+  const isFeatured = creator?.isFeatured;
+  const isLive = creator?.isLive;
 
   // Social links present
   const socialLinks = [
-    vtuber?.twitchUrl && { url: vtuber.twitchUrl, label: 'Twitch', color: '#9146FF' },
-    vtuber?.youtubeUrl && { url: vtuber.youtubeUrl, label: 'YouTube', color: '#FF0000' },
-    vtuber?.twitterUrl && { url: vtuber.twitterUrl, label: 'X', color: '#1DA1F2' },
-    vtuber?.discordUrl && { url: vtuber.discordUrl, label: 'Discord', color: '#5865F2' },
+    creator?.twitchUrl && { url: creator.twitchUrl, label: 'Twitch', color: '#9146FF' },
+    creator?.youtubeUrl && { url: creator.youtubeUrl, label: 'YouTube', color: '#FF0000' },
+    creator?.kickUrl && { url: creator.kickUrl, label: 'Kick', color: '#53fc18' },
+    creator?.twitterUrl && { url: creator.twitterUrl, label: 'X', color: '#1DA1F2' },
+    creator?.discordUrl && { url: creator.discordUrl, label: 'Discord', color: '#5865F2' },
   ].filter(Boolean) as { url: string; label: string; color: string }[];
 
   return (
@@ -485,17 +487,17 @@ function CardContent({
         )}
 
         {/* Oshi mark / fan name */}
-        {(vtuber?.oshiMark || vtuber?.fanName) && (
+        {(creator?.oshiMark || creator?.fanName) && (
           <p style={{
             margin: '0 0 8px', fontSize: '0.72rem', color: themeColor, fontWeight: 600,
           }}>
-            {vtuber?.oshiMark && <span style={{ marginRight: '6px' }}>{vtuber.oshiMark}</span>}
-            {vtuber?.fanName && <span>✨ {vtuber.fanName}</span>}
+            {creator?.oshiMark && <span style={{ marginRight: '6px' }}>{creator.oshiMark}</span>}
+            {creator?.fanName && <span>✨ {creator.fanName}</span>}
           </p>
         )}
 
         {/* Description */}
-        {vtuber?.description && (
+        {creator?.description && (
           <p style={{
             margin: '0 auto 16px',
             fontSize: '0.82rem', lineHeight: 1.6,
@@ -506,7 +508,7 @@ function CardContent({
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
           }}>
-            {vtuber.description}
+            {creator.description}
           </p>
         )}
 

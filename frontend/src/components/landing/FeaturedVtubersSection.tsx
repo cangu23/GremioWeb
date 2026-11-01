@@ -89,10 +89,17 @@ export default function FeaturedVtubersSection() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const data = await apiFetch('/vtubers/featured', {}).catch(() => []);
-        if (Array.isArray(data) && data.length > 0) {
-          setVtubers(data);
-          setSelectedVtuber(data[0].id);
+        const [vtData, stData] = await Promise.all([
+          apiFetch('/vtubers/featured', {}).catch(() => []),
+          apiFetch('/streamers/featured', {}).catch(() => []),
+        ]);
+        const combined: FeaturedVTuber[] = [
+          ...(Array.isArray(vtData) ? vtData : []),
+          ...(Array.isArray(stData) ? stData : []),
+        ];
+        if (combined.length > 0) {
+          setVtubers(combined);
+          setSelectedVtuber(combined[0].id);
         } else {
           setVtubers([GUREN_DEFAULT]);
           setSelectedVtuber(GUREN_DEFAULT.id);

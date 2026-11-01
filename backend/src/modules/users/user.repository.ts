@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../database';
 import { CreateUserPayload } from './user.types';
-import { UpdateUserPayload } from '@gremio-estelar/shared';
+import { UpdateUserPayload, parseUserRoles } from '@gremio-estelar/shared';
 import { checkSingleVTuber } from '../vtubers/stream-monitor.service';
 import { checkSingleStreamer } from '../streamers/stream-monitor.service';
 
@@ -246,31 +246,34 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       'displayName', 'avatarUrl', 'bio', 'bannerColor', 'displayedRole',
       'profileFrame', 'profileBg', 'profileMusic', 'profilePet', 'profileParticles', 'profileTheme', 'activeTitle'
     ];
-    // Fields that specifically belong to VTuberProfile (excluding shared userFields)
-    const vtuberSpecificFields = [
+    // Fields that specifically belong to creator profiles (VTuberProfile / StreamerProfile)
+    const creatorSpecificFields = [
       'bannerUrl', 'description', 'lore',
       'twitchUrl', 'youtubeUrl', 'kickUrl', 'tiktokUrl', 'twitterUrl',
       'discordUrl', 'websiteUrl', 'kofiUrl', 'streamSchedule', 'contentType',
       'live2dModel', 'model3d', 'fanName', 'oshiMark', 'themeColor', 'isLive',
     ];
-    const vtuberProfileFields = ['displayName', 'avatarUrl', ...vtuberSpecificFields];
+    const creatorProfileFields = ['displayName', 'avatarUrl', ...creatorSpecificFields];
     
     const dataRecord = data as unknown as Record<string, unknown>;
-    const existingProfile = await tx.vTuberProfile.findUnique({
-      where: { userId },
-    });
 
-    // Campos vacíos (null/'') NO deben crear un VTuberProfile de la nada:
-    // solo campos con valor real lo activan (o un perfil ya existente).
-    const hasRealVtuberValue = (v: unknown) => v !== undefined && v !== null && v !== '';
-    const hasVtuberFields = existingProfile !== null ||
-      vtuberSpecificFields.some(f => hasRealVtuberValue(dataRecord[f])) ||
+    const user = await tx.user.findUnique({ where: { id: userId } });
+    const userRoles = parseUserRoles(user?.role);
+    const isStreamerRole = userRoles.includes('STREAMER');
+    const isVtuberRole = userRoles.includes('VTUBER');
+
+    const existingVtuberProfile = await tx.vTuberProfile.findUnique({ where: { userId } });
+    const existingStreamerProfile = await tx.streamerProfile.findUnique({ where: { userId } });
+
+    const hasRealCreatorValue = (v: unknown) => v !== undefined && v !== null && v !== '';
+    const hasCreatorFields =
+      creatorSpecificFields.some(f => hasRealCreatorValue(dataRecord[f])) ||
       data.socialLinks !== undefined || data.languages !== undefined || data.hashtags !== undefined;
-    
+
     const { username, socialLinks, ...rest } = data;
     const languages = dataRecord.languages;
     const hashtags = dataRecord.hashtags;
-    
+
     // 1. Build user update data (username + basic profile fields)
     const userUpdateData: Record<string, unknown> = {};
     if (username !== undefined) userUpdateData.username = username;
@@ -286,38 +289,69 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
       });
     }
 
-    // 2. Update or create VTuberProfile (if existing or if VTuber fields are present)
-    if (hasVtuberFields) {
-      const profileData: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(rest)) {
-        if (value !== undefined && vtuberProfileFields.includes(key)) {
-          profileData[key] = value;
-        }
+    // 2. Prepare profile data for creator profiles
+    const profileData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(rest)) {
+      if (value !== undefined && creatorProfileFields.includes(key)) {
+        profileData[key] = value;
       }
-      if (dataRecord.displayName !== undefined) profileData.displayName = dataRecord.displayName;
-      if (dataRecord.avatarUrl !== undefined) profileData.avatarUrl = dataRecord.avatarUrl;
-      if (dataRecord.isLive === true) profileData.lastLiveAt = new Date();
-      if (socialLinks !== undefined) profileData.socialLinks = JSON.stringify(socialLinks);
-      if (languages !== undefined) profileData.languages = JSON.stringify(languages);
-      if (hashtags !== undefined) profileData.hashtags = JSON.stringify(hashtags);
+    }
+    if (dataRecord.displayName !== undefined) profileData.displayName = dataRecord.displayName;
+    if (dataRecord.avatarUrl !== undefined) profileData.avatarUrl = dataRecord.avatarUrl;
+    if (dataRecord.isLive === true) profileData.lastLiveAt = new Date();
+    if (socialLinks !== undefined) profileData.socialLinks = JSON.stringify(socialLinks);
+    if (languages !== undefined) profileData.languages = JSON.stringify(languages);
+    if (hashtags !== undefined) profileData.hashtags = JSON.stringify(hashtags);
 
-      if (existingProfile) {
-        if (Object.keys(profileData).length > 0) {
-          await tx.vTuberProfile.update({
-            where: { userId },
-            data: profileData as Prisma.VTuberProfileUpdateInput,
+    // Determine target creator profiles:
+    // A) If user has a StreamerProfile OR role includes STREAMER (and NOT strictly already a VTuber with no streamer role):
+    const shouldUpdateStreamer = existingStreamerProfile !== null || (isStreamerRole && !existingVtuberProfile);
+    // B) If user has a VTuberProfile OR role includes VTUBER:
+    const shouldUpdateVtuber = existingVtuberProfile !== null || isVtuberRole;
+
+    if (hasCreatorFields || existingVtuberProfile || existingStreamerProfile) {
+      // Sync Streamer Profile if applicable
+      if (shouldUpdateStreamer && (Object.keys(profileData).length > 0 || hasCreatorFields)) {
+        if (existingStreamerProfile) {
+          if (Object.keys(profileData).length > 0) {
+            await tx.streamerProfile.update({
+              where: { userId },
+              data: profileData as Prisma.StreamerProfileUpdateInput,
+            });
+          }
+        } else if (isStreamerRole) {
+          await tx.streamerProfile.create({
+            data: {
+              userId,
+              displayName: (profileData.displayName as string) || (userUpdateData.displayName as string) || user?.displayName || user?.username || 'Streamer',
+              avatarUrl: (profileData.avatarUrl as string) || (userUpdateData.avatarUrl as string) || user?.avatarUrl || null,
+              isApproved: true,
+              ...profileData,
+            } as Prisma.StreamerProfileUncheckedCreateInput,
           });
         }
-      } else {
-        const user = await tx.user.findUnique({ where: { id: userId } });
-        await tx.vTuberProfile.create({
-          data: {
-            userId,
-            displayName: (profileData.displayName as string) || (userUpdateData.displayName as string) || user?.username || 'VTuber',
-            avatarUrl: (profileData.avatarUrl as string) || (userUpdateData.avatarUrl as string) || user?.avatarUrl || null,
-            ...profileData,
-          } as Prisma.VTuberProfileUncheckedCreateInput,
-        });
+      }
+
+      // Sync VTuber Profile if applicable
+      if (shouldUpdateVtuber && (Object.keys(profileData).length > 0 || hasCreatorFields)) {
+        if (existingVtuberProfile) {
+          if (Object.keys(profileData).length > 0) {
+            await tx.vTuberProfile.update({
+              where: { userId },
+              data: profileData as Prisma.VTuberProfileUpdateInput,
+            });
+          }
+        } else if (isVtuberRole) {
+          await tx.vTuberProfile.create({
+            data: {
+              userId,
+              displayName: (profileData.displayName as string) || (userUpdateData.displayName as string) || user?.displayName || user?.username || 'VTuber',
+              avatarUrl: (profileData.avatarUrl as string) || (userUpdateData.avatarUrl as string) || user?.avatarUrl || null,
+              isApproved: true,
+              ...profileData,
+            } as Prisma.VTuberProfileUncheckedCreateInput,
+          });
+        }
       }
     }
 

@@ -107,7 +107,7 @@ export default function LiveNowSection() {
             Transmitiendo en <span className="landing-gradient-text">Directo</span>
           </h2>
           <p className="section-subtitle" style={{ marginTop: '8px', marginBottom: 0 }}>
-            {liveVtubers.length === 1 ? '1 VTuber está transmitiendo' : `${liveVtubers.length} VTubers están transmitiendo`}
+            {liveVtubers.length === 1 ? '1 Creador está transmitiendo' : `${liveVtubers.length} Creadores están transmitiendo`}
           </p>
         </div>
 

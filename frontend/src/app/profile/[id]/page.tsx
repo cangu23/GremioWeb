@@ -31,7 +31,10 @@ const PROFILE_MUSIC_ENABLED = false;
 interface SocialUser {
   id: string;
   username: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
   vtuberProfile?: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
+  streamerProfile?: { displayName: string; avatarUrl: string | null; isVerified?: boolean } | null;
 }
 
 interface Post {
@@ -1679,19 +1682,17 @@ function ProfileContent() {
                   onClick={() => setShowFollowers(false)}>
                   <div style={{
                     width: '40px', height: '40px', borderRadius: '50%',
-                    background: f.vtuberProfile?.avatarUrl
-                      ? `url(${f.vtuberProfile.avatarUrl}) center/cover`
-                      : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    background: (f.avatarUrl || f.vtuberProfile?.avatarUrl || (f as any).streamerProfile?.avatarUrl) ? `url(${f.avatarUrl || f.vtuberProfile?.avatarUrl || (f as any).streamerProfile?.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
                     overflow: 'hidden',
                   }}>
-                    {!f.vtuberProfile?.avatarUrl && (f.vtuberProfile?.displayName || f.username).charAt(0).toUpperCase()}
+                    {!(f.avatarUrl || f.vtuberProfile?.avatarUrl || (f as any).streamerProfile?.avatarUrl) && (f.displayName || f.vtuberProfile?.displayName || (f as any).streamerProfile?.displayName || f.username).charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      {f.vtuberProfile?.displayName || f.username}
-                      {f.vtuberProfile?.isVerified && (
+                      {f.displayName || f.vtuberProfile?.displayName || (f as any).streamerProfile?.displayName || f.username}
+                      {!!(f.vtuberProfile?.isVerified || (f as any).streamerProfile?.isVerified || (f as any).isVerified) && (
                         <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Verificado">
                           <circle cx="12" cy="12" r="10" fill="#1d9bf0"/>
                           <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1744,17 +1745,15 @@ function ProfileContent() {
                   onClick={() => setShowFollowing(false)}>
                   <div style={{
                     width: '40px', height: '40px', borderRadius: '50%',
-                    background: f.vtuberProfile?.avatarUrl
-                      ? `url(${f.vtuberProfile.avatarUrl}) center/cover`
-                      : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                    background: (f.avatarUrl || f.vtuberProfile?.avatarUrl || (f as any).streamerProfile?.avatarUrl) ? `url(${f.avatarUrl || f.vtuberProfile?.avatarUrl || (f as any).streamerProfile?.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: 'white', fontWeight: 'bold', fontSize: '1.1rem',
                     overflow: 'hidden',
                   }}>
-                    {!f.vtuberProfile?.avatarUrl && (f.vtuberProfile?.displayName || f.username).charAt(0).toUpperCase()}
+                    {!(f.avatarUrl || f.vtuberProfile?.avatarUrl || (f as any).streamerProfile?.avatarUrl) && (f.displayName || f.vtuberProfile?.displayName || (f as any).streamerProfile?.displayName || f.username).charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{f.vtuberProfile?.displayName || f.username}</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{f.displayName || f.vtuberProfile?.displayName || (f as any).streamerProfile?.displayName || f.username}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{f.username}</div>
                   </div>
                 </Link>
