@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
+import { Tag, Sparkles, Star, AlertCircle } from '@/components/ui/Icons';
 
 interface CreatorInfo {
   id: string;
@@ -103,7 +104,7 @@ export default function CreatorCodeInput({
         marginBottom: '6px',
       }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span>🏷️</span> Código de Creador (Opcional)
+          <Tag size={13} color="#10b981" /> Código de Creador (Opcional)
         </span>
         <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>
           35% apoya al creador
@@ -134,13 +135,12 @@ export default function CreatorCodeInput({
                 width: '32px',
                 height: '32px',
                 borderRadius: '50%',
-                background: 'rgba(16, 185, 129, 0.3)',
+                background: 'rgba(16, 185, 129, 0.25)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.9rem',
               }}>
-                ✨
+                <Sparkles size={16} color="#34d399" />
               </span>
             )}
             <div style={{ minWidth: 0 }}>
@@ -166,8 +166,8 @@ export default function CreatorCodeInput({
                   {validatedData.code}
                 </span>
               </div>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                ⭐ +10% Polvo Estelar de regalo extra para ti
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Star size={11} color="#fbbf24" fill="#fbbf24" /> +10% Polvo Estelar de regalo extra para ti
               </div>
             </div>
           </div>
@@ -240,7 +240,7 @@ export default function CreatorCodeInput({
 
           {error && (
             <p style={{ margin: '6px 0 0', fontSize: '0.74rem', color: '#f87171' }}>
-              ⚠️ {error}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><AlertCircle size={12} color="#f87171" /> {error}</span>
             </p>
           )}
         </div>

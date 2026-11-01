@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
+import { BarChart, Server, Users, Rocket, Clock, FileText, Award, Check } from '@/components/ui/Icons';
 
 interface RevenueSplit {
   serversAndInfra: number;
@@ -125,7 +126,7 @@ export default function AdminFinanzasPage() {
       {/* Header */}
       <div>
         <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          💼 Centro Financiero & Economía de Creadores (35 / 35 / 30)
+          <BarChart size={24} color="#10b981" /> Centro Financiero & Economía de Creadores (35 / 35 / 30)
         </h1>
         <p style={{ fontSize: '0.82rem', color: '#a0a0a0', margin: '4px 0 0' }}>
           Gestión de ingresos por Pases Estelares, suscripciones, liquidación a VTubers y creadores, y balance de infraestructura.
@@ -161,7 +162,7 @@ export default function AdminFinanzasPage() {
           border: '1px solid rgba(56, 189, 248, 0.3)',
         }}>
           <div style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 800, textTransform: 'uppercase' }}>
-            ⚡ 35% Servidores & Hosting
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Server size={13} color="#38bdf8" /> 35% Servidores & Hosting</span>
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#38bdf8', marginTop: '6px' }}>
             ${summary?.revenueSplit.serversAndInfra.toFixed(2) || '0.00'}{' '}
@@ -180,7 +181,7 @@ export default function AdminFinanzasPage() {
           border: '1px solid rgba(16, 185, 129, 0.3)',
         }}>
           <div style={{ fontSize: '0.72rem', color: '#34d399', fontWeight: 800, textTransform: 'uppercase' }}>
-            💚 35% Economía Creadoras
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Users size={13} color="#34d399" /> 35% Economía de Creadores</span>
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#34d399', marginTop: '6px' }}>
             ${summary?.revenueSplit.creatorCommissions.toFixed(2) || '0.00'}{' '}
@@ -199,7 +200,7 @@ export default function AdminFinanzasPage() {
           border: '1px solid rgba(251, 191, 36, 0.3)',
         }}>
           <div style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 800, textTransform: 'uppercase' }}>
-            🚀 30% Desarrollo & Fundador
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Rocket size={13} color="#fbbf24" /> 30% Desarrollo & Plataforma</span>
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#fbbf24', marginTop: '6px' }}>
             ${summary?.revenueSplit.founderAndInnovation.toFixed(2) || '0.00'}{' '}
@@ -229,7 +230,7 @@ export default function AdminFinanzasPage() {
             gap: '6px',
           }}
         >
-          <span>⏳ Solicitudes Pendientes</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Clock size={15} color="#fbbf24" /> Solicitudes Pendientes</span>
           {pendingPayouts.length > 0 && (
             <span style={{
               background: '#f59e0b',
@@ -257,7 +258,7 @@ export default function AdminFinanzasPage() {
             cursor: 'pointer',
           }}
         >
-          📜 Historial de Liquidaciones
+          Historial de Liquidaciones
         </button>
 
         <button
@@ -273,7 +274,7 @@ export default function AdminFinanzasPage() {
             cursor: 'pointer',
           }}
         >
-          🌟 Ranking Creadoras
+          Ranking de Creadores
         </button>
       </div>
 
@@ -363,7 +364,7 @@ export default function AdminFinanzasPage() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
-              🎉 No hay solicitudes de retiro pendientes en este momento.
+              No hay solicitudes de retiro pendientes en este momento.
             </div>
           )}
         </div>

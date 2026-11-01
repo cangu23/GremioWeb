@@ -27,11 +27,11 @@ interface NewsArticle {
 }
 
 const CATEGORY_OPTIONS = [
-  { id: 'PLATFORM', label: '🚀 Plataforma' },
-  { id: 'VTUBER', label: '🎙️ VTubers' },
-  { id: 'COMMUNITY', label: '👥 Comunidad' },
-  { id: 'EVENT', label: '🎉 Eventos' },
-  { id: 'PATCH_NOTES', label: '⚡ Notas de Parche' },
+  { id: 'PLATFORM', label: 'Plataforma' },
+  { id: 'VTUBER', label: 'VTubers' },
+  { id: 'COMMUNITY', label: 'Comunidad' },
+  { id: 'EVENT', label: 'Eventos' },
+  { id: 'PATCH_NOTES', label: 'Notas de Parche' },
 ];
 
 function AdminNewsContent() {
@@ -189,12 +189,12 @@ function AdminNewsContent() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#FFF' }}>📰 Gestión de Noticias y Novedades</h1>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#FFF' }}>Gestión de Noticias y Novedades</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Publica avisos, notas de parches y anuncios para la comunidad.</p>
         </div>
 
         <button onClick={openCreateModal} className="btn btn--primary" style={{ padding: '10px 20px', borderRadius: '12px', fontSize: '0.9rem', fontWeight: 700 }}>
-          ➕ Redactar Nueva Noticia
+          + Redactar Noticia
         </button>
       </div>
 
@@ -268,7 +268,7 @@ function AdminNewsContent() {
                             cursor: 'pointer',
                           }}
                         >
-                          {art.isPinned ? '📌 Fijado' : 'Fijar'}
+                          {art.isPinned ? 'Fijado' : 'Fijar'}
                         </button>
 
                         <button
@@ -290,7 +290,7 @@ function AdminNewsContent() {
                     </td>
 
                     <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>
-                      👁️ {art.views}
+                      {art.views} vistas
                     </td>
 
                     <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
@@ -304,14 +304,14 @@ function AdminNewsContent() {
                           className="btn btn--ghost"
                           style={{ padding: '4px 10px', fontSize: '0.8rem' }}
                         >
-                          ✏️ Editar
+                          Editar
                         </button>
                         <button
                           onClick={() => handleDelete(art)}
                           className="btn btn--ghost"
                           style={{ padding: '4px 10px', fontSize: '0.8rem', color: '#EF4444' }}
                         >
-                          🗑️ Eliminar
+                          Eliminar
                         </button>
                       </div>
                     </td>
@@ -346,7 +346,7 @@ function AdminNewsContent() {
             border: '1px solid rgba(139, 92, 246, 0.3)',
           }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '20px', color: '#FFF' }}>
-              {editingArticle ? '✏️ Editar Noticia' : '➕ Redactar Nueva Noticia'}
+              {editingArticle ? 'Editar Noticia' : '+ Redactar Nueva Noticia'}
             </h2>
 
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -477,7 +477,7 @@ function AdminNewsContent() {
                     checked={isPinned}
                     onChange={(e) => setIsPinned(e.target.checked)}
                   />
-                  <span>📌 Fijar como noticia destacada</span>
+                  <span>Fijar como noticia destacada</span>
                 </label>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem' }}>

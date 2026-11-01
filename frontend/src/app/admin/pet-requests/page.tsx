@@ -82,7 +82,7 @@ export default function AdminPetRequestsPage() {
       if (url) {
         if (target === 'image1') setImage1Url(url);
         else setImage2Url(url);
-        showToast('Imagen/GIF subido con éxito ✨', 'success');
+        showToast('Imagen subida con éxito', 'success');
       }
     } catch (err: any) {
       showToast(err?.message || 'Error al subir archivo', 'error');
@@ -108,7 +108,7 @@ export default function AdminPetRequestsPage() {
           adminNote: adminNote.trim() || undefined,
         }),
       });
-      showToast(`✅ Mascota aprobada y asignada a @${selectedRequest.user.username}!`, 'success');
+      showToast(`Mascota aprobada y asignada a @${selectedRequest.user.username}!`, 'success');
       setSelectedRequest(null);
       setModalMode(null);
       resetModalFields();
@@ -130,7 +130,7 @@ export default function AdminPetRequestsPage() {
           adminNote: adminNote.trim() || undefined,
         }),
       });
-      showToast('Solicitud rechazada 📋', 'success');
+      showToast('Solicitud rechazada', 'success');
       setSelectedRequest(null);
       setModalMode(null);
       resetModalFields();
@@ -154,7 +154,7 @@ export default function AdminPetRequestsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            🐾 Solicitudes de Mascotas
+            Solicitudes de Mascotas
             {pendingCount > 0 && (
               <span style={{ fontSize: '0.8rem', padding: '2px 10px', borderRadius: '12px', background: '#ff9800', color: '#000', fontWeight: 800 }}>
                 {pendingCount} Pendiente{pendingCount > 1 ? 's' : ''}
@@ -184,7 +184,7 @@ export default function AdminPetRequestsPage() {
                 transition: 'all 0.2s',
               }}
             >
-              {st === 'PENDING' ? '⏳ Pendientes' : st === 'APPROVED' ? '✅ Aprobadas' : st === 'REJECTED' ? '❌ Rechazadas' : '🌐 Todas'}
+              {st === 'PENDING' ? 'Pendientes' : st === 'APPROVED' ? 'Aprobadas' : st === 'REJECTED' ? 'Rechazadas' : 'Todas'}
             </button>
           ))}
         </div>
@@ -253,7 +253,7 @@ export default function AdminPetRequestsPage() {
                 {/* PET REQUEST DETAILS */}
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '12px', marginBottom: '10px' }}>
                   <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fbbf24', marginBottom: '4px' }}>
-                    🐾 {req.petName}
+                    {req.petName}
                   </div>
                   {req.description && (
                     <p style={{ fontSize: '0.85rem', color: '#e4e4e7', margin: '0 0 6px', whiteSpace: 'pre-wrap' }}>
@@ -267,7 +267,7 @@ export default function AdminPetRequestsPage() {
                       rel="noopener noreferrer"
                       style={{ fontSize: '0.78rem', color: '#60a5fa', textDecoration: 'underline' }}
                     >
-                      🔗 Ver Imagen de Referencia
+                      Ver Imagen de Referencia
                     </a>
                   )}
                 </div>
@@ -318,7 +318,7 @@ export default function AdminPetRequestsPage() {
                       cursor: 'pointer',
                     }}
                   >
-                    ✨ Subir GIF & Aprobar
+                    Subir Archivo & Aprobar
                   </button>
                   <button
                     onClick={() => {
@@ -365,7 +365,7 @@ export default function AdminPetRequestsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>
-              {modalMode === 'APPROVE' ? `✨ Subir Mascota para "${selectedRequest.petName}"` : `Rechazar Solicitud`}
+              {modalMode === 'APPROVE' ? `Subir Mascota para "${selectedRequest.petName}"` : `Rechazar Solicitud`}
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
               Usuario: <strong>@{selectedRequest.user.username}</strong>
@@ -392,7 +392,7 @@ export default function AdminPetRequestsPage() {
                         color: '#fff', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center',
                       }}
                     >
-                      {uploading ? '...' : '📁 Subir File'}
+                      {uploading ? '...' : 'Subir Archivo'}
                       <input
                         type="file"
                         accept="image/*"
@@ -467,7 +467,7 @@ export default function AdminPetRequestsPage() {
                     disabled={processing || uploading}
                     style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#00e676', border: 'none', color: '#000', fontWeight: 800, cursor: 'pointer' }}
                   >
-                    {processing ? 'Guardando...' : '✅ Aprobar & Asignar Mascota'}
+                    {processing ? 'Guardando...' : 'Aprobar & Asignar Mascota'}
                   </button>
                   <button
                     onClick={() => { setSelectedRequest(null); setModalMode(null); }}

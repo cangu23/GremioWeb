@@ -624,13 +624,13 @@ export default function AdminVtubersPage() {
                       <label className="form-label">Tipo de Contenido</label>
                       <select className="input" value={editData.contentType} onChange={e => setEditData({ ...editData, contentType: e.target.value })}>
                         <option value="">Seleccionar...</option>
-                        <option value="gaming">🎮 Gaming</option>
-                        <option value="music">🎵 Música</option>
-                        <option value="art">🎨 Arte</option>
-                        <option value="singing">🎤 Canto</option>
-                        <option value="asmr">🎧 ASMR</option>
-                        <option value="chatting">💬 Chats</option>
-                        <option value="vtuber">✨ VTuber General</option>
+                        <option value="gaming">Gaming</option>
+                        <option value="music">Música</option>
+                        <option value="art">Arte</option>
+                        <option value="singing">Canto</option>
+                        <option value="asmr">ASMR</option>
+                        <option value="chatting">Charla / Just Chatting</option>
+                        <option value="vtuber">VTuber General</option>
                       </select>
                     </div>
                     <div className="form-group">

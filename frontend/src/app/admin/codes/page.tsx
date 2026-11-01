@@ -73,7 +73,7 @@ export default function AdminCodesPage() {
         body: JSON.stringify(form),
       });
       setNewCode(res.rawCode);
-      showToast(`✅ Código "${res.name}" generado exitosamente`, 'success');
+      showToast(`Código "${res.name}" generado exitosamente`, 'success');
       setForm({ name: '', role: 'VTUBER' });
       fetchCodes();
     } catch (err: unknown) {
@@ -87,7 +87,7 @@ export default function AdminCodesPage() {
     if (!window.confirm(`¿Revocar el código "${name}"? Ya no podrá ser usado.`)) return;
     try {
       await apiFetch(`/admin/codes/${id}`, { method: 'DELETE' });
-      showToast(`Código "${name}" revocado 🔴`, 'success');
+      showToast(`Código "${name}" revocado`, 'success');
       fetchCodes();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error', 'error');

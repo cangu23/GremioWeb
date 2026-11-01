@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
+import { Crown, DollarSign, Copy, TrendingUp, Clock } from '@/components/ui/Icons';
 
 interface SaleItem {
   id: string;
@@ -159,7 +160,7 @@ export default function CreatorEarningsCard() {
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '24px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <span style={{ fontSize: '1.4rem' }}>💎</span>
+            <Crown size={22} color="#34d399" />
             <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff', margin: 0 }}>
               Panel de Creador & Ganancias
             </h2>
@@ -201,7 +202,7 @@ export default function CreatorEarningsCard() {
             gap: '8px',
           }}
         >
-          <span>💸</span>
+          <DollarSign size={16} />
           <span>{canWithdraw ? 'Solicitar Retiro' : `Mínimo $${data?.minPayout || 10} USD`}</span>
         </button>
       </div>
@@ -342,7 +343,7 @@ export default function CreatorEarningsCard() {
                   gap: '4px',
                 }}
               >
-                🔗 Copiar enlace de Pase con tu código
+                <Copy size={12} /> Copiar enlace con tu código
               </button>
             </>
           )}
@@ -354,7 +355,7 @@ export default function CreatorEarningsCard() {
         {/* Ventas Recientes */}
         <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '14px', padding: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '12px' }}>
-            🛒 Ventas Recientes con tu Código
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TrendingUp size={15} color="#34d399" /> Ventas con tu Código</span>
           </div>
           {data?.recentSales && data.recentSales.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
@@ -400,7 +401,7 @@ export default function CreatorEarningsCard() {
         {/* Historial de Retiros */}
         <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '14px', padding: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#e2e8f0', marginBottom: '12px' }}>
-            📋 Solicitudes de Retiro
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Clock size={15} color="#38bdf8" /> Solicitudes de Retiro</span>
           </div>
           {data?.payouts && data.payouts.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
@@ -493,7 +494,7 @@ export default function CreatorEarningsCard() {
             }}
           >
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 8px' }}>
-              💸 Solicitar Retiro de Saldo
+              Solicitar Retiro de Saldo
             </h3>
             <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 20px', lineHeight: 1.5 }}>
               Transfiere tus ganancias acumuladas directamente a tu cuenta de PayPal en USD.

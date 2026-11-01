@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from '@/components/ui/Icons';
+import { X, Star, Crown, Zap, Sparkles, Users, CreditCard } from '@/components/ui/Icons';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -132,7 +132,7 @@ export default function SeasonPassCheckoutModal({
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-              <span>⭐</span> Temporada Activa
+              <Star size={13} color="#fbbf24" fill="#fbbf24" /> Temporada Activa
             </div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2 }}>
               Desbloquea el Pase Estelar VIP
@@ -180,7 +180,7 @@ export default function SeasonPassCheckoutModal({
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>🌟</span>
+                <Crown size={20} color="#fbbf24" />
                 <span style={{ fontWeight: 800, fontSize: '0.98rem', color: '#fff' }}>Pase Estelar VIP</span>
                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24', fontWeight: 700 }}>
                   Más Popular
@@ -213,10 +213,10 @@ export default function SeasonPassCheckoutModal({
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>🚀</span>
+                <Zap size={20} color="#c084fc" />
                 <span style={{ fontWeight: 800, fontSize: '0.98rem', color: '#fff' }}>Pase VIP + Impulso 10 Niveles</span>
                 <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(192, 132, 252, 0.25)', color: '#d8b4fe', fontWeight: 700 }}>
-                  +2,500 ⭐ Bonus
+                  +2,500 Bonus
                 </span>
               </div>
               <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '4px 0 0 28px' }}>
@@ -246,7 +246,7 @@ export default function SeasonPassCheckoutModal({
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.1rem' }}>✨</span>
+                <Sparkles size={18} color="#38bdf8" />
                 <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>Canjear con Polvo Estelar</span>
               </div>
               <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '2px 0 0 26px' }}>
@@ -254,7 +254,7 @@ export default function SeasonPassCheckoutModal({
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#38bdf8' }}>2,500 ⭐</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>2,500 <Star size={13} color="#38bdf8" fill="#38bdf8" /></div>
               <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Stardust</div>
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function SeasonPassCheckoutModal({
             }}
           >
             <div style={{ fontWeight: 700, color: '#e2e8f0', marginBottom: '4px' }}>
-              🌱 Economía de Creadores y Sostenibilidad de la Plataforma:
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Users size={13} color="#34d399" /> Economía de Creadores y Sostenibilidad de la Plataforma:</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', marginTop: '6px' }}>
               <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', color: '#34d399' }}>
@@ -326,7 +326,7 @@ export default function SeasonPassCheckoutModal({
               gap: '8px',
             }}
           >
-            {loading ? 'Canjeando...' : '⭐ Canjear Pase por 2,500 Polvo Estelar'}
+            {loading ? 'Canjeando...' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Sparkles size={16} /> Canjear Pase por 2,500 Polvo Estelar</span>}
           </button>
         ) : (
           <button
@@ -353,7 +353,7 @@ export default function SeasonPassCheckoutModal({
               gap: '8px',
             }}
           >
-            <span>💳 Pagar con PayPal Segura</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><CreditCard size={16} /> Pagar con PayPal Segura</span>
             <span>({selectedTier === 'BOOST' ? '$7.99 USD' : '$3.99 USD'})</span>
           </button>
         )}

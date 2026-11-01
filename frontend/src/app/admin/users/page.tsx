@@ -68,14 +68,14 @@ const roleColors: Record<string, string> = {
 };
 
 const AVAILABLE_ROLES = [
-  { id: 'ADMIN', label: '👑 Administrador', color: '#8a2be2' },
-  { id: 'MODERATOR', label: '⚔️ Moderador', color: '#2196f3' },
-  { id: 'STAFF', label: '🛡️ Staff', color: '#10b981' },
-  { id: 'BETA_TESTER', label: '🧪 Beta Tester', color: '#00bcd4' },
-  { id: 'VTUBER', label: '🌸 VTuber / Creador', color: '#ff007f' },
-  { id: 'STREAMER', label: '🎥 Streamer / Creador', color: '#38bdf8' },
-  { id: 'MAID', label: '☕ Maid Café Host', color: '#d4a030' },
-  { id: 'USER', label: '👤 Usuario Normal', color: '#4caf50' },
+  { id: 'ADMIN', label: 'Administrador', color: '#8a2be2' },
+  { id: 'MODERATOR', label: 'Moderador', color: '#2196f3' },
+  { id: 'STAFF', label: 'Staff', color: '#10b981' },
+  { id: 'BETA_TESTER', label: 'Beta Tester', color: '#00bcd4' },
+  { id: 'VTUBER', label: 'VTuber', color: '#ff007f' },
+  { id: 'STREAMER', label: 'Streamer', color: '#38bdf8' },
+  { id: 'MAID', label: 'Maid Café Host', color: '#d4a030' },
+  { id: 'USER', label: 'Usuario', color: '#4caf50' },
 ];
 
 export default function AdminUsersPage() {
@@ -248,7 +248,7 @@ export default function AdminUsersPage() {
         method: 'PATCH',
         body: JSON.stringify({ isVerified: nextState }),
       });
-      showToast(nextState ? 'Usuario verificado 🔵' : 'Insignia de verificación removida', 'success');
+      showToast(nextState ? 'Usuario verificado' : 'Insignia de verificación removida', 'success');
       fetchUsers();
     } catch (err: any) {
       showToast(err.message || 'Error al cambiar verificación', 'error');
@@ -374,7 +374,7 @@ export default function AdminUsersPage() {
                               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColors[user.status] || '#666' }} />
                               {user.status}
                               {user.plan && user.plan !== 'FREE' && (
-                                <span style={{ color: '#d4a030', marginLeft: '6px' }}>💎 {user.plan}</span>
+                                <span style={{ color: '#d4a030', marginLeft: '6px' }}>{user.plan}</span>
                               )}
                               {user.platformSubscription?.status === 'ACTIVE' && (
                                 <span style={{ color: '#a78bfa', marginLeft: '6px', fontSize: '0.72rem' }}>
@@ -401,7 +401,7 @@ export default function AdminUsersPage() {
                                 borderRadius: '8px',
                               }}
                             >
-                              ✏️ Editar Roles
+                              Editar Roles
                             </button>
 
                             <button
@@ -415,7 +415,7 @@ export default function AdminUsersPage() {
                                 borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
                               }}
                             >
-                              {isVer ? '🔵 Verificado' : '⚪ Verificar'}
+                              {isVer ? 'Verificado' : 'Verificar'}
                             </button>
 
                             <button
@@ -428,7 +428,7 @@ export default function AdminUsersPage() {
                                 borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
                               }}
                             >
-                              💎 Premium
+                              Plan
                             </button>
 
                             {hasPremium(user) && (
@@ -442,7 +442,7 @@ export default function AdminUsersPage() {
                                   borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
                                 }}
                               >
-                                🚫 Quitar
+                                Quitar Plan
                               </button>
                             )}
 
@@ -458,7 +458,7 @@ export default function AdminUsersPage() {
                                 borderRadius: '8px', cursor: isStaffRole(user.role) ? 'not-allowed' : 'pointer', fontWeight: 700,
                               }}
                             >
-                              🗑️ Borrar
+                              Eliminar
                             </button>
                           </div>
                         </td>
@@ -512,7 +512,7 @@ export default function AdminUsersPage() {
               {/* Multi-Role Selector Checkboxes */}
               <div style={{ background: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(212,160,48,0.2)' }}>
                 <label className="form-label" style={{ color: '#e8c060', fontWeight: 800, marginBottom: '10px', display: 'block', fontSize: '0.9rem' }}>
-                  🎯 Roles Asignados (Puedes marcar múltiples roles simultáneamente)
+                  Roles Asignados (Puedes marcar múltiples roles simultáneamente)
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
                   {AVAILABLE_ROLES.map(r => {
@@ -560,9 +560,9 @@ export default function AdminUsersPage() {
                   <label className="form-label" style={{ color: '#e8c060', fontWeight: 700 }}>Plan Premium VIP</label>
                   <select className="input" value={editData.plan} onChange={e => setEditData({ ...editData, plan: e.target.value })}>
                     <option value="FREE">Gratuito (FREE)</option>
-                    <option value="ASTRO">💎 Astro — $2.99/mes</option>
-                    <option value="NOVA">✨ Nova Pro — $5.99/mes</option>
-                    <option value="STELLAR">🌟 Stellar Elite — $12.99/mes</option>
+                    <option value="ASTRO">Astro — $2.99/mes</option>
+                    <option value="NOVA">Nova Pro — $5.99/mes</option>
+                    <option value="STELLAR">Stellar Elite — $12.99/mes</option>
                   </select>
                 </div>
 
@@ -579,10 +579,10 @@ export default function AdminUsersPage() {
                 <div className="form-group">
                   <label className="form-label">Estado de la Cuenta</label>
                   <select className="input" value={editData.status} onChange={e => setEditData({ ...editData, status: e.target.value })}>
-                    <option value="ACTIVE">🟢 Activo</option>
-                    <option value="SUSPENDED">🟠 Suspendido</option>
-                    <option value="BANNED">🔴 Baneado</option>
-                    <option value="PENDING">⚪ Pendiente</option>
+                    <option value="ACTIVE">Activo</option>
+                    <option value="SUSPENDED">Suspendido</option>
+                    <option value="BANNED">Baneado</option>
+                    <option value="PENDING">Pendiente</option>
                   </select>
                 </div>
               </div>
@@ -595,7 +595,7 @@ export default function AdminUsersPage() {
                     onChange={e => setEditData({ ...editData, isVerified: e.target.checked })}
                     style={{ width: '18px', height: '18px', accentColor: '#1d9bf0', cursor: 'pointer' }}
                   />
-                  <span>🔵 Usuario Verificado (Insignia Oficial)</span>
+                  <span>Usuario Verificado (Insignia Oficial)</span>
                 </label>
               </div>
             </div>
@@ -603,7 +603,7 @@ export default function AdminUsersPage() {
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button onClick={() => setSelectedUser(null)} className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>Cancelar</button>
               <button onClick={saveUser} className="btn" disabled={saving} style={{ background: 'linear-gradient(135deg, #d4a030, #a0782c)', color: '#1a1410', fontWeight: 800 }}>
-                {saving ? 'Guardando...' : '💾 Guardar Cambios'}
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </div>
           </div>
@@ -623,7 +623,7 @@ export default function AdminUsersPage() {
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f87171' }}>🗑️ Eliminar Cuenta</h2>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f87171' }}>Eliminar Cuenta</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Esta acción es permanente e irreversible.</p>
               </div>
               <button onClick={() => setDeleteTarget(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
@@ -662,7 +662,7 @@ export default function AdminUsersPage() {
                   cursor: normalizeUsername(deleteConfirmName) === deleteTarget.username ? 'pointer' : 'not-allowed',
                 }}
               >
-                {deleting ? 'Eliminando...' : '🗑️ Eliminar permanentemente'}
+                {deleting ? 'Eliminando...' : 'Eliminar permanentemente'}
               </button>
             </div>
           </div>
@@ -682,7 +682,7 @@ export default function AdminUsersPage() {
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f5e6d3' }}>💎 Otorgar Plan Premium</h2>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f5e6d3' }}>Otorgar Plan Premium</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Activa un plan con expiración para @{premiumUser.username}</p>
               </div>
               <button onClick={() => setPremiumUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
@@ -697,9 +697,9 @@ export default function AdminUsersPage() {
                   onChange={e => setGrantPlan(e.target.value as 'ASTRO' | 'NOVA' | 'STELLAR')}
                   style={{ marginTop: '6px' }}
                 >
-                  <option value="ASTRO">💎 Astro — $2.99/mes (×1.2 Stardust, ×1.5 XP)</option>
-                  <option value="NOVA">✨ Nova Pro — $5.99/mes (×1.5 Stardust, ×2 XP)</option>
-                  <option value="STELLAR">🌟 Stellar Elite — $12.99/mes (×2 Stardust, ×3 XP)</option>
+                  <option value="ASTRO">Astro — $2.99/mes (×1.2 Stardust, ×1.5 XP)</option>
+                  <option value="NOVA">Nova Pro — $5.99/mes (×1.5 Stardust, ×2 XP)</option>
+                  <option value="STELLAR">Stellar Elite — $12.99/mes (×2 Stardust, ×3 XP)</option>
                 </select>
               </div>
 
@@ -734,7 +734,7 @@ export default function AdminUsersPage() {
                   background: 'linear-gradient(135deg, #d4a030, #a0782c)', color: '#1a1410', fontWeight: 800,
                 }}
               >
-                {granting ? 'Otorgando...' : `💎 Otorgar ${grantPlan}`}
+                {granting ? 'Otorgando...' : `Otorgar ${grantPlan}`}
               </button>
             </div>
           </div>

@@ -262,7 +262,7 @@ export default function StickersAdminPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span>🎨</span> Gestión de Emojis y Stickers
+            Gestión de Emojis y Stickers
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
             Agrega o quita los emojis y stickers personalizados de la plataforma en tiempo real.
@@ -280,7 +280,7 @@ export default function StickersAdminPage() {
                 color: '#ef4444', cursor: isDeletingBulk ? 'wait' : 'pointer',
               }}
             >
-              {isDeletingBulk ? 'Eliminando...' : `🗑️ Quitar seleccionados (${selectedIds.size})`}
+              {isDeletingBulk ? 'Eliminando...' : `Quitar seleccionados (${selectedIds.size})`}
             </button>
           )}
           <button
@@ -303,7 +303,7 @@ export default function StickersAdminPage() {
         <div className="glass" style={{ padding: '24px', borderRadius: '18px', marginBottom: '28px', border: '1px solid rgba(138,43,226,0.3)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>
-              {formType === 'emoji' ? '😊 Agregar Nuevo Emoji' : '🏷️ Agregar Nuevo Sticker'}
+              {formType === 'emoji' ? 'Agregar Nuevo Emoji' : 'Agregar Nuevo Sticker'}
             </h3>
             {/* Toggle Tipo */}
             <div style={{ display: 'inline-flex', background: 'rgba(0,0,0,0.3)', padding: '3px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -317,7 +317,7 @@ export default function StickersAdminPage() {
                   fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer',
                 }}
               >
-                😊 Emoji (32×32)
+                Emoji (32×32)
               </button>
               <button
                 type="button"
@@ -328,7 +328,7 @@ export default function StickersAdminPage() {
                   color: '#fff', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer',
                 }}
               >
-                🏷️ Sticker (96×96)
+                Sticker (96×96)
               </button>
             </div>
           </div>
@@ -408,7 +408,7 @@ export default function StickersAdminPage() {
                       fontSize: '0.85rem', whiteSpace: 'nowrap',
                     }}
                   >
-                    {uploading ? '⏳ Subiendo...' : '📁 Subir Archivo'}
+                    {uploading ? 'Subiendo...' : 'Subir Archivo'}
                   </button>
                   <input
                     ref={fileInputRef}
@@ -511,7 +511,7 @@ export default function StickersAdminPage() {
               color: typeFilter === 'emoji' ? '#000' : 'var(--text-muted)',
             }}
           >
-            😊 Emojis ({emojiCount})
+            Emojis ({emojiCount})
           </button>
           <button
             onClick={() => setTypeFilter('sticker')}
@@ -522,7 +522,7 @@ export default function StickersAdminPage() {
               color: typeFilter === 'sticker' ? '#fff' : 'var(--text-muted)',
             }}
           >
-            🏷️ Stickers ({stickerCount})
+            Stickers ({stickerCount})
           </button>
         </div>
 
@@ -532,7 +532,7 @@ export default function StickersAdminPage() {
             className="input"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="🔍 Buscar por :nombre: o categoría..."
+            placeholder="Buscar por :nombre: o categoría..."
             style={{ flex: 1, padding: '9px 14px', fontSize: '0.86rem', borderRadius: '10px' }}
           />
           <select
@@ -654,7 +654,7 @@ export default function StickersAdminPage() {
                     e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)';
                   }}
                 >
-                  <span>🗑️</span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
                   <span>Quitar</span>
                 </button>
 

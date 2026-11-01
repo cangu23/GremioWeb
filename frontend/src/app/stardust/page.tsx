@@ -11,6 +11,7 @@ import Link from 'next/link';
 import UserAvatar from '@/components/ui/UserAvatar';
 import StardustStatsModal from '@/components/ui/StardustStatsModal';
 import SendStardustModal from '@/components/ui/SendStardustModal';
+import { Gift, ShoppingBag, Calendar, Sparkles, Zap, Clock } from '@/components/ui/Icons';
 
 interface Transaction {
   id: string;
@@ -141,7 +142,7 @@ function StardustContent() {
           className="btn btn--primary"
           style={{ padding: '12px 24px', fontSize: '0.95rem', fontWeight: 800, borderRadius: '14px' }}
         >
-          🎁 Regalar y Transferir Stardust
+          Enviar Polvo Estelar
         </button>
       </div>
 
@@ -192,7 +193,7 @@ function StardustContent() {
             </span>
             <div style={{ fontSize: '2.6rem', fontWeight: 900, color: '#fff', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '10px', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
               <span style={{ animation: 'stardustFloat 3s ease-in-out infinite alternate', display: 'inline-block', filter: 'drop-shadow(0 0 10px #fbbf24)' }}>⭐</span>
-              {balance >= 99999990 || user?.role?.includes('ADMIN') ? '♾️ Infinito' : balance.toLocaleString()}
+              {balance >= 99999990 || user?.role?.includes('ADMIN') ? 'Infinito' : balance.toLocaleString()}
               <span style={{ fontSize: '1.05rem', color: '#fbbf24', fontWeight: 800, marginLeft: '2px' }}>Stardust</span>
             </div>
           </div>
@@ -221,7 +222,7 @@ function StardustContent() {
             boxShadow: multiplier > 1 ? '0 0 16px rgba(245,158,11,0.35)' : 'none',
             whiteSpace: 'nowrap',
           }}>
-            Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
+            Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? 'ACTIVO' : ''}
           </div>
           <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0, fontWeight: 500, textAlign: 'right', whiteSpace: 'nowrap' }}>
             {multiplier > 1 ? `Tu plan ${data?.plan} otorga un +${Math.round((multiplier - 1) * 100)}% extra` : 'Aumenta tus ganancias pasando a Premium'}
@@ -232,7 +233,7 @@ function StardustContent() {
       {/* QUICK ACTIONS GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '16px', marginBottom: '40px' }}>
         <button onClick={() => setShowSendModal(true)} className="glass" style={{ ...actionCardStyle, cursor: 'pointer', textAlign: 'left', border: 'none', background: 'rgba(245,158,11,0.15)' }}>
-          <span style={{ fontSize: '2rem' }}>🎁</span>
+          <Gift size={28} color="#fbbf24" />
           <div>
             <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Regalar / Transferir</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Envía Polvo Estelar o regalos</div>
@@ -240,7 +241,7 @@ function StardustContent() {
         </button>
 
         <Link href="/shop" className="glass" style={actionCardStyle}>
-          <span style={{ fontSize: '2rem' }}>🔭</span>
+          <ShoppingBag size={28} color="#38bdf8" />
           <div>
             <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Observatorio Estelar</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Compra marcos, roles y títulos</div>
@@ -248,7 +249,7 @@ function StardustContent() {
         </Link>
 
         <Link href="/daily-rewards" className="glass" style={actionCardStyle}>
-          <span style={{ fontSize: '2rem' }}>🎁</span>
+          <Calendar size={28} color="#34d399" />
           <div>
             <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Recompensas Diarias</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Reclama tu racha de login</div>
@@ -256,7 +257,7 @@ function StardustContent() {
         </Link>
 
         <Link href="/roulette" className="glass" style={actionCardStyle}>
-          <span style={{ fontSize: '2rem' }}>🎰</span>
+          <Sparkles size={28} color="#c084fc" />
           <div>
             <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>Ruleta Mística</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Prueba tu suerte diariamente</div>
@@ -269,7 +270,7 @@ function StardustContent() {
         {/* MISSIONS COLUMN */}
         <div className="glass" style={{ padding: '24px', borderRadius: '20px' }}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🎯 Misiones Activas
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><Zap size={18} color="#34d399" /> Misiones Activas</span>
           </h3>
 
           {missions.length === 0 ? (
@@ -332,7 +333,7 @@ function StardustContent() {
         {/* HISTORY COLUMN */}
         <div className="glass" style={{ padding: '24px', borderRadius: '20px' }}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            📜 Historial Reciente
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}><Clock size={18} color="#94a3b8" /> Historial Reciente</span>
           </h3>
 
           {!data?.history || data.history.length === 0 ? (
@@ -410,7 +411,7 @@ function StardustContent() {
                             {meta.label}
                           </span>
                           <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>
-                            🕒 {dateStr}
+                            {dateStr}
                           </span>
                         </div>
                       </div>

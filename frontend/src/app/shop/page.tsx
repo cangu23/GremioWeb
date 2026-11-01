@@ -7,6 +7,7 @@ import { useToast } from '@/lib/ToastContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import PetRequestModal from '@/components/ui/PetRequestModal';
+import { Backpack, Award } from '@/components/ui/Icons';
 
 interface ShopItem {
   id: string;
@@ -62,12 +63,12 @@ const TYPE_LABELS: Record<string, string> = {
 
 const CATEGORIES = [
   { key: 'all', label: 'Todos' },
-  { key: 'BADGE', label: '🏅 Insignias' },
-  { key: 'TITLE', label: '👑 Títulos' },
+  { key: 'BADGE', label: 'Insignias' },
+  { key: 'TITLE', label: 'Títulos' },
   { key: 'FRAME', label: '⭕ Marcos' },
-  { key: 'COLOR', label: '🎨 Colores' },
-  { key: 'HOVER', label: '✨ Efectos' },
-  { key: 'consumable', label: '📦 Consumibles' },
+  { key: 'COLOR', label: 'Colores' },
+  { key: 'HOVER', label: 'Efectos' },
+  { key: 'consumable', label: 'Consumibles' },
 ];
 
 function parseItemData(data: string | null): any {
@@ -334,7 +335,7 @@ export default function ShopPage() {
             fontSize: '0.82rem', color: 'var(--primary)', fontWeight: 700,
             marginBottom: '12px',
           }}>
-            <span>✨ OBSERVATORIO ESTELAR ⭐</span>
+            <span>OBSERVATORIO ESTELAR</span>
           </div>
 
           <h1 style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 800, marginBottom: '8px' }}>
@@ -375,7 +376,7 @@ export default function ShopPage() {
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
             >
-              🎒 Ver Inventario ({inventory.length})
+              <Backpack size={16} /> Ver Inventario ({inventory.length})
             </Link>
 
             {/* Achievements Link */}
@@ -391,7 +392,7 @@ export default function ShopPage() {
                 boxShadow: '0 4px 14px rgba(255,215,0,0.15)',
               }}
             >
-              🏆 Mis Logros
+              <Award size={16} /> Mis Logros
             </Link>
 
             {/* Solicitar Mascota Button */}
@@ -407,7 +408,7 @@ export default function ShopPage() {
                 boxShadow: '0 4px 16px rgba(245,158,11,0.2)',
               }}
             >
-              🐾 Solicitar Mascota
+              Solicitar Mascota
             </button>
           </div>
         </div>
@@ -523,7 +524,7 @@ export default function ShopPage() {
                       letterSpacing: '0.04em', zIndex: 2,
                       boxShadow: '0 0 10px rgba(239,68,68,0.5)',
                     }}>
-                      🏷️ {discountPercent}% DESCUENTO
+                      {discountPercent}% DESCUENTO
                     </div>
                   )}
 
@@ -583,7 +584,7 @@ export default function ShopPage() {
                         color: owned ? 'var(--text-muted)' : effectivePrice === 0 ? '#10b981' : canAfford ? '#ffd700' : '#ef4444',
                       }}>
                         {effectivePrice === 0 ? (
-                          <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>🎁 GRATIS</span>
+                          <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>GRATIS</span>
                         ) : (
                           <>
                             <span>⭐</span>
@@ -656,7 +657,7 @@ export default function ShopPage() {
                           boxShadow: canAfford ? '0 4px 14px rgba(139,92,246,0.3)' : 'none',
                         }}
                       >
-                        {purchasing === item.id ? 'Obteniendo...' : effectivePrice === 0 ? '🎁 Obtener Gratis' : canAfford ? 'Comprar' : 'Sin Stardust'}
+                        {purchasing === item.id ? 'Obteniendo...' : effectivePrice === 0 ? 'Obtener Gratis' : canAfford ? 'Comprar' : 'Sin Stardust'}
                       </button>
                     )}
                   </div>

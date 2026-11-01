@@ -50,7 +50,7 @@ export default function AdminEconomyPage() {
       
       <div>
         <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          💰 Consola de Economía & Stardust ⭐
+          Consola de Economía & Polvo Estelar
         </h1>
         <p style={{ fontSize: '0.82rem', color: '#a0a0a0', margin: '4px 0 0' }}>
           Otorgar Stardust ilimitado a usuarios, recompensas especiales y gestión del mercado.
@@ -59,7 +59,7 @@ export default function AdminEconomyPage() {
 
       <div style={{ background: '#0d0d12', border: '1px solid #fbbf2455', borderRadius: '12px', padding: '24px', maxWidth: '540px' }}>
         <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fbbf24', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          👑 Otorgar Stardust ⭐ (ADMIN)
+          Otorgar Polvo Estelar (Staff)
         </h2>
 
         <form onSubmit={handleGrantStardust} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -77,7 +77,7 @@ export default function AdminEconomyPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '0.78rem', color: '#a0a0a0', display: 'block', marginBottom: '6px' }}>Cantidad ⭐:</label>
+              <label style={{ fontSize: '0.78rem', color: '#a0a0a0', display: 'block', marginBottom: '6px' }}>Cantidad (Stardust):</label>
               <input
                 type="number"
                 min="1"
@@ -174,9 +174,9 @@ export default function AdminEconomyPage() {
                 onChange={e => setGrantPlan(e.target.value as 'ASTRO' | 'NOVA' | 'STELLAR')}
                 style={{ width: '100%', padding: '10px 14px', background: '#050505', border: '1px solid #262626', color: '#fff', fontSize: '0.85rem', borderRadius: '6px', outline: 'none' }}
               >
-                <option value="ASTRO">💎 Astro — $2.99/mes</option>
-                <option value="NOVA">✨ Nova Pro — $5.99/mes</option>
-                <option value="STELLAR">🌟 Stellar Elite — $12.99/mes</option>
+                <option value="ASTRO">Astro — $2.99/mes</option>
+                <option value="NOVA">Nova Pro — $5.99/mes</option>
+                <option value="STELLAR">Stellar Elite — $12.99/mes</option>
               </select>
             </div>
             <div>

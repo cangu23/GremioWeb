@@ -97,6 +97,37 @@ interface CommunityChallenge {
 }
 
 // ─── SVG Icons ───────────────────────────────────────────────
+function ZapIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+function TrophyIcon({ size = 16, color = '#fbbf24' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2" />
+      <path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2" />
+      <path d="M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+    </svg>
+  );
+}
+
+function InfoIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+  );
+}
+
 
 function StarIcon({ size = 14, color = '#fbbf24' }: { size?: number; color?: string }) {
   return (
@@ -1156,7 +1187,7 @@ export default function StellarPassPage() {
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
               }}
             >
-              ⚡ Saltar Nivel (150 ⭐)
+              <ZapIcon size={14} color="#38bdf8" /> Saltar Nivel (150 Stardust)
             </button>
 
             {/* Claim All Button */}
@@ -1212,7 +1243,7 @@ export default function StellarPassPage() {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#fff', margin: 0 }}>
-                    🏆 Hoja de Ruta de Rangos Estelares
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><TrophyIcon size={16} color="#fbbf24" /> Hoja de Ruta de Rangos Estelares</span>
                   </h3>
                   <span style={{ fontSize: '0.78rem', color: '#a1a1aa' }}>
                     Nivel {data.userPass.level} / 50
@@ -1411,7 +1442,7 @@ export default function StellarPassPage() {
                   </div>
 
                   <div style={{ fontSize: '0.8rem', color: streakData.hasCheckedInToday ? '#22c55e' : '#fbbf24', fontWeight: 800 }}>
-                    {streakData.hasCheckedInToday ? '✅ Check-in de hoy registrado' : '⚡ Haz tu check-in hoy'}
+                    {streakData.hasCheckedInToday ? 'Check-in de hoy registrado' : 'Haz tu check-in hoy'}
                   </div>
                 </div>
 
@@ -1465,7 +1496,7 @@ export default function StellarPassPage() {
                 <div style={{ flex: 1, minWidth: '280px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#38bdf8', textTransform: 'uppercase' }}>
-                      🌐 Desafío Cooperativo Semanal
+                      Desafío Cooperativo Semanal
                     </span>
                   </div>
                   <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#fff' }}>
@@ -1565,7 +1596,7 @@ export default function StellarPassPage() {
                             background: isClaimed ? 'rgba(34, 197, 94, 0.2)' : isDone ? 'rgba(168, 85, 247, 0.2)' : 'rgba(255,255,255,0.05)',
                             color: isClaimed ? '#22c55e' : isDone ? '#c084fc' : '#a1a1aa',
                           }}>
-                            {isClaimed ? '✅ Reclamada' : isDone ? '✨ Lista' : 'En Progreso'}
+                            {isClaimed ? 'Reclamada' : isDone ? 'Lista para Reclamar' : 'En Progreso'}
                           </span>
                         </div>
 
@@ -1578,7 +1609,7 @@ export default function StellarPassPage() {
                           background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
                           fontSize: '0.75rem', color: '#cbd5e1', lineHeight: '1.3', marginBottom: '12px',
                         }}>
-                          💡 <strong style={{ color: '#fbbf24' }}>¿Cómo hacerla?</strong> {actionInfo.instruction}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><InfoIcon size={13} color="#fbbf24" /> <strong style={{ color: '#fbbf24' }}>¿Cómo hacerla?</strong></span> {actionInfo.instruction}
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1594,7 +1625,7 @@ export default function StellarPassPage() {
                             padding: '3px 9px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.1)',
                             border: '1px solid rgba(56, 189, 248, 0.2)',
                           }}>
-                            ⚡ +{m.xpReward} XP
+                            +{m.xpReward} XP
                           </span>
                         </div>
                       </div>
@@ -1619,7 +1650,7 @@ export default function StellarPassPage() {
 
                         {isClaimed ? (
                           <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#22c55e', fontWeight: 800 }}>
-                            ✅ Recompensa entregada
+                            Recompensa entregada
                           </div>
                         ) : isDone ? (
                           <button

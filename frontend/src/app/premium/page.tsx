@@ -173,7 +173,7 @@ export default function PremiumPage() {
             marginBottom: '16px',
             color: '#fbbf24',
           }}>
-            <span>✨ MEMBRESÍAS DE PLATAFORMA</span>
+            <span>MEMBRESÍAS DE PLATAFORMA</span>
           </div>
           <h1 style={{
             fontSize: '2.8rem',
@@ -247,11 +247,11 @@ export default function PremiumPage() {
             </div>
             <div>
               <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>
-                🔵 Insignia de Verificación <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1d9bf0' }}>— para cualquier usuario</span>
+                Insignia de Verificación Oficial <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1d9bf0' }}>— para cualquier usuario</span>
               </div>
               <div style={{ fontSize: '0.88rem', color: 'var(--text-muted, #a1a1aa)' }}>
                 Insignia azul oficial junto a tu nombre en posts, chats, perfiles y líderes. Renovable mensualmente.
-                {currentPlan === 'STELLAR' && ' ✨ Ya incluida en tu Plan Stellar Elite.'}
+                {currentPlan === 'STELLAR' && ' Ya incluida con tu Plan Stellar Elite.'}
               </div>
             </div>
           </div>
@@ -275,7 +275,7 @@ export default function PremiumPage() {
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  {loadingVerified ? 'Abriendo PayPal...' : '🔵 Verificar mi cuenta'}
+                  {loadingVerified ? 'Abriendo PayPal...' : 'Obtener Verificación'}
                 </button>
               </>
             )}
@@ -341,7 +341,7 @@ export default function PremiumPage() {
                     boxShadow: '0 4px 12px rgba(251, 191, 36, 0.4)',
                     textTransform: 'uppercase',
                   }}>
-                    Popular ✨
+                    MÁS POPULAR
                   </div>
                 )}
 
@@ -445,12 +445,12 @@ export default function PremiumPage() {
                   { feature: 'Multiplicador de Stardust (Moneda)', free: '×1.0', astro: '×1.2 (+20%)', nova: '×1.5 (+50%)', stellar: '×2.0 (+100%)' },
                   { feature: 'Multiplicador de Experiencia (XP)', free: '×1.0', astro: '×1.5', nova: '×2.0', stellar: '×3.0' },
                   { feature: 'Límite de imágenes por día', free: '20', astro: '100', nova: '100', stellar: '500' },
-                  { feature: 'Badge de Plan exclusivo', free: '—', astro: '⭐ Azul', nova: '✨ Morado', stellar: '🌟 Dorado Animado' },
+                  { feature: 'Badge de Plan exclusivo', free: '—', astro: 'Azul', nova: 'Morado', stellar: 'Dorado Animado' },
                   { feature: 'Borde de avatar personalizado', free: 'Estático', astro: 'Azul neón', nova: 'Morado pulsante', stellar: 'Dorado animado' },
                   { feature: 'Personalización de Banner', free: 'Color Base', astro: 'Gradiente / Imagen', nova: 'Banner GIF Animado', stellar: 'Video / Animado' },
-                  { feature: 'Música en el Perfil', free: '—', astro: '—', nova: '✅', stellar: '✅' },
-                  { feature: 'Efectos de Partículas en Perfil', free: '—', astro: '—', nova: '—', stellar: '✅ Cósmicas' },
-                  { feature: 'Mascota Virtual Acompañante', free: '—', astro: '—', nova: '—', stellar: '✅' },
+                  { feature: 'Música en el Perfil', free: '—', astro: '—', nova: 'Incluido', stellar: 'Incluido' },
+                  { feature: 'Efectos de Partículas en Perfil', free: '—', astro: '—', nova: '—', stellar: 'Cósmicas' },
+                  { feature: 'Mascota Virtual Acompañante', free: '—', astro: '—', nova: '—', stellar: 'Incluido' },
                   { feature: 'Publicaciones y chats', free: 'Ilimitados', astro: 'Ilimitados', nova: 'Ilimitados', stellar: 'Ilimitados' },
                 ].map((row, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>

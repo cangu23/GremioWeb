@@ -32,20 +32,20 @@ interface NewsArticle {
 }
 
 const CATEGORIES = [
-  { id: 'ALL', label: 'Todas', icon: '🌟' },
-  { id: 'PLATFORM', label: 'Plataforma', icon: '🚀' },
-  { id: 'VTUBER', label: 'VTubers', icon: '🎙️' },
-  { id: 'COMMUNITY', label: 'Comunidad', icon: '👥' },
-  { id: 'EVENT', label: 'Eventos', icon: '🎉' },
-  { id: 'PATCH_NOTES', label: 'Parches', icon: '⚡' },
+  { id: 'ALL', label: 'Todas', icon: '' },
+  { id: 'PLATFORM', label: 'Plataforma', icon: '' },
+  { id: 'VTUBER', label: 'VTubers', icon: '' },
+  { id: 'COMMUNITY', label: 'Comunidad', icon: '' },
+  { id: 'EVENT', label: 'Eventos', icon: '' },
+  { id: 'PATCH_NOTES', label: 'Parches', icon: '' },
 ];
 
 const CATEGORY_META: Record<string, { label: string; icon: string; bg: string; color: string }> = {
-  PLATFORM: { label: 'Plataforma', icon: '🚀', bg: 'rgba(139, 92, 246, 0.2)', color: '#A78BFA' },
-  VTUBER: { label: 'VTubers', icon: '🎙️', bg: 'rgba(236, 72, 153, 0.2)', color: '#F472B6' },
-  COMMUNITY: { label: 'Comunidad', icon: '👥', bg: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA' },
-  EVENT: { label: 'Eventos', icon: '🎉', bg: 'rgba(245, 158, 11, 0.2)', color: '#FBBF24' },
-  PATCH_NOTES: { label: 'Notas de Parche', icon: '⚡', bg: 'rgba(16, 185, 129, 0.2)', color: '#34D399' },
+  PLATFORM: { label: 'Plataforma', icon: '', bg: 'rgba(139, 92, 246, 0.2)', color: '#A78BFA' },
+  VTUBER: { label: 'VTubers', icon: '', bg: 'rgba(236, 72, 153, 0.2)', color: '#F472B6' },
+  COMMUNITY: { label: 'Comunidad', icon: '', bg: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA' },
+  EVENT: { label: 'Eventos', icon: '', bg: 'rgba(245, 158, 11, 0.2)', color: '#FBBF24' },
+  PATCH_NOTES: { label: 'Notas de Parche', icon: '', bg: 'rgba(16, 185, 129, 0.2)', color: '#34D399' },
 };
 
 function estimateReadingTime(content: string): string {
@@ -158,7 +158,7 @@ function NewsContent() {
           fontWeight: 700,
           marginBottom: '12px',
         }}>
-          <span>📢</span> Novedades de la Comunidad y la Plataforma
+          Novedades de la Comunidad y la Plataforma
         </div>
 
         <h1 style={{
@@ -219,7 +219,7 @@ function NewsContent() {
                 fontWeight: 800,
                 boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
               }}>
-                📌 DESTACADO
+                DESTACADO
               </span>
               <span style={{
                 padding: '4px 12px',
@@ -238,11 +238,11 @@ function NewsContent() {
           {/* Details column */}
           <div style={{ padding: '28px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
-              <span>📅 {formatDate(pinnedArticle.createdAt)}</span>
+              <span>{formatDate(pinnedArticle.createdAt)}</span>
               <span>•</span>
               <span>⏱️ {estimateReadingTime(pinnedArticle.content)}</span>
               <span>•</span>
-              <span>👁️ {pinnedArticle.views} vistas</span>
+              <span>{pinnedArticle.views} vistas</span>
             </div>
 
             <h2 style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.3, marginBottom: '12px', color: '#FFF' }}>
@@ -358,7 +358,7 @@ function NewsContent() {
         </div>
       ) : articles.length === 0 ? (
         <div className="glass" style={{ padding: '40px', textAlign: 'center', borderRadius: '16px' }}>
-          <p style={{ fontSize: '1.2rem', marginBottom: '8px' }}>📭 No hay publicaciones en esta categoría.</p>
+          <p style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No hay publicaciones en esta categoría.</p>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Prueba seleccionando otra categoría o limpiando el buscador.</p>
         </div>
       ) : (
@@ -409,7 +409,7 @@ function NewsContent() {
                         fontSize: '0.7rem',
                         fontWeight: 800,
                       }}>
-                        📌 FIJADO
+                        FIJADO
                       </span>
                     )}
                     <span style={{
@@ -430,7 +430,7 @@ function NewsContent() {
                 <div style={{ padding: '18px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
                     <span>{formatDate(item.createdAt)}</span>
-                    <span>👁️ {item.views} vistas</span>
+                    <span>{item.views} vistas</span>
                   </div>
 
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 800, lineHeight: 1.4, marginBottom: '8px', color: '#FFF' }}>
@@ -568,11 +568,11 @@ function NewsContent() {
             {/* Content Body */}
             <div style={{ padding: '28px', overflowY: 'auto', flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                <span>📅 {formatDate(selectedArticle.createdAt)}</span>
+                <span>{formatDate(selectedArticle.createdAt)}</span>
                 <span>•</span>
                 <span>⏱️ {estimateReadingTime(selectedArticle.content)}</span>
                 <span>•</span>
-                <span>👁️ {selectedArticle.views} lecturas</span>
+                <span>{selectedArticle.views} lecturas</span>
               </div>
 
               <h1 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '14px', lineHeight: 1.3, color: '#FFF' }}>
@@ -640,7 +640,7 @@ function NewsContent() {
                   className="btn btn--ghost"
                   style={{ fontSize: '0.82rem', padding: '6px 14px', borderRadius: '10px' }}
                 >
-                  🔗 Compartir
+                  Compartir
                 </button>
               </div>
             </div>

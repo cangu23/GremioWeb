@@ -128,7 +128,7 @@ function RewardsContent() {
             ¡Recompensa reclamada!
           </h2>
           <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem' }}>
-            +{claimed.xpAwarded} XP • {claimed.bonus ? '🎉 BONUS' : `Día ${claimed.day}`}
+            +{claimed.xpAwarded} XP • {claimed.bonus ? 'BONUS' : `Día ${claimed.day}`}
           </p>
           {status && !status.canClaim && (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '12px' }}>
@@ -223,7 +223,7 @@ function RewardsContent() {
                   {isClaimed ? '✓' : reward.bonus ? '⭐' : reward.day}
                 </div>
                 <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px' }}>
-                  {reward.bonus ? '🎉 BONUS' : `Día ${reward.day}`}
+                  {reward.bonus ? 'BONUS' : `Día ${reward.day}`}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: reward.bonus ? '#F59E0B' : 'var(--text-muted)' }}>
                   +{reward.xp} XP

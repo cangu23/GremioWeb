@@ -125,7 +125,7 @@ function UserSettings() {
         method: 'PATCH',
         body: JSON.stringify({ profileFrame: nextHidden ? 'OFF' : 'PLAN' }),
       });
-      showToast(nextHidden ? 'Marco del plan quitado' : 'Marco del plan equipado ✨', 'success');
+      showToast(nextHidden ? 'Marco del plan quitado' : 'Marco del plan equipado', 'success');
       window.dispatchEvent(new Event('user-refetched'));
     } catch (err: unknown) {
       showToast(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
@@ -317,7 +317,7 @@ function UserSettings() {
                     }}
                     title="Recortar y editar foto actual"
                   >
-                    ✂️ Recortar
+                    Recortar
                   </button>
                 )}
                 <input
@@ -395,7 +395,7 @@ function UserSettings() {
                     fontWeight: 600,
                   }}
                 >
-                  ✂️ Recortar
+                  Recortar
                 </button>
               )}
               <input
@@ -446,7 +446,7 @@ function UserSettings() {
               fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px',
               display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap',
             }}>
-              🏆 Marco de Avatar Premium
+              Marco de Avatar Premium
               <span style={{
                 fontSize: '0.6rem', padding: '2px 8px', borderRadius: '10px',
                 background: planFrameHidden ? 'rgba(255,255,255,0.08)' : 'rgba(255,215,0,0.18)',
@@ -512,7 +512,7 @@ function UserSettings() {
                   transition: 'all 0.2s', opacity: togglingFrame ? 0.6 : 1,
                 }}
               >
-                {togglingFrame ? '...' : planFrameHidden ? '✨ Equipar' : 'Quitar'}
+                {togglingFrame ? '...' : planFrameHidden ? 'Equipar' : 'Quitar'}
               </button>
             </div>
           </div>
@@ -535,7 +535,7 @@ function UserSettings() {
                 fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px',
                 display: 'flex', alignItems: 'center', gap: '8px', color: '#f5e6d3'
               }}>
-                🏷️ Insignia Principal Visible en Publicaciones
+                Insignia Principal Visible en Publicaciones
               </h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
                 Selecciona cuál de tus roles deseas mostrar al lado de tu nombre en el Feed, comentarios y el widget de perfil:
@@ -585,7 +585,7 @@ function UserSettings() {
                 fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px',
                 display: 'flex', alignItems: 'center', gap: '8px', color: '#1db954'
               }}>
-                🎵 Música de Fondo para tu Perfil (Beneficio Premium NOVA / STELLAR)
+                Música de Fondo para tu Perfil (Beneficio Premium NOVA / STELLAR)
               </h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
                 Pega el enlace de una <strong style={{ color: '#4ade80' }}>canción, álbum o playlist de Spotify</strong>.
@@ -665,7 +665,7 @@ function UserSettings() {
                           transition: 'all 0.2s ease',
                         }}
                       >
-                        🗑️ Quitar mi música
+                        Quitar música
                       </button>
                     )}
                     <Link href="/premium" className="btn" style={{ padding: '8px 16px', fontSize: '0.82rem', background: 'linear-gradient(135deg, #9333ea, #c084fc)', color: '#fff', fontWeight: 700, borderRadius: '10px', textDecoration: 'none' }}>
@@ -800,7 +800,7 @@ function UserSettings() {
             fontSize: '1.05rem', fontWeight: 800, marginBottom: '8px',
             display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171',
           }}>
-            ⚠️ Zona de peligro
+            Zona de peligro
           </h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '16px' }}>
             Eliminar tu cuenta borrará <strong style={{ color: '#f87171' }}>permanentemente</strong> tu perfil,
@@ -819,7 +819,7 @@ function UserSettings() {
             onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.28)'; }}
             onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
           >
-            🗑️ Borrar mi cuenta permanentemente
+            Eliminar cuenta permanentemente
           </button>
         </div>
       )}
@@ -834,7 +834,7 @@ function UserSettings() {
           fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px',
           display: 'flex', alignItems: 'center', gap: '6px',
         }}>
-          🎤 ¿Eres VTuber?
+          ¿Eres VTuber o Creador?
         </h4>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '12px' }}>
           Si tienes un personaje VTuber con modelo, puedes solicitar ser VTuber oficial
@@ -878,7 +878,7 @@ function UserSettings() {
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f87171' }}>🗑️ Eliminar mi cuenta</h2>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f87171' }}>Eliminar mi cuenta</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Esta acción es permanente e irreversible.</p>
               </div>
               <button onClick={() => setDeleteOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
@@ -917,7 +917,7 @@ function UserSettings() {
                   cursor: normalizeUsername(deleteConfirmName) === user.username ? 'pointer' : 'not-allowed',
                 }}
               >
-                {deleting ? 'Eliminando...' : '🗑️ Eliminar permanentemente'}
+                {deleting ? 'Eliminando...' : 'Eliminar permanentemente'}
               </button>
             </div>
           </div>

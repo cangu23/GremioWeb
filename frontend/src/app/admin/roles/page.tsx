@@ -60,7 +60,7 @@ export default function RoleBuilderPage() {
           },
         }),
       });
-      showToast('¡Configuración de Roles guardada con éxito! 🎭', 'success');
+      showToast('¡Configuración de Roles guardada con éxito!', 'success');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error al guardar roles', 'error');
     } finally {
@@ -96,7 +96,7 @@ export default function RoleBuilderPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            🎭 Constructor Visual de Roles (Role Builder)
+            Constructor Visual de Roles (Role Builder)
           </h1>
           <p style={{ fontSize: '0.82rem', color: '#a0a0a0', margin: '4px 0 0' }}>
             Crea, edita, reordena jerarquías, duplica y configura propiedades visuales de cada rol.
@@ -111,7 +111,7 @@ export default function RoleBuilderPage() {
               border: '1px solid #333', color: '#fff', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer'
             }}
           >
-            📥 Exportar JSON
+            Exportar JSON
           </button>
           <button
             onClick={handleSaveRoles}
@@ -123,7 +123,7 @@ export default function RoleBuilderPage() {
               cursor: saving ? 'wait' : 'pointer', boxShadow: '0 0 16px rgba(236, 72, 153, 0.4)'
             }}
           >
-            {saving ? 'GUARDANDO...' : '💾 GUARDAR ROLES'}
+            {saving ? 'GUARDANDO...' : 'GUARDAR ROLES'}
           </button>
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function RoleBuilderPage() {
                 onClick={() => handleDuplicate(r)}
                 style={{ background: '#1a1a20', border: '1px solid #333', color: '#a0a0a0', padding: '4px 8px', borderRadius: '4px', fontSize: '0.70rem', cursor: 'pointer' }}
               >
-                📋 Duplicar
+                Duplicar
               </button>
             </div>
 
@@ -167,13 +167,13 @@ export default function RoleBuilderPage() {
             {/* Properties Toggles */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '0.70rem', fontWeight: 800 }}>
               <span style={{ padding: '2px 8px', borderRadius: '4px', background: r.isVisible ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.05)', color: r.isVisible ? '#34d399' : '#71717a' }}>
-                {r.isVisible ? '👁️ Visible' : '🙈 Oculto'}
+                {r.isVisible ? 'Visible' : 'Oculto'}
               </span>
               <span style={{ padding: '2px 8px', borderRadius: '4px', background: r.isVerified ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.05)', color: r.isVerified ? '#38bdf8' : '#71717a' }}>
                 {r.isVerified ? '⭐ Verificado' : 'Normal'}
               </span>
               <span style={{ padding: '2px 8px', borderRadius: '4px', background: r.isAutoAssign ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)', color: r.isAutoAssign ? '#fbbf24' : '#71717a' }}>
-                {r.isAutoAssign ? '🤖 Automático' : 'Manual'}
+                {r.isAutoAssign ? 'Automático' : 'Manual'}
               </span>
             </div>
           </div>

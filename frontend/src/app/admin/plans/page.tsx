@@ -22,8 +22,8 @@ interface CustomPlanConfig {
 const DEFAULT_PLANS: CustomPlanConfig[] = [
   { id: 'FREE', name: 'Plan Gratis (Aventurero)', price: '$0 / mes', multiplier: 1.0, uploadLimitMb: 5, storeDiscountPct: 0, monthlyStardustBonus: 0, allowGifs: false, allowCustomPets: false, color: '#a0a0a0' },
   { id: 'ASTRO', name: 'Plan Astro ⭐', price: '$4.99 / mes (15,000 ⭐)', multiplier: 1.2, uploadLimitMb: 15, storeDiscountPct: 10, monthlyStardustBonus: 200, allowGifs: true, allowCustomPets: false, color: '#818cf8' },
-  { id: 'NOVA', name: 'Plan Nova 🌟', price: '$9.99 / mes (35,000 ⭐)', multiplier: 1.5, uploadLimitMb: 50, storeDiscountPct: 15, monthlyStardustBonus: 500, allowGifs: true, allowCustomPets: false, color: '#38bdf8' },
-  { id: 'STELLAR', name: 'Plan Stellar ✨', price: '$19.99 / mes (80,000 ⭐)', multiplier: 2.0, uploadLimitMb: 200, storeDiscountPct: 25, monthlyStardustBonus: 1000, allowGifs: true, allowCustomPets: true, color: '#ffd700' },
+  { id: 'NOVA', name: 'Plan Nova', price: '$9.99 / mes (35,000 ⭐)', multiplier: 1.5, uploadLimitMb: 50, storeDiscountPct: 15, monthlyStardustBonus: 500, allowGifs: true, allowCustomPets: false, color: '#38bdf8' },
+  { id: 'STELLAR', name: 'Plan Stellar', price: '$19.99 / mes (80,000 ⭐)', multiplier: 2.0, uploadLimitMb: 200, storeDiscountPct: 25, monthlyStardustBonus: 1000, allowGifs: true, allowCustomPets: true, color: '#ffd700' },
 ];
 
 export default function PlanBuilderPage() {
@@ -53,7 +53,7 @@ export default function PlanBuilderPage() {
           },
         }),
       });
-      showToast('¡Configuración de Planes Premium guardada con éxito! 💳', 'success');
+      showToast('¡Configuración de Planes Premium guardada con éxito!', 'success');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error al guardar planes', 'error');
     } finally {
@@ -74,7 +74,7 @@ export default function PlanBuilderPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            💳 Constructor Visual de Planes Premium (Plan Builder)
+            Constructor Visual de Planes Premium (Plan Builder)
           </h1>
           <p style={{ fontSize: '0.82rem', color: '#a0a0a0', margin: '4px 0 0' }}>
             Configura precios, multiplicadores de Stardust, espacio de subida y ventajas de cada membresía.
@@ -91,7 +91,7 @@ export default function PlanBuilderPage() {
             cursor: saving ? 'wait' : 'pointer', boxShadow: '0 0 16px rgba(255, 215, 0, 0.4)'
           }}
         >
-          {saving ? 'GUARDANDO...' : '💾 GUARDAR PLANES'}
+          {saving ? 'GUARDANDO...' : 'GUARDAR PLANES'}
         </button>
       </div>
 
@@ -158,7 +158,7 @@ export default function PlanBuilderPage() {
                   checked={p.allowGifs}
                   onChange={e => updatePlanField(idx, 'allowGifs', e.target.checked)}
                 />
-                🎞️ Permitir GIFs Animadas
+                Permitir GIFs Animados
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: p.allowCustomPets ? '#fbbf24' : '#71717a' }}>
@@ -167,7 +167,7 @@ export default function PlanBuilderPage() {
                   checked={p.allowCustomPets}
                   onChange={e => updatePlanField(idx, 'allowCustomPets', e.target.checked)}
                 />
-                🐾 Solicitud de Mascota Personalizada
+                Solicitud de Mascota Personalizada
               </label>
             </div>
 

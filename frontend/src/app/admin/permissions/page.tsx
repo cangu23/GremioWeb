@@ -15,8 +15,8 @@ interface PermissionItem {
 
 const PERMISSION_CATEGORIES: { category: string; icon: string; items: PermissionItem[] }[] = [
   {
-    category: '📰 Feed & Publicaciones',
-    icon: '📰',
+    category: 'Feed & Publicaciones',
+    icon: '',
     items: [
       { id: 'feed_create', name: 'Crear publicaciones', category: 'Feed', description: 'Permite publicar en el Feed principal' },
       { id: 'feed_edit', name: 'Editar publicaciones', category: 'Feed', description: 'Editar texto e imágenes de sus publicaciones' },
@@ -30,8 +30,8 @@ const PERMISSION_CATEGORIES: { category: string; icon: string; items: Permission
     ],
   },
   {
-    category: '💬 Comentarios & Respuestas',
-    icon: '💬',
+    category: 'Comentarios & Respuestas',
+    icon: '',
     items: [
       { id: 'comments_create', name: 'Comentar', category: 'Comentarios', description: 'Escribir comentarios en publicaciones' },
       { id: 'comments_reply', name: 'Responder comentarios', category: 'Comentarios', description: 'Crear hilos de respuesta' },
@@ -41,10 +41,10 @@ const PERMISSION_CATEGORIES: { category: string; icon: string; items: Permission
     ],
   },
   {
-    category: '💰 Economía & Comercio',
-    icon: '💰',
+    category: 'Economía & Comercio',
+    icon: '',
     items: [
-      { id: 'economy_grant_stardust', name: 'Otorgar Stardust 👑', category: 'Economía', description: 'Crear/Regalar Stardust a cualquier usuario' },
+      { id: 'economy_grant_stardust', name: 'Otorgar Stardust', category: 'Economía', description: 'Crear/Regalar Stardust a cualquier usuario' },
       { id: 'economy_transfer', name: 'Transferir Stardust', category: 'Economía', description: 'Enviar Stardust entre usuarios' },
       { id: 'economy_gift_plan', name: 'Regalar Plan Premium', category: 'Economía', description: 'Regalar membresía Astro/Nova/Stellar' },
       { id: 'economy_giveaway', name: 'Crear Sorteos', category: 'Economía', description: 'Crear sorteos automáticos de Stardust' },
@@ -52,8 +52,8 @@ const PERMISSION_CATEGORIES: { category: string; icon: string; items: Permission
     ],
   },
   {
-    category: '🎨 Perfil & Personalización',
-    icon: '🎨',
+    category: 'Perfil & Personalización',
+    icon: '',
     items: [
       { id: 'profile_custom_url', name: 'URL personalizada', category: 'Perfil', description: 'Enlace personalizado gremioestelar.com/u/alias' },
       { id: 'profile_neon_notes', name: 'Notas neón custom', category: 'Perfil', description: 'Glow neón y color personalizado en notas' },
@@ -62,8 +62,8 @@ const PERMISSION_CATEGORIES: { category: string; icon: string; items: Permission
     ],
   },
   {
-    category: '🎪 Gremios & Eventos',
-    icon: '🎪',
+    category: 'Gremios & Eventos',
+    icon: '',
     items: [
       { id: 'guilds_create', name: 'Fundar Gremios', category: 'Gremios', description: 'Crear y liderar un nuevo Gremio' },
       { id: 'guilds_subgroups', name: 'Crear Subgrupos', category: 'Gremios', description: 'Canales y sub-rangos internos en gremio' },
@@ -72,25 +72,25 @@ const PERMISSION_CATEGORIES: { category: string; icon: string; items: Permission
     ],
   },
   {
-    category: '🔴 Creadores & Live Monitor',
-    icon: '🔴',
+    category: 'Creadores & Live Monitor',
+    icon: '',
     items: [
-      { id: 'creator_live_badge', name: 'Alerta Live 🔴', category: 'Creadores', description: 'Banner de en vivo automático al transmitir' },
-      { id: 'creator_tips', name: 'Recibir Donaciones 💖', category: 'Creadores', description: 'Habilitar botón de propinas de Stardust' },
+      { id: 'creator_live_badge', name: 'Alerta Live', category: 'Creadores', description: 'Banner de en vivo automático al transmitir' },
+      { id: 'creator_tips', name: 'Recibir Donaciones', category: 'Creadores', description: 'Habilitar botón de propinas de Stardust' },
       { id: 'creator_goals', name: 'Objetivos de Donación', category: 'Creadores', description: 'Barras de meta de donaciones en perfil' },
       { id: 'creator_clips', name: 'Publicar Clips', category: 'Creadores', description: 'Pestaña de vídeos cortos y destacados' },
     ],
   },
   {
-    category: '🛡️ Moderación & Seguridad',
-    icon: '🛡️',
+    category: 'Moderación & Seguridad',
+    icon: '',
     items: [
       { id: 'mod_reports', name: 'Revisar Reportes', category: 'Moderación', description: 'Acceso a la bandeja de reportes de usuarios' },
       { id: 'mod_slowmode', name: 'Modo Lento (Cooldown)', category: 'Moderación', description: 'Activar cooldown de envío en chats' },
       { id: 'mod_timeout', name: 'Timeout / Silenciar', category: 'Moderación', description: 'Silenciar usuarios temporalmente' },
       { id: 'mod_ban', name: 'Ban / Expulsar', category: 'Moderación', description: 'Banear usuarios del sistema' },
       { id: 'mod_shadowban', name: 'Shadowban', category: 'Moderación', description: 'Ocultar contenido sin notificar al usuario' },
-      { id: 'mod_view_ip', name: 'Ver IP / Dispositivos 👑', category: 'Moderación', description: 'Inspeccionar IP y sesiones (Solo Admin/Owner)' },
+      { id: 'mod_view_ip', name: 'Ver IP / Dispositivos', category: 'Moderación', description: 'Inspeccionar IP y sesiones (Solo Admin/Owner)' },
     ],
   },
 ];
@@ -168,7 +168,7 @@ export default function PermissionMatrixPage() {
           },
         }),
       });
-      showToast('¡Matriz de Permisos guardada con éxito! 🛡️', 'success');
+      showToast('¡Matriz de Permisos guardada con éxito!', 'success');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error al guardar matriz', 'error');
     } finally {
@@ -183,7 +183,7 @@ export default function PermissionMatrixPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            📊 Matriz Granular de Permisos (Spreadsheet Matrix)
+            Matriz Granular de Permisos
           </h1>
           <p style={{ fontSize: '0.82rem', color: '#a0a0a0', margin: '4px 0 0' }}>
             Controla visualmente los interruptores de cada función por Rol Base, Plan y Cargo Staff sin tocar código.
@@ -206,7 +206,7 @@ export default function PermissionMatrixPage() {
             transition: 'all 0.2s ease',
           }}
         >
-          {saving ? 'GUARDANDO MATRIZ...' : '💾 GUARDAR MATRIZ DE PERMISOS'}
+          {saving ? 'GUARDANDO MATRIZ...' : 'GUARDAR MATRIZ DE PERMISOS'}
         </button>
       </div>
 
@@ -214,7 +214,7 @@ export default function PermissionMatrixPage() {
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', background: '#0d0d12', padding: '14px', borderRadius: '8px', border: '1px solid #1a1a20' }}>
         <input
           type="text"
-          placeholder="🔍 Buscar permiso por nombre o ID..."
+          placeholder="Buscar permiso por nombre o ID..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{

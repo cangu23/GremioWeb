@@ -774,7 +774,7 @@ function RouletteContent() {
                   animation: !spinning ? 'roulette-pulse 2s ease-in-out infinite' : 'none',
                 }}
               >
-                {spinning ? 'Girando...' : '🎰 ¡GIRO GRATIS DIARIO!'}
+                {spinning ? 'Girando...' : 'GIRAR RULETA DIARIA'}
               </button>
             ) : (
               /* Stardust Spin Button when Free Spin is on Cooldown */
@@ -819,7 +819,7 @@ function RouletteContent() {
           {/* User Lifetime Stats Card */}
           <div className="glass" style={{ padding: '20px' }}>
             <h3 style={{ fontSize: '0.98rem', fontWeight: 700, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📊</span> Mis Estadísticas en la Ruleta
+              Mis Estadísticas en la Ruleta
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center' }}>
@@ -844,7 +844,7 @@ function RouletteContent() {
           <div className="glass" style={{ padding: '22px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🏆</span> Premios y Probabilidades
+                Premios y Probabilidades
               </h2>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '6px' }}>
                 8 Recompensas
@@ -912,7 +912,7 @@ function RouletteContent() {
           <div className="glass" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>📜</span> Historial de Giros
+                Historial de Giros
               </h3>
               <button
                 onClick={() => setShowHistory(!showHistory)}
@@ -998,7 +998,7 @@ function RouletteContent() {
               </div>
 
               <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '6px' }}>
-                {spinResult.prize.id === 'nothing' ? '¡Vaya!' : '¡Felicidades! 🎉'}
+                {spinResult.prize.id === 'nothing' ? '¡Vaya!' : '¡Felicidades!'}
               </h2>
 
               <p style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
@@ -1022,7 +1022,7 @@ function RouletteContent() {
                   </div>
                   {(spinResult.streakBonusPercent || 0) > 0 && (
                     <div style={{ fontSize: '0.78rem', color: '#FBBF24', fontWeight: 700 }}>
-                      🔥 Incluye +{spinResult.streakBonusPercent}% por tu racha diaria
+                      Incluye +{spinResult.streakBonusPercent}% por tu racha diaria
                     </div>
                   )}
                 </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { Sparkles, Star, Crown, Shield } from '@/components/ui/Icons';
 
 interface PlanFeature {
   text: string;
@@ -14,7 +15,7 @@ interface Plan {
   price: string;
   period: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
   features: PlanFeature[];
   cta: { label: string; href: string };
   highlighted?: boolean;
@@ -27,7 +28,7 @@ const plans: Plan[] = [
     price: 'Gratis',
     period: 'siempre',
     description: 'Perfecto para explorar la plataforma y conectar con la comunidad.',
-    icon: '✦',
+    icon: <Sparkles size={22} color="var(--primary)" />,
     features: [
       { text: 'Perfil básico', included: true },
       { text: 'Feed social', included: true },
@@ -45,7 +46,7 @@ const plans: Plan[] = [
     price: 'Gratis',
     period: 'por ahora',
     description: 'Todo lo que necesitas para brillar como creador de contenido virtual.',
-    icon: '🎭',
+    icon: <Star size={22} color="var(--primary)" />,
     highlighted: true,
     features: [
       { text: 'Todo lo del plan Gratuito', included: true },
@@ -65,7 +66,7 @@ const plans: Plan[] = [
     price: 'Próximamente',
     period: '',
     description: 'Lleva tu carrera al siguiente nivel con herramientas profesionales.',
-    icon: '🌟',
+    icon: <Crown size={22} color="var(--primary)" />,
     features: [
       { text: 'Todo lo del plan VTuber', included: true },
       { text: 'Estadísticas y análisis', included: true },
@@ -84,7 +85,7 @@ const plans: Plan[] = [
     price: 'A medida',
     period: '',
     description: 'Solución completa para agencias y grupos de gestión de VTubers.',
-    icon: '🏢',
+    icon: <Shield size={22} color="var(--primary)" />,
     features: [
       { text: 'Todo lo del plan Pro', included: true },
       { text: 'Múltiples perfiles', included: true },

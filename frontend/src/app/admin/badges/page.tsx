@@ -19,15 +19,15 @@ interface CustomBadgeConfig {
 }
 
 const DEFAULT_BADGES: CustomBadgeConfig[] = [
-  { id: 'FOUNDER', name: 'Fundador 🏆', rarity: 'LEGENDARY', color: '#ffd700', description: 'Pioneros del inicio de GremioWeb', isAnimated: true, isEventBadge: false, unlockCondition: 'Cuenta creada en el primer mes' },
-  { id: 'BETA_TESTER', name: 'Beta Tester 🧪', rarity: 'EPIC', color: '#00e5ff', description: 'Evaluador de funciones experimentales', isAnimated: false, isEventBadge: false, unlockCondition: 'Asignado por el Staff' },
-  { id: 'DONATOR', name: 'Donador 💜', rarity: 'RARE', color: '#c084fc', description: 'Mecenas de la comunidad', isAnimated: false, isEventBadge: false, unlockCondition: 'Contribuciones y donaciones' },
-  { id: 'VERIFIED', name: 'Verificado ⭐', rarity: 'EPIC', color: '#38bdf8', description: 'Identidad autenticada oficialmente', isAnimated: false, isEventBadge: false, unlockCondition: 'Verificación oficial' },
-  { id: 'DEVELOPER', name: 'Desarrollador 🎖️', rarity: 'LEGENDARY', color: '#34d399', description: 'Creador del sistema', isAnimated: true, isEventBadge: false, unlockCondition: 'Equipo de desarrollo' },
-  { id: 'LEGENDARY', name: 'Legendario 👑', rarity: 'LEGENDARY', color: '#fbbf24', description: 'Miembros de trayectoria estelar', isAnimated: true, isEventBadge: false, unlockCondition: 'Logros especiales' },
-  { id: 'EARLY_100', name: 'Primeros 100 🎉', rarity: 'EPIC', color: '#f472b6', description: 'Primeros 100 aventureros', isAnimated: false, isEventBadge: true, unlockCondition: 'Registros iniciales' },
-  { id: 'VETERAN_1YR', name: '1 Año 🎂', rarity: 'RARE', color: '#fb923c', description: '1 año en la comunidad', isAnimated: false, isEventBadge: false, unlockCondition: 'Antigüedad > 365 días' },
-  { id: 'EVENT_WINNER', name: 'Campeón 🏅', rarity: 'LEGENDARY', color: '#eab308', description: 'Ganador de Torneo / Evento', isAnimated: true, isEventBadge: true, unlockCondition: 'Victoria en evento comunitario' },
+  { id: 'FOUNDER', name: 'Fundador', rarity: 'LEGENDARY', color: '#ffd700', description: 'Pioneros del inicio de GremioWeb', isAnimated: true, isEventBadge: false, unlockCondition: 'Cuenta creada en el primer mes' },
+  { id: 'BETA_TESTER', name: 'Beta Tester', rarity: 'EPIC', color: '#00e5ff', description: 'Evaluador de funciones experimentales', isAnimated: false, isEventBadge: false, unlockCondition: 'Asignado por el Staff' },
+  { id: 'DONATOR', name: 'Donador', rarity: 'RARE', color: '#c084fc', description: 'Mecenas de la comunidad', isAnimated: false, isEventBadge: false, unlockCondition: 'Contribuciones y donaciones' },
+  { id: 'VERIFIED', name: 'Verificado', rarity: 'EPIC', color: '#38bdf8', description: 'Identidad autenticada oficialmente', isAnimated: false, isEventBadge: false, unlockCondition: 'Verificación oficial' },
+  { id: 'DEVELOPER', name: 'Desarrollador', rarity: 'LEGENDARY', color: '#34d399', description: 'Creador del sistema', isAnimated: true, isEventBadge: false, unlockCondition: 'Equipo de desarrollo' },
+  { id: 'LEGENDARY', name: 'Legendario', rarity: 'LEGENDARY', color: '#fbbf24', description: 'Miembros de trayectoria estelar', isAnimated: true, isEventBadge: false, unlockCondition: 'Logros especiales' },
+  { id: 'EARLY_100', name: 'Primeros 100', rarity: 'EPIC', color: '#f472b6', description: 'Primeros 100 aventureros', isAnimated: false, isEventBadge: true, unlockCondition: 'Registros iniciales' },
+  { id: 'VETERAN_1YR', name: '1 Año', rarity: 'RARE', color: '#fb923c', description: '1 año en la comunidad', isAnimated: false, isEventBadge: false, unlockCondition: 'Antigüedad > 365 días' },
+  { id: 'EVENT_WINNER', name: 'Campeón', rarity: 'LEGENDARY', color: '#eab308', description: 'Ganador de Torneo / Evento', isAnimated: true, isEventBadge: true, unlockCondition: 'Victoria en evento comunitario' },
 ];
 
 export default function BadgeBuilderPage() {
@@ -57,7 +57,7 @@ export default function BadgeBuilderPage() {
           },
         }),
       });
-      showToast('¡Configuración de Badges guardada con éxito! 🏆', 'success');
+      showToast('¡Configuración de Badges guardada con éxito!', 'success');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error al guardar badges', 'error');
     } finally {
@@ -72,7 +72,7 @@ export default function BadgeBuilderPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            🏆 Constructor Visual de Badges / Insignias (Badge Builder)
+            Constructor Visual de Badges e Insignias (Badge Builder)
           </h1>
           <p style={{ fontSize: '0.82rem', color: '#a0a0a0', margin: '4px 0 0' }}>
             Gestiona reconocimientos acumulables, rarezas, condiciones de desbloqueo e insignias de eventos.
@@ -89,7 +89,7 @@ export default function BadgeBuilderPage() {
             cursor: saving ? 'wait' : 'pointer', boxShadow: '0 0 16px rgba(167, 139, 250, 0.4)'
           }}
         >
-          {saving ? 'GUARDANDO...' : '💾 GUARDAR INSIGNIAS'}
+          {saving ? 'GUARDANDO...' : 'GUARDAR INSIGNIAS'}
         </button>
       </div>
 
@@ -123,10 +123,10 @@ export default function BadgeBuilderPage() {
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '0.70rem', fontWeight: 800 }}>
               <span style={{ padding: '2px 8px', borderRadius: '4px', background: b.isAnimated ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.05)', color: b.isAnimated ? '#34d399' : '#71717a' }}>
-                {b.isAnimated ? '✨ Animada' : 'Estática'}
+                {b.isAnimated ? 'Animada' : 'Estática'}
               </span>
               <span style={{ padding: '2px 8px', borderRadius: '4px', background: b.isEventBadge ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)', color: b.isEventBadge ? '#fbbf24' : '#71717a' }}>
-                {b.isEventBadge ? '🎉 Evento Especial' : 'Permanente'}
+                {b.isEventBadge ? 'Evento Especial' : 'Permanente'}
               </span>
             </div>
           </div>
@@ -182,7 +182,7 @@ function AdminAchievementAssigner() {
           achievementId: selectedAchievementId,
         }),
       });
-      showToast('¡Logro e insignia asignados correctamente al usuario! 🏆', 'success');
+      showToast('¡Logro e insignia asignados correctamente al usuario!', 'success');
       setUsernameQuery('');
       setFoundUsers([]);
     } catch (err: unknown) {
@@ -202,10 +202,10 @@ function AdminAchievementAssigner() {
       boxShadow: '0 4px 24px rgba(139,92,246,0.15)',
     }}>
       <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fff', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        👑 Asignador Manual de Logros e Insignias de Prestigio
+        Asignador Manual de Logros e Insignias de Prestigio
       </h3>
       <p style={{ fontSize: '0.82rem', color: '#a0a0a0', marginBottom: '20px' }}>
-        Otorga distinciones únicas como <strong>Pionero de la Racha Gremial ⚡</strong>, <strong>Señor del Fuego 🔥</strong> o <strong>Leyenda 👑</strong> a miembros destacados.
+        Otorga distinciones de mérito a miembros destacados de la comunidad.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', alignItems: 'end' }}>
@@ -246,7 +246,7 @@ function AdminAchievementAssigner() {
               onClick={handleSearchUser}
               style={{ padding: '10px 16px', borderRadius: '8px', background: '#222', border: '1px solid #444', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
             >
-              🔍 Buscar
+              Buscar
             </button>
           </div>
         </div>
@@ -296,7 +296,7 @@ function AdminAchievementAssigner() {
           boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
         }}
       >
-        {assigning ? 'OTORGANDO LOGRO...' : '🏆 ASIGNAR LOGRO E INSIGNIA DE PRESTIGIO'}
+        {assigning ? 'OTORGANDO LOGRO...' : 'ASIGNAR LOGRO E INSIGNIA'}
       </button>
     </div>
   );

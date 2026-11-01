@@ -923,7 +923,7 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
                   onMouseOver={e => { e.currentTarget.style.background = 'rgba(236,72,153,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
                   onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
                   <span style={{ color: '#ec4899', display: 'inline-flex' }}>{Icons.trending}</span>
-                  <span style={{ color: '#ec4899', fontWeight: 700 }}>{hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? '👑 Panel Admin' : '🛡️ Panel Moderación'}</span>
+                  <span style={{ color: '#ec4899', fontWeight: 700 }}>{hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? 'Panel Admin' : 'Panel Moderación'}</span>
                 </Link>
               </>
             )}
@@ -1077,7 +1077,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
           {hasAnyRole(user.role, ['ADMIN', 'MODERATOR', 'STAFF', 'MOD', 'OWNER']) && (
             <Link href="/admin" onClick={closeMenu} style={{ ...mobileLink, color: 'var(--primary)', fontWeight: 600 }}>
               <span style={{ display: 'inline-flex', width: '20px', justifyContent: 'center' }}><Settings size={18} color="var(--primary)" /></span>
-              <span>{hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? '👑 Panel Admin' : '🛡️ Panel Moderación'}</span>
+              <span>{hasAnyRole(user.role, ['ADMIN', 'OWNER']) ? 'Panel Admin' : 'Panel Moderación'}</span>
             </Link>
           )}
 

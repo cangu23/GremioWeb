@@ -35,7 +35,7 @@ export default function AdminSettingsPage() {
         method: 'PATCH',
         body: JSON.stringify({ settings }),
       });
-      showToast('¡Configuración Global guardada con éxito! ⚙️', 'success');
+      showToast('¡Configuración Global guardada con éxito!', 'success');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error al guardar ajustes', 'error');
     } finally {
@@ -48,7 +48,7 @@ export default function AdminSettingsPage() {
       
       <div>
         <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          ⚙️ Configuración Global del Sistema (System Settings)
+          Configuración Global del Sistema (System Settings)
         </h1>
         <p style={{ fontSize: '0.82rem', color: '#a0a0a0', margin: '4px 0 0' }}>
           Ajustes visuales del sitio, integraciones OAuth (Discord, Twitch, Kick) y valores por defecto de economía.
@@ -59,7 +59,7 @@ export default function AdminSettingsPage() {
         
         {/* Section 1: General */}
         <div style={{ background: '#0d0d12', border: '1px solid #1a1a20', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#fbbf24', margin: 0 }}>🌐 General & Marca</h2>
+          <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#fbbf24', margin: 0 }}>General & Marca</h2>
           
           <div>
             <label style={{ fontSize: '0.78rem', color: '#a0a0a0', display: 'block', marginBottom: '4px' }}>Nombre del Sitio:</label>
@@ -84,7 +84,7 @@ export default function AdminSettingsPage() {
 
         {/* Section 2: Economy */}
         <div style={{ background: '#0d0d12', border: '1px solid #1a1a20', borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#ffd700', margin: 0 }}>💰 Economía & Stardust</h2>
+          <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#ffd700', margin: 0 }}>Economía & Polvo Estelar</h2>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
@@ -123,7 +123,7 @@ export default function AdminSettingsPage() {
             boxShadow: '0 0 16px rgba(251, 191, 36, 0.4)',
           }}
         >
-          {saving ? 'GUARDANDO...' : '💾 GUARDAR CONFIGURACIÓN GLOBAL'}
+          {saving ? 'GUARDANDO...' : 'GUARDAR CONFIGURACIÓN GLOBAL'}
         </button>
 
       </form>

@@ -317,7 +317,7 @@ export default function InventoryPage() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '36px' }}>
           <h1 style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 800, marginBottom: '8px' }}>
-            🎒 Mi Inventario
+            Mi Inventario
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', marginBottom: '20px' }}>
             Administra y equipa los ítems que has adquirido en el Observatorio Estelar
@@ -334,7 +334,7 @@ export default function InventoryPage() {
                 textDecoration: 'none', boxShadow: '0 4px 16px rgba(139,92,246,0.3)',
               }}
             >
-              🔭 Observatorio Estelar
+              Observatorio Estelar
             </Link>
 
             <Link
@@ -348,7 +348,7 @@ export default function InventoryPage() {
                 textDecoration: 'none', boxShadow: '0 4px 14px rgba(255,215,0,0.15)',
               }}
             >
-              🏆 Mis Logros
+              Mis Logros
             </Link>
 
             <button
@@ -363,7 +363,7 @@ export default function InventoryPage() {
                 boxShadow: '0 4px 14px rgba(245,158,11,0.2)',
               }}
             >
-              🐾 Solicitar Mascota
+              Solicitar Mascota
             </button>
           </div>
         </div>
@@ -408,7 +408,7 @@ export default function InventoryPage() {
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <h3 style={{ fontSize: '1.02rem', fontWeight: 800, margin: '0 0 4px', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                🏆 Marco de Plan {effectivePlan}
+                Marco de Plan {effectivePlan}
                 <span style={{
                   fontSize: '0.6rem', padding: '2px 8px', borderRadius: '10px',
                   background: planFrameHidden ? 'rgba(255,255,255,0.08)' : 'rgba(255,215,0,0.18)',
@@ -440,7 +440,7 @@ export default function InventoryPage() {
                 transition: 'all 0.2s', opacity: togglingFrame ? 0.6 : 1,
               }}
             >
-              {togglingFrame ? '...' : planFrameHidden ? '✨ Equipar' : 'Quitar'}
+              {togglingFrame ? '...' : planFrameHidden ? 'Equipar' : 'Quitar'}
             </button>
           </div>
         )}
@@ -452,13 +452,13 @@ export default function InventoryPage() {
         }}>
           {[
             { key: 'all', label: `Todos (${inventory.length})` },
-            { key: 'equipped', label: `✨ Equipados (${inventory.filter(p => p.equipped).length})` },
+            { key: 'equipped', label: `Equipados (${inventory.filter(p => p.equipped).length})` },
             { key: 'FRAME', label: '⭕ Marcos' },
-            { key: 'TITLE', label: '👑 Títulos' },
-            { key: 'BADGE', label: '🏅 Insignias' },
-            { key: 'COLOR', label: '🎨 Colores' },
-            { key: 'BANNER', label: '🖼️ Banners' },
-            { key: 'consumables', label: '📦 Consumibles' },
+            { key: 'TITLE', label: 'Títulos' },
+            { key: 'BADGE', label: 'Insignias' },
+            { key: 'COLOR', label: 'Colores' },
+            { key: 'BANNER', label: 'Banners' },
+            { key: 'consumables', label: 'Consumibles' },
           ].map((f) => (
             <button
               key={f.key}
@@ -564,7 +564,7 @@ export default function InventoryPage() {
                           transition: 'all 0.2s', opacity: isBusy ? 0.6 : 1,
                         }}
                       >
-                        {isBusy ? '...' : equipped ? '✓ Desequipar' : 'Equipar'}
+                        {isBusy ? '...' : equipped ? 'Desequipar' : 'Equipar'}
                       </button>
                     ) : (
                       <button

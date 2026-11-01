@@ -276,3 +276,35 @@ export const RefreshCw = (props: IconProps) => withDefaults(
 export const UserCheck = (props: IconProps) => withDefaults(
   <><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><polyline points="17 11 19 13 23 9" /></>, props
 );
+
+export const DollarSign = (props: IconProps) => withDefaults(
+  <><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></>, props
+);
+
+export const CreditCard = (props: IconProps) => withDefaults(
+  <><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></>, props
+);
+
+export const Tag = (props: IconProps) => withDefaults(
+  <><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></>, props
+);
+
+export const Server = (props: IconProps) => withDefaults(
+  <><rect x="2" y="2" width="20" height="8" rx="2" ry="2" /><rect x="2" y="14" width="20" height="8" rx="2" ry="2" /><line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" /></>, props
+);
+
+export const Crown = (props: IconProps) => withDefaults(
+  <><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" /></>, props
+);
+
+export const Zap = (props: IconProps) => withDefaults(
+  <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></>, props
+);
+
+export const Copy = (props: IconProps) => withDefaults(
+  <><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>, props
+);
+
+export const Clock = (props: IconProps) => withDefaults(
+  <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>, props
+);

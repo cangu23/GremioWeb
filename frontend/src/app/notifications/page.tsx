@@ -76,7 +76,7 @@ function NotificationsContent() {
     // Navbar en el socket compartido (el contador de notificaciones se rompería).
     const handleNewNotif = (notif: Notification) => {
       setNotifications(prev => [notif, ...prev]);
-      showToast(`🔔 ${notif.title}`, 'info');
+      showToast(notif.title, 'info');
     };
     try {
       sock = connectSocket();
@@ -280,7 +280,7 @@ function NotificationsContent() {
               }}
               title="Borrar notificaciones ya leídas"
             >
-              🗑️ Limpiar leídas
+              Limpiar leídas
             </button>
           )}
         </div>
