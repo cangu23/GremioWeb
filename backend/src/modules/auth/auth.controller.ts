@@ -4,7 +4,7 @@ import * as AuthService from './auth.service';
 // 30 days in milliseconds
 const REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 
-const getRefreshCookieOptions = (req: Request) => {
+export const getRefreshCookieOptions = (req: Request) => {
   const isProduction = process.env.NODE_ENV === 'production';
   const isSecure = isProduction || req.secure || req.headers['x-forwarded-proto'] === 'https';
 

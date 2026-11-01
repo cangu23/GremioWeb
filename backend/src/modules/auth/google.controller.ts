@@ -1,23 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import * as GoogleService from './google.service';
+import { getRefreshCookieOptions } from './auth.controller';
 
 export const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { credential } = req.body;
-    if (!credential) {
+    if (!credential || typeof credential !== 'string') {
       return res.status(400).json({ status: 'error', message: 'Google credential is required' });
     }
 
     const authResponse = await GoogleService.authenticateWithGoogle(credential);
 
-    // Set refresh token as httpOnly cookie
-    res.cookie('refreshToken', authResponse.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      path: '/',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
+    // Set refresh token using unified secure cookie options
+    res.cookie('refreshToken', authResponse.refreshToken, getRefreshCookieOptions(req));
 
     res.json({
       accessToken: authResponse.accessToken,
