@@ -84,12 +84,23 @@ export default function HeroSection() {
           apiFetch('/vtubers/live', {}).catch(() => []),
         ]);
         setStats(s || null);
+        const gurenDefault: FloatingVTuber = {
+          id: 'guren-lead',
+          userId: 'gurenvt_',
+          displayName: 'Guren Tatsumaki',
+          avatarUrl: '/images/guren-avatar.jpg',
+          isLive: true,
+          user: { _count: { followers: 366 } },
+        };
+
         if (Array.isArray(live) && live.length > 0) {
           setFloating(live.slice(0, 3));
         } else {
           const featured = await apiFetch('/vtubers/featured', {}).catch(() => []);
           if (Array.isArray(featured) && featured.length > 0) {
             setFloating(featured.slice(0, 3));
+          } else {
+            setFloating([gurenDefault]);
           }
         }
       } catch {

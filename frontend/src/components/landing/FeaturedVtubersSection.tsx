@@ -49,6 +49,36 @@ function formatTimeAgo(dateStr: string): string {
   return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
+const GUREN_DEFAULT: FeaturedVTuber = {
+  id: 'gurenvt-lead',
+  userId: 'gurenvt_',
+  displayName: 'Guren Tatsumaki',
+  avatarUrl: '/images/guren-avatar.jpg',
+  bannerUrl: '/images/guren-banner.jpg',
+  description: 'Soy Christend Guren Tatsumaki クリステンド 紅蓮 竜巻, Emperador del Imperio CARMESI. ¡Únete a mis tropas en el Gremio Estelar!',
+  isLive: true,
+  isVerified: true,
+  twitchUrl: 'https://www.twitch.tv/gurenvt_',
+  youtubeUrl: null,
+  twitterUrl: null,
+  user: {
+    id: 'gurenvt_',
+    username: 'gurenvt_',
+    role: 'VTUBER',
+    _count: { followers: 366, following: 42 },
+  },
+  posts: [
+    {
+      id: 'post-guren-1',
+      content: 'Buenos días, criaturitas del Señor. El mundo les dice hola. ¡Hoy directo especial en VRChat y novedades del Gremio Estelar!',
+      mediaUrl: null,
+      createdAt: new Date().toISOString(),
+      _count: { comments: 14, likes: 48 },
+      hashtags: ['#ImperioCarmesí', '#VRChat', '#GremioEstelar'],
+    },
+  ],
+};
+
 export default function FeaturedVtubersSection() {
   const [vtubers, setVtubers] = useState<FeaturedVTuber[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,10 +89,13 @@ export default function FeaturedVtubersSection() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const data = await apiFetch('/vtubers/featured', {});
-        setVtubers(data);
-        if (data.length > 0) {
+        const data = await apiFetch('/vtubers/featured', {}).catch(() => []);
+        if (Array.isArray(data) && data.length > 0) {
+          setVtubers(data);
           setSelectedVtuber(data[0].id);
+        } else {
+          setVtubers([GUREN_DEFAULT]);
+          setSelectedVtuber(GUREN_DEFAULT.id);
         }
       } catch {
         /* silent */

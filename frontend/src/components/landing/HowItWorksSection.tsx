@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { User, Sparkles, Zap, Star, Check } from '@/components/ui/Icons';
+import Image from 'next/image';
+import { User, Sparkles, Zap, Check } from '@/components/ui/Icons';
 
 export default function HowItWorksSection() {
   const [visibleSteps, setVisibleSteps] = useState<Set<number>>(new Set());
@@ -75,7 +76,7 @@ export default function HowItWorksSection() {
           </p>
         </div>
 
-        {/* 3 Cyber-Agency Cards with Integrated Visual Previews */}
+        {/* 3 Cyber-Agency Cards with Real VTuber Showcase (GurenVT_) */}
         <div
           style={{
             display: 'grid',
@@ -93,7 +94,7 @@ export default function HowItWorksSection() {
             style={{
               padding: '32px 26px 28px',
               borderRadius: '20px',
-              background: 'linear-gradient(165deg, rgba(26,22,38,0.85), rgba(15,14,22,0.95))',
+              background: 'linear-gradient(165deg, rgba(26,20,32,0.88), rgba(15,12,20,0.96))',
               border: '1px solid rgba(139,92,246,0.3)',
               display: 'flex',
               flexDirection: 'column',
@@ -209,12 +210,12 @@ export default function HowItWorksSection() {
               </p>
             </div>
 
-            {/* Visual Graphic Element: Character Dossier Preview */}
+            {/* Visual Graphic Element: Real VTuber Dossier Preview (GurenVT_) */}
             <div
               style={{
                 borderRadius: '14px',
-                background: 'rgba(10,10,16,0.65)',
-                border: '1px solid rgba(139,92,246,0.22)',
+                background: 'rgba(12,10,18,0.7)',
+                border: '1px solid rgba(139,92,246,0.25)',
                 padding: '16px 18px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -223,7 +224,7 @@ export default function HowItWorksSection() {
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '0.64rem', letterSpacing: '0.08em', fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase' }}>
-                  DOSSIER ARCHIVE // F-01
+                  DOSSIER ARCHIVE // IMPERIO CARMESÍ
                 </span>
                 <span
                   style={{
@@ -244,49 +245,53 @@ export default function HowItWorksSection() {
                 </span>
               </div>
 
-              {/* Character mini badge preview */}
+              {/* Character mini badge preview with real Guren avatar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div
                   style={{
-                    width: '40px',
-                    height: '40px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
-                    border: '2px solid rgba(255,255,255,0.2)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    border: '2px solid rgba(239,68,68,0.6)',
+                    boxShadow: '0 0 14px rgba(239,68,68,0.3)',
                     flexShrink: 0,
+                    background: '#1a1016',
                   }}
                 >
-                  ★
+                  <Image
+                    src="/images/guren-avatar.jpg"
+                    alt="GurenVT_"
+                    fill
+                    sizes="44px"
+                    style={{ objectFit: 'cover' }}
+                  />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                    Luna Astral // ルナ
+                  <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>Guren Tatsumaki</span>
+                    <span style={{ fontSize: '0.72rem', color: 'rgba(239,68,68,0.85)', fontWeight: 600 }}>// 紅蓮 竜巻</span>
                   </div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                    Vocalist & Gaming VTuber
+                    Emperador del Imperio Carmesí · VTuber
                   </div>
                 </div>
               </div>
 
               {/* Tech feature pills */}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)' }}>
-                  2D Live2D
+                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(239,68,68,0.12)', color: '#fca5a5', fontWeight: 700 }}>
+                  Imperio Carmesí
                 </span>
                 <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)' }}>
-                  3D VRM
+                  VRChat
                 </span>
                 <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)' }}>
-                  Lore Oficial
+                  Live2D & 3D
                 </span>
                 <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(139,92,246,0.12)', color: '#c4b5fd', fontWeight: 700 }}>
-                  Galeria HD
+                  Lore Oficial
                 </span>
               </div>
             </div>
@@ -301,7 +306,7 @@ export default function HowItWorksSection() {
             style={{
               padding: '32px 26px 28px',
               borderRadius: '20px',
-              background: 'linear-gradient(165deg, rgba(20,26,38,0.85), rgba(12,17,26,0.95))',
+              background: 'linear-gradient(165deg, rgba(20,26,38,0.88), rgba(12,17,26,0.96))',
               border: '1px solid rgba(56,189,248,0.3)',
               display: 'flex',
               flexDirection: 'column',
@@ -417,12 +422,12 @@ export default function HowItWorksSection() {
               </p>
             </div>
 
-            {/* Visual Graphic Element: Live Radar & Equalizer Audio Visualizer */}
+            {/* Visual Graphic Element: Real Stream Preview (GurenVT_ on Twitch) */}
             <div
               style={{
                 borderRadius: '14px',
-                background: 'rgba(10,12,18,0.65)',
-                border: '1px solid rgba(56,189,248,0.22)',
+                background: 'rgba(10,12,18,0.7)',
+                border: '1px solid rgba(56,189,248,0.25)',
                 padding: '16px 18px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -448,19 +453,33 @@ export default function HowItWorksSection() {
                   <span className="landing-live-dot" style={{ width: '5px', height: '5px' }} />
                   ON AIR // 1080p60
                 </span>
-                <span style={{ fontSize: '0.62rem', color: '#38bdf8', fontWeight: 700, letterSpacing: '0.04em' }}>
-                  TWITCH × YOUTUBE
-                </span>
+                <a
+                  href="https://www.twitch.tv/gurenvt_"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: '0.64rem',
+                    color: '#9146ff',
+                    fontWeight: 800,
+                    letterSpacing: '0.04em',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  TWITCH // twitch.tv/gurenvt_ ↗
+                </a>
               </div>
 
-              {/* Stream Title & Equalizer Simulation */}
+              {/* Real Stream Title & Equalizer Simulation */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    Charla & Karaoke Cósmico
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    Buenos días, criaturitas del Señor | VRChat
                   </div>
                   <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                    Salas con Socket.IO y stickers 128px
+                    Transmisión en directo sincronizada con la portada
                   </div>
                 </div>
 
@@ -476,11 +495,11 @@ export default function HowItWorksSection() {
 
               {/* Sync status pills */}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(145,66,255,0.12)', color: '#c084fc', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(145,66,255,0.15)', color: '#c084fc', fontWeight: 700 }}>
                   Twitch Live API
                 </span>
-                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,0,0,0.1)', color: '#f87171', fontWeight: 600 }}>
-                  YouTube Live
+                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)' }}>
+                  Categoría: VRChat
                 </span>
                 <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(56,189,248,0.12)', color: '#38bdf8', fontWeight: 700 }}>
                   Cero Algoritmos
@@ -498,7 +517,7 @@ export default function HowItWorksSection() {
             style={{
               padding: '32px 26px 28px',
               borderRadius: '20px',
-              background: 'linear-gradient(165deg, rgba(34,26,20,0.85), rgba(20,16,12,0.95))',
+              background: 'linear-gradient(165deg, rgba(34,26,18,0.88), rgba(20,15,10,0.96))',
               border: '1px solid rgba(245,158,11,0.3)',
               display: 'flex',
               flexDirection: 'column',
@@ -614,12 +633,12 @@ export default function HowItWorksSection() {
               </p>
             </div>
 
-            {/* Visual Graphic Element: Season Pass Ticket & Creator Code Preview */}
+            {/* Visual Graphic Element: Creator Code Simulation with Guren's actual code */}
             <div
               style={{
                 borderRadius: '14px',
-                background: 'rgba(18,14,10,0.65)',
-                border: '1px dashed rgba(245,158,11,0.3)',
+                background: 'rgba(16,12,8,0.7)',
+                border: '1px dashed rgba(245,158,11,0.35)',
                 padding: '16px 18px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -645,40 +664,39 @@ export default function HowItWorksSection() {
                 </span>
               </div>
 
-              {/* Creator Code simulation banner */}
+              {/* Creator Code simulation banner with Guren */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '8px 12px',
+                  padding: '9px 12px',
                   borderRadius: '8px',
-                  background: 'rgba(0,0,0,0.35)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: 'rgba(0,0,0,0.4)',
+                  border: '1px solid rgba(245,158,11,0.25)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>CÓDIGO:</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f59e0b', letterSpacing: '0.08em' }}>
-                    LUNA
+                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#f59e0b', letterSpacing: '0.1em' }}>
+                    GUREN
                   </span>
-                  <Check size={12} color="#10b981" />
+                  <span style={{ color: '#10b981', display: 'flex', alignItems: 'center' }}>
+                    <Check size={14} color="#10b981" />
+                  </span>
                 </div>
                 <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#10b981' }}>
-                  +10% ⭐ Regalo Fan
+                  +10% ⭐ Regalo Tropas
                 </span>
               </div>
 
               {/* Split distribution summary */}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(245,158,11,0.12)', color: '#fbbf24', fontWeight: 700 }}>
-                  35% Creador
+                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(239,68,68,0.15)', color: '#fca5a5', fontWeight: 700 }}>
+                  35% Comisión @GurenVT_
                 </span>
                 <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)' }}>
                   35% Servidores
-                </span>
-                <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)' }}>
-                  30% Premios
                 </span>
                 <span style={{ fontSize: '0.64rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(16,185,129,0.12)', color: '#34d399', fontWeight: 700 }}>
                   100% Free Stardust

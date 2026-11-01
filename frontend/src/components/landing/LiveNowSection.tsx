@@ -35,6 +35,20 @@ function getEmbedUrl(url: string): string | null {
   return null;
 }
 
+const GUREN_LIVE_DEFAULT: LiveVTuber = {
+  id: 'guren-stream-default',
+  userId: 'gurenvt_',
+  displayName: 'Guren Tatsumaki',
+  avatarUrl: '/images/guren-avatar.jpg',
+  bannerUrl: '/images/guren-banner.jpg',
+  description: 'Emperador del Imperio Carmesí · VTuber',
+  isLive: true,
+  isVerified: true,
+  twitchUrl: 'https://www.twitch.tv/gurenvt_',
+  youtubeUrl: null,
+  user: { id: 'gurenvt_', username: 'gurenvt_', role: 'VTUBER' },
+};
+
 export default function LiveNowSection() {
   const [liveVtubers, setLiveVtubers] = useState<LiveVTuber[]>([]);
   const [loading, setLoading] = useState(true);

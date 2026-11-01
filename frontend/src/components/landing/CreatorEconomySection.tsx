@@ -51,7 +51,7 @@ const PILLARS: Pillar[] = [
 
 export default function CreatorEconomySection() {
   const [visible, setVisible] = useState(false);
-  const [simulatedCode, setSimulatedCode] = useState('ESTELAR');
+  const [simulatedCode, setSimulatedCode] = useState('GUREN');
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
