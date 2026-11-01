@@ -476,11 +476,12 @@ function CardContent({
             display: 'inline-block',
             padding: '3px 12px',
             borderRadius: '12px',
-            background: `${themeColor !== 'var(--primary)' ? themeColor : '#8b5cf6'}20`,
-            border: `1px solid ${themeColor !== 'var(--primary)' ? themeColor : '#8b5cf6'}40`,
-            color: themeColor !== 'var(--primary)' ? themeColor : '#a78bfa',
+            background: 'rgba(139, 92, 246, 0.25)',
+            border: '1px solid rgba(167, 139, 250, 0.45)',
+            color: '#f5f3ff',
             fontSize: '0.75rem',
             fontWeight: 700,
+            textShadow: '0 1px 3px rgba(0,0,0,0.5)',
           }}>
             {titleData?.title || titleData?.label || equippedTitle?.item?.name}
           </div>
@@ -489,10 +490,10 @@ function CardContent({
         {/* Oshi mark / fan name */}
         {(creator?.oshiMark || creator?.fanName) && (
           <p style={{
-            margin: '0 0 8px', fontSize: '0.72rem', color: themeColor, fontWeight: 600,
+            margin: '0 0 8px', fontSize: '0.75rem', color: '#e2e8f0', fontWeight: 600,
           }}>
             {creator?.oshiMark && <span style={{ marginRight: '6px' }}>{creator.oshiMark}</span>}
-            {creator?.fanName && <span>✨ {creator.fanName}</span>}
+            {creator?.fanName && <span style={{ color: '#c4b5fd' }}>✨ {creator.fanName}</span>}
           </p>
         )}
 
@@ -516,31 +517,40 @@ function CardContent({
         <div style={{
           display: 'flex', justifyContent: 'center', gap: '0',
           marginBottom: '16px',
-          background: 'rgba(255,255,255,0.03)',
+          background: 'rgba(255, 255, 255, 0.05)',
           borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
           overflow: 'hidden',
         }}>
           {[
-            { value: profile._count.followers, label: 'Seguidores', icon: '👥' },
-            { value: profile._count.following, label: 'Siguiendo', icon: '👤' },
-            { value: profile.level || 0, label: 'Nivel', icon: '⭐' },
-            { value: profile.xp || 0, label: 'XP', icon: '✨' },
+            { value: (profile._count.followers || 0).toLocaleString('es-ES'), label: 'Seguidores' },
+            { value: (profile._count.following || 0).toLocaleString('es-ES'), label: 'Siguiendo' },
+            { value: (profile.level || 0).toLocaleString('es-ES'), label: 'Nivel' },
+            { value: (profile.xp || 0).toLocaleString('es-ES'), label: 'XP' },
           ].map((stat, i) => (
             <div key={i} style={{
               flex: 1, textAlign: 'center', padding: '10px 4px',
-              borderRight: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+              borderRight: i < 3 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+              background: i % 2 === 1 ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
             }}>
               <div style={{
-                fontSize: '1rem', fontWeight: 800,
-                color: themeColor !== 'var(--primary)' ? themeColor : 'var(--accent, #a78bfa)',
-                textShadow: themeColor !== 'var(--primary)' ? `0 0 10px ${themeColor}66` : 'none',
+                fontSize: '1.05rem',
+                fontWeight: 800,
+                color: '#ffffff',
+                lineHeight: 1.2,
+                fontVariantNumeric: 'tabular-nums',
+                letterSpacing: '-0.02em',
+                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
               }}>
                 {stat.value}
               </div>
               <div style={{
-                fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '1px',
-                fontWeight: 500,
+                fontSize: '0.62rem',
+                color: 'rgba(255, 255, 255, 0.7)',
+                marginTop: '3px',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
               }}>
                 {stat.label}
               </div>
@@ -623,13 +633,19 @@ function CardContent({
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
               width: '100%', maxWidth: '240px',
-              padding: '8px 16px', borderRadius: '10px',
-              fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600,
-              background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)',
+              padding: '9px 16px', borderRadius: '10px',
+              fontSize: '0.82rem', color: '#ffffff', fontWeight: 600,
+              background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)',
               textDecoration: 'none', transition: 'all 0.15s',
             }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.18)'; e.currentTarget.style.color = '#fff'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.08)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.28)';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            }}
           >
             Ver perfil completo
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
