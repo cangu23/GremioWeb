@@ -125,10 +125,10 @@ export default function AdminFinanzasPage() {
       {/* Header */}
       <div>
         <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          💼 Centro Financiero & Economía Creadoras (35 / 35 / 30)
+          💼 Centro Financiero & Economía de Creadores (35 / 35 / 30)
         </h1>
         <p style={{ fontSize: '0.82rem', color: '#a0a0a0', margin: '4px 0 0' }}>
-          Gestión de ingresos por Pases Estelares, suscripciones, liquidación a creadoras y balance de servidores.
+          Gestión de ingresos por Pases Estelares, suscripciones, liquidación a VTubers y creadores, y balance de infraestructura.
         </p>
       </div>
 
@@ -618,3 +618,4 @@ export default function AdminFinanzasPage() {
     </div>
   );
 }
+

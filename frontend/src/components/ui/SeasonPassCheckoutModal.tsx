@@ -229,7 +229,7 @@ export default function SeasonPassCheckoutModal({
             </div>
           </div>
 
-          {/* Opción 3: Canjear con Polvo Estelar (Gratuito Jugando) */}
+          {/* Opción 3: Canjear con Polvo Estelar (Comunidad) */}
           <div
             onClick={() => setSelectedTier('STARDUST')}
             style={{
@@ -250,7 +250,7 @@ export default function SeasonPassCheckoutModal({
                 <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff' }}>Canjear con Polvo Estelar</span>
               </div>
               <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '2px 0 0 26px' }}>
-                Desbloquea jugando misiones y participando en la comunidad.
+                Canjea con tu Polvo Estelar acumulado apoyando streams y participando en la comunidad.
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -286,20 +286,20 @@ export default function SeasonPassCheckoutModal({
             }}
           >
             <div style={{ fontWeight: 700, color: '#e2e8f0', marginBottom: '4px' }}>
-              🌱 Economía Sostenible y Transparente:
+              🌱 Economía de Creadores y Sostenibilidad de la Plataforma:
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', marginTop: '6px' }}>
               <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', color: '#34d399' }}>
                 <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>35%</div>
-                <div>Creadoras</div>
+                <div>VTubers y Creadores</div>
               </div>
               <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8' }}>
                 <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>35%</div>
-                <div>Servidores</div>
+                <div>Infraestructura</div>
               </div>
               <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24' }}>
                 <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>30%</div>
-                <div>Desarrollo</div>
+                <div>Comunidad & Staff</div>
               </div>
             </div>
           </div>
@@ -363,3 +363,4 @@ export default function SeasonPassCheckoutModal({
 
   return createPortal(modalContent, document.body);
 }
+

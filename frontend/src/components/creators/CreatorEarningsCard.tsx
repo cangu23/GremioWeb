@@ -161,7 +161,7 @@ export default function CreatorEarningsCard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span style={{ fontSize: '1.4rem' }}>💎</span>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff', margin: 0 }}>
-              Panel de Creadora & Ganancias
+              Panel de Creador & Ganancias
             </h2>
             <span style={{
               fontSize: '0.68rem',
@@ -176,7 +176,7 @@ export default function CreatorEarningsCard() {
             </span>
           </div>
           <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: 0 }}>
-            Gana el 35% de cada Pase Estelar o membresía comprada con tu código o enlace directo.
+            Gana el 35% de cada Pase Estelar o membresía adquirida con tu código o enlace directo de la comunidad.
           </p>
         </div>
 
@@ -609,3 +609,4 @@ export default function CreatorEarningsCard() {
     </div>
   );
 }
+

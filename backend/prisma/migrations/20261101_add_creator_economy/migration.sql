@@ -81,3 +81,4 @@ ALTER TABLE "CreatorEarningsLog" ADD CONSTRAINT "CreatorEarningsLog_creatorCodeI
 
 -- AddForeignKey
 ALTER TABLE "CreatorEarningsLog" ADD CONSTRAINT "CreatorEarningsLog_buyerId_fkey" FOREIGN KEY ("buyerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
