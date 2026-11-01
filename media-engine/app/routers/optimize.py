@@ -1,5 +1,7 @@
 import io
 import logging
+import re
+import secrets
 import time
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Header
 from typing import Optional
@@ -13,11 +15,23 @@ from app.services.storage import upload, is_configured as r2_configured
 logger = logging.getLogger("media-engine")
 router = APIRouter()
 
+ALLOWED_FOLDER_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,32}$")
+
 
 def _require_internal_token(x_internal_token: str) -> None:
-    """Guard for internal endpoints. Only enforced when a token is configured."""
-    if settings.MEDIA_ENGINE_TOKEN and x_internal_token != settings.MEDIA_ENGINE_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    """Guard for internal endpoints. Enforces token with constant-time comparison."""
+    token = settings.MEDIA_ENGINE_TOKEN
+    # In production, MEDIA_ENGINE_TOKEN is strictly required to prevent unauthorized uploads
+    if not settings.DEBUG:
+        if not token:
+            logger.error("MEDIA_ENGINE_TOKEN is not configured in production. Rejecting request.")
+            raise HTTPException(status_code=401, detail="Internal authentication token not configured")
+        if not x_internal_token or not secrets.compare_digest(x_internal_token, token):
+            raise HTTPException(status_code=401, detail="Unauthorized")
+    else:
+        # In debug mode, if token is set, enforce it
+        if token and (not x_internal_token or not secrets.compare_digest(x_internal_token, token)):
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 @router.post("/internal/optimize", response_model=OptimizeResponse)
@@ -40,8 +54,13 @@ async def optimize(
     """
     start = time.time()
 
-    # Internal auth guard (only when a token is configured)
+    # Internal auth guard (strictly enforced in production)
     _require_internal_token(x_internal_token)
+
+    # Sanitize folder parameter to prevent path traversal in S3/R2 keys
+    clean_folder = folder.strip().lower()
+    if not ALLOWED_FOLDER_PATTERN.match(clean_folder):
+        clean_folder = "general"
 
     # Validate MIME type
     if image.content_type not in (
@@ -80,7 +99,7 @@ async def optimize(
     content_type = "image/webp"
 
     try:
-        storage_result = upload(buffer, folder, content_type)
+        storage_result = upload(buffer, clean_folder, content_type)
     except RuntimeError as e:
         logger.warning(f"R2 upload failed (fallback considered): {e}")
         raise HTTPException(status_code=502, detail=f"Storage error: {str(e)}")
