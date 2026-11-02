@@ -116,7 +116,7 @@ function useNavbarState(user: { id: string } | null, isLoading: boolean) {
         const badge = await apiFetch(`/shop/badge/${user.id}`, {});
         if (badge?.item?.data) {
           const data = JSON.parse(badge.item.data);
-          setEquippedBadge({ icon: data.icon || '🏅', label: data.label || '' });
+          setEquippedBadge({ icon: data.icon || '✦', label: data.label || '' });
         } else {
           setEquippedBadge(null);
         }
@@ -318,6 +318,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
               { label: 'Streamers', href: '/streamers' },
               { label: 'Eventos', href: '/events' },
               { label: 'Gremios', href: '/guilds' },
+              { label: 'Pase Estelar', href: '/pass' },
               { label: 'Observatorio Estelar', href: '/shop' },
               { label: 'Hoshizora Maid', href: '/hoshizora-maid' },
             ].map(q => (

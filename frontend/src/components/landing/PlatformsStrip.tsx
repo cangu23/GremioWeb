@@ -30,7 +30,7 @@ const PLATFORMS: Platform[] = [
   },
   {
     label: 'Twitch',
-    href: 'https://twitch.tv',
+    href: 'https://www.twitch.tv/gurenvt_',
     brand: '#9146FF',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -50,7 +50,7 @@ const PLATFORMS: Platform[] = [
   },
   {
     label: 'X',
-    href: 'https://twitter.com',
+    href: 'https://x.com/GremioEstelarES',
     brand: '#e7e9ea',
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -60,7 +60,7 @@ const PLATFORMS: Platform[] = [
   },
   {
     label: 'Discord',
-    href: 'https://discord.com',
+    href: 'https://discord.gg/SAR2EazYMa',
     brand: '#5865F2',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

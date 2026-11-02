@@ -67,7 +67,7 @@ const plans: Plan[] = [
     name: 'Pase Estelar VIP',
     subtitle: 'Pase de temporada',
     price: '$3.99',
-    period: 'temporada o 2,500 ⭐',
+    period: 'temporada o 2,500 Stardust',
     description: 'Desbloquea cosméticos de edición limitada, marcos dinámicos y títulos de honor exclusivos.',
     icon: <Crown size={22} color="#f59e0b" />,
     badge: 'Temporada',
@@ -77,7 +77,7 @@ const plans: Plan[] = [
       { text: 'Títulos de perfil y prestigio legendario', included: true },
       { text: 'Stickers gigantes HD para el chat', included: true },
       { text: '+10% Stardust usando Código de Creador', included: true },
-      { text: 'Canjeable 100% gratis con 2,500 ⭐ Stardust', included: true },
+      { text: 'Canjeable 100% gratis con 2,500 Stardust', included: true },
       { text: 'Emblema de la temporada activa', included: true },
       { text: 'Conserva todas tus recompensas para siempre', included: true },
     ],
@@ -369,7 +369,7 @@ export default function PricingSection() {
           color: 'var(--text-muted)',
           lineHeight: 1.6,
         }}>
-          💡 Todos los pagos son transparentes: 35% va al creador mediante su código, 35% al hosting de servidores y 30% al fondo de la comunidad.
+          ✦ Todos los pagos son transparentes: 35% va al creador mediante su código, 35% al hosting de servidores y 30% al fondo de la comunidad.
         </p>
       </div>
     </section>

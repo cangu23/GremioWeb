@@ -285,7 +285,7 @@ export default function CreatorEconomySection() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
                 {[
-                  'Desbloqueable con dinero ($3.99) o 100% gratis con 2,500 ⭐ Stardust',
+                  'Desbloqueable con dinero ($3.99) o 100% gratis con 2,500 Stardust',
                   'Cosméticos y marcos de avatar exclusivos que conservas para siempre',
                   'Gana XP al comentar, asistir a streams y completar misiones del gremio',
                   '+10% de Stardust extra de regalo al canjear con un Código de Creador',
@@ -301,7 +301,7 @@ export default function CreatorEconomySection() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', paddingTop: '16px', borderTop: '1px solid var(--glass-border)' }}>
               <div>
                 <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary-hover)' }}>$3.99</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '6px' }}>USD o 2,500 ⭐</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '6px' }}>USD o 2,500 Stardust</span>
               </div>
               <Link href="/pass" className="btn btn--sm btn--shine" style={{ padding: '8px 18px', fontWeight: 700 }}>
                 Explorar el Pase <ArrowRight size={14} style={{ marginLeft: '4px' }} />

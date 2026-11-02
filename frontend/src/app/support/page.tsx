@@ -122,7 +122,7 @@ function SupportContent() {
   return (
     <>
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>Apoya a la Comunidad 💜</h1>
+        <h1 style={{ marginBottom: '10px', fontSize: '2.5rem' }}>Apoya a la Comunidad</h1>
         <p style={{ color: 'var(--muted)', marginBottom: '8px', maxWidth: '620px', margin: '0 auto' }}>
           Conviértete en miembro Premium y obtén beneficios exclusivos mientras apoyas
           a los VTubers de Gremio Estelar. El pago se procesa de forma segura con PayPal.

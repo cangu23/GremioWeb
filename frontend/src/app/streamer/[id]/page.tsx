@@ -141,7 +141,7 @@ function StreamRewardTimer({ streamerName }: { streamerName: string }) {
           })
             .then((res: any) => {
               if (res?.xpAwarded) {
-                showToast(`🍿 ¡+${res.xpAwarded} XP / Stardust ganados por ver a ${streamerName}!`, 'success');
+                showToast(`✦ ¡+${res.xpAwarded} XP / Stardust ganados por ver a ${streamerName}!`, 'success');
                 setClaimedCount(c => c + 1);
               }
             })
@@ -173,7 +173,7 @@ function StreamRewardTimer({ streamerName }: { streamerName: string }) {
       fontSize: '0.78rem',
       fontWeight: 700,
     }}>
-      <span>🍿 Ganando Stardust en {formattedTime}</span>
+      <span>✦ Ganando Stardust en {formattedTime}</span>
       {claimedCount > 0 && <span style={{ color: '#00e676' }}>({claimedCount}x ⭐)</span>}
     </div>
   );
@@ -202,13 +202,13 @@ function SectionTitle({ icon, children, count }: { icon: React.ReactNode; childr
 
 function StreamerWeeklyScheduleGrid({ streamer, isLive }: { streamer: StreamerProfileData | null; isLive: boolean }) {
   const days = [
-    { code: 'MON', label: 'Lun', topic: 'Gaming 🎮' },
-    { code: 'TUE', label: 'Mar', topic: 'Collab 💜' },
-    { code: 'WED', label: 'Mié', topic: 'Chatting 💬' },
-    { code: 'THU', label: 'Jue', topic: 'Edición 🎬' },
-    { code: 'FRI', label: 'Vie', topic: 'Karaoke 🎤' },
-    { code: 'SAT', label: 'Sáb', topic: 'Special ✨' },
-    { code: 'SUN', label: 'Dom', topic: 'Descanso 💤' },
+    { code: 'MON', label: 'Lun', topic: 'Gaming' },
+    { code: 'TUE', label: 'Mar', topic: 'Colaboración' },
+    { code: 'WED', label: 'Mié', topic: 'Charla' },
+    { code: 'THU', label: 'Jue', topic: 'Edición' },
+    { code: 'FRI', label: 'Vie', topic: 'Karaoke' },
+    { code: 'SAT', label: 'Sáb', topic: 'Especial' },
+    { code: 'SUN', label: 'Dom', topic: 'Descanso' },
   ];
 
   const streamUrl = streamer?.twitchUrl || streamer?.youtubeUrl || '#';
@@ -266,7 +266,7 @@ function StreamerWeeklyScheduleGrid({ streamer, isLive }: { streamer: StreamerPr
                     transition: 'all 0.2s',
                   }}
                 >
-                  {isToday && isLive ? '🔴 En Vivo' : 'Ver Stream'}
+                  {isToday && isLive ? 'EN VIVO' : 'Ver Stream'}
                 </a>
               ) : (
                 <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Día Libre</span>
