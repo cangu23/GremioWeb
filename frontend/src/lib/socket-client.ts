@@ -57,7 +57,7 @@ export const connectSocket = (): Socket => {
         socket.disconnect();
       }
       socket.connect();
-    } else if (!socket.connected) {
+    } else if (!socket.connected && token) {
       socket.connect();
     }
     return socket;
@@ -88,7 +88,9 @@ export const connectSocket = (): Socket => {
   }
 
   socket.on('connect_error', async (err) => {
-    console.warn('[Socket] Connection error:', err.message, '→ target:', SOCKET_URL);
+    if (!err.message.includes('Authentication')) {
+      console.warn('[Socket] Connection error:', err.message, '→ target:', SOCKET_URL);
+    }
     if (err.message.includes('token') || err.message.includes('Authentication') || err.message.includes('cuenta')) {
       try {
         const { performRefresh } = await import('./api');
