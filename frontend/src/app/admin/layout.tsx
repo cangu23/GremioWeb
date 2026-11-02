@@ -38,61 +38,64 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
 
 const adminNavItems = [
   {
-    section: 'Command Center',
+    section: 'Panel de Control',
     items: [
       { href: '/admin', label: 'Dashboard', icon: 'dashboard', color: '#d4af37' },
       { href: '/admin/logs', label: 'Auditoría (Logs)', icon: 'logs', color: '#00e5ff' },
-      { href: '/admin/settings', label: 'Configuración Global', icon: 'settings', color: '#fbbf24' },
     ],
   },
   {
-    section: 'Arquitectura & Permisos',
+    section: 'Bandeja de Solicitudes',
     items: [
+      { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: 'requests', color: '#ec4899' },
+      { href: '/admin/streamer-requests', label: 'Solicitudes Streamer', icon: 'requests', color: '#38bdf8' },
+      { href: '/admin/pet-requests', label: 'Solicitudes Mascotas', icon: 'requests', color: '#ff9800' },
+      { href: '/admin/codes', label: 'Códigos de Rol', icon: 'codes', color: '#a78bfa' },
+    ],
+  },
+  {
+    section: 'Directorio de Comunidad',
+    items: [
+      { href: '/admin/users', label: 'Usuarios', icon: 'users', color: '#a0a0a0' },
+      { href: '/admin/vtubers', label: 'VTubers Oficiales', icon: 'vtubers', color: '#ec4899' },
+      { href: '/admin/streamers', label: 'Streamers Oficiales', icon: 'streamers', color: '#38bdf8' },
+      { href: '/admin/guilds', label: 'Gremios', icon: 'guilds', color: '#10b981' },
+    ],
+  },
+  {
+    section: 'Seguridad & Moderación',
+    items: [
+      { href: '/admin/reports', label: 'Reportes', icon: 'reports', color: '#dc143c' },
+      { href: '/admin/warnings', label: 'Advertencias', icon: 'shield', color: '#dc143c' },
+      { href: '/admin/posts', label: 'Publicaciones', icon: 'posts', color: '#a0a0a0' },
+      { href: '/admin/comments', label: 'Comentarios', icon: 'comments', color: '#a0a0a0' },
+    ],
+  },
+  {
+    section: 'Contenido & Eventos',
+    items: [
+      { href: '/admin/events', label: 'Eventos', icon: 'events', color: '#a78bfa' },
+      { href: '/admin/news', label: 'Noticias & Novedades', icon: 'news', color: '#38bdf8' },
+      { href: '/admin/hoshizora-maid', label: 'Hoshizora Maid', icon: 'hoshizora', color: '#fb7185' },
+      { href: '/admin/stickers', label: 'Stickers & Emojis', icon: 'stickers', color: '#34d399' },
+    ],
+  },
+  {
+    section: 'Economía & Finanzas',
+    items: [
+      { href: '/admin/finanzas', label: 'Finanzas (35/35/30)', icon: 'economy', color: '#10b981' },
+      { href: '/admin/economy', label: 'Economía Stardust & Planes', icon: 'economy', color: '#fbbf24' },
+    ],
+  },
+  {
+    section: 'Configuración & Roles',
+    items: [
+      { href: '/admin/settings', label: 'Configuración Global', icon: 'settings', color: '#fbbf24' },
       { href: '/admin/permissions', label: 'Matriz de Permisos', icon: 'matrix', color: '#00e5ff' },
       { href: '/admin/roles', label: 'Constructor de Roles', icon: 'roles', color: '#ec4899' },
       { href: '/admin/plans', label: 'Planes Premium', icon: 'plans', color: '#ffd700' },
       { href: '/admin/badges', label: 'Insignias (Badges)', icon: 'badges', color: '#a78bfa' },
       { href: '/admin/professions', label: 'Profesiones Base', icon: 'professions', color: '#38bdf8' },
-    ],
-  },
-  {
-    section: 'Gestión de Entidades',
-    items: [
-      { href: '/admin/users', label: 'Usuarios', icon: 'users', color: '#a0a0a0' },
-      { href: '/admin/vtubers', label: 'VTubers', icon: 'vtubers', color: '#a0a0a0' },
-      { href: '/admin/streamers', label: 'Streamers', icon: 'streamers', color: '#a0a0a0' },
-      { href: '/admin/guilds', label: 'Gremios', icon: 'guilds', color: '#a0a0a0' },
-      { href: '/admin/events', label: 'Eventos', icon: 'events', color: '#a0a0a0' },
-    ],
-  },
-  {
-    section: 'Seguridad & Mod',
-    items: [
-      { href: '/admin/reports', label: 'Reportes', icon: 'reports', color: '#dc143c' },
-      { href: '/admin/warnings', label: 'Advertencias', icon: 'shield', color: '#dc143c' },
-    ],
-  },
-  {
-    section: 'Operaciones & Economía',
-    items: [
-      { href: '/admin/finanzas', label: 'Finanzas (35/35/30)', icon: 'economy', color: '#10b981' },
-      { href: '/admin/economy', label: 'Economía Stardust', icon: 'economy', color: '#fbbf24' },
-      { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: 'requests', color: '#d4af37' },
-      { href: '/admin/streamer-requests', label: 'Solicitudes Streamer', icon: 'requests', color: '#00e5ff' },
-      { href: '/admin/pet-requests', label: 'Solicitudes Mascotas', icon: 'requests', color: '#ff9800' },
-      { href: '/admin/codes', label: 'Códigos', icon: 'codes', color: '#a0a0a0' },
-      { href: '/admin/stickers', label: 'Stickers & Emojis', icon: 'stickers', color: '#34d399' },
-    ],
-  },
-  {
-    section: 'Contenido',
-    items: [
-      { href: '/admin/news', label: 'Noticias & Novedades', icon: 'news', color: '#a78bfa' },
-      { href: '/admin/posts', label: 'Publicaciones', icon: 'posts', color: '#a0a0a0' },
-      { href: '/admin/comments', label: 'Comentarios', icon: 'comments', color: '#a0a0a0' },
-      { href: '/admin/events', label: 'Eventos', icon: 'events', color: '#a0a0a0' },
-      { href: '/admin/hoshizora-maid', label: 'Hoshizora Maid', icon: 'hoshizora', color: '#a0a0a0' },
-      { href: '/admin/stickers', label: 'Stickers y Emojis', icon: 'stickers', color: '#a0a0a0' },
     ],
   },
 ];
@@ -106,6 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoading = auth.isLoading;
   const [sidebarOpen, setSidebarOpen] = useState(false); // Solo controla mobile
   const [pendingRequests, setPendingRequests] = useState(0);
+  const [pendingReports, setPendingReports] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -116,6 +120,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       apiFetch('/admin/dashboard/stats').then((data) => {
         if (data?.pendingVtuberRequests !== undefined) {
           setPendingRequests(data.pendingVtuberRequests);
+        }
+        if (data?.pendingReports !== undefined) {
+          setPendingReports(data.pendingReports);
         }
       }).catch(() => {});
     }
@@ -227,11 +234,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       
                       {item.href === '/admin/vtuber-requests' && pendingRequests > 0 && (
                         <span style={{
-                          marginLeft: 'auto', background: '#d4af37', color: '#000',
+                          marginLeft: 'auto', background: '#ec4899', color: '#fff',
                           fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px',
                           borderRadius: '4px', lineHeight: 1,
                         }}>
                           {pendingRequests > 99 ? '99+' : pendingRequests}
+                        </span>
+                      )}
+                      {item.href === '/admin/reports' && pendingReports > 0 && (
+                        <span style={{
+                          marginLeft: 'auto', background: '#dc143c', color: '#fff',
+                          fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px',
+                          borderRadius: '4px', lineHeight: 1,
+                        }}>
+                          {pendingReports > 99 ? '99+' : pendingReports}
                         </span>
                       )}
                     </Link>

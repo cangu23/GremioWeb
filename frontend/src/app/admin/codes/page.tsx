@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
+import RequestsSubnav from '@/components/admin/RequestsSubnav';
 
 interface RoleCode {
   id: string;
@@ -103,6 +104,7 @@ export default function AdminCodesPage() {
 
   return (
     <div>
+      <RequestsSubnav />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>Codigos de Invitacion</h1>

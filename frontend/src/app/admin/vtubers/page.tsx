@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -57,13 +58,11 @@ export default function AdminVtubersPage() {
   const [filterVerified, setFilterVerified] = useState('');
   const [filterApproved, setFilterApproved] = useState('');
   const [page, setPage] = useState(1);
-  const [unverifiedData, setUnverifiedData] = useState<AdminVtuber[]>([]);
-  const [loadingUnverified, setLoadingUnverified] = useState(true);
   const [unapprovedData, setUnapprovedData] = useState<AdminVtuber[]>([]);
   const [loadingUnapproved, setLoadingUnapproved] = useState(true);
   const [fetchError, setFetchError] = useState(false);
-  const [quickVerifyError, setQuickVerifyError] = useState(false);
   const [quickApprovalError, setQuickApprovalError] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<AdminVtuber | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -95,17 +94,7 @@ export default function AdminVtubersPage() {
     finally { setLoading(false); }
   }, [page, filterVerified, filterApproved, showToast]);
 
-  const fetchUnverified = async () => {
-    setLoadingUnverified(true);
-    setQuickVerifyError(false);
-    try {
-      const res = await apiFetch('/admin/vtubers?isVerified=false&limit=10');
-      setUnverifiedData(res.data || []);
-    } catch {
-      setQuickVerifyError(true);
-    }
-    finally { setLoadingUnverified(false); }
-  };
+
 
   const fetchUnapproved = async () => {
     setLoadingUnapproved(true);
@@ -123,7 +112,7 @@ export default function AdminVtubersPage() {
   useEffect(() => { fetchData(); }, [page, filterVerified, filterApproved]);
   // Las secciones de verificación/aprobación rápida son ADMIN-only: no tiene
   // sentido que moderadores/staff consulten esos listados que no van a ver.
-  useEffect(() => { if (canAdmin) { fetchUnverified(); fetchUnapproved(); } }, [canAdmin]);
+  useEffect(() => { if (canAdmin) { fetchUnapproved(); } }, [canAdmin]);
   useEffect(() => { setPage(1); }, [search, filterVerified, filterApproved]);
 
   const openEdit = (profile: AdminVtuber) => {
@@ -170,7 +159,6 @@ export default function AdminVtubersPage() {
       await apiFetch(`/admin/vtubers/${id}`, { method: 'PATCH', body: JSON.stringify({ [field]: !currentValue }) });
       showToast(`VTuber ${label.toLowerCase()} ${currentValue ? 'desactivado' : 'activado'}`, 'success');
       fetchData();
-      fetchUnverified();
       fetchUnapproved();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
   };
@@ -181,168 +169,75 @@ export default function AdminVtubersPage() {
       await apiFetch(`/admin/vtubers/${id}`, { method: 'DELETE' });
       showToast('Perfil VTuber eliminado correctamente', 'success');
       fetchData();
-      fetchUnverified();
       fetchUnapproved();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Error al eliminar', 'error');
     }
   };
 
+  const handleCleanupProfiles = async () => {
+    if (!window.confirm('¿Depurar perfiles fantasma? Se eliminarán los registros huérfanos de VTuber asociados a usuarios con rol USER. Esta acción es segura y dejará la lista exclusivamente con VTubers reales.')) return;
+    setCleaning(true);
+    try {
+      const res = await apiFetch<{ message: string }>('/admin/users/cleanup-profiles', { method: 'POST' });
+      showToast(res.message || 'Depuración completada', 'success');
+      fetchData();
+      fetchUnapproved();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error en la depuración', 'error');
+    } finally {
+      setCleaning(false);
+    }
+  };
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0 }}>VTubers</h1>
-          <p style={{ color: 'var(--text-muted)', marginTop: '4px', marginBottom: 0 }}>Gestión de perfiles VTuber</p>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>VTubers Oficiales</h1>
+          <p style={{ color: 'var(--text-muted)', marginTop: '4px', marginBottom: 0, fontSize: '0.9rem' }}>Directorio y administración de perfiles VTuber en la plataforma</p>
         </div>
-        {(unverifiedData.length > 0 || unapprovedData.length > 0) && (
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {unverifiedData.length > 0 && (
-              <div style={{
-                padding: '10px 18px', borderRadius: '12px',
-                background: 'rgba(0,212,255,0.08)',
-                border: '1px solid rgba(0,212,255,0.2)',
-                display: 'flex', alignItems: 'center', gap: '8px',
-                fontSize: '0.9rem', fontWeight: 600, color: 'var(--accent)',
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="8 12 11 15 16 9"/>
-                </svg>
-                {unverifiedData.length} pendientes de verificar
-              </div>
-            )}
-            {unapprovedData.length > 0 && (
-              <div style={{
-                padding: '10px 18px', borderRadius: '12px',
-                background: 'rgba(33,150,243,0.08)',
-                border: '1px solid rgba(33,150,243,0.2)',
-                display: 'flex', alignItems: 'center', gap: '8px',
-                fontSize: '0.9rem', fontWeight: 600, color: '#2196f3',
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                {unapprovedData.length} pendientes de aprobar
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ===== QUICK VERIFY SECTION ===== */}
-      {canAdmin && !loadingUnverified && unverifiedData.length > 0 && !quickVerifyError && (
-        <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '24px', border: '1px solid rgba(0,212,255,0.15)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <div style={{
-              width: '36px', height: '36px', borderRadius: '10px',
-              background: 'rgba(0,212,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="8 12 11 15 16 9"/>
-              </svg>
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Verificación Rápida</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
-                Estos VTubers están aprobados pero aún no verificados. Haz clic en ✓ para verificarlos.
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {unverifiedData.map((profile) => (
-              <div key={profile.id} style={{
-                display: 'flex', alignItems: 'center', gap: '12px',
-                padding: '12px 16px', borderRadius: '12px',
-                background: 'rgba(255,255,255,0.03)',
-                transition: 'background 0.2s',
-              }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}>
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '50%',
-                  background: profile.avatarUrl
-                    ? `url(${profile.avatarUrl}) center/cover`
-                    : 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                  flexShrink: 0, overflow: 'hidden',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'white', fontWeight: 'bold', fontSize: '0.9rem',
-                }}>
-                  {!profile.avatarUrl && profile.displayName.charAt(0).toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {profile.displayName}
-                    {profile.isApproved && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" aria-label="Aprobado">
-                        <circle cx="12" cy="12" r="10" fill="#00e676"/>
-                        <polyline points="8 12 11 15 16 9" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    @{profile.user?.username}
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleToggleFlag(profile.id, 'isVerified', false, 'Verificación')}
-                  className="btn"
-                  style={{
-                    padding: '8px 20px', fontSize: '0.85rem', borderRadius: '10px',
-                    background: 'linear-gradient(135deg, #1d9bf0, #0d7ed4)',
-                    color: 'white', fontWeight: 700, border: 'none',
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 2px 12px rgba(29,155,240,0.3)',
-                  }}
-                  onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(29,155,240,0.4)'; }}
-                  onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(29,155,240,0.3)'; }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="8 12 11 15 16 9"/>
-                  </svg>
-                  Verificar
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ===== QUICK VERIFY RETRY ===== */}
-      {!loadingUnverified && quickVerifyError && (
-        <div className="glass" style={{ padding: '24px', borderRadius: '16px', marginBottom: '24px', textAlign: 'center', border: '1px solid rgba(244,67,54,0.2)' }}>
-          <div style={{ color: '#f44336', fontSize: '0.9rem', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            No se pudieron cargar los VTubers pendientes de verificar
-          </div>
-          <button
-            onClick={fetchUnverified}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Link
+            href="/admin/vtuber-requests"
             className="btn"
             style={{
-              padding: '10px 24px', fontSize: '0.85rem', borderRadius: '10px',
-              background: 'rgba(29,155,240,0.15)', color: '#1d9bf0',
-              border: '1px solid rgba(29,155,240,0.3)', fontWeight: 600,
+              padding: '9px 18px', borderRadius: '10px',
+              background: 'linear-gradient(135deg, #ec4899, #be185d)',
+              color: '#ffffff', fontWeight: 600, fontSize: '0.85rem',
               display: 'inline-flex', alignItems: 'center', gap: '8px',
-              transition: 'all 0.2s',
+              textDecoration: 'none', border: 'none',
+              boxShadow: '0 2px 10px rgba(236,72,153,0.3)',
             }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(29,155,240,0.25)'; }}
-            onMouseOut={e => { e.currentTarget.style.background = 'rgba(29,155,240,0.15)'; }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 4 23 10 17 10"/>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
-            Reintentar
-          </button>
+            Bandeja de Solicitudes
+          </Link>
+          {canAdmin && (
+            <button
+              onClick={handleCleanupProfiles}
+              disabled={cleaning}
+              className="btn"
+              style={{
+                padding: '9px 16px', borderRadius: '10px',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.85rem',
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                opacity: cleaning ? 0.6 : 1,
+              }}
+              title="Elimina fichas fantasma de usuarios comunes con rol USER"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              {cleaning ? 'Depurando...' : 'Depurar Huérfanos'}
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
       {/* ===== QUICK APPROVAL SECTION ===== */}
       {canAdmin && !loadingUnapproved && unapprovedData.length > 0 && !quickApprovalError && (

@@ -16,11 +16,7 @@ import { activatePlatformPlan, PLATFORM_PLANS } from '../subscriptions/platform-
 
 import { hardDeleteUser } from '../users/user.service';
 
-
-
 // ========== HELPERS ==========
-
-
 
 function buildPaginationMeta(total: number, page: number, limit: number) {
 
@@ -38,8 +34,6 @@ function buildPaginationMeta(total: number, page: number, limit: number) {
 
 }
 
-
-
 function extractPagination(query: AdminQueryInput) {
 
   const page = Math.max(1, Number(query.page) || 1);
@@ -49,8 +43,6 @@ function extractPagination(query: AdminQueryInput) {
   return { page, limit, skip: (page - 1) * limit };
 
 }
-
-
 
 async function logAdminAction(userId: string, action: string, detail?: Record<string, unknown>, ip?: string) {
 
@@ -76,11 +68,7 @@ async function logAdminAction(userId: string, action: string, detail?: Record<st
 
 }
 
-
-
 // ========== DASHBOARD STATISTICS ==========
-
-
 
 export const getDashboardStats = async () => {
 
@@ -88,19 +76,13 @@ export const getDashboardStats = async () => {
 
 };
 
-
-
 export const getRecentActivity = async (limit = 20) => {
 
   return AdminRepository.getRecentActivity(limit);
 
 };
 
-
-
 // ========== USERS ==========
-
-
 
 export const listUsers = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
 
@@ -142,15 +124,11 @@ export const listUsers = async (query: AdminQueryInput): Promise<PaginatedRespon
 
 };
 
-
-
 export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId: string, ip?: string) => {
 
   const user = await AdminRepository.findUserById(id);
 
   if (!user) throw new AppError('Usuario no encontrado', 404);
-
-
 
   // Hierarchy safety check: protect OWNER and SYSADMIN from unauthorized tampering
 
@@ -169,8 +147,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     }
 
   }
-
-
 
   if (data.role) {
 
@@ -192,8 +168,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 
   }
 
-
-
   // Safety check: prevent an admin from demoting or banning themselves.
 
   // hasAnyRole tolera roles múltiples: solo bloquea si el nuevo rol pierde ADMIN.
@@ -214,8 +188,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 
   }
 
-
-
   // Safety check: prevent banning or suspending staff members
 
   if (id !== adminId && isStaffRole(user.role)) {
@@ -227,8 +199,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     }
 
   }
-
-
 
   const changes: string[] = [];
 
@@ -249,8 +219,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     changes.push(`username: ${user.username} → ${data.username}`);
 
   }
-
-
 
   // Consistencia nivel/XP: el ranking ordena por XP pero muestra el nivel,
 
@@ -278,8 +246,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 
   }
 
-
-
   // isVerified NO es columna de User (es del VTuberProfile). Si se pasa en el
 
   // update directo, Prisma lanza "Unknown argument isVerified" → 500. Se extrae
@@ -291,8 +257,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
   delete userUpdateData.isVerified;
 
   const updated = await AdminRepository.updateUser(id, userUpdateData as Prisma.UserUpdateInput);
-
-
 
   // Sync de perfiles de creador — SOLO si el usuario tiene el rol real.
 
@@ -313,8 +277,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
   const isVtuberRole = targetRoles.includes('VTUBER');
 
   const isStreamerRole = targetRoles.includes('STREAMER');
-
-
 
   if (isVtuberRole || (data.isVerified !== undefined && user.vtuberProfile)) {
 
@@ -361,8 +323,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
     });
 
   }
-
-
 
   // Sync Streamer profile (mismo criterio: rol real o perfil preexistente)
 
@@ -412,8 +372,6 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 
   }
 
-
-
   if (changes.length > 0) {
 
     await logAdminAction(adminId, data.status === 'BANNED' ? 'BAN_USER' : data.status === 'SUSPENDED' ? 'SUSPEND_USER' : 'UPDATE_USER', {
@@ -428,13 +386,9 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
 
   }
 
-
-
   return updated;
 
 };
-
-
 
 export const deleteVtuber = async (id: string, adminId: string, ip?: string) => {
 
@@ -442,11 +396,7 @@ export const deleteVtuber = async (id: string, adminId: string, ip?: string) => 
 
   if (!profile) throw new AppError('Perfil VTuber no encontrado', 404);
 
-
-
   await AdminRepository.deleteVtuberProfile(id);
-
-
 
   try {
 
@@ -472,8 +422,6 @@ export const deleteVtuber = async (id: string, adminId: string, ip?: string) => 
 
   }
 
-
-
   await logAdminAction(adminId, 'DELETE_VTUBER', {
 
     targetProfileId: id,
@@ -486,23 +434,15 @@ export const deleteVtuber = async (id: string, adminId: string, ip?: string) => 
 
   }, ip);
 
-
-
   return { message: 'Perfil VTuber eliminado correctamente' };
 
 };
-
-
-
-
 
 export const deleteUser = async (id: string, adminId: string, ip?: string) => {
 
   const user = await AdminRepository.findUserById(id);
 
   if (!user) throw new AppError('Usuario no encontrado', 404);
-
-
 
   // Safety: an admin can't delete their own account
 
@@ -512,23 +452,17 @@ export const deleteUser = async (id: string, adminId: string, ip?: string) => {
 
   }
 
-
-
   if (isStaffRole(user.role)) {
 
     throw new AppError('No se puede eliminar la cuenta de un miembro del staff', 400);
 
   }
 
-
-
   // Hard delete (shared con el borrado propio del usuario): limpia en una
 
   // transacción las FKs sin onDelete: Cascade y deja que la DB cascadee el resto.
 
   await hardDeleteUser(id);
-
-
 
   await logAdminAction(adminId, 'DELETE_USER', {
 
@@ -538,17 +472,11 @@ export const deleteUser = async (id: string, adminId: string, ip?: string) => {
 
   }, ip);
 
-
-
   return { message: 'Usuario eliminado permanentemente' };
 
 };
 
-
-
 // ========== PREMIUM PLAN GRANT ==========
-
-
 
 /**
 
@@ -576,8 +504,6 @@ export const grantPremiumPlan = async (
 
   }
 
-
-
   const cleanTarget = data.targetUser.trim().replace(/^@/, '');
 
   const target = await prisma.user.findFirst({
@@ -600,19 +526,13 @@ export const grantPremiumPlan = async (
 
   });
 
-
-
   if (!target) {
 
     throw new AppError(`No se encontró ningún usuario con el identificador "${data.targetUser}"`, 404);
 
   }
 
-
-
   const activation = await activatePlatformPlan(target.id, data.plan, data.durationDays);
-
-
 
   // Notificar al usuario (fire-and-forget, nunca rompe el flujo principal)
 
@@ -642,8 +562,6 @@ export const grantPremiumPlan = async (
 
   }
 
-
-
   await logAdminAction(adminId, 'GRANT_PLAN', {
 
     targetUserId: target.id,
@@ -657,8 +575,6 @@ export const grantPremiumPlan = async (
     expiresAt: activation.subscription.currentPeriodEnd.toISOString(),
 
   }, ip);
-
-
 
   return {
 
@@ -675,8 +591,6 @@ export const grantPremiumPlan = async (
   };
 
 };
-
-
 
 /**
 
@@ -718,21 +632,15 @@ export const revokePremiumPlan = async (
 
   });
 
-
-
   if (!target) {
 
     throw new AppError(`No se encontró ningún usuario con el identificador "${data.targetUser}"`, 404);
 
   }
 
-
-
   const sub = await prisma.platformSubscription.findUnique({ where: { userId: target.id } });
 
   const hasPremium = (sub && sub.status === 'ACTIVE') || (!!target.plan && target.plan !== 'FREE');
-
-
 
   if (!hasPremium) {
 
@@ -749,8 +657,6 @@ export const revokePremiumPlan = async (
     };
 
   }
-
-
 
   if (sub && sub.status === 'ACTIVE') {
 
@@ -771,8 +677,6 @@ export const revokePremiumPlan = async (
     data: { plan: 'FREE' },
 
   });
-
-
 
   // Notificar al usuario (fire-and-forget)
 
@@ -802,8 +706,6 @@ export const revokePremiumPlan = async (
 
   }
 
-
-
   await logAdminAction(adminId, 'REVOKE_PLAN', {
 
     targetUserId: target.id,
@@ -813,8 +715,6 @@ export const revokePremiumPlan = async (
     previousPlan: target.plan,
 
   }, ip);
-
-
 
   return {
 
@@ -828,17 +728,11 @@ export const revokePremiumPlan = async (
 
 };
 
-
-
 // ========== VTUBERS ==========
-
-
 
 export const listVtubers = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
 
   const { page, limit, skip } = extractPagination(query);
-
-
 
   const filters: Record<string, boolean> = {};
 
@@ -849,8 +743,6 @@ export const listVtubers = async (query: AdminQueryInput): Promise<PaginatedResp
   if (query.isHidden !== undefined) filters.isHidden = query.isHidden === 'true';
 
   if (query.isFeatured !== undefined) filters.isFeatured = query.isFeatured === 'true';
-
-
 
   const [data, total] = await Promise.all([
 
@@ -874,13 +766,9 @@ export const listVtubers = async (query: AdminQueryInput): Promise<PaginatedResp
 
   ]);
 
-
-
   return { data, meta: buildPaginationMeta(total, page, limit) };
 
 };
-
-
 
 export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adminId: string, ip?: string) => {
 
@@ -888,11 +776,7 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
 
   if (!profile) throw new AppError('Perfil VTuber no encontrado', 404);
 
-
-
   const updated = await AdminRepository.updateVtuberProfile(id, data);
-
-
 
   // Sync user role based on VTuber profile status changes.
 
@@ -964,8 +848,6 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
 
   }
 
-
-
   const changes: string[] = [];
 
   if (data.isVerified !== undefined && data.isVerified !== profile.isVerified) {
@@ -992,8 +874,6 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
 
   }
 
-
-
   if (changes.length > 0) {
 
     await logAdminAction(adminId, 'UPDATE_VTUBER', {
@@ -1007,8 +887,6 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
     }, ip);
 
   }
-
-
 
   // Notify VTuber when approved or verified (fire-and-forget, never crash main flow)
 
@@ -1070,13 +948,9 @@ export const updateVtuber = async (id: string, data: UpdateVtuberAdminInput, adm
 
   }
 
-
-
   return updated;
 
 };
-
-
 
 export const deleteStreamer = async (id: string, adminId: string, ip?: string) => {
 
@@ -1084,11 +958,7 @@ export const deleteStreamer = async (id: string, adminId: string, ip?: string) =
 
   if (!profile) throw new AppError('Perfil Streamer no encontrado', 404);
 
-
-
   await AdminRepository.deleteStreamerProfile(id);
-
-
 
   try {
 
@@ -1114,8 +984,6 @@ export const deleteStreamer = async (id: string, adminId: string, ip?: string) =
 
   }
 
-
-
   await logAdminAction(adminId, 'DELETE_STREAMER', {
 
     targetProfileId: id,
@@ -1128,25 +996,15 @@ export const deleteStreamer = async (id: string, adminId: string, ip?: string) =
 
   }, ip);
 
-
-
   return { message: 'Perfil Streamer eliminado correctamente' };
 
 };
 
-
-
-
-
 // ========== STREAMERS ==========
-
-
 
 export const listStreamers = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
 
   const { page, limit, skip } = extractPagination(query);
-
-
 
   const filters: Record<string, boolean> = {};
 
@@ -1157,8 +1015,6 @@ export const listStreamers = async (query: AdminQueryInput): Promise<PaginatedRe
   if (query.isHidden !== undefined) filters.isHidden = query.isHidden === 'true';
 
   if (query.isFeatured !== undefined) filters.isFeatured = query.isFeatured === 'true';
-
-
 
   const [data, total] = await Promise.all([
 
@@ -1182,13 +1038,9 @@ export const listStreamers = async (query: AdminQueryInput): Promise<PaginatedRe
 
   ]);
 
-
-
   return { data, meta: buildPaginationMeta(total, page, limit) };
 
 };
-
-
 
 export const updateStreamer = async (id: string, data: UpdateStreamerAdminInput, adminId: string, ip?: string) => {
 
@@ -1196,11 +1048,7 @@ export const updateStreamer = async (id: string, data: UpdateStreamerAdminInput,
 
   if (!profile) throw new AppError('Perfil Streamer no encontrado', 404);
 
-
-
   const updated = await AdminRepository.updateStreamerProfile(id, data);
-
-
 
   // Sync user role based on streamer profile status changes.
 
@@ -1272,8 +1120,6 @@ export const updateStreamer = async (id: string, data: UpdateStreamerAdminInput,
 
   }
 
-
-
   const changes: string[] = [];
 
   if (data.isVerified !== undefined && data.isVerified !== profile.isVerified) {
@@ -1300,8 +1146,6 @@ export const updateStreamer = async (id: string, data: UpdateStreamerAdminInput,
 
   }
 
-
-
   if (changes.length > 0) {
 
     await logAdminAction(adminId, 'UPDATE_STREAMER', {
@@ -1315,8 +1159,6 @@ export const updateStreamer = async (id: string, data: UpdateStreamerAdminInput,
     }, ip);
 
   }
-
-
 
   // Notify streamer when approved or verified (fire-and-forget)
 
@@ -1378,23 +1220,15 @@ export const updateStreamer = async (id: string, data: UpdateStreamerAdminInput,
 
   }
 
-
-
   return updated;
 
 };
 
-
-
 // ========== EVENTS ==========
-
-
 
 export const listEvents = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
 
   const { page, limit, skip } = extractPagination(query);
-
-
 
   const [data, total] = await Promise.all([
 
@@ -1424,21 +1258,15 @@ export const listEvents = async (query: AdminQueryInput): Promise<PaginatedRespo
 
   ]);
 
-
-
   return { data, meta: buildPaginationMeta(total, page, limit) };
 
 };
-
-
 
 export const updateEvent = async (id: string, data: UpdateEventAdminInput, adminId: string, ip?: string) => {
 
   const event = await AdminRepository.findEventById(id);
 
   if (!event) throw new AppError('Evento no encontrado', 404);
-
-
 
   const updateData: Record<string, unknown> = { ...data };
 
@@ -1452,11 +1280,7 @@ export const updateEvent = async (id: string, data: UpdateEventAdminInput, admin
 
   }
 
-
-
   const updated = await AdminRepository.updateEvent(id, updateData);
-
-
 
   if (data.status === 'CANCELLED' && event.status !== 'CANCELLED') {
 
@@ -1482,21 +1306,15 @@ export const updateEvent = async (id: string, data: UpdateEventAdminInput, admin
 
   }
 
-
-
   return updated;
 
 };
-
-
 
 export const deleteEvent = async (id: string, adminId: string, ip?: string) => {
 
   const event = await AdminRepository.findEventById(id);
 
   if (!event) throw new AppError('Evento no encontrado', 404);
-
-
 
   await AdminRepository.deleteEvent(id);
 
@@ -1508,23 +1326,15 @@ export const deleteEvent = async (id: string, adminId: string, ip?: string) => {
 
   }, ip);
 
-
-
   return { message: 'Evento eliminado permanentemente' };
 
 };
 
-
-
 // ========== GUILDS ==========
-
-
 
 export const listGuilds = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
 
   const { page, limit, skip } = extractPagination(query);
-
-
 
   const [data, total] = await Promise.all([
 
@@ -1546,13 +1356,9 @@ export const listGuilds = async (query: AdminQueryInput): Promise<PaginatedRespo
 
   ]);
 
-
-
   return { data, meta: buildPaginationMeta(total, page, limit) };
 
 };
-
-
 
 export const getGuildDetail = async (id: string) => {
 
@@ -1564,19 +1370,13 @@ export const getGuildDetail = async (id: string) => {
 
 };
 
-
-
 export const updateGuild = async (id: string, data: UpdateGuildAdminInput, adminId: string, ip?: string) => {
 
   const guild = await AdminRepository.findGuildById(id);
 
   if (!guild) throw new AppError('Gremio no encontrado', 404);
 
-
-
   const updated = await AdminRepository.updateGuild(id, data);
-
-
 
   if (data.isSuspended !== undefined && data.isSuspended !== guild.isSuspended) {
 
@@ -1590,21 +1390,15 @@ export const updateGuild = async (id: string, data: UpdateGuildAdminInput, admin
 
   }
 
-
-
   return updated;
 
 };
-
-
 
 export const deleteGuild = async (id: string, adminId: string, ip?: string) => {
 
   const guild = await AdminRepository.findGuildById(id);
 
   if (!guild) throw new AppError('Gremio no encontrado', 404);
-
-
 
   await AdminRepository.deleteGuild(id);
 
@@ -1616,29 +1410,19 @@ export const deleteGuild = async (id: string, adminId: string, ip?: string) => {
 
   }, ip);
 
-
-
   return { message: 'Gremio eliminado permanentemente' };
 
 };
 
-
-
 // ========== POSTS ==========
-
-
 
 export const listPosts = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
 
   const { page, limit, skip } = extractPagination(query);
 
-
-
   const filters: Record<string, boolean> = {};
 
   if (query.isHidden !== undefined) filters.isHidden = query.isHidden === 'true';
-
-
 
   const [data, total] = await Promise.all([
 
@@ -1662,13 +1446,9 @@ export const listPosts = async (query: AdminQueryInput): Promise<PaginatedRespon
 
   ]);
 
-
-
   return { data, meta: buildPaginationMeta(total, page, limit) };
 
 };
-
-
 
 export const updatePost = async (id: string, data: UpdatePostAdminInput, adminId: string, ip?: string) => {
 
@@ -1676,11 +1456,7 @@ export const updatePost = async (id: string, data: UpdatePostAdminInput, adminId
 
   if (!post) throw new AppError('Publicación no encontrada', 404);
 
-
-
   const updated = await AdminRepository.updatePost(id, data);
-
-
 
   if (data.isHidden !== undefined && data.isHidden !== post.isHidden) {
 
@@ -1714,21 +1490,15 @@ export const updatePost = async (id: string, data: UpdatePostAdminInput, adminId
 
   }
 
-
-
   return updated;
 
 };
-
-
 
 export const deletePost = async (id: string, adminId: string, ip?: string) => {
 
   const post = await AdminRepository.findPostById(id);
 
   if (!post) throw new AppError('Publicación no encontrada', 404);
-
-
 
   await AdminRepository.deletePost(id);
 
@@ -1740,21 +1510,15 @@ export const deletePost = async (id: string, adminId: string, ip?: string) => {
 
   }, ip);
 
-
-
   return { message: 'Publicación eliminada permanentemente' };
 
 };
-
-
 
 export const restorePost = async (id: string, adminId: string, ip?: string) => {
 
   const post = await AdminRepository.findPostById(id);
 
   if (!post) throw new AppError('Publicación no encontrada', 404);
-
-
 
   const updated = await AdminRepository.updatePost(id, { isHidden: false });
 
@@ -1764,29 +1528,19 @@ export const restorePost = async (id: string, adminId: string, ip?: string) => {
 
   }, ip);
 
-
-
   return updated;
 
 };
 
-
-
 // ========== COMMENTS ==========
-
-
 
 export const listComments = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
 
   const { page, limit, skip } = extractPagination(query);
 
-
-
   const filters: Record<string, boolean> = {};
 
   if (query.isHidden !== undefined) filters.isHidden = query.isHidden === 'true';
-
-
 
   const [data, total] = await Promise.all([
 
@@ -1810,13 +1564,9 @@ export const listComments = async (query: AdminQueryInput): Promise<PaginatedRes
 
   ]);
 
-
-
   return { data, meta: buildPaginationMeta(total, page, limit) };
 
 };
-
-
 
 export const updateComment = async (id: string, data: UpdateCommentAdminInput, adminId: string, ip?: string) => {
 
@@ -1824,11 +1574,7 @@ export const updateComment = async (id: string, data: UpdateCommentAdminInput, a
 
   if (!comment) throw new AppError('Comentario no encontrado', 404);
 
-
-
   const updated = await AdminRepository.updateComment(id, data);
-
-
 
   if (data.isHidden !== undefined && data.isHidden !== comment.isHidden) {
 
@@ -1840,21 +1586,15 @@ export const updateComment = async (id: string, data: UpdateCommentAdminInput, a
 
   }
 
-
-
   return updated;
 
 };
-
-
 
 export const deleteComment = async (id: string, adminId: string, ip?: string) => {
 
   const comment = await AdminRepository.findCommentById(id);
 
   if (!comment) throw new AppError('Comentario no encontrado', 404);
-
-
 
   await AdminRepository.deleteComment(id);
 
@@ -1864,23 +1604,15 @@ export const deleteComment = async (id: string, adminId: string, ip?: string) =>
 
   }, ip);
 
-
-
   return { message: 'Comentario eliminado permanentemente' };
 
 };
 
-
-
 // ========== REPORTS ==========
-
-
 
 export const listReports = async (query: AdminQueryInput): Promise<PaginatedResponse<any>> => {
 
   const { page, limit, skip } = extractPagination(query);
-
-
 
   const [data, total] = await Promise.all([
 
@@ -1904,21 +1636,15 @@ export const listReports = async (query: AdminQueryInput): Promise<PaginatedResp
 
   ]);
 
-
-
   return { data, meta: buildPaginationMeta(total, page, limit) };
 
 };
-
-
 
 export const resolveReport = async (id: string, data: { status: string; resolution?: string }, adminId: string, ip?: string) => {
 
   const report = await AdminRepository.findReportById(id);
 
   if (!report) throw new AppError('Reporte no encontrado', 404);
-
-
 
   const updated = await AdminRepository.updateReport(id, {
 
@@ -1929,8 +1655,6 @@ export const resolveReport = async (id: string, data: { status: string; resoluti
     moderatorId: adminId,
 
   } as Prisma.ReportUpdateInput);
-
-
 
   await logAdminAction(adminId, 'RESOLVE_REPORT', {
 
@@ -1944,153 +1668,104 @@ export const resolveReport = async (id: string, data: { status: string; resoluti
 
   }, ip);
 
-
-
   return updated;
 
 };
 
-
-
 // ========== LOGS ==========
-
-
 
 // ========== CLEANUP ==========
 
-
-
 export const cleanupUserProfiles = async (adminId: string, ip?: string) => {
-
-  // Find users with role USER that have a vtuberProfile
-
-  const usersWithProfile = await prisma.user.findMany({
-
+  // Find users with role USER that have a vtuberProfile or streamerProfile
+  const usersWithVtuber = await prisma.user.findMany({
     where: {
-
       role: 'USER',
-
       vtuberProfile: { isNot: null },
-
     },
-
     select: {
-
       id: true,
-
       username: true,
-
-      email: true,
-
       provider: true,
-
-      createdAt: true,
-
       vtuberProfile: {
-
-        select: {
-
-          id: true,
-
-          displayName: true,
-
-          isApproved: true,
-
-        },
-
+        select: { id: true, displayName: true, isApproved: true },
       },
-
     },
-
     orderBy: { createdAt: 'asc' },
-
   });
 
+  const usersWithStreamer = await prisma.user.findMany({
+    where: {
+      role: 'USER',
+      streamerProfile: { isNot: null },
+    },
+    select: {
+      id: true,
+      username: true,
+      provider: true,
+      streamerProfile: {
+        select: { id: true, displayName: true, isApproved: true },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
 
-
-  if (usersWithProfile.length === 0) {
-
-    return {
-
-      removed: 0,
-
-      affectedUsers: [],
-
-      message: 'No se encontraron usuarios role USER con VTuberProfile.',
-
-    };
-
-  }
-
-
-
-  // Prepare report before deleting
-
-  const affectedUsers = usersWithProfile.map(u => ({
-
-    id: u.id,
-
-    username: u.username,
-
-    provider: u.provider,
-
-    displayName: u.vtuberProfile?.displayName ?? null,
-
-  }));
-
-
-
-  // Delete profiles
-
-  const profileIds = usersWithProfile
-
+  const vtuberProfileIds = usersWithVtuber
     .map(u => u.vtuberProfile?.id)
-
     .filter((id): id is string => !!id);
 
+  const streamerProfileIds = usersWithStreamer
+    .map(u => u.streamerProfile?.id)
+    .filter((id): id is string => !!id);
 
+  let vtuberCount = 0;
+  if (vtuberProfileIds.length > 0) {
+    const res = await prisma.vTuberProfile.deleteMany({
+      where: { id: { in: vtuberProfileIds } },
+    });
+    vtuberCount = res.count;
+  }
 
-  const result = await prisma.vTuberProfile.deleteMany({
+  let streamerCount = 0;
+  if (streamerProfileIds.length > 0) {
+    const res = await prisma.streamerProfile.deleteMany({
+      where: { id: { in: streamerProfileIds } },
+    });
+    streamerCount = res.count;
+  }
 
-    where: { id: { in: profileIds } },
+  const totalRemoved = vtuberCount + streamerCount;
+  if (totalRemoved === 0) {
+    return {
+      removed: 0,
+      affectedUsers: [],
+      message: 'No se encontraron usuarios comunes con perfiles huérfanos.',
+    };
+  }
 
-  });
-
-
-
-  // Log the cleanup action
-
-  const summary = affectedUsers.map(u => `${u.username}(${u.provider})`).join(', ');
+  const allAffected = [
+    ...usersWithVtuber.map(u => ({ id: u.id, username: u.username, provider: u.provider, type: 'VTUBER' })),
+    ...usersWithStreamer.map(u => ({ id: u.id, username: u.username, provider: u.provider, type: 'STREAMER' })),
+  ];
 
   await logAdminAction(adminId, 'CLEANUP_USER_PROFILES', {
-
-    removed: result.count,
-
-    users: summary,
-
+    removedVtubers: vtuberCount,
+    removedStreamers: streamerCount,
+    total: totalRemoved,
   }, ip);
 
-
-
   return {
-
-    removed: result.count,
-
-    affectedUsers,
-
-    message: `${result.count} VTuberProfile(s) eliminado(s) de usuarios role USER.`,
-
+    removed: totalRemoved,
+    removedVtubers: vtuberCount,
+    removedStreamers: streamerCount,
+    affectedUsers: allAffected,
+    message: `${totalRemoved} perfil(es) huérfano(s) eliminado(s) (${vtuberCount} VTuber, ${streamerCount} Streamer) de usuarios role USER.`,
   };
-
 };
-
-
 
 export const listLogs = async (query: AdminQueryInput): Promise<PaginatedResponse<unknown>> => {
 
   const { page, limit, skip } = extractPagination(query);
-
-
 
   const [data, total] = await Promise.all([
 
@@ -2105,8 +1780,6 @@ export const listLogs = async (query: AdminQueryInput): Promise<PaginatedRespons
     AdminRepository.countAdminLogs({}),
 
   ]);
-
-
 
   return { data, meta: buildPaginationMeta(total, page, limit) };
 

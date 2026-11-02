@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useToast } from '@/lib/ToastContext';
 import { useSocketMedia } from '@/lib/hooks/useSocketMedia';
+import RequestsSubnav from '@/components/admin/RequestsSubnav';
 
 interface PetRequestItem {
   id: string;
@@ -150,6 +151,7 @@ export default function AdminPetRequestsPage() {
 
   return (
     <div style={{ paddingBottom: '40px' }}>
+      <RequestsSubnav />
       {/* HEADER */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
