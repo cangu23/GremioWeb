@@ -48,10 +48,19 @@ export const staffPermissions: Record<string, Permission[]> = {
   NONE: [],
 };
 
+// Aliases for backwards compatibility
+staffPermissions.MODERATOR = staffPermissions.MOD;
+staffPermissions.SYSADMIN = staffPermissions.OWNER;
+
+const GOD_ROLES = ['OWNER', 'ADMIN', 'SYSADMIN'];
+
 export const rolePermissions = staffPermissions;
 
 export const checkPermission = (role: string, permission: Permission): boolean => {
   if (!role) return false;
   const roles = role.split(',').map(r => r.trim().toUpperCase());
+  if (roles.some(r => GOD_ROLES.includes(r))) {
+    return true;
+  }
   return roles.some(r => staffPermissions[r]?.includes(permission));
 };

@@ -54,7 +54,12 @@ export enum Role {
   STAFF = 'STAFF',
   BETA_TESTER = 'BETA_TESTER',
   MODERATOR = 'MODERATOR',
+  MOD = 'MOD',
+  HELPER = 'HELPER',
   ADMIN = 'ADMIN',
+  OWNER = 'OWNER',
+  SYSADMIN = 'SYSADMIN',
+  PARTNER = 'PARTNER',
   BOT = 'BOT',
 }
 
@@ -74,7 +79,7 @@ export const hasAnyRole = (role?: string | null, targetRoles: string[] = []): bo
   return userRoles.some(r => targets.includes(r));
 };
 
-export const ROLE_PRIORITY = ['ADMIN', 'OWNER', 'STAFF', 'MODERATOR', 'VTUBER', 'STREAMER', 'MAID', 'BETA_TESTER', 'USER'];
+export const ROLE_PRIORITY = ['OWNER', 'SYSADMIN', 'ADMIN', 'STAFF', 'MODERATOR', 'MOD', 'HELPER', 'PARTNER', 'VTUBER', 'STREAMER', 'ARTIST', 'CLIPPER', 'MAID', 'BETA_TESTER', 'USER'];
 
 export const getPrimaryRole = (roleStr?: string | null, displayedRole?: string | null): string => {
   const userRoles = parseUserRoles(roleStr);

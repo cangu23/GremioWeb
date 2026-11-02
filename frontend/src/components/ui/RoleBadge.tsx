@@ -3,6 +3,8 @@
 import React from 'react';
 
 export type RoleType =
+  | 'OWNER'
+  | 'SYSADMIN'
   | 'ADMIN'
   | 'MODERATOR'
   | 'STAFF'
@@ -184,6 +186,22 @@ const ROLE_CONFIGS: Record<string, {
   glow: string;
   IconComponent: React.ComponentType<{ size?: number }>;
 }> = {
+  OWNER: {
+    label: 'PROPIETARIO',
+    bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(245, 158, 11, 0.35))',
+    border: 'rgba(245, 158, 11, 0.7)',
+    color: '#fbbf24',
+    glow: 'rgba(245, 158, 11, 0.5)',
+    IconComponent: AdminCrownIcon,
+  },
+  SYSADMIN: {
+    label: 'SYSADMIN',
+    bg: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.3))',
+    border: 'rgba(168, 85, 247, 0.6)',
+    color: '#c084fc',
+    glow: 'rgba(168, 85, 247, 0.4)',
+    IconComponent: AdminCrownIcon,
+  },
   ADMIN: {
     label: 'ADMIN',
     bg: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(217, 119, 6, 0.25))',
@@ -207,6 +225,30 @@ const ROLE_CONFIGS: Record<string, {
     color: '#34d399',
     glow: 'rgba(16, 185, 129, 0.35)',
     IconComponent: StaffWrenchIcon,
+  },
+  MOD: {
+    label: 'MODERADOR',
+    bg: 'linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(225, 29, 72, 0.25))',
+    border: 'rgba(244, 63, 94, 0.5)',
+    color: '#fb7185',
+    glow: 'rgba(244, 63, 94, 0.35)',
+    IconComponent: ModeratorShieldIcon,
+  },
+  HELPER: {
+    label: 'HELPER',
+    bg: 'linear-gradient(135deg, rgba(45, 212, 191, 0.2), rgba(20, 184, 166, 0.25))',
+    border: 'rgba(45, 212, 191, 0.5)',
+    color: '#2dd4bf',
+    glow: 'rgba(45, 212, 191, 0.35)',
+    IconComponent: StaffWrenchIcon,
+  },
+  PARTNER: {
+    label: 'PARTNER',
+    bg: 'linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(249, 115, 22, 0.25))',
+    border: 'rgba(234, 179, 8, 0.5)',
+    color: '#eab308',
+    glow: 'rgba(234, 179, 8, 0.35)',
+    IconComponent: VtuberSparkleIcon,
   },
   BETA_TESTER: {
     label: 'BETA TESTER',
