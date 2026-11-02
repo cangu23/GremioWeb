@@ -215,6 +215,8 @@ export default function Footer() {
 
           <div style={{ display: 'flex', gap: '24px' }}>
             {[
+              { href: '/terms', label: 'Términos' },
+              { href: '/privacy', label: 'Privacidad' },
               { href: '/support', label: 'Apoyar el proyecto' },
             ].map((link) => (
               <Link
