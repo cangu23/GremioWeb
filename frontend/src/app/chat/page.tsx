@@ -86,6 +86,7 @@ interface DmMessageData {
   sender: UserInfo;
   receiver: UserInfo;
   reactions?: Record<string, string[]>; // emoji -> array of userIds
+  isOptimistic?: boolean;
 }
 
 interface ConversationData {
@@ -349,6 +350,15 @@ function MessengerContent() {
       if (isForActiveChat) {
         setMessages(prev => {
           if (prev.some(m => m.id === msg.id)) return prev;
+          // Reemplazo transparente del mensaje optimista del remitente (0 parpadeos)
+          if (msg.senderId === currentUser.id) {
+            const tempIdx = prev.findIndex(m => m.id.startsWith('temp-') && m.senderId === msg.senderId && m.content === msg.content);
+            if (tempIdx !== -1) {
+              const updated = [...prev];
+              updated[tempIdx] = msg;
+              return updated;
+            }
+          }
           return [...prev, msg];
         });
         if (msg.receiverId === currentUser.id && sock.connected) {
@@ -505,18 +515,35 @@ function MessengerContent() {
     if (!groupInput.trim() || !activeGroupId || groupSending) return;
     const content = groupInput.trim();
     setGroupInput('');
-    setGroupSending(true);
+
+    const tempId = 'temp-g-' + Date.now();
+    const optimisticGroupMsg: GroupMessageData = {
+      id: tempId,
+      content,
+      createdAt: new Date().toISOString(),
+      senderId: currentUser?.id || '',
+      sender: {
+        id: currentUser?.id || '',
+        username: (currentUser as any)?.username || '',
+        displayName: (currentUser as any)?.displayName || (currentUser as any)?.username || '',
+        avatarUrl: (currentUser as any)?.avatarUrl || null,
+        role: (currentUser as any)?.role || 'USER',
+      },
+    };
+
+    // Insercion inmediata en pantalla
+    setGroupMessages(prev => [...prev, optimisticGroupMsg]);
+    setGroups(prev => prev.map(g => g.id === activeGroupId ? { ...g, lastMessage: { content, createdAt: new Date().toISOString(), sender: { username: (currentUser as any)?.username || '' } } } : g));
+
     try {
       const msg = await apiFetch(`/groups/${activeGroupId}/messages`, {
         method: 'POST',
         body: JSON.stringify({ content }),
       });
-      setGroupMessages(prev => [...prev, msg]);
-      setGroups(prev => prev.map(g => g.id === activeGroupId ? { ...g, lastMessage: { content, createdAt: new Date().toISOString(), sender: { username: (currentUser as any)?.username || '' } } } : g));
+      setGroupMessages(prev => prev.map(m => m.id === tempId ? msg : m));
     } catch (err: unknown) {
+      setGroupMessages(prev => prev.filter(m => m.id !== tempId));
       showToast(err instanceof Error ? err.message : 'Error al enviar mensaje', 'error');
-    } finally {
-      setGroupSending(false);
     }
   }, [groupInput, activeGroupId, groupSending, currentUser, showToast]);
 
@@ -657,24 +684,46 @@ function MessengerContent() {
     window.history.replaceState({}, '', url.toString());
   }, []);
 
-  /* ─── Send a message ─── */
+  /* ─── Send a message (Optimistic UI instantaneo como Discord / WhatsApp) ─── */
   const handleSend = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !socket || !activeUserId || sending) return;
+    if (!input.trim() || !socket || !activeUserId || sending || !currentUser || !activeUserInfo) return;
 
-    setSending(true);
     const content = input.trim();
     setInput('');
+    setSending(true);
+
+    const tempId = 'temp-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+    const optimisticMsg: DmMessageData = {
+      id: tempId,
+      content,
+      read: false,
+      reactions: {},
+      createdAt: new Date().toISOString(),
+      senderId: currentUser.id,
+      receiverId: activeUserId,
+      sender: currentUser as any,
+      receiver: activeUserInfo as any,
+      isOptimistic: true,
+    };
+
+    // Insercion inmediata en pantalla (0ms de latencia percibida)
+    setMessages(prev => [...prev, optimisticMsg]);
+    setConversations(prev => {
+      const filtered = prev.filter(c => {
+        const cOtherId = c.senderId === currentUser.id ? c.receiverId : c.senderId;
+        return cOtherId !== activeUserId;
+      });
+      return [optimisticMsg, ...filtered];
+    });
 
     socket.emit(DM_EVENTS.MESSAGE, { receiverId: activeUserId, content });
     socket.emit(DM_EVENTS.TYPING, { receiverId: activeUserId, isTyping: false });
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
-    // Bloquear el envío unos instantes: `setSending(false)` inmediato era
-    // agrupado por React y nunca llegaba a proteger contra dobles clics.
-    setTimeout(() => setSending(false), 400);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  }, [input, socket, activeUserId, sending]);
+    setTimeout(() => setSending(false), 60);
+    setTimeout(() => inputRef.current?.focus(), 15);
+  }, [input, socket, activeUserId, sending, currentUser, activeUserInfo]);
 
   /* ─── Toggle Pin Conversation ─── */
   const togglePinUser = useCallback((userId: string, e: React.MouseEvent) => {
@@ -1841,14 +1890,15 @@ function MessengerContent() {
                 </div>
               )}
 
-              {/* Input area */}
+              {/* Input area celestial */}
               <form
                 onSubmit={handleSend}
                 style={{
-                  display: 'flex', gap: '8px',
+                  display: 'flex', gap: '10px', alignItems: 'center',
                   padding: '14px 20px',
-                  borderTop: '1px solid var(--glass-border)',
-                  background: 'rgba(0,0,0,0.15)',
+                  borderTop: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(12, 10, 24, 0.7)',
+                  backdropFilter: 'blur(20px)',
                   flexShrink: 0,
                 }}
               >
@@ -1953,7 +2003,12 @@ function MessengerContent() {
                     padding: '11px 22px', fontSize: '0.88rem', fontWeight: 700,
                     borderRadius: '12px',
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    boxShadow: '0 4px 16px rgba(138,43,226,0.35)',
+                    background: input.trim() ? 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)' : 'rgba(255,255,255,0.05)',
+                    color: input.trim() ? '#fff' : 'rgba(255,255,255,0.35)',
+                    border: input.trim() ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: input.trim() ? '0 4px 16px rgba(168,85,247,0.4)' : 'none',
+                    transition: 'all 0.15s ease',
+                    cursor: input.trim() && connected ? 'pointer' : 'default',
                   }}
                   disabled={!connected || !input.trim() || sending || uploadingImage}
                 >

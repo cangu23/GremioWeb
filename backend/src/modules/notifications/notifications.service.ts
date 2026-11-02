@@ -202,6 +202,21 @@ export const notifyNewStreamerRequest = async (requesterUsername: string, reques
 
 export const notifyDM = async (senderName: string, senderId: string, receiverId: string) => {
   const cleanName = senderName && senderName !== 'undefined' ? senderName : 'Un usuario';
+  // Anti-spam: si ya existe una notificacion de DM sin leer de este usuario en los ultimos 10 min, no saturar la campana
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+  const existingUnread = await prisma.notification.findFirst({
+    where: {
+      userId: receiverId,
+      type: NOTIFICATION_TYPES.DM,
+      referenceId: senderId,
+      read: false,
+      createdAt: { gte: tenMinutesAgo },
+    },
+  });
+  if (existingUnread) {
+    return existingUnread;
+  }
+
   return NotificationsRepository.createNotification({
     userId: receiverId,
     type: NOTIFICATION_TYPES.DM,

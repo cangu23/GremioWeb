@@ -470,17 +470,37 @@ function NotificationsDropdown({ unreadCount }: { unreadCount: number }) {
       {open && (
         <div style={{
           position: 'absolute', top: '100%', right: 0, marginTop: '8px',
-          width: '320px', zIndex: 1000,
-          background: 'rgba(20,20,32,0.97)', backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px',
+          width: '360px', zIndex: 1000,
+          background: 'rgba(18,15,30,0.98)', backdropFilter: 'blur(24px)', border: '1px solid rgba(168,85,247,0.25)', borderRadius: '16px',
           boxShadow: '0 12px 40px rgba(0,0,0,0.6)', padding: '12px',
           animation: 'slideDown 0.15s ease',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
             <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#fff' }}>Notificaciones</span>
-            <Link href="/notifications" onClick={() => setOpen(false)} style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
-              Ver todas →
-            </Link>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    try {
+                      await apiFetch('/notifications/read-all', { method: 'PUT' });
+                      setNotifs(prev => prev.map(item => ({ ...item, read: true })));
+                      window.dispatchEvent(new Event('notifications-read'));
+                    } catch {}
+                  }}
+                  style={{
+                    background: 'none', border: 'none', color: '#38bdf8',
+                    fontSize: '0.72rem', cursor: 'pointer', fontWeight: 700, padding: 0,
+                  }}
+                >
+                  ✓ Leídas
+                </button>
+              )}
+              <Link href="/notifications" onClick={() => setOpen(false)} style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+                Ver todas →
+              </Link>
+            </div>
           </div>
 
           {loading ? (
@@ -542,8 +562,26 @@ function NotificationsDropdown({ unreadCount }: { unreadCount: number }) {
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                   onMouseLeave={e => (e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(139,92,246,0.1)')}
                 >
-                  <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#fff', marginBottom: '2px' }}>{n.title}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.message}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '32px', height: '32px', borderRadius: '50%',
+                      background: n.read ? 'rgba(255,255,255,0.05)' : 'rgba(168,85,247,0.18)',
+                      color: n.read ? 'var(--text-muted)' : '#c084fc',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      border: n.read ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(168,85,247,0.35)',
+                    }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.title}</div>
+                        {!n.read && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#c084fc', boxShadow: '0 0 6px #c084fc', flexShrink: 0 }} />}
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '1px' }}>{n.message}</div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

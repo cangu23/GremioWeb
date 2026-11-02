@@ -335,7 +335,11 @@ function NotificationsContent() {
         </div>
       ) : filteredNotifications.length === 0 ? (
         <div className="glass" style={{ padding: '50px 20px', textAlign: 'center', color: 'var(--text-muted)', borderRadius: '16px' }}>
-          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '10px' }}>🔔</span>
+          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', margin: '0 auto 14px' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
           No tienes notificaciones en esta categoría.
         </div>
       ) : (
@@ -352,7 +356,7 @@ function NotificationsContent() {
                 const senderMatch = n.message?.match(/@([a-zA-Z0-9_.-]+)/);
                 const senderName = senderMatch ? senderMatch[1] : 'Amigo Estelar';
                 const msgMatch = n.message?.match(/:\s*"([^"]+)"/);
-                const amountMatch = n.message?.match(/⭐\s*([\d,.]+)/);
+                const amountMatch = n.message?.match(/(?:⭐|✦|Stardust)\s*([\d,.]+)/i);
 
                 setGiftEnvelopeData({
                   id: n.id,
