@@ -40,7 +40,7 @@ export default function GlobalMusicPlayer() {
     audio.preload = 'metadata';
     audio.volume = 0;
     audioRef.current = audio;
-    attachMusicVisualizer(audio);
+    // Visualizer attached on user gesture below
 
     const handleCanPlay = () => setReady(true);
     const handleError = () => setReady(false);
@@ -83,6 +83,7 @@ export default function GlobalMusicPlayer() {
     const handleFirstInteraction = () => {
       const audio = audioRef.current;
       if (!audio || userToggled) return;
+      attachMusicVisualizer(audio);
       audio
         .play()
         .then(() => {
@@ -108,6 +109,7 @@ export default function GlobalMusicPlayer() {
     const audio = audioRef.current;
     if (!audio) return;
     setUserToggled(true);
+    attachMusicVisualizer(audio);
 
     if (playing) {
       fadeTo(0, 400);

@@ -1671,3 +1671,51 @@ img, svg {
 
 
 
+
+/* ==========================================================================
+   MOBILE RESPONSIVE ENHANCEMENTS (Auth, Landing, Founders)
+   ========================================================================== */
+
+@media (max-width: 960px) {
+  .auth-main-wrapper {
+    padding: 72px 16px 24px !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    overflow-y: auto !important;
+  }
+  .auth-hero-column {
+    display: none !important;
+  }
+  .auth-card-column {
+    width: 100% !important;
+    max-width: 440px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-stats-container {
+    flex-wrap: wrap !important;
+    gap: 16px !important;
+    padding: 16px 20px !important;
+    justify-content: center !important;
+    width: calc(100% - 24px) !important;
+    max-width: 440px !important;
+  }
+  .hero-stats-divider {
+    display: none !important;
+  }
+  .founders-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .founders-incoming-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .global-music-capsule {
+    left: 12px !important;
+    bottom: 12px !important;
+    transform: scale(0.92);
+    transform-origin: bottom left;
+  }
+}

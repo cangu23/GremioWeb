@@ -19,18 +19,28 @@ interface LiveVTuber {
   user: { id: string; username: string; role: string };
 }
 
+function extractTwitchChannel(input: string | null | undefined): string | null {
+  if (!input || !input.trim()) return null;
+  const clean = input.trim().replace(/^@/, '');
+  const urlMatch = clean.match(/(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]{2,25})/i);
+  if (urlMatch) return urlMatch[1].toLowerCase();
+  if (!clean.includes('/') && !clean.includes('.') && /^[a-zA-Z0-9_]{2,25}$/.test(clean)) {
+    return clean.toLowerCase();
+  }
+  return null;
+}
+
 function getEmbedUrl(url: string): string | null {
   if (!url || !url.trim()) return null;
-  const clean = url.trim().replace(/^@/, '');
-  const twitchMatch = clean.match(/(?:twitch\.tv\/)?([a-zA-Z0-9_]{2,25})/i);
-  if (twitchMatch && (clean.includes('twitch') || !clean.includes('http'))) {
+  const channel = extractTwitchChannel(url);
+  if (channel) {
     const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     const parentParams = `parent=${encodeURIComponent(host)}&parent=localhost&parent=127.0.0.1`;
-    return `https://player.twitch.tv/?channel=${twitchMatch[1].toLowerCase()}&${parentParams}&autoplay=true&muted=true`;
+    return `https://player.twitch.tv/?channel=${channel}&${parentParams}&autoplay=true&muted=true`;
   }
-  const ytChannelMatch = url.match(/(?:youtube\.com\/@)([a-zA-Z0-9_]+)/);
+  const ytChannelMatch = url.match(/(?:youtube\.com\/@)([a-zA-Z0-9_-]+)/i);
   if (ytChannelMatch) return `https://www.youtube.com/embed/live_stream?channel=${ytChannelMatch[1]}&autoplay=1&muted=1`;
-  const ytVideoMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  const ytVideoMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/i);
   if (ytVideoMatch) return `https://www.youtube.com/embed/${ytVideoMatch[1]}?autoplay=1&muted=1`;
   return null;
 }

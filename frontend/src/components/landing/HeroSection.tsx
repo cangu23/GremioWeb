@@ -453,6 +453,7 @@ export default function HeroSection() {
 
       {/* LeFolk-style Technical Agency Stats Bar */}
       <div
+        className="hero-stats-container"
         style={{
           opacity: 0,
           animation: visible ? 'fadeInUp 0.6s ease 0.6s forwards' : 'none',
@@ -470,9 +471,9 @@ export default function HeroSection() {
         }}
       >
         <AgencyStat target={totalVtubers} sublabel="[01] // TALENTS" label="VTubers Registrados" />
-        <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)' }} />
+        <div className="hero-stats-divider" style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)' }} />
         <AgencyStat target={totalEvents} sublabel="[02] // EVENTS" label="Eventos Realizados" />
-        <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)' }} />
+        <div className="hero-stats-divider" style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)' }} />
         <AgencyStat target={totalUsers} sublabel="[03] // MEMBERS" label="Miembros de la Red" />
       </div>
 

@@ -386,6 +386,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
 
       {/* 🚀 CENTERED MAX-WIDTH WORKSPACE — character + card as one balanced unit */}
       <main
+        className="auth-main-wrapper"
         style={{
           position: 'relative',
           zIndex: 10,
@@ -527,6 +528,7 @@ export default function AuthLayout({ activeTab }: AuthLayoutProps) {
 
         {/* RIGHT PANEL: ORNATE GOLD FORM CARD (stable, no parallax) */}
         <div
+          className="auth-card-column"
           style={{
             width: '430px',
             maxWidth: '92vw',

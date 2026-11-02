@@ -47,7 +47,7 @@ export interface ResolvedFounder {
 const FOUNDERS_CONFIG: FounderConfig[] = [
   {
     id: 'guren',
-    username: 'gurenvt_',
+    username: 'canguvt',
     alternateUsernames: ['guren', 'canguvt', 'gurenvt'],
     name: 'Guren Tatsumaki',
     role: 'Emperador del Imperio Carmesí',
@@ -135,21 +135,34 @@ export default function FoundersSection() {
     const fetchProfiles = async () => {
       const updated = await Promise.all(
         FOUNDERS_CONFIG.map(async (cfg) => {
-          const usernamesToTry = [cfg.username, ...(cfg.alternateUsernames || [])];
+          if (cfg.isIncoming) {
+            return {
+              id: cfg.id,
+              username: cfg.username,
+              name: cfg.name,
+              role: cfg.role,
+              badge: cfg.badge,
+              isIncoming: true,
+              avatarUrl: cfg.fallbackAvatar || null,
+              bannerUrl: cfg.fallbackBanner || null,
+              themeColor: cfg.themeColor,
+              description: cfg.fallbackDescription,
+              socials: cfg.fallbackSocials || {},
+              profileUrl: `/profile/${cfg.username}`,
+            };
+          }
+
           let profileData: any = null;
           let matchedUsername = cfg.username;
 
-          for (const u of usernamesToTry) {
-            try {
-              const res = await apiFetch(`/social/profile/${encodeURIComponent(u)}`, {});
-              if (res && res.id) {
-                profileData = res;
-                matchedUsername = res.username || u;
-                break;
-              }
-            } catch {
-              // try next alternate username
+          try {
+            const res = await apiFetch(`/social/profile/${encodeURIComponent(cfg.username)}`, {});
+            if (res && res.id) {
+              profileData = res;
+              matchedUsername = res.username || cfg.username;
             }
+          } catch {
+            // Use fallback data seamlessly if offline or not found
           }
 
           if (!profileData) {
@@ -282,9 +295,10 @@ export default function FoundersSection() {
 
         {/* Primary Founders Row (Guren, Meiro, Alesha) */}
         <div
+          className="founders-main-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
             gap: '24px',
             marginBottom: '32px',
           }}
@@ -642,9 +656,10 @@ export default function FoundersSection() {
           </div>
 
           <div
+            className="founders-incoming-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
               gap: '16px',
             }}
           >
