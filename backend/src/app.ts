@@ -243,9 +243,13 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     });
   }
 
+  const errorMessage = err.message || 'Internal server error';
+  res.setHeader('X-Error-Message', errorMessage.replace(/[\r\n]+/g, ' '));
+
   return res.status(500).json({
     status: 'error',
-    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+    message: errorMessage,
+    ...(process.env.NODE_ENV !== 'production' ? { stack: err.stack } : {}),
   });
 });
 

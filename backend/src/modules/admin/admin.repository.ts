@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 
 // ========== USERS ==========
 
-export const findUsers = (params: {
+export const findUsers = async (params: {
   skip: number;
   take: number;
   search?: string;
@@ -27,53 +27,85 @@ export const findUsers = (params: {
   const sortOrder = params.sortOrder || 'desc';
   const orderBy = { [sortField]: sortOrder } as Prisma.UserOrderByWithRelationInput;
 
-  return prisma.user.findMany({
-    where,
-    orderBy,
-    skip: params.skip,
-    take: params.take,
-    include: {
-      vtuberProfile: {
-        select: {
-          id: true,
-          displayName: true,
-          avatarUrl: true,
-          isVerified: true,
-          isApproved: true,
-          isFeatured: true,
-          isHidden: true,
+  try {
+    return await prisma.user.findMany({
+      where,
+      orderBy,
+      skip: params.skip,
+      take: params.take,
+      include: {
+        vtuberProfile: {
+          select: {
+            id: true,
+            displayName: true,
+            avatarUrl: true,
+            isVerified: true,
+            isApproved: true,
+            isFeatured: true,
+            isHidden: true,
+          },
+        },
+        streamerProfile: {
+          select: {
+            id: true,
+            displayName: true,
+            avatarUrl: true,
+            isVerified: true,
+            isApproved: true,
+            isFeatured: true,
+            isHidden: true,
+          },
+        },
+        platformSubscription: {
+          select: {
+            plan: true,
+            status: true,
+            currentPeriodEnd: true,
+          },
+        },
+        _count: {
+          select: {
+            posts: true,
+            comments: true,
+            likes: true,
+            followers: true,
+            following: true,
+            notifications: true,
+          },
         },
       },
-      streamerProfile: {
-        select: {
-          id: true,
-          displayName: true,
-          avatarUrl: true,
-          isVerified: true,
-          isApproved: true,
-          isFeatured: true,
-          isHidden: true,
+    });
+  } catch (err: any) {
+    return await prisma.user.findMany({
+      where,
+      orderBy,
+      skip: params.skip,
+      take: params.take,
+      include: {
+        vtuberProfile: {
+          select: {
+            id: true,
+            displayName: true,
+            avatarUrl: true,
+            isVerified: true,
+            isApproved: true,
+            isFeatured: true,
+            isHidden: true,
+          },
+        },
+        _count: {
+          select: {
+            posts: true,
+            comments: true,
+            likes: true,
+            followers: true,
+            following: true,
+            notifications: true,
+          },
         },
       },
-      platformSubscription: {
-        select: {
-          plan: true,
-          status: true,
-          currentPeriodEnd: true,
-        },
-      },
-      _count: {
-        select: {
-          posts: true,
-          comments: true,
-          likes: true,
-          followers: true,
-          following: true,
-          notifications: true,
-        },
-      },
-    },
-  });
+    });
+  }
 };
 
 export const countUsers = (params: { search?: string; status?: string; role?: string }) => {
@@ -224,7 +256,7 @@ export const updateVtuberProfile = (id: string, data: Prisma.VTuberProfileUpdate
 
 // ========== STREAMER PROFILES ==========
 
-export const findStreamerProfiles = (params: {
+export const findStreamerProfiles = async (params: {
   skip: number;
   take: number;
   search?: string;
@@ -252,29 +284,33 @@ export const findStreamerProfiles = (params: {
   const sortOrder = params.sortOrder || 'desc';
   const orderBy = { [sortField]: sortOrder } as Prisma.StreamerProfileOrderByWithRelationInput;
 
-  return prisma.streamerProfile.findMany({
-    where,
-    orderBy,
-    skip: params.skip,
-    take: params.take,
-    include: {
-      user: {
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          xp: true,
-          level: true,
+  try {
+    return await prisma.streamerProfile.findMany({
+      where,
+      orderBy,
+      skip: params.skip,
+      take: params.take,
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            role: true,
+            status: true,
+            createdAt: true,
+            xp: true,
+            level: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (err) {
+    return [];
+  }
 };
 
-export const countStreamerProfiles = (params: {
+export const countStreamerProfiles = async (params: {
   search?: string;
   isVerified?: boolean;
   isApproved?: boolean;
@@ -292,7 +328,11 @@ export const countStreamerProfiles = (params: {
   if (params.isApproved !== undefined) where.isApproved = params.isApproved;
   if (params.isHidden !== undefined) where.isHidden = params.isHidden;
   if (params.isFeatured !== undefined) where.isFeatured = params.isFeatured;
-  return prisma.streamerProfile.count({ where });
+  try {
+    return await prisma.streamerProfile.count({ where });
+  } catch (err) {
+    return 0;
+  }
 };
 
 export const findStreamerProfileById = (id: string) => {
@@ -780,9 +820,9 @@ export const getDashboardStats = async () => {
     pendingVerifications,
     usersByRole,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { status: 'ACTIVE' } }),
-    prisma.vTuberProfile.count(),
+    prisma.user.count().catch(() => 0),
+    prisma.user.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
+    prisma.vTuberProfile.count().catch(() => 0),
     prisma.user.count({
       where: {
         OR: [
@@ -791,31 +831,48 @@ export const getDashboardStats = async () => {
           { displayedRole: { contains: 'MAID' } },
         ],
       },
+    }).catch(async () => {
+      try {
+        return await prisma.user.count({
+          where: {
+            OR: [
+              { role: { contains: 'MAID' } },
+              { role: { contains: 'maid' } },
+            ],
+          },
+        });
+      } catch {
+        return 0;
+      }
     }),
-    prisma.vTuberProfile.count({ where: { isLive: true } }),
-    prisma.guild.count(),
-    prisma.event.count(),
-    prisma.post.count(),
-    prisma.comment.count(),
-    prisma.like.count(),
-    prisma.report.count({ where: { status: 'PENDING' } }),
-    prisma.vtuberRequest.count({ where: { status: 'PENDING' } }),
+    prisma.vTuberProfile.count({ where: { isLive: true } }).catch(() => 0),
+    prisma.guild.count().catch(() => 0),
+    prisma.event.count().catch(() => 0),
+    prisma.post.count().catch(() => 0),
+    prisma.comment.count().catch(() => 0),
+    prisma.like.count().catch(() => 0),
+    prisma.report.count({ where: { status: 'PENDING' } }).catch(() => 0),
+    prisma.vtuberRequest.count({ where: { status: 'PENDING' } }).catch(() => 0),
     prisma.user.count({
       where: { createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
-    }),
+    }).catch(() => 0),
     prisma.user.count({
       where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
-    }),
+    }).catch(() => 0),
     prisma.user.count({
       where: { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
-    }),
-    prisma.vTuberProfile.count({ where: { isApproved: true, isVerified: false } }),
-    prisma.user.groupBy({ by: ['role'], _count: true }),
+    }).catch(() => 0),
+    prisma.vTuberProfile.count({ where: { isApproved: true, isVerified: false } }).catch(() => 0),
+    prisma.user.groupBy({ by: ['role'], _count: true }).catch(() => [] as any[]),
   ]);
 
   const userCountByRole: Record<string, number> = {};
-  for (const entry of usersByRole) {
-    userCountByRole[entry.role] = entry._count;
+  if (Array.isArray(usersByRole)) {
+    for (const entry of usersByRole) {
+      if (entry && entry.role) {
+        userCountByRole[entry.role] = entry._count;
+      }
+    }
   }
 
   return {

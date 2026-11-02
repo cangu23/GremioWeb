@@ -46,7 +46,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
 export const setAccessToken = (token: string | null) => {
   currentAccessToken = token;
-  if (token) authCooldownUntil = 0; // nueva sesión → reactivar peticiones
+  if (token) {
+    authCooldownUntil = 0; // nueva sesión → reactivar peticiones
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:token', { detail: { token } }));
+    }
+  }
 };
 
 export const getAccessToken = () => currentAccessToken;

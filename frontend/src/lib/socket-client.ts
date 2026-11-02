@@ -63,17 +63,29 @@ export const connectSocket = (): Socket => {
     return socket;
   }
 
-  if (!token) throw new Error('No auth token');
-
   socket = io(SOCKET_URL, {
-    auth: { token },
+    auth: { token: token || '' },
+    autoConnect: Boolean(token),
     transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: 15, // antes Infinity: bucle infinito con token muerto
+    reconnectionAttempts: 15,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 8000,
     timeout: 20000,
   });
+
+  if (typeof window !== 'undefined') {
+    const handleToken = (e: any) => {
+      const freshToken = e?.detail?.token || getAccessToken();
+      if (freshToken && socket) {
+        (socket as any).auth = { token: freshToken };
+        if (!socket.connected) {
+          socket.connect();
+        }
+      }
+    };
+    window.addEventListener('auth:token', handleToken);
+  }
 
   socket.on('connect_error', async (err) => {
     console.warn('[Socket] Connection error:', err.message, '→ target:', SOCKET_URL);

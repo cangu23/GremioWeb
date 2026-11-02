@@ -65,6 +65,9 @@ if [ -f /app/backend/prisma/schema.prisma ]; then
       exit 1
     fi
     echo "[BOOT] ⚠️  Database sync failed after 5 attempts — starting anyway (dev mode)"
+  else
+    echo "[BOOT] Ensuring all schema models and columns are fully synchronized via prisma db push..."
+    npx prisma db push --schema "$SCHEMA" --skip-generate || true
   fi
 fi
 
