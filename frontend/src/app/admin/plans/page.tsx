@@ -114,7 +114,7 @@ export default function PlanBuilderPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '1.1rem', fontWeight: 900, color: p.color }}>{p.name}</span>
               <span style={{ fontSize: '0.72rem', background: `${p.color}22`, border: `1px solid ${p.color}44`, color: p.color, padding: '2px 8px', borderRadius: '12px', fontWeight: 800 }}>
-                x{p.multiplier.toFixed(1)} Stardust
+                x{Number(p.multiplier ?? 1).toFixed(1)} Stardust
               </span>
             </div>
 

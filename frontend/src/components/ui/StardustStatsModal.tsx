@@ -504,7 +504,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                           gap: '5px',
                           boxShadow: multiplier > 1 ? '0 0 14px rgba(245,158,11,0.3)' : 'none',
                         }}>
-                          Multiplicador ×{multiplier.toFixed(1)} {multiplier > 1 ? '✨ ACTIVO' : ''}
+                          Multiplicador ×{Number(multiplier ?? 1).toFixed(1)} {multiplier > 1 ? '✦ ACTIVO' : ''}
                         </div>
                         <span style={{ fontSize: '0.7rem', color: '#9ca3af', fontWeight: 500 }}>
                           {multiplier > 1 ? `Plan ${data?.plan} (+${Math.round((multiplier - 1) * 100)}%)` : 'Consigue Premium'}

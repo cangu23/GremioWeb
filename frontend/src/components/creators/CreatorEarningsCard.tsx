@@ -54,6 +54,10 @@ export default function CreatorEarningsCard() {
   const [payoutAmount, setPayoutAmount] = useState<number>(10);
   const [submittingPayout, setSubmittingPayout] = useState(false);
 
+  const formatUsd = (val: number | null | undefined): string => {
+    return Number(val ?? 0).toFixed(2);
+  };
+
   const loadData = useCallback(async () => {
     try {
       const res = await apiFetch<{ status: string; data: CreatorDashboardData }>('/creators/my-dashboard');
@@ -220,7 +224,7 @@ export default function CreatorEarningsCard() {
             Saldo Disponible
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', marginTop: '4px' }}>
-            ${currentBalance.toFixed(2)}{' '}
+            ${formatUsd(currentBalance)}{' '}
             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#94a3b8' }}>USD</span>
           </div>
           <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
@@ -239,7 +243,7 @@ export default function CreatorEarningsCard() {
             Ganancias Totales
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', marginTop: '4px' }}>
-            ${totalEarnings.toFixed(2)}{' '}
+            ${formatUsd(totalEarnings)}{' '}
             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#94a3b8' }}>USD</span>
           </div>
           <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
@@ -382,7 +386,7 @@ export default function CreatorEarningsCard() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontWeight: 800, color: '#10b981' }}>
-                      +${sale.commission.toFixed(2)} USD
+                      +${formatUsd(sale.commission)} USD
                     </div>
                     <div style={{ fontSize: '0.68rem', color: '#64748b' }}>
                       {new Date(sale.createdAt).toLocaleDateString()}
@@ -429,7 +433,7 @@ export default function CreatorEarningsCard() {
                   >
                     <div>
                       <div style={{ fontWeight: 800, color: '#fff' }}>
-                        ${payout.amount.toFixed(2)} USD
+                        ${formatUsd(payout.amount)} USD
                       </div>
                       <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
                         {payout.paypalEmail}
@@ -565,7 +569,7 @@ export default function CreatorEarningsCard() {
                   </button>
                 </div>
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>
-                  Saldo disponible: ${currentBalance.toFixed(2)} USD (Mínimo: ${data?.minPayout || 10} USD)
+                  Saldo disponible: ${formatUsd(currentBalance)} USD (Mínimo: ${data?.minPayout || 10} USD)
                 </div>
               </div>
 

@@ -71,6 +71,10 @@ export default function AdminFinanzasPage() {
   const [txId, setTxId] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  const formatUsd = (val: number | null | undefined): string => {
+    return Number(val ?? 0).toFixed(2);
+  };
+
   const loadData = useCallback(async () => {
     try {
       const [sumRes, payRes] = await Promise.all([
@@ -121,6 +125,15 @@ export default function AdminFinanzasPage() {
   const pendingPayouts = payouts.filter(p => p.status === 'PENDING' || p.status === 'APPROVED');
   const historyPayouts = payouts.filter(p => p.status === 'PAID' || p.status === 'REJECTED');
 
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center', justifyContent: 'center', minHeight: '360px', color: '#94a3b8' }}>
+        <div style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ fontSize: '0.85rem', margin: 0 }}>Sincronizando balances financieros y economía de creadores...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Header */}
@@ -146,7 +159,7 @@ export default function AdminFinanzasPage() {
             Ingresos Brutos Totales
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginTop: '6px' }}>
-            ${summary?.grossRevenue.toFixed(2) || '0.00'}{' '}
+            ${formatUsd(summary?.grossRevenue)}{' '}
             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#94a3b8' }}>USD</span>
           </div>
           <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>
@@ -165,7 +178,7 @@ export default function AdminFinanzasPage() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Server size={13} color="#38bdf8" /> 35% Servidores & Hosting</span>
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#38bdf8', marginTop: '6px' }}>
-            ${summary?.revenueSplit.serversAndInfra.toFixed(2) || '0.00'}{' '}
+            ${formatUsd(summary?.revenueSplit?.serversAndInfra)}{' '}
             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#94a3b8' }}>USD</span>
           </div>
           <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>
@@ -184,11 +197,11 @@ export default function AdminFinanzasPage() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Users size={13} color="#34d399" /> 35% Economía de Creadores</span>
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#34d399', marginTop: '6px' }}>
-            ${summary?.revenueSplit.creatorCommissions.toFixed(2) || '0.00'}{' '}
+            ${formatUsd(summary?.revenueSplit?.creatorCommissions)}{' '}
             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#94a3b8' }}>USD</span>
           </div>
           <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>
-            ${summary?.payoutSummary.pendingAmount.toFixed(2) || '0.00'} pendientes de pago
+            ${formatUsd(summary?.payoutSummary?.pendingAmount)} pendientes de pago
           </div>
         </div>
 
@@ -203,7 +216,7 @@ export default function AdminFinanzasPage() {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Rocket size={13} color="#fbbf24" /> 30% Desarrollo & Plataforma</span>
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#fbbf24', marginTop: '6px' }}>
-            ${summary?.revenueSplit.founderAndInnovation.toFixed(2) || '0.00'}{' '}
+            ${formatUsd(summary?.revenueSplit?.founderAndInnovation)}{' '}
             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#94a3b8' }}>USD</span>
           </div>
           <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>
@@ -312,7 +325,7 @@ export default function AdminFinanzasPage() {
                         {p.paypalEmail}
                       </td>
                       <td style={{ padding: '12px 10px', fontWeight: 900, color: '#34d399', fontSize: '0.95rem' }}>
-                        ${p.amount.toFixed(2)} USD
+                        ${formatUsd(p.amount)} USD
                       </td>
                       <td style={{ padding: '12px 10px', color: '#94a3b8', fontSize: '0.75rem' }}>
                         {new Date(p.requestedAt).toLocaleString()}
@@ -397,7 +410,7 @@ export default function AdminFinanzasPage() {
                         <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>@{p.user.username}</div>
                       </td>
                       <td style={{ padding: '10px', fontFamily: 'monospace', color: '#94a3b8' }}>{p.paypalEmail}</td>
-                      <td style={{ padding: '10px', fontWeight: 800, color: '#fff' }}>${p.amount.toFixed(2)} USD</td>
+                      <td style={{ padding: '10px', fontWeight: 800, color: '#fff' }}>${formatUsd(p.amount)} USD</td>
                       <td style={{ padding: '10px' }}>
                         <span style={{
                           padding: '2px 8px',
@@ -477,7 +490,7 @@ export default function AdminFinanzasPage() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontWeight: 900, color: '#10b981', fontSize: '0.95rem' }}>
-                      ${c.totalEarnings.toFixed(2)}
+                      ${formatUsd(c.totalEarnings)}
                     </div>
                     <div style={{ fontSize: '0.68rem', color: '#64748b' }}>USD total</div>
                   </div>
@@ -526,8 +539,8 @@ export default function AdminFinanzasPage() {
             </h3>
             <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 16px' }}>
               {actionType === 'MARK_PAID'
-                ? `Estás marcando como pagado el monto de $${selectedPayout.amount.toFixed(2)} USD a ${selectedPayout.paypalEmail}.`
-                : `Al rechazar, el monto de $${selectedPayout.amount.toFixed(2)} USD volverá automáticamente al saldo disponible de la creadora.`}
+                ? `Estás marcando como pagado el monto de $${formatUsd(selectedPayout.amount)} USD a ${selectedPayout.paypalEmail}.`
+                : `Al rechazar, el monto de $${formatUsd(selectedPayout.amount)} USD volverá automáticamente al saldo disponible de la creadora.`}
             </p>
 
             <form onSubmit={handleProcessSubmit}>
