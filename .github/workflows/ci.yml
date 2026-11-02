@@ -8,6 +8,10 @@ on:
     branches:
       - master
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-check:
     name: Typecheck & Tests
@@ -28,6 +32,8 @@ jobs:
 
       - name: Generate Prisma client
         run: npm run prisma:generate --workspace=backend
+        env:
+          DATABASE_URL: "postgresql://ci_user:ci_pass@localhost:5432/ci_db"
 
       - name: Build shared package
         run: npm run build:shared
@@ -40,3 +46,6 @@ jobs:
 
       - name: Run unit tests
         run: npm test --workspace=backend
+        env:
+          NODE_ENV: test
+          DATABASE_URL: "postgresql://ci_user:ci_pass@localhost:5432/ci_db"
