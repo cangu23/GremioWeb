@@ -48,6 +48,9 @@ function HomeContent() {
     feedMode, setFeedMode, setPage, loadMore, handleLike,
   } = usePosts({ user });
 
+  const [newPostsQueue, setNewPostsQueue] = useState<any[]>([]);
+  const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
+
   // Right sidebar data
   const [trendingHashtags, setTrendingHashtags] = useState<TrendingHashtag[]>([]);
   const [liveVtubers, setLiveVtubers] = useState<LiveVTuberProfile[]>([]);
@@ -172,6 +175,17 @@ function HomeContent() {
       setUnreadNotifs(prev => prev + 1);
     };
 
+    // Real-time new post broadcast
+    const handlePostNew = (data: { id: string; authorId: string; post: any }) => {
+      if (!data || !data.post) return;
+      if (data.authorId !== user.id) {
+        setNewPostsQueue(prev => {
+          if (prev.some(p => p.id === data.id)) return prev;
+          return [data.post, ...prev];
+        });
+      }
+    };
+
     // User went offline
     const handleOffline = (data: { userId: string }) => {
       setOnlineFriendIds(prev => {
@@ -189,6 +203,7 @@ function HomeContent() {
       sock.on('user:online', handleOnline);
       sock.on('notification:new', handleNotifNew);
       sock.on('user:offline', handleOffline);
+      sock.on('post:new', handlePostNew);
     } catch (err) {
       console.warn('[Socket] Could not connect for presence:', err);
     }
@@ -199,9 +214,22 @@ function HomeContent() {
         sock.off('user:online', handleOnline);
         sock.off('notification:new', handleNotifNew);
         sock.off('user:offline', handleOffline);
+        sock.off('post:new', handlePostNew);
       }
     };
   }, [user]);
+
+  const handleFollowCreator = async (creatorId: string) => {
+    try {
+      await apiFetch(`/social/follow/${creatorId}`, { method: 'POST' });
+      setFollowingMap(prev => ({ ...prev, [creatorId]: true }));
+      // Reload feed to show followed creator posts
+      setPage(1);
+    } catch (err) {
+      console.warn('Failed to follow creator:', err);
+    }
+  };
+
   const handlePostCreated = (post: any) => {
     setPosts(prev => [post, ...prev]);
   };
@@ -568,7 +596,7 @@ function HomeContent() {
             background: 'rgba(212,160,48,0.12)', border: '1px solid rgba(212,160,48,0.25)',
             padding: '3px 8px', borderRadius: '8px', flexShrink: 0,
           }}>
-            ✨ Próximamente
+            ✦ Próximamente
           </span>
         </Link>
       </div>
@@ -697,7 +725,7 @@ function HomeContent() {
               transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
               boxShadow: feedMode === 'for-you' ? '0 2px 10px rgba(139,92,246,0.3)' : 'none',
             }}>
-              <span>Para Ti</span> ✨
+              <span>Para Ti</span> <span style={{ color: '#ffd700', fontSize: '0.85rem' }}>✦</span>
             </button>
             <button onClick={() => { setFeedMode('following'); setPage(1); }} style={{
               padding: '6px 14px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
@@ -707,7 +735,7 @@ function HomeContent() {
               transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
               boxShadow: feedMode === 'following' ? '0 2px 10px rgba(233,30,99,0.3)' : 'none',
             }}>
-              <span>Siguiendo</span> 👥
+              <span>Siguiendo</span> <span style={{ color: '#38bdf8', fontSize: '0.85rem' }}>★</span>
             </button>
             <button onClick={() => { setFeedMode('global'); setPage(1); }} style={{
               padding: '6px 14px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
@@ -716,7 +744,7 @@ function HomeContent() {
               cursor: 'pointer', fontWeight: feedMode === 'global' ? 600 : 400,
               transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
             }}>
-              <span>Global</span> 🌐
+              <span>Global</span> <span style={{ color: '#a78bfa', fontSize: '0.85rem' }}>✧</span>
             </button>
           </div>
         </div>
@@ -1197,6 +1225,44 @@ function HomeContent() {
           </div>
         )}
 
+        {/* Real-time New Posts Banner (Bluesky/X style) */}
+        {newPostsQueue.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', position: 'sticky', top: '70px', zIndex: 30, marginBottom: '8px' }}>
+            <button
+              onClick={() => {
+                setPosts(prev => [...newPostsQueue, ...prev]);
+                setNewPostsQueue([]);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="btn"
+              style={{
+                padding: '9px 20px',
+                borderRadius: '24px',
+                background: 'linear-gradient(135deg, var(--primary), #ec4899)',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.84rem',
+                border: '1px solid rgba(255,255,255,0.2)',
+                boxShadow: '0 8px 24px rgba(236,72,153,0.35)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <span style={{ fontSize: '0.9rem', color: '#ffd700' }}>✦</span>
+              <span>{newPostsQueue.length === 1 ? '1 publicación nueva disponible' : `${newPostsQueue.length} publicaciones nuevas`}</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Feed */}
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1206,19 +1272,82 @@ function HomeContent() {
             <SkeletonPostCard withImage />
           </div>
         ) : posts.length === 0 ? (
-          <div className="glass" style={{ padding: '40px 20px', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.3, display: 'flex', justifyContent: 'center' }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="8 12 11 15 16 9"/>
-                <line x1="3" y1="6" x2="5" y2="8"/>
-                <line x1="19" y1="16" x2="21" y2="18"/>
-                <line x1="6" y1="19" x2="8" y2="17"/>
-              </svg>
+          feedMode === 'following' ? (
+            <div className="glass" style={{ padding: '32px 24px', textAlign: 'center', borderRadius: '16px', border: '1px solid rgba(56,189,248,0.2)' }}>
+              <div style={{ width: '48px', height: '48px', margin: '0 auto 14px', borderRadius: '50%', background: 'rgba(56,189,248,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '1.4rem', color: '#38bdf8' }}>✦</span>
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 6px', color: '#f0f0f5' }}>Tu feed de seguidos está tranquilo</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto 20px', lineHeight: 1.5 }}>
+                Aún no sigues a creadores o no han publicado hoy. Sigue a estos VTubers y Streamers para llenar tu feed con sus transmisiones y momentos:
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', textAlign: 'left', marginBottom: '16px' }}>
+                {[...liveVtubers, ...liveStreamers].slice(0, 3).map((creator) => {
+                  const isFollowing = followingMap[creator.userId];
+                  return (
+                    <div key={creator.id} style={{
+                      padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '10px',
+                    }}>
+                      <div style={{
+                        width: '38px', height: '38px', borderRadius: '50%',
+                        background: creator.avatarUrl ? `url(${creator.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                        flexShrink: 0,
+                      }} />
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {creator.displayName}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          @{creator.user?.username}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleFollowCreator(creator.userId)}
+                        disabled={isFollowing}
+                        className="btn"
+                        style={{
+                          padding: '5px 12px', fontSize: '0.75rem', borderRadius: '8px',
+                          background: isFollowing ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                          color: isFollowing ? 'var(--text-muted)' : '#ffffff',
+                          border: 'none', fontWeight: 600,
+                        }}
+                      >
+                        {isFollowing ? 'Siguiendo' : 'Seguir'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setFeedMode('for-you')}
+                className="btn"
+                style={{
+                  padding: '8px 18px', fontSize: '0.82rem', borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)',
+                  border: '1px solid rgba(255,255,255,0.1)', fontWeight: 600,
+                }}
+              >
+                Explorar el feed «Para Ti» →
+              </button>
             </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '4px' }}>No hay publicaciones aún.</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>¡Comparte algo con la comunidad estelar!</p>
-          </div>
+          ) : (
+            <div className="glass" style={{ padding: '40px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.3, display: 'flex', justifyContent: 'center' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="8 12 11 15 16 9"/>
+                  <line x1="3" y1="6" x2="5" y2="8"/>
+                  <line x1="19" y1="16" x2="21" y2="18"/>
+                  <line x1="6" y1="19" x2="8" y2="17"/>
+                </svg>
+              </div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '4px' }}>No hay publicaciones aún.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>¡Comparte algo con la comunidad estelar!</p>
+            </div>
+          )
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {posts.map(post => (

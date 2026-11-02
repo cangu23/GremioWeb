@@ -55,7 +55,20 @@ export const createPost = async (payload: CreatePostPayload, userId: string, men
   trackMissionProgress(userId, 'POST_CREATE').catch(() => {});
   addStardust(userId, 5, 'Publicación creada').catch(() => {});
 
-  return formatPost(fullPost);
+  const formatted = formatPost(fullPost);
+
+  // Broadcast new post in real-time to active sessions
+  try {
+    ioContext.instance?.emit('post:new', {
+      id: formatted.id,
+      authorId: userId,
+      post: formatted,
+    });
+  } catch (err) {
+    console.warn('[Socket] Failed to broadcast post:new:', err);
+  }
+
+  return formatted;
 };
 
 export const getFeed = async (currentUserId?: string, page = 1, limit = 20) => {

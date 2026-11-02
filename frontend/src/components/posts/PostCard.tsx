@@ -90,6 +90,7 @@ function extractEquippedFrame(user: any): { frameUrl?: string | null; equippedFr
 export default function PostCard({ post, onLike, currentUserId, currentUserRole, currentUserPlan, onDelete, highlight }: PostCardProps) {
   useStickersCache();
   const [showComments, setShowComments] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -977,7 +978,33 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center', marginBottom: '10px' }}>Sin comentarios. ¡Sé el primero!</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
-              {comments.map(comment => (
+              {comments.length > 3 && !showAllComments && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllComments(true)}
+                  style={{
+                    padding: '7px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    background: 'rgba(255,255,255,0.03)',
+                    color: 'var(--primary)',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    marginBottom: '4px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                  onMouseOut={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                >
+                  <span style={{ color: '#ffd700' }}>✦</span>
+                  <span>Ver los {comments.length - 3} comentarios anteriores</span>
+                </button>
+              )}
+              {(showAllComments || comments.length <= 3 ? comments : comments.slice(-3)).map(comment => (
                 <div
                   key={comment.id}
                   style={{
