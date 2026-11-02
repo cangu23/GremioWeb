@@ -86,6 +86,13 @@ export const updateVtuber = async (req: Request, res: Response, next: NextFuncti
   } catch (err) { next(err); }
 };
 
+export const deleteVtuber = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AdminService.deleteVtuber(String(req.params.id), req.user!.id, req.ip);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
 // ========== STREAMERS ==========
 
 export const listStreamers = async (req: Request, res: Response, next: NextFunction) => {
@@ -98,6 +105,13 @@ export const listStreamers = async (req: Request, res: Response, next: NextFunct
 export const updateStreamer = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await AdminService.updateStreamer(String(req.params.id), req.body, req.user!.id, req.ip);
+    res.json(result);
+  } catch (err) { next(err); }
+};
+
+export const deleteStreamer = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await AdminService.deleteStreamer(String(req.params.id), req.user!.id, req.ip);
     res.json(result);
   } catch (err) { next(err); }
 };

@@ -254,6 +254,12 @@ export const updateVtuberProfile = (id: string, data: Prisma.VTuberProfileUpdate
   });
 };
 
+export const deleteVtuberProfile = (id: string) => {
+  return prisma.vTuberProfile.delete({
+    where: { id },
+  });
+};
+
 // ========== STREAMER PROFILES ==========
 
 export const findStreamerProfiles = async (params: {
@@ -363,6 +369,12 @@ export const updateStreamerProfile = (id: string, data: Prisma.StreamerProfileUp
     where: { id },
     data,
     include: { user: { select: { id: true, username: true } } },
+  });
+};
+
+export const deleteStreamerProfile = (id: string) => {
+  return prisma.streamerProfile.delete({
+    where: { id },
   });
 };
 

@@ -48,7 +48,7 @@ export default function AdminVtubersPage() {
   // Editar/verificar/aprobar/destacar/ocultar son acciones ADMIN-only en el
   // backend (PATCH /admin/vtubers/:id exige authorize(ADMIN)). Los moderadores
   // y staff solo pueden VER la lista; si intentaran una acción recibirían 403.
-  const canAdmin = hasAnyRole(user?.role, ['ADMIN', 'OWNER']); // SYSADMIN pasa por god-mode
+  const canAdmin = hasAnyRole(user?.role, ['ADMIN', 'OWNER', 'SYSADMIN']); // SYSADMIN pasa por god-mode
   const [data, setData] = useState<AdminVtubersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -173,6 +173,19 @@ export default function AdminVtubersPage() {
       fetchUnverified();
       fetchUnapproved();
     } catch (err: unknown) { showToast(err instanceof Error ? err.message : 'Error', 'error'); }
+  };
+
+  const handleDeleteProfile = async (id: string, displayName: string) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar permanentemente el perfil VTuber de "${displayName}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      await apiFetch(`/admin/vtubers/${id}`, { method: 'DELETE' });
+      showToast('Perfil VTuber eliminado correctamente', 'success');
+      fetchData();
+      fetchUnverified();
+      fetchUnapproved();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Error al eliminar', 'error');
+    }
   };
 
   return (
@@ -483,12 +496,25 @@ export default function AdminVtubersPage() {
                       onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
                       <td style={{ padding: '12px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <a
+                          href={`/vtubers/${profile.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}
+                          title="Ver perfil público"
+                        >
                           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: profile.avatarUrl ? `url(${profile.avatarUrl}) center/cover` : 'linear-gradient(135deg, var(--primary), var(--secondary))', flexShrink: 0 }} />
                           <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{profile.displayName}</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span>{profile.displayName}</span>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                <polyline points="15 3 21 3 21 9" />
+                                <line x1="10" y1="14" x2="21" y2="3" />
+                              </svg>
+                            </div>
                           </div>
-                        </div>
+                        </a>
                       </td>
                       <td style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>@{profile.user?.username}</td>
                       <td style={{ padding: '12px 16px' }}>
@@ -529,6 +555,9 @@ export default function AdminVtubersPage() {
                           </button>
                           <button onClick={() => handleToggleFlag(profile.id, 'isHidden', profile.isHidden, 'Ocultar')} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(244,67,54,0.2)', color: '#f44336', border: '1px solid rgba(244,67,54,0.3)' }}>
                             {profile.isHidden ? 'Mostrar' : 'Ocultar'}
+                          </button>
+                          <button onClick={() => handleDeleteProfile(profile.id, profile.displayName)} className="btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(244,67,54,0.15)', color: '#f44336', border: '1px solid rgba(244,67,54,0.3)' }} title="Eliminar perfil permanentemente">
+                            Eliminar
                           </button>
                         </div>
                         )}
@@ -647,7 +676,7 @@ export default function AdminVtubersPage() {
                     </div>
                     <div className="form-group">
                       <label className="form-label">Oshi Mark (Símbolo)</label>
-                      <input className="input" value={editData.oshiMark} onChange={e => setEditData({ ...editData, oshiMark: e.target.value })} placeholder="Ej: ✨" maxLength={10} />
+                      <input className="input" value={editData.oshiMark} onChange={e => setEditData({ ...editData, oshiMark: e.target.value })} placeholder="Ej: ✦" maxLength={10} />
                     </div>
                   </div>
                 </>

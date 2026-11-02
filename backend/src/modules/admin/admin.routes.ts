@@ -46,13 +46,15 @@ router.post('/users/cleanup-profiles', adminOnly, AdminController.cleanupUserPro
 router.post('/grant-plan', adminOnly, validateRequest(grantPlanSchema), AdminController.grantPlan);
 router.post('/revoke-plan', adminOnly, validateRequest(revokePlanSchema), AdminController.revokePlan);
 
-// ========== VTUBERS (Staff View, Admin Edit) ==========
+// ========== VTUBERS (Staff View, Admin Edit & Delete) ==========
 router.get('/vtubers', validateRequest(adminQuerySchema), AdminController.listVtubers);
 router.patch('/vtubers/:id', adminOnly, validateRequest(updateVtuberAdminSchema), AdminController.updateVtuber);
+router.delete('/vtubers/:id', adminOnly, AdminController.deleteVtuber);
 
-// ========== STREAMERS (Staff View, Admin Edit) ==========
+// ========== STREAMERS (Staff View, Admin Edit & Delete) ==========
 router.get('/streamers', validateRequest(adminQuerySchema), AdminController.listStreamers);
 router.patch('/streamers/:id', adminOnly, validateRequest(updateStreamerAdminSchema), AdminController.updateStreamer);
+router.delete('/streamers/:id', adminOnly, AdminController.deleteStreamer);
 
 // ========== EVENTS (Staff View, Admin Edit) ==========
 router.get('/events', validateRequest(adminQuerySchema), AdminController.listEvents);
