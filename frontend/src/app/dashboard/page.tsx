@@ -2,10 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
@@ -89,6 +89,15 @@ function DashboardContent() {
   const [redeeming, setRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState<{ message: string; newRole: string; codeName: string } | null>(null);
   const [showVtuberWelcome, setShowVtuberWelcome] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const codeParam = searchParams?.get('code');
+    if (codeParam) {
+      setRedeemCode(codeParam.trim());
+      setShowRedeem(true);
+    }
+  }, [searchParams]);
 
   const xpThresholds = [0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 4000, 5200, 6600, 8200, 10000, 12000];
   const isVtuber = hasAnyRole(user?.role, ['VTUBER', 'MAID']) || user?.vtuberProfile?.isApproved === true;
@@ -453,7 +462,9 @@ export default function DashboardPage() {
             </div>
           }
         >
-          <DashboardContent />
+          <Suspense fallback={null}>
+            <DashboardContent />
+          </Suspense>
         </ClientOnly>
       </div>
     </ErrorBoundary>

@@ -130,8 +130,28 @@ export default function AdminCodesPage() {
                     {form.name} · {form.role}
                   </div>
                 </div>
-                <button onClick={() => { navigator.clipboard.writeText(newCode); showToast('Codigo copiado', 'success'); }} className="btn" style={{ width: '100%', padding: '12px', marginBottom: '8px' }}>
-                  Copiar Codigo
+                <button
+                  type="button"
+                  onClick={() => {
+                    const directUrl = window.location.origin + '/dashboard?code=' + encodeURIComponent(newCode);
+                    navigator.clipboard.writeText(directUrl);
+                    showToast('Enlace de activacion directa copiado para enviar al creador', 'success');
+                  }}
+                  className="btn"
+                  style={{ width: '100%', padding: '12px', marginBottom: '8px', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', color: '#fff', fontWeight: 700 }}
+                >
+                  Copiar Enlace de Activacion Directa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(newCode);
+                    showToast('Codigo copiado', 'success');
+                  }}
+                  className="btn"
+                  style={{ width: '100%', padding: '12px', marginBottom: '8px', background: 'rgba(255,255,255,0.06)' }}
+                >
+                  Copiar Solo Codigo
                 </button>
                 <button onClick={() => { setShowGenerate(false); setNewCode(''); }} className="btn" style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>
                   Cerrar

@@ -46,6 +46,15 @@ const logoutLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter anti fuerza-bruta para códigos de activación: máx 5 intentos cada 15 min
+const redeemLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Demasiados intentos de canje de código. Por seguridad, inténtalo de nuevo en 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // All routes in this file are prefixed with /api/auth
 
 router.post('/login', loginLimiter, validateRequest(loginSchema), AuthController.login);
@@ -54,7 +63,7 @@ router.post('/refresh', refreshLimiter, AuthController.refresh);
 router.post('/logout', logoutLimiter, AuthController.logout);
 
 // Redeem an invitation code (authenticated users)
-router.post('/redeem-code', authenticate, validateRequest(redeemCodeSchema), CodesController.redeemCode);
+router.post('/redeem-code', authenticate, redeemLimiter, validateRequest(redeemCodeSchema), CodesController.redeemCode);
 
 // 🔵 Google OAuth (Google Identity Services con loginLimiter)
 router.post('/google', loginLimiter, GoogleController.googleLogin);
