@@ -67,7 +67,7 @@ export default function AdminEconomyPage() {
             <label style={{ fontSize: '0.78rem', color: '#a0a0a0', display: 'block', marginBottom: '6px' }}>Usuario objetivo (Username o Email):</label>
             <input
               type="text"
-              placeholder="Ej: sebastian o user@gremio.com"
+              placeholder="Ej: usuario o usuario@gremioestelar.com"
               value={targetUser}
               onChange={e => setTargetUser(e.target.value)}
               style={{ width: '100%', padding: '10px 14px', background: '#050505', border: '1px solid #262626', color: '#fff', fontSize: '0.85rem', borderRadius: '6px', outline: 'none' }}
@@ -115,7 +115,7 @@ export default function AdminEconomyPage() {
               boxShadow: '0 0 16px rgba(251, 191, 36, 0.4)',
             }}
           >
-            {submitting ? 'OTORGANDO...' : '👑 OTORGAR STARDUST AHORA'}
+            {submitting ? 'OTORGANDO...' : '★ OTORGAR STARDUST AHORA'}
           </button>
         </form>
       </div>
@@ -123,7 +123,7 @@ export default function AdminEconomyPage() {
       {/* Grant Premium Plan */}
       <div style={{ background: '#0d0d12', border: '1px solid #d4a03055', borderRadius: '12px', padding: '24px', maxWidth: '540px' }}>
         <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#d4a030', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          💎 Otorgar Plan Premium (ADMIN)
+          ✦ Otorgar Plan Premium (ADMIN)
         </h2>
 
         <form
@@ -158,7 +158,7 @@ export default function AdminEconomyPage() {
             <label style={{ fontSize: '0.78rem', color: '#a0a0a0', display: 'block', marginBottom: '6px' }}>Usuario objetivo (Username, Email o ID):</label>
             <input
               type="text"
-              placeholder="Ej: sebastian o user@gremio.com"
+              placeholder="Ej: usuario o usuario@gremioestelar.com"
               value={planTarget}
               onChange={e => setPlanTarget(e.target.value)}
               style={{ width: '100%', padding: '10px 14px', background: '#050505', border: '1px solid #262626', color: '#fff', fontSize: '0.85rem', borderRadius: '6px', outline: 'none' }}
@@ -212,7 +212,7 @@ export default function AdminEconomyPage() {
               boxShadow: '0 0 16px rgba(212, 160, 48, 0.4)',
             }}
           >
-            {granting ? 'OTORGANDO...' : '💎 OTORGAR PLAN PREMIUM'}
+            {granting ? 'OTORGANDO...' : '✦ OTORGAR PLAN PREMIUM'}
           </button>
         </form>
       </div>

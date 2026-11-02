@@ -169,7 +169,7 @@ export default function AdminCodesPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div className="form-group">
                       <label className="form-label">Nombre personalizado</label>
-                      <input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ej: VTuber-Kira, Moderador-Juan" required />
+                      <input className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ej: VTuber-Kira, Moderador-Staff" required />
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Este nombre te ayudará a identificar el código</p>
                     </div>
                     <div className="form-group">

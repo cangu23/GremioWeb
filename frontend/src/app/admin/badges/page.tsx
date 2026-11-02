@@ -236,7 +236,7 @@ function AdminAchievementAssigner() {
           <div style={{ display: 'flex', gap: '8px' }}>
             <input
               type="text"
-              placeholder="Ej: sebas, vtuberguild..."
+              placeholder="Ej: usuario, vtuberguild..."
               value={usernameQuery}
               onChange={(e) => setUsernameQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearchUser(); }}

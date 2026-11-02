@@ -285,7 +285,7 @@ export default function GiftPlanModal({
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input
                   type="text"
-                  placeholder="Nombre de usuario (ej. cangu_vt)"
+                  placeholder="Nombre de usuario (ej. usuario_estelar)"
                   value={customUsername}
                   onChange={e => setCustomUsername(e.target.value)}
                   style={{
