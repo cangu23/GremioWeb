@@ -415,8 +415,7 @@ export default function HeroSection() {
           marginBottom: '38px',
         }}
       >
-        El hogar y red de VTubers, streamers y su comunidad en español. Perfiles con lore e historia,
-        sincronización de streams en directo, Pase Estelar y un modelo económico transparente con 35% de comisión neta para creadores.
+        El hogar y red de talentos virtuales y streamers en español fundada por Guren Tatsumaki. Perfiles con lore e historia, sincronización de streams en vivo, arte original, eventos y un espacio creado por y para la comunidad virtual.
       </p>
 
       {/* CTA Buttons in sleek agency aesthetic */}

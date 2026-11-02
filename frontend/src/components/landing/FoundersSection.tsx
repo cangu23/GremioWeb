@@ -48,64 +48,73 @@ const FOUNDERS_CONFIG: FounderConfig[] = [
   {
     id: 'guren',
     username: 'canguvt',
-    alternateUsernames: ['guren', 'canguvt', 'gurenvt'],
+    alternateUsernames: ['guren', 'canguvt', 'gurenvt', 'gurenvt_'],
     name: 'Guren Tatsumaki',
-    role: 'Emperador del Imperio Carmesí',
-    badge: 'Fundador Principal',
+    role: 'Fundador & CEO // Creador Principal',
+    badge: 'Fundador & CEO',
     fallbackAvatar: '/images/guren-avatar.jpg',
     fallbackBanner: '/images/guren-banner.jpg',
     themeColor: '#E63946',
     fallbackDescription:
-      'Soy Christend Guren Tatsumaki クリステンド 紅蓮 竜巻, Emperador del Imperio CARMESI. Fundador del Gremio Estelar, creador de contenido, directos en VRChat y líder de la comunidad astral.',
+      'Fundador, CEO y creador de Gremio Estelar. Arquitecto de la plataforma tecnológica y líder del Imperio Carmesí, impulsando la constelación junto a AleshaWeasley y Meiro Chan.',
     fallbackSocials: {
       twitch: 'https://www.twitch.tv/gurenvt_',
+      twitter: 'https://x.com/GremioEstelarES',
     },
-  },
-  {
-    id: 'meiro',
-    username: 'meiro',
-    alternateUsernames: ['Meiro', 'meiro_stelar'],
-    name: 'Meiro',
-    role: 'Talento Fundador',
-    badge: 'Fundadora',
-    themeColor: '#9D4EDD',
-    fallbackDescription:
-      'Pilar estelar y cofundadora del Gremio Estelar. Transmisiones mágicas, directos cautivadores y creadora fundamental en la expansión de nuestra constelación.',
   },
   {
     id: 'alesha',
     username: 'aleshaW',
     alternateUsernames: ['Alesha', 'alesha', 'AleshaWeasleyVT'],
-    name: 'Alesha',
-    role: 'Talento Fundador',
-    badge: 'Fundadora',
+    name: 'AleshaWeasley',
+    role: 'Co-fundadora & Talento Estelar',
+    badge: 'Co-fundadora',
     themeColor: '#3A86FF',
     fallbackDescription:
-      'Pilar estelar y cofundadora del Gremio Estelar. Voz cósmica, talento artístico y chispa creadora que dio vida a los primeros pasos de nuestra comunidad.',
+      'Pilar fundamental y co-fundadora del Gremio Estelar. Creadora de contenido, voz esencial y compañera clave en el nacimiento y expansión continua de la comunidad.',
+    fallbackSocials: {
+      twitch: 'https://www.twitch.tv/aleshaweasleyvt',
+      youtube: 'https://www.youtube.com/@AleshaWeasleyVT',
+    },
+  },
+  {
+    id: 'meiro',
+    username: 'Meiro',
+    alternateUsernames: ['meiro', 'meiro_stelar'],
+    name: 'Meiro Chan',
+    role: 'Co-fundadora & Talento Estelar',
+    badge: 'Co-fundadora',
+    themeColor: '#9D4EDD',
+    fallbackDescription:
+      'Co-fundadora del Gremio Estelar. Creadora virtual carismática, impulsora de directos y pilar indispensable en el crecimiento, calidez y unión de nuestra constelación.',
+    fallbackSocials: {
+      twitch: 'https://www.twitch.tv/meiro_kawa',
+      youtube: 'https://www.youtube.com/@MeiroKawa',
+    },
   },
   {
     id: 'chemy',
     username: 'chemy',
     alternateUsernames: ['Chemy', 'chemy_vt'],
     name: 'Chemy',
-    role: 'En Proceso de Integración',
-    badge: 'Próximamente',
+    role: 'Directora de Arte & Ilustradora Oficial',
+    badge: 'Dirección de Arte',
     isIncoming: true,
     themeColor: '#06D6A0',
     fallbackDescription:
-      'Futura estrella del santuario astral. Preparando su aterrizaje estelar en el Gremio para unirse a las filas de talentos principales.',
+      'Ilustradora oficial, creadora y organizadora de la identidad visual, estética y universo artístico del Gremio Estelar.',
   },
   {
     id: 'shinku',
     username: 'shinku',
     alternateUsernames: ['Shinku', 'shinku_vt'],
     name: 'Shinku',
-    role: 'En Proceso de Integración',
+    role: 'Talento en Integración',
     badge: 'Próximamente',
     isIncoming: true,
     themeColor: '#FF70A6',
     fallbackDescription:
-      'Futura estrella del santuario astral. Alistando motores y afinando su debut en las transmisiones y proyectos del Gremio.',
+      'Talento en proceso de integración oficial al Gremio Estelar. Alistando su constelación para sumarse a los proyectos y directos de la red.',
   },
 ];
 
@@ -736,6 +745,30 @@ export default function FoundersSection() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Historical Legacy Recognition Plaque */}
+        <div
+          style={{
+            marginTop: '22px',
+            padding: '14px 24px',
+            borderRadius: '14px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(232, 199, 122, 0.16)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            textAlign: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <FourPointStar size={10} color="#E8C77A" />
+          <span style={{ fontSize: '0.75rem', color: 'rgba(245, 239, 223, 0.7)', letterSpacing: '0.04em' }}>
+            <strong style={{ color: '#E8C77A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Reconocimiento Histórico:</strong> Con gratitud a{' '}
+            <strong style={{ color: '#FAF6EE' }}>Rixzrosez</strong> (Ex Co-fundador) por su valioso aporte y apoyo en las etapas iniciales de la creación del Gremio Estelar.
+          </span>
+          <FourPointStar size={10} color="#E8C77A" />
         </div>
       </div>
     </section>
