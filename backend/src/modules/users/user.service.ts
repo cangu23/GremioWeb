@@ -1,7 +1,7 @@
 import AppError from '../../errors/AppError';
 import * as UserRepository from './user.repository';
 import prisma from '../../database/prisma';
-import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl, attachVerified, isVerifiedEffective, isStaffRole } from '@gremio-estelar/shared';
+import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl, attachVerified, isVerifiedEffective, isStaffRole, parseUserRoles } from '@gremio-estelar/shared';
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
@@ -96,6 +96,15 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
     const effective = getEffectivePlan(me?.plan, me?.role);
     if (!planMeetsOrExceeds(effective, 'STELLAR')) {
       throw new AppError('Las partículas cósmicas son exclusivas de Stellar Elite.', 403);
+    }
+  }
+
+  if (payload.displayedRole) {
+    const me = await UserRepository.findById(userId);
+    const userRoles = parseUserRoles(me?.role);
+    const requested = payload.displayedRole.toUpperCase();
+    if (!userRoles.includes(requested)) {
+      delete (payload as Record<string, unknown>).displayedRole;
     }
   }
 

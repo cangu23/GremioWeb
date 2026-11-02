@@ -102,6 +102,7 @@ const MATRIX_COLUMNS = [
   { id: 'ARTIST', label: 'ARTIST', color: '#a78bfa' },
   { id: 'CLIPPER', label: 'CLIPPER', color: '#fbbf24' },
   { id: 'MAID', label: 'MAID', color: '#c084fc' },
+  { id: 'PARTNER', label: 'PARTNER', color: '#eab308' },
   { id: 'ASTRO', label: 'ASTRO', color: '#818cf8' },
   { id: 'NOVA', label: 'NOVA', color: '#38bdf8' },
   { id: 'STELLAR', label: 'STELLAR', color: '#ffd700' },

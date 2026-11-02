@@ -75,6 +75,27 @@ export const updateUser = async (id: string, data: UpdateUserAdminInput, adminId
   const user = await AdminRepository.findUserById(id);
   if (!user) throw new AppError('Usuario no encontrado', 404);
 
+  // Hierarchy safety check: protect OWNER and SYSADMIN from unauthorized tampering
+  const isTargetOwner = parseUserRoles(user.role).some(r => ['OWNER', 'SYSADMIN'].includes(r));
+  if (isTargetOwner && id !== adminId) {
+    const caller = await AdminRepository.findUserById(adminId);
+    const callerRoles = parseUserRoles(caller?.role);
+    if (!callerRoles.some(r => ['OWNER', 'SYSADMIN'].includes(r))) {
+      throw new AppError('Solo un Propietario o SysAdmin puede modificar a otro Propietario', 403);
+    }
+  }
+
+  if (data.role) {
+    const requestedRoles = parseUserRoles(data.role);
+    if (requestedRoles.some(r => ['OWNER', 'SYSADMIN'].includes(r))) {
+      const caller = await AdminRepository.findUserById(adminId);
+      const callerRoles = parseUserRoles(caller?.role);
+      if (!callerRoles.some(r => ['OWNER', 'SYSADMIN'].includes(r))) {
+        throw new AppError('Solo el Propietario puede conceder el rango de Propietario o SysAdmin', 403);
+      }
+    }
+  }
+
   // Safety check: prevent an admin from demoting or banning themselves.
   // hasAnyRole tolera roles múltiples: solo bloquea si el nuevo rol pierde ADMIN.
   if (id === adminId) {

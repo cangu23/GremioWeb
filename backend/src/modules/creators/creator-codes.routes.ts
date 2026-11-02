@@ -10,7 +10,7 @@ const router = Router();
 router.get('/validate', Controller.validateCode);
 
 // 2. Rutas para Creadoras (VTuber, Streamer, Maid, Staff, Admin)
-const creatorRoles = [Role.VTUBER, Role.STREAMER, Role.MAID, Role.STAFF, Role.MODERATOR, Role.ADMIN];
+const creatorRoles = [Role.VTUBER, Role.STREAMER, Role.MAID, Role.ARTIST, Role.CLIPPER, Role.PARTNER, Role.STAFF, Role.MODERATOR, Role.MOD, Role.ADMIN, Role.OWNER];
 router.get('/my-dashboard', authenticate, authorize(...creatorRoles), Controller.getMyDashboard);
 router.post('/my-code', authenticate, authorize(...creatorRoles), Controller.setupMyCode);
 router.post('/payout', authenticate, authorize(...creatorRoles), Controller.handleRequestPayout);

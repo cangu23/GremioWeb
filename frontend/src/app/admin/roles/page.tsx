@@ -30,7 +30,8 @@ const DEFAULT_ROLES: CustomRoleConfig[] = [
   { id: 'ARTIST', name: 'Artista / Ilustrador', color: '#a78bfa', description: 'Portafolio de arte y comisiones', priority: 8, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
   { id: 'CLIPPER', name: 'Clipper', color: '#fbbf24', description: 'Edits y recortes destacados', priority: 9, isVisible: true, isVerified: false, isAutoAssign: false, isProtected: false },
   { id: 'MAID', name: 'Maid', color: '#c084fc', description: 'Anfitrión del Hoshizora Café', priority: 10, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
-  { id: 'USER', name: 'Aventurero Estándar', color: '#a0a0a0', description: 'Miembro registrado común', priority: 11, isVisible: true, isVerified: false, isAutoAssign: true, isProtected: true },
+  { id: 'PARTNER', name: 'Partner / Aliado', color: '#eab308', description: 'Creador o comunidad aliada oficial', priority: 11, isVisible: true, isVerified: true, isAutoAssign: false, isProtected: false },
+  { id: 'USER', name: 'Aventurero Estándar', color: '#a0a0a0', description: 'Miembro registrado común', priority: 12, isVisible: true, isVerified: false, isAutoAssign: true, isProtected: true },
 ];
 
 export default function RoleBuilderPage() {

@@ -54,6 +54,7 @@ export interface PublicUser {
 
 export interface UpdateUserPayload {
   username?: string;
+  displayedRole?: string | null;
   displayName?: string;
   avatarUrl?: string;
   bio?: string;

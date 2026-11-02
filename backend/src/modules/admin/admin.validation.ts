@@ -32,7 +32,7 @@ export const updateUserAdminSchema = z.object({
       const validRoles = [
         'USER', 'VTUBER', 'STREAMER', 'MAID', 'ARTIST', 'CLIPPER',
         'VIP_ASTRO', 'VIP_NOVA', 'VIP_STELLAR',
-        'STAFF', 'BETA_TESTER', 'MODERATOR', 'ADMIN', 'BOT', 'OWNER', 'HELPER', 'MOD'
+        'STAFF', 'BETA_TESTER', 'MODERATOR', 'MOD', 'HELPER', 'ADMIN', 'OWNER', 'SYSADMIN', 'PARTNER', 'BOT'
       ];
       const roles = val.split(',').map(r => r.trim().toUpperCase());
       return roles.every(r => validRoles.includes(r));
