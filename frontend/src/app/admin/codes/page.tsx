@@ -19,10 +19,17 @@ interface RoleCode {
 }
 
 const roleColors: Record<string, string> = {
-  VTUBER: '#ff007f',
+  VTUBER: '#ec4899',
   STREAMER: '#38bdf8',
-  MODERATOR: '#2196f3',
-  ADMIN: '#8a2be2',
+  ARTIST: '#a78bfa',
+  CLIPPER: '#fbbf24',
+  MAID: '#c084fc',
+  PARTNER: '#eab308',
+  STAFF: '#10b981',
+  MODERATOR: '#fb7185',
+  MOD: '#fb7185',
+  HELPER: '#2dd4bf',
+  ADMIN: '#fbbf24',
 };
 
 const statusColors: Record<string, string> = {
@@ -148,7 +155,13 @@ export default function AdminCodesPage() {
                       <select className="input" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                         <option value="VTUBER">VTuber</option>
                         <option value="STREAMER">Streamer</option>
+                        <option value="ARTIST">Artista / Ilustrador</option>
+                        <option value="CLIPPER">Clipper</option>
+                        <option value="MAID">Maid (Hoshizora Café)</option>
+                        <option value="PARTNER">Partner / Aliado</option>
+                        <option value="STAFF">Staff</option>
                         <option value="MODERATOR">Moderador</option>
+                        <option value="HELPER">Helper</option>
                         <option value="ADMIN">Admin</option>
                       </select>
                     </div>
@@ -174,8 +187,14 @@ export default function AdminCodesPage() {
             <select className="input" value={filterRole} onChange={e => { setFilterRole(e.target.value); setPage(1); }} style={{ marginTop: '6px', minWidth: '130px' }}>
               <option value="">Todos</option>
               <option value="VTUBER">VTuber</option>
-                        <option value="STREAMER">Streamer</option>
+              <option value="STREAMER">Streamer</option>
+              <option value="ARTIST">Artista</option>
+              <option value="CLIPPER">Clipper</option>
+              <option value="MAID">Maid</option>
+              <option value="PARTNER">Partner</option>
+              <option value="STAFF">Staff</option>
               <option value="MODERATOR">Moderador</option>
+              <option value="HELPER">Helper</option>
               <option value="ADMIN">Admin</option>
             </select>
           </div>
