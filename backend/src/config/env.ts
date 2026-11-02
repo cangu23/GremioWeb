@@ -16,6 +16,12 @@ function buildAllowedOrigins(): string[] {
     origins.add(frontendUrl.trim().replace(/\/+$/, ''));
   }
 
+  // Dominios de produccion
+  origins.add('https://gremioestelar.com');
+  origins.add('https://www.gremioestelar.com');
+  origins.add('https://gremioweb-hnq1.onrender.com');
+  origins.add('https://gremioweb.onrender.com');
+
   if (process.env.ALLOWED_ORIGINS) {
     process.env.ALLOWED_ORIGINS.split(',').forEach((o) => {
       const trimmed = o.trim().replace(/\/+$/, '');
