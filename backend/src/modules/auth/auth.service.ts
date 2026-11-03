@@ -7,6 +7,7 @@ import * as UserRepository from '../users/user.repository';
 import * as AuthRepository from './auth.repository';
 import AppError from '../../errors/AppError';
 import env from '../../config/env';
+import logger from '../../utils/logger';
 import { generateTokens, hashToken } from './tokens';
 import { LoginInput, RegisterInput, RefreshTokenInput } from './auth.types';
 import { trackMissionProgress } from '../ecosystem/missions.service';
@@ -248,7 +249,7 @@ export const requestPasswordReset = async (email: string) => {
   const frontendBase = (env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
   const resetUrl = `${frontendBase}/reset-password?token=${resetToken}`;
 
-  // Despachar email
+  // Despachar email (en segundo plano / sin exponer detalles internos al cliente)
   const emailRes = await sendPasswordResetEmail({
     to: user.email,
     username: user.displayName || user.username,
@@ -256,13 +257,7 @@ export const requestPasswordReset = async (email: string) => {
   });
 
   if (!emailRes.success) {
-    if (emailRes.error?.includes('You can only send testing emails to your own email address')) {
-      const allowedEmail = emailRes.error.match(/\(([^)]+)\)/)?.[1] || 'el correo de tu cuenta Resend';
-      throw new AppError(
-        `Modo de prueba de Resend activo: solo puedes enviar correos a tu cuenta registrada (${allowedEmail}). Para enviar a cualquier usuario, verifica tu dominio en resend.com/domains.`,
-        400
-      );
-    }
+    logger.warn(`[AUTH] No se pudo entregar correo de recuperación a ${user.email}: ${emailRes.error}`);
   }
 
   return {
