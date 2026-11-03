@@ -268,3 +268,4 @@ export default function ForgotPasswordModal({
     </div>
   );
 }
+
