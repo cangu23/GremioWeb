@@ -44,6 +44,7 @@ export interface PublicUser {
   avatarUrl?: string | null;
   bio?: string | null;
   isVerified?: boolean;
+  createdAt?: string | Date | null;
   vtuberProfile?: VTuberProfile | null;
   streamerProfile?: StreamerProfile | null;
   profileBg?: string | null;
@@ -88,3 +89,17 @@ export interface UpdateUserPayload {
   profileTheme?: string | null;
   profileParticles?: string | null;
 }
+
+/**
+ * Determina si un usuario se registró recientemente (por defecto en los últimos 7 días).
+ * Se calcula dinámicamente respecto a createdAt para que expire automáticamente.
+ */
+export const NEW_USER_THRESHOLD_DAYS = 7;
+
+export const isNewUser = (createdAt?: string | Date | null, days = NEW_USER_THRESHOLD_DAYS): boolean => {
+  if (!createdAt) return false;
+  const createdTime = new Date(createdAt).getTime();
+  if (isNaN(createdTime)) return false;
+  const diffMs = Date.now() - createdTime;
+  return diffMs >= 0 && diffMs < days * 24 * 60 * 60 * 1000;
+};

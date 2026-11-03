@@ -372,3 +372,31 @@ export const updateUserProfile = async (userId: string, data: UpdateUserPayload)
     return result;
   });
 };
+
+export const findNewestUsers = async (limit = 10) => {
+  return prisma.user.findMany({
+    where: {
+      status: 'ACTIVE',
+    },
+    take: limit,
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarUrl: true,
+      role: true,
+      displayedRole: true,
+      createdAt: true,
+      bio: true,
+      bannerColor: true,
+      vtuberProfile: {
+        select: {
+          displayName: true,
+          avatarUrl: true,
+          isVerified: true,
+        },
+      },
+    },
+  });
+};

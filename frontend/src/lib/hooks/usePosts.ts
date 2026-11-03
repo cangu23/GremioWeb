@@ -7,7 +7,7 @@ import type { Post } from '@gremio-estelar/shared';
 // ==========================================================================
 // Types
 // ==========================================================================
-export type FeedMode = 'for-you' | 'following' | 'global';
+export type FeedMode = 'for-you' | 'trending' | 'recent' | 'media' | 'following' | 'global';
 
 interface UsePostsOptions {
   user?: { id: string } | null;

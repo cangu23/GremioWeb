@@ -86,6 +86,32 @@ export const findRecentPostsForAlgorithmicFeed = (takeCount = 60, skipCount = 0)
   });
 };
 
+export const findRecentPostsForTrendingFeed = (sinceDate: Date, takeCount = 100) => {
+  return prisma.post.findMany({
+    where: {
+      isHidden: false,
+      createdAt: { gte: sinceDate },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: takeCount,
+    include: postIncludes,
+  });
+};
+
+export const findMediaPosts = (page = 1, limit = 20) => {
+  const skip = (page - 1) * limit;
+  return prisma.post.findMany({
+    where: {
+      isHidden: false,
+      mediaUrl: { not: null },
+    },
+    orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+    skip,
+    take: limit,
+    include: postIncludes,
+  });
+};
+
 export const findPostsByUser = (userId: string, page = 1, limit = 20) => {
   const skip = (page - 1) * limit;
   return prisma.post.findMany({

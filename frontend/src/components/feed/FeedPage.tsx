@@ -57,6 +57,7 @@ function HomeContent() {
   const [liveStreamers, setLiveStreamers] = useState<LiveStreamerProfile[]>([]);
   const [followingUsers, setFollowingUsers] = useState<FollowingUser[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
+  const [newestUsers, setNewestUsers] = useState<any[]>([]);
   const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set());
   const [now, setNow] = useState(() => Date.now());
 
@@ -94,7 +95,7 @@ function HomeContent() {
 
     const fetchSidebarData = async () => {
       // Parallelize sidebar queries simultaneously
-      const [guildsRes, tagsRes, notifsRes, liveRes, liveStreamersRes, followingRes, eventsRes] = await Promise.allSettled([
+      const [guildsRes, tagsRes, notifsRes, liveRes, liveStreamersRes, followingRes, eventsRes, newestRes] = await Promise.allSettled([
         apiFetch('/guilds', {}),
         apiFetch('/posts/hashtags/trending?limit=8', {}),
         apiFetch('/notifications/unread-count', {}),
@@ -102,6 +103,7 @@ function HomeContent() {
         apiFetch('/streamers/live', {}),
         apiFetch(`/social/following/${user.id}`, {}),
         apiFetch('/events?status=UPCOMING&limit=5', {}),
+        apiFetch('/users/newest?limit=6', {}),
       ]);
 
       if (guildsRes.status === 'fulfilled' && Array.isArray(guildsRes.value)) {
@@ -124,6 +126,9 @@ function HomeContent() {
       }
       if (eventsRes.status === 'fulfilled' && Array.isArray(eventsRes.value)) {
         setUpcomingEvents(eventsRes.value.slice(0, 4));
+      }
+      if (newestRes.status === 'fulfilled' && Array.isArray(newestRes.value)) {
+        setNewestUsers(newestRes.value.slice(0, 6));
       }
     };
 
@@ -517,6 +522,78 @@ function HomeContent() {
         </div>
       )}
 
+      {/* Nuevos Viajeros / Descubrimiento de Miembros Recientes */}
+      {newestUsers.length > 0 && (
+        <div className="glass" style={{ padding: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', color: '#00e5ff' }}>
+              <span style={{ fontSize: '0.9rem' }}>✦</span>
+              Nuevos Viajeros
+            </h4>
+            <span style={{ fontSize: '0.68rem', color: 'rgba(0, 229, 255, 0.7)', fontWeight: 600 }}>
+              Recién llegados
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {newestUsers.map(nu => {
+              const nuDisplayName = nu.displayName || nu.vtuberProfile?.displayName || nu.username;
+              const nuAvatar = nu.avatarUrl || nu.vtuberProfile?.avatarUrl;
+              return (
+                <Link
+                  key={nu.id}
+                  href={`/profile/${nu.id}`}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '6px 8px', borderRadius: '8px', textDecoration: 'none', color: 'inherit',
+                    fontSize: '0.82rem', transition: 'all 0.15s ease',
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.background = 'rgba(0, 229, 255, 0.06)')}
+                  onMouseOut={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <div style={{
+                    width: '28px', height: '28px', borderRadius: '50%',
+                    background: nuAvatar
+                      ? `url(${nuAvatar}) center/cover`
+                      : 'linear-gradient(135deg, #00e5ff, #8b5cf6)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'white', fontWeight: 'bold', fontSize: '0.65rem',
+                    flexShrink: 0,
+                    border: '1px solid rgba(0, 229, 255, 0.3)',
+                  }}>
+                    {!nuAvatar && nuDisplayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{
+                      fontWeight: 600, fontSize: '0.82rem',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                    }}>
+                      {nuDisplayName}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                      @{nu.username}
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 700,
+                    color: '#00e5ff',
+                    background: 'rgba(0, 229, 255, 0.1)',
+                    border: '1px solid rgba(0, 229, 255, 0.25)',
+                    padding: '2px 6px',
+                    borderRadius: '8px',
+                    letterSpacing: '0.04em',
+                    flexShrink: 0,
+                  }}>
+                    ✦ NUEVO
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Upcoming Events */}
       {upcomingEvents.length > 0 && (
         <div className="glass" style={{ padding: '14px' }}>
@@ -716,35 +793,56 @@ function HomeContent() {
             </svg>
             Inicio
           </h1>
-          <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '4px', border: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '4px', border: '1px solid var(--glass-border)' }}>
             <button onClick={() => { setFeedMode('for-you'); setPage(1); }} style={{
-              padding: '6px 14px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
+              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
               background: feedMode === 'for-you' ? 'linear-gradient(135deg, var(--primary), #8b5cf6)' : 'transparent',
               color: feedMode === 'for-you' ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: feedMode === 'for-you' ? 600 : 400,
+              cursor: 'pointer', fontWeight: feedMode === 'for-you' ? 700 : 500,
               transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
-              boxShadow: feedMode === 'for-you' ? '0 2px 10px rgba(139,92,246,0.3)' : 'none',
+              boxShadow: feedMode === 'for-you' ? '0 2px 10px rgba(139,92,246,0.35)' : 'none',
             }}>
-              <span>Para Ti</span> <span style={{ color: '#ffd700', fontSize: '0.85rem' }}>✦</span>
+              <span>Para Ti</span> <span style={{ color: '#ffd700', fontSize: '0.82rem' }}>✦</span>
+            </button>
+            <button onClick={() => { setFeedMode('trending'); setPage(1); }} style={{
+              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
+              background: feedMode === 'trending' ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : 'transparent',
+              color: feedMode === 'trending' ? 'white' : 'var(--text-muted)',
+              cursor: 'pointer', fontWeight: feedMode === 'trending' ? 700 : 500,
+              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
+              boxShadow: feedMode === 'trending' ? '0 2px 10px rgba(245,158,11,0.35)' : 'none',
+            }}>
+              <span>Tendencia</span> <span style={{ color: '#fbbf24', fontSize: '0.82rem' }}>★</span>
+            </button>
+            <button onClick={() => { setFeedMode('recent'); setPage(1); }} style={{
+              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
+              background: (feedMode === 'recent' || feedMode === 'global') ? 'linear-gradient(135deg, #10b981, #06b6d4)' : 'transparent',
+              color: (feedMode === 'recent' || feedMode === 'global') ? 'white' : 'var(--text-muted)',
+              cursor: 'pointer', fontWeight: (feedMode === 'recent' || feedMode === 'global') ? 700 : 500,
+              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
+              boxShadow: (feedMode === 'recent' || feedMode === 'global') ? '0 2px 10px rgba(16,185,129,0.35)' : 'none',
+            }}>
+              <span>Recientes</span> <span style={{ color: '#34d399', fontSize: '0.82rem' }}>✧</span>
+            </button>
+            <button onClick={() => { setFeedMode('media'); setPage(1); }} style={{
+              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
+              background: feedMode === 'media' ? 'linear-gradient(135deg, #00e5ff, #3b82f6)' : 'transparent',
+              color: feedMode === 'media' ? 'white' : 'var(--text-muted)',
+              cursor: 'pointer', fontWeight: feedMode === 'media' ? 700 : 500,
+              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
+              boxShadow: feedMode === 'media' ? '0 2px 10px rgba(0,229,255,0.35)' : 'none',
+            }}>
+              <span>Multimedia</span> <span style={{ color: '#00e5ff', fontSize: '0.82rem' }}>✦</span>
             </button>
             <button onClick={() => { setFeedMode('following'); setPage(1); }} style={{
-              padding: '6px 14px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
-              background: feedMode === 'following' ? 'var(--primary)' : 'transparent',
+              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
+              background: feedMode === 'following' ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' : 'transparent',
               color: feedMode === 'following' ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: feedMode === 'following' ? 600 : 400,
+              cursor: 'pointer', fontWeight: feedMode === 'following' ? 700 : 500,
               transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
-              boxShadow: feedMode === 'following' ? '0 2px 10px rgba(233,30,99,0.3)' : 'none',
+              boxShadow: feedMode === 'following' ? '0 2px 10px rgba(236,72,153,0.35)' : 'none',
             }}>
-              <span>Siguiendo</span> <span style={{ color: '#38bdf8', fontSize: '0.85rem' }}>★</span>
-            </button>
-            <button onClick={() => { setFeedMode('global'); setPage(1); }} style={{
-              padding: '6px 14px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
-              background: feedMode === 'global' ? 'rgba(255,255,255,0.12)' : 'transparent',
-              color: feedMode === 'global' ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: feedMode === 'global' ? 600 : 400,
-              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
-            }}>
-              <span>Global</span> <span style={{ color: '#a78bfa', fontSize: '0.85rem' }}>✧</span>
+              <span>Siguiendo</span> <span style={{ color: '#f472b6', fontSize: '0.82rem' }}>★</span>
             </button>
           </div>
         </div>

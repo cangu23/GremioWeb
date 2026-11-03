@@ -23,7 +23,7 @@ import { getNoteBubbleStyle } from '@/components/ui/UserAvatar';
 import PetWidget from '@/components/ui/PetWidget';
 import ProfileMusicPlayer from '@/components/ui/ProfileMusicPlayer';
 import RoleBadge from '@/components/ui/RoleBadge';
-import { parseUserRoles, getPrimaryRole, planMeetsOrExceeds, getEffectivePlan } from '@gremio-estelar/shared';
+import { parseUserRoles, getPrimaryRole, planMeetsOrExceeds, getEffectivePlan, isNewUser } from '@gremio-estelar/shared';
 
 // ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
 const PROFILE_MUSIC_ENABLED = false;
@@ -456,6 +456,25 @@ function ProfileContent() {
               ✓ Verificado
             </div>
           )}
+
+          {/* Marca de agua Usuario Nuevo (auto-expira a los 7 días) */}
+          {isNewUser(profile.createdAt) && (
+            <div style={{
+              position: 'absolute', bottom: '12px', right: '16px', zIndex: 2,
+              padding: '3px 8px', borderRadius: '6px',
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(0, 229, 255, 0.3)',
+              fontSize: '0.68rem', fontWeight: 700, color: '#00e5ff',
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+              pointerEvents: 'none', userSelect: 'none',
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
+            }}>
+              <span>✦</span>
+              <span>Usuario Nuevo</span>
+            </div>
+          )}
         </div>
 
         {/* Avatar — fuera del overflow:hidden para que sobresalga del banner */}
@@ -741,6 +760,30 @@ function ProfileContent() {
                 </svg>
                 {profile.note ? 'Editar nota' : 'Agregar nota'}
               </button>
+            )}
+
+            {/* Distintivo Usuario Nuevo (expira automáticamente a los 7 días) */}
+            {isNewUser(profile.createdAt) && (
+              <span
+                title="Usuario registrado recientemente en Gremio Estelar"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '4px 12px',
+                  borderRadius: '20px',
+                  background: 'rgba(0, 229, 255, 0.08)',
+                  border: '1px solid rgba(0, 229, 255, 0.28)',
+                  color: '#00e5ff',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <span>✦</span>
+                <span>Usuario Nuevo</span>
+              </span>
             )}
           </div>
         </div>
@@ -1414,6 +1457,34 @@ function ProfileContent() {
       </div>
     </div>
   )}
+
+      {/* Marca de agua al pie del perfil para usuarios nuevos (expira automáticamente) */}
+      {isNewUser(profile.createdAt) && (
+        <div style={{
+          textAlign: 'center',
+          padding: '24px 16px 40px',
+          userSelect: 'none',
+          pointerEvents: 'none',
+        }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            color: 'rgba(0, 229, 255, 0.45)',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            padding: '4px 14px',
+            borderRadius: '12px',
+            background: 'rgba(0, 229, 255, 0.03)',
+            border: '1px solid rgba(0, 229, 255, 0.08)',
+          }}>
+            <span>✦</span>
+            <span>Usuario Nuevo · Recién llegado al Gremio</span>
+          </span>
+        </div>
+      )}
 
       {/* ===== ADVANCED STATS MODAL (NOVA+) ===== */}
       {mounted && showStatsModal && createPortal(

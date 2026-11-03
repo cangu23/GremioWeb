@@ -5,6 +5,8 @@ import {
   getPrimaryRole,
   isStaffRole,
   Role,
+  isNewUser,
+  NEW_USER_THRESHOLD_DAYS,
 } from '@gremio-estelar/shared';
 import {
   getEffectivePlan,
@@ -149,6 +151,39 @@ describe('Shared Plan & Economy Contracts', () => {
       expect(canUseBannerImage('FREE', 'MAID')).toBe(true);
       expect(canUseBannerImage('FREE', 'ADMIN')).toBe(true);
       expect(canUseBannerImage('FREE', 'MODERATOR')).toBe(true);
+    });
+  });
+
+  describe('isNewUser', () => {
+    it('should return false for missing, null, or invalid dates', () => {
+      expect(isNewUser(null)).toBe(false);
+      expect(isNewUser(undefined)).toBe(false);
+      expect(isNewUser('invalid-date')).toBe(false);
+    });
+
+    it('should return true for accounts created within the default 7 days', () => {
+      const now = new Date();
+      expect(isNewUser(now)).toBe(true);
+
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+      expect(isNewUser(threeDaysAgo)).toBe(true);
+
+      const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
+      expect(isNewUser(sixDaysAgo.toISOString())).toBe(true);
+    });
+
+    it('should automatically return false (expire badge) once older than threshold', () => {
+      const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
+      expect(isNewUser(eightDaysAgo)).toBe(false);
+
+      const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      expect(isNewUser(oneMonthAgo.toISOString())).toBe(false);
+    });
+
+    it('should respect custom threshold days when provided', () => {
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      expect(isNewUser(fiveDaysAgo, 3)).toBe(false);
+      expect(isNewUser(fiveDaysAgo, 10)).toBe(true);
     });
   });
 });

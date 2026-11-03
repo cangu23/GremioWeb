@@ -169,6 +169,96 @@ export const getAlgorithmicFeed = async (currentUserId?: string, page = 1, limit
   });
 };
 
+/**
+ * Algoritmo de Tendencias (Trending/Hot):
+ * Clasifica publicaciones recientes por velocidad de interacción (likes * 3 + comments * 5)
+ * con decaimiento temporal balanceado en las últimas 72 horas.
+ */
+export const getTrendingFeed = async (currentUserId?: string, page = 1, limit = 20) => {
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.max(1, Math.min(limit, 50));
+  
+  // Buscar publicaciones de las últimas 72 horas
+  const windowDays = 3;
+  const sinceDate = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+  let candidates = await PostsRepository.findRecentPostsForTrendingFeed(sinceDate, 120);
+
+  // Si hay pocas publicaciones en la ventana de 72h, retroceder a publicaciones generales recientes
+  if (candidates.length < safeLimit) {
+    candidates = await PostsRepository.findRecentPostsForAlgorithmicFeed(100, 0);
+  }
+
+  if (candidates.length === 0) return [];
+
+  const nowMs = Date.now();
+  const scoredPosts = candidates.map((post) => {
+    const hoursOld = Math.max(0, (nowMs - new Date(post.createdAt).getTime()) / (1000 * 60 * 60));
+    const likes = post._count?.likes || 0;
+    const comments = post._count?.comments || 0;
+
+    // Velocidad de interacción: mayor peso a comentarios y debate comunitario
+    const interactionScore = (likes * 3.0) + (comments * 5.0);
+    const mediaBonus = post.mediaUrl ? 8 : 0;
+    const pinnedBonus = post.isPinned ? 30 : 0;
+
+    // Decaimiento exponencial suave por hora
+    const freshness = 1 / Math.pow(hoursOld + 2, 1.25);
+    const score = (10 + interactionScore + mediaBonus + pinnedBonus) * freshness;
+
+    return { post, score };
+  });
+
+  scoredPosts.sort((a, b) => b.score - a.score);
+
+  const startIndex = (safePage - 1) * safeLimit;
+  const paginated = scoredPosts.slice(startIndex, startIndex + safeLimit).map(sp => sp.post);
+
+  let likedPostIds = new Set<string>();
+  if (currentUserId && paginated.length > 0) {
+    const postIds = paginated.map(p => p.id);
+    const likes = await prisma.like.findMany({
+      where: { userId: currentUserId, postId: { in: postIds } },
+      select: { postId: true },
+    });
+    likedPostIds = new Set(likes.map(l => l.postId!).filter(Boolean));
+  }
+
+  return paginated.map((p) => {
+    const formatted = formatPost(p);
+    if (currentUserId) {
+      formatted.isLikedByMe = likedPostIds.has(p.id);
+    }
+    return formatted;
+  });
+};
+
+/**
+ * Algoritmo Multimedia (Galería de Publicaciones con Media / Arte / Clips)
+ */
+export const getMediaFeed = async (currentUserId?: string, page = 1, limit = 20) => {
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.max(1, Math.min(limit, 50));
+  const posts = await PostsRepository.findMediaPosts(safePage, safeLimit);
+
+  let likedPostIds = new Set<string>();
+  if (currentUserId && posts.length > 0) {
+    const postIds = posts.map(p => p.id);
+    const likes = await prisma.like.findMany({
+      where: { userId: currentUserId, postId: { in: postIds } },
+      select: { postId: true },
+    });
+    likedPostIds = new Set(likes.map(l => l.postId!).filter(Boolean));
+  }
+
+  return posts.map((p) => {
+    const formatted = formatPost(p);
+    if (currentUserId) {
+      formatted.isLikedByMe = likedPostIds.has(p.id);
+    }
+    return formatted;
+  });
+};
+
 export const getPersonalizedFeed = async (userId: string, page = 1, limit = 20) => {
   // Get users this user follows
   const following = await SocialRepository.getFollowing(userId);

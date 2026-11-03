@@ -110,3 +110,13 @@ export const updateNote = async (req: Request, res: Response, next: NextFunction
     next(error);
   }
 };
+
+export const getNewestUsers = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = Math.min(30, Number(req.query.limit) || 10);
+    const users = await UserService.getNewestUsers(limit);
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+};

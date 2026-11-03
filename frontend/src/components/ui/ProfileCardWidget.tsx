@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import UserAvatar, { getNoteBubbleStyle } from './UserAvatar';
 import PetWidget from './PetWidget';
 import RoleBadge from './RoleBadge';
-import { getPrimaryRole, hasAnyRole, parseUserRoles } from '@gremio-estelar/shared';
+import { getPrimaryRole, hasAnyRole, parseUserRoles, isNewUser } from '@gremio-estelar/shared';
 
 // ── Types ──
 interface ProfileCardData {
@@ -16,6 +16,7 @@ interface ProfileCardData {
   username: string;
   role: string;
   displayedRole?: string | null;
+  createdAt?: string | Date | null;
   xp: number;
   level: number;
   displayName?: string | null;
@@ -700,6 +701,22 @@ function CardContent({
                 )}
               </a>
             ))}
+          </div>
+        )}
+
+        {/* Marca de agua Usuario Nuevo (auto-expira a los 7 días) */}
+        {isNewUser(profile.createdAt) && (
+          <div style={{
+            marginTop: '12px',
+            textAlign: 'center',
+            fontSize: '0.68rem',
+            letterSpacing: '0.08em',
+            color: 'rgba(0, 229, 255, 0.7)',
+            textTransform: 'uppercase',
+            fontWeight: 700,
+            userSelect: 'none',
+          }}>
+            ✦ Nuevo Viajero
           </div>
         )}
       </div>

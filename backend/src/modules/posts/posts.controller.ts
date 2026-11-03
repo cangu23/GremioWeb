@@ -19,11 +19,17 @@ export const getFeed = async (req: Request, res: Response, next: NextFunction) =
     if (mode === 'following' && req.user) {
       const posts = await PostsService.getPersonalizedFeed(req.user.id, page, limit);
       res.json(posts);
-    } else if (mode === 'for-you') {
-      const posts = await PostsService.getAlgorithmicFeed(req.user?.id, page, limit);
+    } else if (mode === 'trending') {
+      const posts = await PostsService.getTrendingFeed(req.user?.id, page, limit);
+      res.json(posts);
+    } else if (mode === 'media') {
+      const posts = await PostsService.getMediaFeed(req.user?.id, page, limit);
+      res.json(posts);
+    } else if (mode === 'recent' || mode === 'global') {
+      const posts = await PostsService.getFeed(req.user?.id, page, limit);
       res.json(posts);
     } else {
-      const posts = await PostsService.getFeed(req.user?.id, page, limit);
+      const posts = await PostsService.getAlgorithmicFeed(req.user?.id, page, limit);
       res.json(posts);
     }
   } catch (err) { next(err); }

@@ -263,3 +263,8 @@ export const getPublicUser = async (userId: string): Promise<PublicUser> => {
     streamerProfile,
   };
 };
+
+export const getNewestUsers = async (limit = 10) => {
+  const safeLimit = Math.max(1, Math.min(limit, 30));
+  return UserRepository.findNewestUsers(safeLimit);
+};
