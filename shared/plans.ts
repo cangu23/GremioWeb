@@ -51,6 +51,18 @@ export function getXpMultiplier(plan?: string | null, role?: string | null): num
   }
 }
 
+/**
+ * ¿Puede el usuario subir o configurar una imagen en su banner?
+ * Usuarios gratis solo pueden elegir un color sólido para su banner.
+ * Imágenes de banner: Plan ASTRO o superior, o creadores/staff.
+ */
+export function canUseBannerImage(plan?: string | null, role?: string | null): boolean {
+  if (isStaffRole(role) || userHasRole(role, 'VTUBER') || userHasRole(role, 'STREAMER') || userHasRole(role, 'MAID')) {
+    return true;
+  }
+  return planMeetsOrExceeds(plan, role, 'ASTRO');
+}
+
 /** Label human-readable del plan efectivo. */
 export function getPlanLabel(plan?: string | null, role?: string | null): string {
   const effective = getEffectivePlan(plan, role);

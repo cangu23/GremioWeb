@@ -1,7 +1,7 @@
 import AppError from '../../errors/AppError';
 import * as UserRepository from './user.repository';
 import prisma from '../../database/prisma';
-import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl, attachVerified, isVerifiedEffective, isStaffRole, parseUserRoles } from '@gremio-estelar/shared';
+import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpotifyUrl, attachVerified, isVerifiedEffective, isStaffRole, parseUserRoles, canUseBannerImage } from '@gremio-estelar/shared';
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
@@ -80,6 +80,13 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
     }
     if (!isKeep && (!me || !canUseProfileMusic(me.plan, me.role))) {
       throw new AppError('La música en el perfil es exclusiva de los Planes Premium NOVA y STELLAR.', 403);
+    }
+  }
+
+  if (payload.bannerUrl !== undefined && payload.bannerUrl) {
+    const me = await UserRepository.findById(userId);
+    if (!canUseBannerImage(me?.plan, me?.role)) {
+      throw new AppError('Las imágenes de banner son exclusivas de miembros con Plan Astro o superior y Creadores. Como usuario Explorer (Gratis) puedes elegir un color sólido para tu banner.', 403);
     }
   }
 

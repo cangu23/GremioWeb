@@ -11,6 +11,7 @@ import {
   planMeetsOrExceeds,
   getXpMultiplier,
   getPlanLabel,
+  canUseBannerImage,
 } from '@gremio-estelar/shared/plans';
 
 describe('Shared Security & Role Contracts', () => {
@@ -127,6 +128,27 @@ describe('Shared Plan & Economy Contracts', () => {
       expect(getPlanLabel('NOVA')).toBe('Nova Pro');
       expect(getPlanLabel('ASTRO')).toBe('Astro');
       expect(getPlanLabel('FREE')).toBe('Explorer (Gratis)');
+    });
+  });
+
+  describe('canUseBannerImage', () => {
+    it('should return false for regular FREE users without creator or staff roles', () => {
+      expect(canUseBannerImage('FREE', 'USER')).toBe(false);
+      expect(canUseBannerImage(null, 'USER')).toBe(false);
+    });
+
+    it('should return true for users with premium plans (ASTRO, NOVA, STELLAR)', () => {
+      expect(canUseBannerImage('ASTRO', 'USER')).toBe(true);
+      expect(canUseBannerImage('NOVA', 'USER')).toBe(true);
+      expect(canUseBannerImage('STELLAR', 'USER')).toBe(true);
+    });
+
+    it('should return true for creators and staff regardless of plan', () => {
+      expect(canUseBannerImage('FREE', 'VTUBER')).toBe(true);
+      expect(canUseBannerImage('FREE', 'STREAMER')).toBe(true);
+      expect(canUseBannerImage('FREE', 'MAID')).toBe(true);
+      expect(canUseBannerImage('FREE', 'ADMIN')).toBe(true);
+      expect(canUseBannerImage('FREE', 'MODERATOR')).toBe(true);
     });
   });
 });

@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { hasAnyRole, isStaffRole } from '@gremio-estelar/shared';
 
 import RoleBadge from '@/components/ui/RoleBadge';
-import { parseUserRoles, getPrimaryRole, isSpotifyUrl, canUseProfileMusic, toSpotifyEmbedUrl, getSpotifyEmbedHeight, getEffectivePlan, planMeetsOrExceeds } from '@gremio-estelar/shared';
+import { parseUserRoles, getPrimaryRole, isSpotifyUrl, canUseProfileMusic, toSpotifyEmbedUrl, getSpotifyEmbedHeight, getEffectivePlan, planMeetsOrExceeds, canUseBannerImage } from '@gremio-estelar/shared';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
 import { normalizeUsername } from '@/lib/user-display';
 import { getPlanAvatarBorder } from '@/lib/plan-avatar-border';
@@ -45,6 +45,7 @@ function UserSettings() {
   const { user, isLoading, logout } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
+  const canBannerImg = canUseBannerImage(user?.plan, user?.role);
 
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -186,7 +187,7 @@ function UserSettings() {
           avatarUrl: avatarUrl.trim() || undefined,
           bio: bio.trim() || undefined,
           bannerColor: bannerColor || undefined,
-          bannerUrl: bannerUrl.trim() || null,
+          bannerUrl: canBannerImg ? (bannerUrl.trim() || null) : null,
           displayedRole: displayedRole || undefined,
           profileMusic: profileMusic.trim() || null,
           profileBg: profileBg || undefined,
@@ -406,17 +407,17 @@ function UserSettings() {
           </div>
         </div>
 
-        {/* Banner Image & Color */}
+        {/* Banner Section */}
         <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>
           <h3 style={{
             fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            Imagen y Color del Banner
+            {canBannerImg ? 'Imagen y Color del Banner' : 'Color de Banner'}
           </h3>
 
-          {/* Banner image preview */}
-          {bannerUrl && (
+          {/* Banner image preview (only if canBannerImg AND bannerUrl exists) */}
+          {canBannerImg && bannerUrl && (
             <div style={{
               width: '100%', height: '120px', borderRadius: '12px', marginBottom: '14px',
               background: `url(${bannerUrl}) center/cover`,
@@ -424,81 +425,148 @@ function UserSettings() {
             }} />
           )}
 
-          <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label">Imagen de Banner (URL o Subir)</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                className="input"
-                value={bannerUrl}
-                onChange={e => setBannerUrl(e.target.value)}
-                placeholder="URL de imagen de banner"
-                style={{ flex: 1 }}
-              />
-              <button
-                type="button"
-                onClick={() => bannerInputRef.current?.click()}
-                disabled={uploadingBanner}
-                style={{
-                  padding: '10px 14px', borderRadius: '8px',
-                  border: '1px solid var(--glass-border)',
-                  background: 'rgba(255,255,255,0.05)', color: 'var(--text)',
-                  cursor: uploadingBanner ? 'wait' : 'pointer',
-                  fontSize: '0.85rem', whiteSpace: 'nowrap',
-                  opacity: uploadingBanner ? 0.6 : 1,
-                }}
-              >
-                {uploadingBanner ? '...' : 'Subir'}
-              </button>
-              {bannerUrl && bannerUrl !== avatarUrl && (
+          {/* Solid Color Banner Preview for Free Users */}
+          {!canBannerImg && (
+            <div style={{
+              width: '100%', height: '90px', borderRadius: '12px', marginBottom: '16px',
+              background: bannerColor || '#8b5cf6',
+              border: '1px solid rgba(255,255,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 0 20px ${bannerColor}33`,
+              transition: 'background 0.3s ease',
+            }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                ✦ Vista Previa del Color de Cabecera
+              </span>
+            </div>
+          )}
+
+          {canBannerImg ? (
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label">Imagen de Banner (URL o Subir)</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  className="input"
+                  value={bannerUrl}
+                  onChange={e => setBannerUrl(e.target.value)}
+                  placeholder="URL de imagen de banner"
+                  style={{ flex: 1 }}
+                />
                 <button
                   type="button"
-                  onClick={() => {
-                    setCropperSrc(bannerUrl);
-                    setCropperType('banner');
-                    setCropperOpen(true);
-                  }}
+                  onClick={() => bannerInputRef.current?.click()}
+                  disabled={uploadingBanner}
                   style={{
                     padding: '10px 14px', borderRadius: '8px',
-                    border: '1px solid rgba(139,92,246,0.3)',
-                    background: 'rgba(139,92,246,0.12)', color: 'var(--primary)',
-                    cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap',
-                    fontWeight: 600,
+                    border: '1px solid var(--glass-border)',
+                    background: 'rgba(255,255,255,0.05)', color: 'var(--text)',
+                    cursor: uploadingBanner ? 'wait' : 'pointer',
+                    fontSize: '0.85rem', whiteSpace: 'nowrap',
+                    opacity: uploadingBanner ? 0.6 : 1,
                   }}
                 >
-                  Recortar
+                  {uploadingBanner ? '...' : 'Subir'}
                 </button>
-              )}
-              <input
-                ref={bannerInputRef}
-                type="file"
-                accept={canBannerGif ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
-                style={{ display: 'none' }}
-                onChange={e => handleFileSelect(e, 'banner')}
-              />
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-              {canBannerGif
-                ? '✨ Puedes subir banners animados (GIF) — beneficio Nova Pro / Stellar Elite.'
-                : 'Los banners animados (GIF) son exclusivos de Nova Pro y Stellar Elite. Sube JPEG, PNG o WebP.'}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <input
-              type="color"
-              value={bannerColor}
-              onChange={(e) => setBannerColor(e.target.value)}
-              style={{
-                width: '60px', height: '40px', padding: 0,
-                border: 'none', borderRadius: '8px', cursor: 'pointer',
-                background: 'none'
-              }}
-            />
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text)' }}>Color de fondo alternativo para tu banner</p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Se mostrará en la parte superior de tu perfil si no hay imagen de banner.
+                {bannerUrl && bannerUrl !== avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCropperSrc(bannerUrl);
+                      setCropperType('banner');
+                      setCropperOpen(true);
+                    }}
+                    style={{
+                      padding: '10px 14px', borderRadius: '8px',
+                      border: '1px solid rgba(139,92,246,0.3)',
+                      background: 'rgba(139,92,246,0.12)', color: 'var(--primary)',
+                      cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Recortar
+                  </button>
+                )}
+                <input
+                  ref={bannerInputRef}
+                  type="file"
+                  accept={canBannerGif ? "image/jpeg,image/png,image/webp,image/gif" : "image/jpeg,image/png,image/webp"}
+                  style={{ display: 'none' }}
+                  onChange={e => handleFileSelect(e, 'banner')}
+                />
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                {canBannerGif
+                  ? '✦ Puedes subir banners animados (GIF) — beneficio Nova Pro / Stellar Elite.'
+                  : 'Los banners animados (GIF) son exclusivos de Nova Pro y Stellar Elite. Sube JPEG, PNG o WebP.'}
               </p>
+            </div>
+          ) : (
+            <div style={{
+              padding: '14px 16px', borderRadius: '12px', marginBottom: '16px',
+              background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}>
+              <div style={{ fontSize: '0.82rem', color: '#e2e8f0', fontWeight: 700, marginBottom: '4px' }}>
+                ✦ Color Sólido Personalizado
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+                Como usuario Explorer (Gratis), puedes personalizar el color sólido de tu cabecera a continuación. Las imágenes e ilustraciones de banner están reservadas para miembros con Plan Astro o superior y Creadores.
+              </p>
+            </div>
+          )}
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+              <input
+                type="color"
+                value={bannerColor}
+                onChange={(e) => setBannerColor(e.target.value)}
+                style={{
+                  width: '60px', height: '40px', padding: 0,
+                  border: 'none', borderRadius: '8px', cursor: 'pointer',
+                  background: 'none'
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text)', margin: 0, fontWeight: 700 }}>Color de tu banner</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+                  {canBannerImg
+                    ? 'Se mostrará en tu cabecera si no defines una imagen de banner.'
+                    : 'Color principal que decora la cabecera de tu perfil público.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Palette presets */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginTop: '10px' }}>
+              <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Colores Estelares:
+              </span>
+              {[
+                { hex: '#8b5cf6', label: 'Violeta' },
+                { hex: '#06b6d4', label: 'Cian' },
+                { hex: '#dc2626', label: 'Carmesí' },
+                { hex: '#f59e0b', label: 'Ámbar' },
+                { hex: '#10b981', label: 'Esmeralda' },
+                { hex: '#ec4899', label: 'Sakura' },
+                { hex: '#1e1b4b', label: 'Índigo' },
+                { hex: '#18181b', label: 'Obsidiana' },
+              ].map(swatch => (
+                <button
+                  key={swatch.hex}
+                  type="button"
+                  onClick={() => setBannerColor(swatch.hex)}
+                  title={swatch.label}
+                  style={{
+                    width: '28px', height: '28px', borderRadius: '50%',
+                    background: swatch.hex,
+                    border: bannerColor.toLowerCase() === swatch.hex.toLowerCase() ? '2px solid #fff' : '1px solid rgba(255,255,255,0.2)',
+                    cursor: 'pointer',
+                    transform: bannerColor.toLowerCase() === swatch.hex.toLowerCase() ? 'scale(1.15)' : 'scale(1)',
+                    boxShadow: bannerColor.toLowerCase() === swatch.hex.toLowerCase() ? `0 0 10px ${swatch.hex}` : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
