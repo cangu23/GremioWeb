@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/api';
 import { AlertCircle, FourPointStar } from '@/components/ui/Icons';
 
@@ -15,12 +16,23 @@ export default function ForgotPasswordModal({
   onClose,
   initialEmail = '',
 }: ForgotPasswordModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState(initialEmail);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (initialEmail) {
+      setEmail(initialEmail);
+    }
+  }, [initialEmail]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,18 +58,26 @@ export default function ForgotPasswordModal({
     onClose();
   };
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(5, 7, 18, 0.82)',
-        backdropFilter: 'blur(8px)',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(5, 7, 18, 0.85)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 99999,
-        padding: '20px',
+        zIndex: 999999,
+        padding: '16px',
+        boxSizing: 'border-box',
+        overflowY: 'auto',
       }}
       onClick={handleClose}
     >
@@ -66,12 +86,16 @@ export default function ForgotPasswordModal({
         style={{
           width: '100%',
           maxWidth: '440px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
           padding: '28px 24px',
           borderRadius: '20px',
-          background: 'linear-gradient(145deg, rgba(20, 24, 46, 0.95), rgba(12, 14, 28, 0.98))',
-          border: '1px solid rgba(138, 43, 226, 0.35)',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(138, 43, 226, 0.2)',
+          background: 'linear-gradient(145deg, rgba(20, 24, 46, 0.98), rgba(12, 14, 28, 0.99))',
+          border: '1px solid rgba(138, 43, 226, 0.45)',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(138, 43, 226, 0.25)',
           position: 'relative',
+          boxSizing: 'border-box',
+          margin: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -265,7 +289,8 @@ export default function ForgotPasswordModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -249,11 +249,21 @@ export const requestPasswordReset = async (email: string) => {
   const resetUrl = `${frontendBase}/reset-password?token=${resetToken}`;
 
   // Despachar email
-  await sendPasswordResetEmail({
+  const emailRes = await sendPasswordResetEmail({
     to: user.email,
     username: user.displayName || user.username,
     resetUrl,
   });
+
+  if (!emailRes.success) {
+    if (emailRes.error?.includes('You can only send testing emails to your own email address')) {
+      const allowedEmail = emailRes.error.match(/\(([^)]+)\)/)?.[1] || 'el correo de tu cuenta Resend';
+      throw new AppError(
+        `Modo de prueba de Resend activo: solo puedes enviar correos a tu cuenta registrada (${allowedEmail}). Para enviar a cualquier usuario, verifica tu dominio en resend.com/domains.`,
+        400
+      );
+    }
+  }
 
   return {
     message: 'Si el correo electrónico está registrado, recibirás un enlace de recuperación en breve.',
