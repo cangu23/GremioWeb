@@ -2,7 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import * as AuthController from './auth.controller';
 import { validateRequest } from './validateRequest';
-import { loginSchema, registerSchema, redeemCodeSchema } from './auth.validation';
+import { loginSchema, registerSchema, redeemCodeSchema, forgotPasswordSchema, resetPasswordSchema } from './auth.validation';
 import { authenticate } from './authenticate';
 import * as CodesController from '../admin/codes.controller';
 import * as GoogleController from './google.controller';
@@ -55,12 +55,25 @@ const redeemLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter para recuperación de contraseña: máx 5 solicitudes cada 15 min
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Demasiadas solicitudes de recuperación de contraseña. Por seguridad, inténtalo de nuevo en 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // All routes in this file are prefixed with /api/auth
 
 router.post('/login', loginLimiter, validateRequest(loginSchema), AuthController.login);
 router.post('/register', registerLimiter, validateRequest(registerSchema), AuthController.register);
 router.post('/refresh', refreshLimiter, AuthController.refresh);
 router.post('/logout', logoutLimiter, AuthController.logout);
+
+// Recuperación y restablecimiento de contraseña
+router.post('/forgot-password', passwordResetLimiter, validateRequest(forgotPasswordSchema), AuthController.forgotPassword);
+router.post('/reset-password', passwordResetLimiter, validateRequest(resetPasswordSchema), AuthController.resetPassword);
 
 // Redeem an invitation code (authenticated users)
 router.post('/redeem-code', authenticate, redeemLimiter, validateRequest(redeemCodeSchema), CodesController.redeemCode);

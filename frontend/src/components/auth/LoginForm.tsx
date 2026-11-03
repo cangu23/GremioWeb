@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
 import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
 import DiscordLoginButton from '@/components/auth/DiscordLoginButton';
+import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal';
 import { AlertCircle, FourPointStar } from '@/components/ui/Icons';
 
 export default function LoginForm() {
@@ -22,6 +23,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,9 +108,14 @@ export default function LoginForm() {
         </div>
 
         <div style={{ textAlign: 'right', marginBottom: '12px' }}>
-          <Link
-            href="/support"
+          <button
+            type="button"
+            onClick={() => setShowForgotModal(true)}
             style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
               fontSize: '0.78rem',
               color: 'rgba(255, 255, 255, 0.5)',
               textDecoration: 'none',
@@ -118,7 +125,7 @@ export default function LoginForm() {
             onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)')}
           >
             ¿Olvidaste tu contraseña?
-          </Link>
+          </button>
         </div>
 
         <button type="submit" className="auth-btn-primary" disabled={loading}>
@@ -165,6 +172,12 @@ export default function LoginForm() {
         <GoogleLoginButton />
         <DiscordLoginButton />
       </div>
+
+      <ForgotPasswordModal
+        isOpen={showForgotModal}
+        onClose={() => setShowForgotModal(false)}
+        initialEmail={email}
+      />
     </div>
   );
 }

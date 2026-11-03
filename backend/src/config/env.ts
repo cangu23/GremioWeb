@@ -58,6 +58,8 @@ const envSchema = z.object({
   TWITCH_CLIENT_ID: z.string().default(''),
   TWITCH_CLIENT_SECRET: z.string().default(''),
   PAYPAL_WEBHOOK_ID: z.string().optional().default(''),
+  RESEND_API_KEY: z.string().default(''),
+  EMAIL_FROM: z.string().default('Gremio Estelar <onboarding@resend.dev>'),
 });
 
 const parseResult = envSchema.safeParse(process.env);

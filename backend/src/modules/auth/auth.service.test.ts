@@ -18,14 +18,19 @@ const mockAuthRepository = vi.hoisted(() => ({
 
 vi.mock('../users/user.repository', () => mockUserRepository);
 vi.mock('./auth.repository', () => mockAuthRepository);
+vi.mock('../../services/email.service', () => ({
+  sendPasswordResetEmail: vi.fn().mockResolvedValue({ success: true, id: 'mock-msg' }),
+}));
 vi.mock('../../database', () => ({
   prisma: {
     user: {
       findUnique: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@example.com', role: 'USER' }),
+      findFirst: vi.fn(),
+      update: vi.fn().mockResolvedValue({ id: 'user-1' }),
     },
     refreshToken: {
       findFirst: vi.fn(),
-      deleteMany: vi.fn(),
+      deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
   },
 }));
@@ -133,6 +138,72 @@ describe('AuthService', () => {
       expect(result.accessToken).toBeDefined();
       expect(result.refreshToken).toBeDefined();
       expect(result.user.id).toBe('user-1');
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('returns generic security message even if user does not exist', async () => {
+      mockUserRepository.findByEmail.mockResolvedValue(null);
+
+      const res = await AuthService.requestPasswordReset('nonexistent@example.com');
+      expect(res.message).toContain('Si el correo electrónico está registrado');
+    });
+
+    it('generates token, updates user, and triggers email when user exists', async () => {
+      const { prisma } = await import('../../database');
+      mockUserRepository.findByEmail.mockResolvedValue({
+        id: 'user-1',
+        email: 'real@example.com',
+        username: 'realuser',
+        displayName: 'Real Star',
+      });
+
+      const res = await AuthService.requestPasswordReset('real@example.com');
+      expect(res.message).toContain('Si el correo electrónico está registrado');
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'user-1' },
+          data: expect.objectContaining({
+            resetPasswordToken: expect.any(String),
+            resetPasswordExpires: expect.any(Date),
+          }),
+        })
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('throws error if token is invalid or expired', async () => {
+      const { prisma } = await import('../../database');
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+
+      await expect(
+        AuthService.resetPassword('invalid-or-expired-token', 'NewSecurePass123!')
+      ).rejects.toThrow('El enlace de recuperación es inválido o ha expirado.');
+    });
+
+    it('updates password, clears reset token, and revokes refresh tokens on success', async () => {
+      const { prisma } = await import('../../database');
+      (prisma.user.findFirst as any).mockResolvedValue({
+        id: 'user-1',
+        email: 'real@example.com',
+      });
+
+      const res = await AuthService.resetPassword('valid-token-123', 'NewSecurePass123!');
+      expect(res.message).toContain('Contraseña actualizada con éxito');
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'user-1' },
+          data: expect.objectContaining({
+            password: expect.any(String),
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
+          }),
+        })
+      );
+      expect(prisma.refreshToken.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      });
     });
   });
 });

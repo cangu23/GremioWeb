@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { AuthProvider, Role } from '@gremio-estelar/shared';
 import { prisma } from '../../database/index';
@@ -10,6 +11,7 @@ import { generateTokens, hashToken } from './tokens';
 import { LoginInput, RegisterInput, RefreshTokenInput } from './auth.types';
 import { trackMissionProgress } from '../ecosystem/missions.service';
 import { addStardust } from '../ecosystem/stardust.service';
+import { sendPasswordResetEmail } from '../../services/email.service';
 
 /**
  * Registers a new user and returns the user object without tokens.
@@ -212,4 +214,99 @@ export const refreshAccessToken = async (input: RefreshTokenInput) => {
   );
 
   return { accessToken, refreshToken: newRefreshToken };
+};
+
+/**
+ * Solicita el restablecimiento de contraseña.
+ * Genera un token aleatorio seguro (crypto.randomBytes), guarda el hash en la DB y envía el correo.
+ * Devuelve siempre un mensaje genérico para mitigar enumeración de usuarios.
+ */
+export const requestPasswordReset = async (email: string) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await UserRepository.findByEmail(normalizedEmail);
+
+  // Si el usuario no existe, devolvemos mensaje genérico por seguridad
+  if (!user) {
+    return {
+      message: 'Si el correo electrónico está registrado, recibirás un enlace de recuperación en breve.',
+    };
+  }
+
+  // Generar token seguro de 32 bytes (64 caracteres hex)
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      resetPasswordToken: tokenHash,
+      resetPasswordExpires: expiresAt,
+    },
+  });
+
+  const frontendBase = (env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  const resetUrl = `${frontendBase}/reset-password?token=${resetToken}`;
+
+  // Despachar email
+  await sendPasswordResetEmail({
+    to: user.email,
+    username: user.displayName || user.username,
+    resetUrl,
+  });
+
+  return {
+    message: 'Si el correo electrónico está registrado, recibirás un enlace de recuperación en breve.',
+  };
+};
+
+/**
+ * Restablece la contraseña con el token recibido.
+ */
+export const resetPassword = async (token: string, newPassword: string) => {
+  if (!token || !newPassword) {
+    throw new AppError('Token y nueva contraseña son requeridos', 400);
+  }
+
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  // Buscar usuario con este token y cuya fecha de expiración sea futura
+  const user = await prisma.user.findFirst({
+    where: {
+      resetPasswordToken: tokenHash,
+      resetPasswordExpires: {
+        gt: new Date(),
+      },
+    },
+  });
+
+  if (!user) {
+    throw new AppError('El enlace de recuperación es inválido o ha expirado. Solicita uno nuevo.', 400);
+  }
+
+  // Cifrar nueva contraseña
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // Actualizar contraseña y limpiar tokens
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
+  });
+
+  // Invalidar todas las sesiones activas (refresh tokens) por seguridad
+  try {
+    await prisma.refreshToken.deleteMany({
+      where: { userId: user.id },
+    });
+  } catch {
+    // Non-critical cleanup
+  }
+
+  return {
+    message: 'Contraseña actualizada con éxito. Ya puedes iniciar sesión con tu nueva clave.',
+  };
 };

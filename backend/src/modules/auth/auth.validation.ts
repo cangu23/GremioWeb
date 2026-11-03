@@ -42,3 +42,22 @@ export const redeemCodeSchema = z.object({
     code: z.string().min(1, 'El código es requerido'),
   }),
 });
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email('Formato de correo electrónico inválido').max(254),
+  }),
+});
+
+export const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'El token de recuperación es requerido'),
+    newPassword: z
+      .string()
+      .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
+      .max(128, 'La nueva contraseña no puede tener más de 128 caracteres')
+      .regex(/[A-Z]/, 'La contraseña debe tener al menos una letra mayúscula')
+      .regex(/[a-z]/, 'La contraseña debe tener al menos una letra minúscula')
+      .regex(/[0-9]/, 'La contraseña debe tener al menos un número'),
+  }),
+});

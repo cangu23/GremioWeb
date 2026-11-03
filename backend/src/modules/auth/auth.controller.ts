@@ -90,4 +90,32 @@ export const refresh = async (
     console.error('[REQ] Refresh token error:', error instanceof Error ? error.message : error);
     next(error);
   }
+};
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body;
+    const result = await AuthService.requestPasswordReset(email);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { token, newPassword } = req.body;
+    const result = await AuthService.resetPassword(token, newPassword);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
 };

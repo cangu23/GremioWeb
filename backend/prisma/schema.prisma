@@ -26,6 +26,8 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   password      String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
 
   // User profile (for non-VTubers)
   displayName   String?
