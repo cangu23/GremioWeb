@@ -301,7 +301,10 @@ function ProfileContent() {
   // la misma estructura de campos, así que el resto de la página los consume
   // de forma idéntica (avatar, banner, redes, horario, verificado, etc.).
   const vtuber = profile.vtuberProfile || profile.streamerProfile;
-  const isStreamer = !!profile.streamerProfile && !profile.vtuberProfile;
+  const isVtuber = !!profile.vtuberProfile;
+  const isStreamer = !!profile.streamerProfile && !isVtuber;
+  const editHref = isVtuber ? '/vtuber-profile' : isStreamer ? '/streamer-profile' : '/settings';
+  const editLabel = isVtuber ? 'Editar Perfil VTuber' : isStreamer ? 'Editar Perfil Streamer' : 'Editar Perfil';
   const avatarUrl = profile.avatarUrl || vtuber?.avatarUrl;
   const displayName = profile.displayName || vtuber?.displayName || profile.username;
   const bio = vtuber?.description || profile.bio;
@@ -970,7 +973,7 @@ function ProfileContent() {
             </>
           ) : (
             <Link
-              href={isStreamer ? '/streamer-profile' : '/vtuber-profile'}
+              href={editHref}
               className="btn"
               style={{
                 padding: '14px 36px', fontSize: '1rem', fontWeight: 700,
@@ -978,7 +981,7 @@ function ProfileContent() {
                 background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg> {isStreamer ? 'Editar Perfil Streamer' : 'Editar Perfil VTuber'}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg> {editLabel}
             </Link>
           )}
         </div>

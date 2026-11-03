@@ -438,9 +438,13 @@ function DashboardContent() {
             <Link href={`/profile/${user.id}`} className="btn btn--outline" style={{ width: '100%', padding: '12px', justifyContent: 'center', fontSize: '0.9rem' }}>
               Ver Perfil Público
             </Link>
-            {isCreator && (
+            {isCreator ? (
               <Link href={isVtuber ? "/vtuber-profile" : "/streamer-profile"} className="btn btn--gradient" style={{ width: '100%', padding: '12px', justifyContent: 'center', fontSize: '0.9rem' }}>
                 {isVtuber ? 'Editar Personaje VTuber' : 'Editar Perfil Streamer'}
+              </Link>
+            ) : (
+              <Link href="/settings" className="btn btn--gradient" style={{ width: '100%', padding: '12px', justifyContent: 'center', fontSize: '0.9rem' }}>
+                Personalizar Mi Perfil
               </Link>
             )}
           </div>
