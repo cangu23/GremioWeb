@@ -7,6 +7,7 @@ import { startStreamMonitor, stopStreamMonitor } from './modules/vtubers/stream-
 import { startStreamMonitor as startStreamerMonitor, stopStreamMonitor as stopStreamerMonitor } from './modules/streamers/stream-monitor.service';
 import { seedAchievements } from './modules/gamification/gamification.service';
 import { expireOutdatedSubscriptions } from './modules/subscriptions/platform-subscriptions.service';
+import { startBotSentinel, stopBotSentinel } from './services/bot-sentinel.service';
 import { createLogger } from './utils/logger';
 
 const log = createLogger('BOOT');
@@ -32,9 +33,14 @@ log.info(`Starting server — Node ${process.version}, ${process.platform}, NODE
 
 const server = http.createServer(app);
 createSocketServer(server);
-log.info('HTTP server + Socket.IO initialized');// Start automatic live stream detection
-  startStreamMonitor();
-  startStreamerMonitor();
+log.info('HTTP server + Socket.IO initialized');
+
+// Start automatic live stream detection
+startStreamMonitor();
+startStreamerMonitor();
+
+// Start Discord Bots Sentinel (Auto-Wakeup & Hibernation Guard)
+startBotSentinel();
 
 // Seed achievements in DB
 seedAchievements().catch((err) => log.error({ err }, 'Error seeding achievements'));
@@ -57,15 +63,15 @@ server.on('error', (err) => {
 // ──────────────────────────────────────────────
 // GRACEFUL SHUTDOWN (SIGTERM/SIGINT)
 // ──────────────────────────────────────────────
-// Cierra el servidor HTTP (y con él Socket.IO), detiene el monitor de streams
-// y desconecta Prisma para no cortar consultas a mitad de camino ni dejar
-// conexiones abiertas cuando la plataforma (Render/Docker) envía SIGTERM.
+// Cierra el servidor HTTP (y con él Socket.IO), detiene el monitor de streams,
+// detiene el centinela de bots y desconecta Prisma para no cortar consultas.
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 function shutdown(signal: string) {
   log.info(`Received ${signal} — shutting down gracefully...`);
   stopStreamMonitor();
   stopStreamerMonitor();
+  stopBotSentinel();
 
   // Cierra también las conexiones keep-alive inactivas (en Node 20, server.close
   // no las termina por sí solo y puede colgar el cierre hasta el timeout).

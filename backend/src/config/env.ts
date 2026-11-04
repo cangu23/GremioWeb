@@ -60,6 +60,12 @@ const envSchema = z.object({
   PAYPAL_WEBHOOK_ID: z.string().optional().default(''),
   RESEND_API_KEY: z.string().default(''),
   EMAIL_FROM: z.string().default('Gremio Estelar <onboarding@resend.dev>'),
+  BOT_SENTINEL_ENABLED: z.coerce.boolean().default(true),
+  BOT_SENTINEL_INTERVAL_MS: z.coerce.number().default(3 * 60 * 1000), // 3 minutes
+  SEIZA_POLICE_URL: z.string().default('https://seiza-police.onrender.com'),
+  HOSHIZORABOT_URL: z.string().default('https://hoshizorabot.onrender.com'),
+  CHRISTHEND_URL: z.string().default('https://christhend.onrender.com'),
+  SENTINEL_EXTRA_URLS: z.string().default(''),
 });
 
 const parseResult = envSchema.safeParse(process.env);

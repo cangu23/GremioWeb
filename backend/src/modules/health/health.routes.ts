@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../../database/prisma';
+import { getBotSentinelStatus, runBotSentinelCycle } from '../../services/bot-sentinel.service';
 
 const router = Router();
 
@@ -26,6 +27,26 @@ router.get('/health', async (req: Request, res: Response) => {
       heapTotalMb: Math.round(memoryUsage.heapTotal / 1024 / 1024),
       heapUsedMb: Math.round(memoryUsage.heapUsed / 1024 / 1024),
     },
+  });
+});
+
+// Bots Sentinel health status endpoint
+router.get('/health/bots', (req: Request, res: Response) => {
+  const bots = getBotSentinelStatus();
+  res.json({
+    timestamp: new Date().toISOString(),
+    count: bots.length,
+    bots,
+  });
+});
+
+// Force immediate wakeup ping across all bots
+router.post('/health/bots/wakeup', async (req: Request, res: Response) => {
+  const bots = await runBotSentinelCycle();
+  res.json({
+    message: 'Ciclo de reactivación completado exitosamente.',
+    timestamp: new Date().toISOString(),
+    bots,
   });
 });
 
