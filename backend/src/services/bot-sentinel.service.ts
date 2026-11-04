@@ -232,3 +232,4 @@ export function stopBotSentinel(): void {
     log.info('✧ [Centinela] Guardián de Bots detenido.');
   }
 }
+
