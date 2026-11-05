@@ -45,7 +45,7 @@ function HomeContent() {
   // Center - Feed
   const {
     posts, setPosts, loading, error, hasMore, loadingMore,
-    feedMode, setFeedMode, setPage, loadMore, handleLike,
+    feedMode, setFeedMode, switchFeedMode, setPage, loadMore, handleLike,
   } = usePosts({ user });
 
   const [newPostsQueue, setNewPostsQueue] = useState<any[]>([]);
@@ -786,63 +786,55 @@ function HomeContent() {
       {/* ===== CENTER FEED ===== */}
       <div className="home-feed-center" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Feed mode toggle */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16v4H4z"/><path d="M4 12h16v8H4z"/>
             </svg>
             Inicio
           </h1>
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '4px', border: '1px solid var(--glass-border)' }}>
-            <button onClick={() => { setFeedMode('for-you'); setPage(1); }} style={{
-              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
-              background: feedMode === 'for-you' ? 'linear-gradient(135deg, var(--primary), #8b5cf6)' : 'transparent',
-              color: feedMode === 'for-you' ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: feedMode === 'for-you' ? 700 : 500,
-              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
-              boxShadow: feedMode === 'for-you' ? '0 2px 10px rgba(139,92,246,0.35)' : 'none',
-            }}>
-              <span>Para Ti</span> <span style={{ color: '#ffd700', fontSize: '0.82rem' }}>✦</span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'rgba(255, 255, 255, 0.035)',
+            borderRadius: '12px',
+            padding: '3px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            gap: '2px',
+          }}>
+            <button
+              type="button"
+              onClick={() => switchFeedMode('for-you')}
+              style={{
+                padding: '6px 16px',
+                fontSize: '0.84rem',
+                borderRadius: '9px',
+                border: 'none',
+                background: feedMode === 'for-you' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: feedMode === 'for-you' ? '#ffffff' : 'var(--text-muted)',
+                cursor: 'pointer',
+                fontWeight: feedMode === 'for-you' ? 600 : 500,
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Para ti
             </button>
-            <button onClick={() => { setFeedMode('trending'); setPage(1); }} style={{
-              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
-              background: feedMode === 'trending' ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : 'transparent',
-              color: feedMode === 'trending' ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: feedMode === 'trending' ? 700 : 500,
-              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
-              boxShadow: feedMode === 'trending' ? '0 2px 10px rgba(245,158,11,0.35)' : 'none',
-            }}>
-              <span>Tendencia</span> <span style={{ color: '#fbbf24', fontSize: '0.82rem' }}>★</span>
-            </button>
-            <button onClick={() => { setFeedMode('recent'); setPage(1); }} style={{
-              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
-              background: (feedMode === 'recent' || feedMode === 'global') ? 'linear-gradient(135deg, #10b981, #06b6d4)' : 'transparent',
-              color: (feedMode === 'recent' || feedMode === 'global') ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: (feedMode === 'recent' || feedMode === 'global') ? 700 : 500,
-              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
-              boxShadow: (feedMode === 'recent' || feedMode === 'global') ? '0 2px 10px rgba(16,185,129,0.35)' : 'none',
-            }}>
-              <span>Recientes</span> <span style={{ color: '#34d399', fontSize: '0.82rem' }}>✧</span>
-            </button>
-            <button onClick={() => { setFeedMode('media'); setPage(1); }} style={{
-              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
-              background: feedMode === 'media' ? 'linear-gradient(135deg, #00e5ff, #3b82f6)' : 'transparent',
-              color: feedMode === 'media' ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: feedMode === 'media' ? 700 : 500,
-              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
-              boxShadow: feedMode === 'media' ? '0 2px 10px rgba(0,229,255,0.35)' : 'none',
-            }}>
-              <span>Multimedia</span> <span style={{ color: '#00e5ff', fontSize: '0.82rem' }}>✦</span>
-            </button>
-            <button onClick={() => { setFeedMode('following'); setPage(1); }} style={{
-              padding: '6px 13px', fontSize: '0.82rem', borderRadius: '8px', border: 'none',
-              background: feedMode === 'following' ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' : 'transparent',
-              color: feedMode === 'following' ? 'white' : 'var(--text-muted)',
-              cursor: 'pointer', fontWeight: feedMode === 'following' ? 700 : 500,
-              transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '5px',
-              boxShadow: feedMode === 'following' ? '0 2px 10px rgba(236,72,153,0.35)' : 'none',
-            }}>
-              <span>Siguiendo</span> <span style={{ color: '#f472b6', fontSize: '0.82rem' }}>★</span>
+            <button
+              type="button"
+              onClick={() => switchFeedMode('following')}
+              style={{
+                padding: '6px 16px',
+                fontSize: '0.84rem',
+                borderRadius: '9px',
+                border: 'none',
+                background: feedMode === 'following' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: feedMode === 'following' ? '#ffffff' : 'var(--text-muted)',
+                cursor: 'pointer',
+                fontWeight: feedMode === 'following' ? 600 : 500,
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Siguiendo
             </button>
           </div>
         </div>
@@ -1420,7 +1412,7 @@ function HomeContent() {
               </div>
 
               <button
-                onClick={() => setFeedMode('for-you')}
+                onClick={() => switchFeedMode('for-you')}
                 className="btn"
                 style={{
                   padding: '8px 18px', fontSize: '0.82rem', borderRadius: '10px',

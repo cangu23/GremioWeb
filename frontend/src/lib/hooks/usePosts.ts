@@ -26,6 +26,7 @@ interface UsePostsReturn {
   loadingMore: boolean;
   feedMode: FeedMode;
   setFeedMode: React.Dispatch<React.SetStateAction<FeedMode>>;
+  switchFeedMode: (newMode: FeedMode) => void;
   setPage: React.Dispatch<React.SetStateAction<number>>;
   loadMore: () => void;
   handleLike: (postId: string, isLiked: boolean) => Promise<void>;
@@ -120,6 +121,16 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
     }
   }, [user]);
 
+  const switchFeedMode = useCallback((newMode: FeedMode) => {
+    setFeedMode((current) => {
+      if (current === newMode) return current;
+      setPage(1);
+      setLoading(true);
+      setError('');
+      return newMode;
+    });
+  }, []);
+
   const refetch = useCallback(() => {
     setPage(1);
     setLoading(true);
@@ -144,6 +155,7 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
     loadingMore,
     feedMode,
     setFeedMode,
+    switchFeedMode,
     setPage,
     loadMore,
     handleLike,
