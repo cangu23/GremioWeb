@@ -65,6 +65,7 @@ const envSchema = z.object({
   SEIZA_POLICE_URL: z.string().default('https://seiza-police.onrender.com'),
   HOSHIZORABOT_URL: z.string().default('https://hoshizorabot.onrender.com'),
   CHRISTHEND_URL: z.string().default('https://christhend.onrender.com'),
+  BOT_MENSAJERO_URL: z.string().default('https://bot-mensajero.onrender.com/ping'),
   SENTINEL_EXTRA_URLS: z.string().default(''),
 });
 

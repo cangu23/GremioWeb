@@ -24,6 +24,19 @@ interface DashboardStats {
   userCountByRole: Record<string, number>;
 }
 
+interface BotRecord {
+  id: string;
+  name: string;
+  url: string;
+  status: 'online' | 'waking_up' | 'offline';
+  statusCode: number | null;
+  responseTimeMs: number | null;
+  lastCheckedAt: string | null;
+  lastSuccessAt: string | null;
+  consecutiveFailures: number;
+  error?: string;
+}
+
 interface Activity {
   id: string;
   action: string;
@@ -96,6 +109,37 @@ export default function AdminDashboardPage() {
   const [grantReason, setGrantReason] = useState('');
   const [grantLoading, setGrantLoading] = useState(false);
   const [grantResult, setGrantResult] = useState<string | null>(null);
+  const [bots, setBots] = useState<BotRecord[]>([]);
+  const [botsLoading, setBotsLoading] = useState(false);
+  const [wakingBots, setWakingBots] = useState(false);
+
+  const fetchBotsStatus = useCallback(async () => {
+    try {
+      setBotsLoading(true);
+      const data = await apiFetch<{ bots: BotRecord[] }>('/health/bots');
+      if (data?.bots) {
+        setBots(data.bots);
+      }
+    } catch (err) {
+      console.error('Error fetching bots status:', err);
+    } finally {
+      setBotsLoading(false);
+    }
+  }, []);
+
+  const handleWakeupBots = async () => {
+    try {
+      setWakingBots(true);
+      const data = await apiFetch<{ bots: BotRecord[] }>('/health/bots/wakeup', { method: 'POST' });
+      if (data?.bots) {
+        setBots(data.bots);
+      }
+    } catch (err) {
+      console.error('Error waking bots:', err);
+    } finally {
+      setWakingBots(false);
+    }
+  };
 
   const handleAdminGrantStardust = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +184,7 @@ export default function AdminDashboardPage() {
     Promise.all([
       apiFetch('/admin/dashboard/stats'),
       apiFetch('/admin/dashboard/activity?limit=15'),
+      fetchBotsStatus(),
     ]).then(([statsData, activityData]) => {
       setStats(statsData);
       setActivity(activityData);
@@ -232,6 +277,91 @@ export default function AdminDashboardPage() {
         
         {/* Left Col */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* ── Discord Bots Infrastructure Sentinel ── */}
+          <div style={{ background: '#0d0d12', border: '1px solid #1a1a20', borderRadius: '4px', padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#00e5ff', fontWeight: 700, margin: 0 }}>
+                  ✦ Centinela de Bots
+                </h3>
+                <span style={{ fontSize: '0.7rem', color: '#666' }}>Auto-reactivación 24/7 en Render</span>
+              </div>
+              <button
+                onClick={handleWakeupBots}
+                disabled={wakingBots}
+                style={{
+                  background: 'rgba(0, 229, 255, 0.1)',
+                  border: '1px solid #00e5ff',
+                  color: '#00e5ff',
+                  borderRadius: '3px',
+                  padding: '5px 12px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: wakingBots ? 'not-allowed' : 'pointer',
+                  fontFamily: 'monospace',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {wakingBots ? 'DESPERTANDO...' : 'REANIMAR'}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {bots.length === 0 ? (
+                <div style={{ fontSize: '0.75rem', color: '#666', fontStyle: 'italic', padding: '8px 0' }}>
+                  {botsLoading ? 'Consultando estado de centinela...' : 'Vigilando bots en segundo plano.'}
+                </div>
+              ) : (
+                bots.map((b) => {
+                  const isOk = b.status === 'online';
+                  const isWaking = b.status === 'waking_up';
+                  const statusColor = isOk ? '#00e676' : isWaking ? '#ffab00' : '#ff1744';
+                  const statusBg = isOk ? 'rgba(0, 230, 118, 0.12)' : isWaking ? 'rgba(255, 171, 0, 0.12)' : 'rgba(255, 23, 68, 0.12)';
+                  const statusLabel = isOk ? 'ONLINE' : isWaking ? 'DESPERTANDO' : 'OFFLINE';
+
+                  return (
+                    <div
+                      key={b.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        background: '#050505',
+                        border: '1px solid #1a1a20',
+                        borderRadius: '3px',
+                        padding: '10px 12px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f0f0f5' }}>
+                          {b.name}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: '#666', fontFamily: 'monospace' }}>
+                          {b.responseTimeMs ? `${b.responseTimeMs}ms` : 'Sin ping'} {b.statusCode ? `[${b.statusCode}]` : ''}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: '10px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          background: statusBg,
+                          color: statusColor,
+                          border: `1px solid ${statusColor}`,
+                        }}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
           
           {/* Quick Actions (Terminal Style) */}
           <div style={{ background: '#0d0d12', border: '1px solid #1a1a20', borderRadius: '4px', padding: '20px' }}>

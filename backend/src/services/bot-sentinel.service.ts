@@ -56,6 +56,14 @@ function getBotTargets(): BotTargetConfig[] {
     });
   }
 
+  if (env.BOT_MENSAJERO_URL) {
+    targets.push({
+      id: 'bot-mensajero',
+      name: 'Mensajero Estelar (Bot de Notificaciones)',
+      url: env.BOT_MENSAJERO_URL.trim(),
+    });
+  }
+
   if (env.SENTINEL_EXTRA_URLS) {
     const extraUrls = env.SENTINEL_EXTRA_URLS.split(',')
       .map((u) => u.trim())
