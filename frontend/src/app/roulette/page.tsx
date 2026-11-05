@@ -61,11 +61,11 @@ const PRIZE_META: Record<string, { rarity: string; icon: string; badgeBg: string
   xp_50: { rarity: 'Común', icon: '✨', badgeBg: 'rgba(139, 92, 246, 0.2)', pct: '24%' },
   stardust_25: { rarity: 'Común', icon: '⭐', badgeBg: 'rgba(245, 158, 11, 0.2)', pct: '20%' },
   xp_200: { rarity: 'Poco Común', icon: '⚡', badgeBg: 'rgba(124, 58, 237, 0.2)', pct: '15%' },
-  chest_bronze: { rarity: 'Especial', icon: '🥉', badgeBg: 'rgba(205, 127, 50, 0.25)', pct: '12%' },
+  chest_bronze: { rarity: 'Especial', icon: '📦', badgeBg: 'rgba(205, 127, 50, 0.25)', pct: '12%' },
   stardust_100: { rarity: 'Raro', icon: '💎', badgeBg: 'rgba(59, 130, 246, 0.2)', pct: '10%' },
-  chest_silver: { rarity: 'Épico', icon: '🥈', badgeBg: 'rgba(192, 192, 192, 0.25)', pct: '8%' },
+  chest_silver: { rarity: 'Épico', icon: '🧰', badgeBg: 'rgba(192, 192, 192, 0.25)', pct: '8%' },
   xp_1000: { rarity: 'Épico', icon: '🔥', badgeBg: 'rgba(236, 72, 153, 0.2)', pct: '5%' },
-  chest_gold: { rarity: 'Legendario', icon: '🥇', badgeBg: 'rgba(255, 215, 0, 0.25)', pct: '3%' },
+  chest_gold: { rarity: 'Legendario', icon: '👑', badgeBg: 'rgba(255, 215, 0, 0.25)', pct: '3%' },
   badge_lucky: { rarity: 'Mítico', icon: '🍀', badgeBg: 'rgba(16, 185, 129, 0.25)', pct: '2%' },
   chest_cosmic: { rarity: 'JACKPOT CÓSMICO', icon: '🌌', badgeBg: 'rgba(147, 51, 234, 0.35)', pct: '1%' },
 };
@@ -363,7 +363,7 @@ function RouletteContent() {
           const targetIndex = prizeIndex >= 0 ? prizeIndex : 0;
 
           // Target mid-angle in unrotated SVG space (0 index is top center at -90deg)
-          const targetMidAngle = 360 - (targetIndex * segmentAngle + segmentAngle / 2);
+          const targetMidAngle = (360 - targetIndex * segmentAngle) % 360;
           // Add a natural random offset within segment bounds (+/- 35% of segment)
           const randomOffset = (Math.random() - 0.5) * segmentAngle * 0.7;
           const targetMod = (targetMidAngle + randomOffset + 360) % 360;
@@ -646,12 +646,13 @@ function RouletteContent() {
 
               {/* Wheel Slices */}
               {prizes.map((prize, i) => {
-                const startAngle = -90 + i * segmentAngle;
+                const startAngle = -90 - segmentAngle / 2 + i * segmentAngle;
                 const endAngle = startAngle + segmentAngle;
                 const midAngle = startAngle + segmentAngle / 2;
 
                 const radStart = (startAngle * Math.PI) / 180;
                 const radEnd = (endAngle * Math.PI) / 180;
+                const radMid = (midAngle * Math.PI) / 180;
 
                 const x1 = cx + radius * Math.cos(radStart);
                 const y1 = cy + radius * Math.sin(radStart);
@@ -663,6 +664,22 @@ function RouletteContent() {
                 const meta = PRIZE_META[prize.id] || { icon: '🎁' };
                 const labelLines = getWheelLabelLines(prize.label);
 
+                // Position icon and text along the wedge bisector
+                const iconR = radius * 0.74;
+                const textR = radius * 0.48;
+
+                const iconX = cx + iconR * Math.cos(radMid);
+                const iconY = cy + iconR * Math.sin(radMid);
+                const textX = cx + textR * Math.cos(radMid);
+                const textY = cy + textR * Math.sin(radMid);
+
+                // Tangential angle so text is never upside down for the user
+                let textRot = midAngle + 90;
+                const normRot = ((textRot % 360) + 360) % 360;
+                if (normRot > 90 && normRot < 270) {
+                  textRot = (textRot + 180) % 360;
+                }
+
                 return (
                   <g key={prize.id}>
                     <path
@@ -672,58 +689,58 @@ function RouletteContent() {
                       strokeWidth="1.5"
                     />
 
-                    {/* Uniform radial alignment for every wedge: no inverted flips or duplicate emojis */}
-                    <g transform={`rotate(${midAngle + 90}, ${cx}, ${cy})`}>
-                      {/* Outer Icon */}
+                    {/* Outer Icon */}
+                    <text
+                      x={iconX}
+                      y={iconY}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize="20"
+                      transform={`rotate(${textRot}, ${iconX}, ${iconY})`}
+                      style={{ userSelect: 'none', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}
+                    >
+                      {meta.icon}
+                    </text>
+
+                    {/* Clean Text Label (always upright and comfortably spaced) */}
+                    {labelLines.length === 1 ? (
                       <text
-                        x={cx}
-                        y={cy - radius * 0.74}
+                        x={textX}
+                        y={textY}
                         textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize="20"
-                        style={{ userSelect: 'none', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}
+                        fill="#FFFFFF"
+                        fontSize="11"
+                        fontWeight="800"
+                        transform={`rotate(${textRot}, ${textX}, ${textY})`}
+                        style={{
+                          userSelect: 'none',
+                          fontFamily: 'system-ui, sans-serif',
+                          textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+                        }}
                       >
-                        {meta.icon}
+                        {labelLines[0]}
                       </text>
-
-                      {/* Clean Text Label */}
-                      {labelLines.length === 1 ? (
-                        <text
-                          x={cx}
-                          y={cy - radius * 0.44}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fill="#FFFFFF"
-                          fontSize="11"
-                          fontWeight="800"
-                          style={{
-                            userSelect: 'none',
-                            fontFamily: 'system-ui, sans-serif',
-                            textShadow: '0 1px 4px rgba(0,0,0,0.95)',
-                          }}
-                        >
-                          {labelLines[0]}
-                        </text>
-                      ) : (
-                        <text
-                          x={cx}
-                          y={cy - radius * 0.44}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fill="#FFFFFF"
-                          fontSize="9.5"
-                          fontWeight="800"
-                          style={{
-                            userSelect: 'none',
-                            fontFamily: 'system-ui, sans-serif',
-                            textShadow: '0 1px 4px rgba(0,0,0,0.95)',
-                          }}
-                        >
-                          <tspan x={cx} dy="-6">{labelLines[0]}</tspan>
-                          <tspan x={cx} dy="13">{labelLines[1]}</tspan>
-                        </text>
-                      )}
-                    </g>
+                    ) : (
+                      <text
+                        x={textX}
+                        y={textY}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fill="#FFFFFF"
+                        fontSize="9.5"
+                        fontWeight="800"
+                        transform={`rotate(${textRot}, ${textX}, ${textY})`}
+                        style={{
+                          userSelect: 'none',
+                          fontFamily: 'system-ui, sans-serif',
+                          textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+                        }}
+                      >
+                        <tspan x={textX} dy="-6">{labelLines[0]}</tspan>
+                        <tspan x={textX} dy="13">{labelLines[1]}</tspan>
+                      </text>
+                    )}
                   </g>
                 );
               })}
@@ -792,7 +809,7 @@ function RouletteContent() {
                     cursor: spinning || (status?.userStardust || 0) < (status?.stardustCostForExtraSpin || 50) ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  <Sparkles size={16} color="#FFF" style={{ display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Giro Extra (50 Polvo Estelar)
+                  <Sparkles size={16} color="#FFF" style={{ display: 'inline-block', verticalAlign: 'text-bottom', marginRight: '6px' }} /> Giro Extra (50 Stardust)
                 </button>
               </div>
             )}
