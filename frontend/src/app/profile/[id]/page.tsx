@@ -11,6 +11,9 @@ import ClientOnly from '@/lib/ClientOnly';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import nextDynamic from 'next/dynamic';
+
+const MediaLightbox = nextDynamic(() => import('@/components/posts/MediaLightbox'), { ssr: false });
 import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink, Gift } from '@/components/ui/Icons';
 import FriendButton from '@/components/social/FriendButton';
 import NoteModal from '@/components/ui/NoteModal';
@@ -1600,49 +1603,12 @@ function ProfileContent() {
       )}
 
       {/* ===== GALLERY LIGHTBOX ===== */}
-      {mounted && galleryImage && createPortal(
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 10000,
-            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '40px', cursor: 'zoom-out',
-            animation: 'fadeIn 0.2s ease',
-          }}
-          onClick={() => setGalleryImage(null)}
-        >
-          <Image
-            src={galleryImage}
-            alt="Galería"
-            width={0}
-            height={0}
-            sizes="90vw"
-            unoptimized
-            style={{
-              maxWidth: '90vw', maxHeight: '90vh',
-              borderRadius: '12px', objectFit: 'contain',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
-              animation: 'scaleIn 0.25s ease',
-            }}
-            onClick={e => e.stopPropagation()}
-          />
-          <button
-            onClick={() => setGalleryImage(null)}
-            style={{
-              position: 'absolute', top: '20px', right: '20px',
-              background: 'rgba(0,0,0,0.5)', border: 'none',
-              color: 'white', fontSize: '1.5rem', cursor: 'pointer',
-              width: '40px', height: '40px', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.5)'; }}
-          >
-            ✕
-          </button>
-        </div>,
-        document.body
+      {mounted && galleryImage && (
+        <MediaLightbox
+          src={galleryImage}
+          alt="Galería"
+          onClose={() => setGalleryImage(null)}
+        />
       )}
 
       {/* ===== DONATE MODAL ===== */}

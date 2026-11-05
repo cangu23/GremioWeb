@@ -940,24 +940,34 @@ input[type="radio"] {
     grid-template-columns: 220px 1fr;
   }
   .home-sidebar-right {
-    display: none;
+    display: none !important;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .home-layout {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: visible;
-    padding: 0 12px;
-    padding-top: 12px;
+    display: block !important;
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: calc(100vh - 72px) !important;
+    overflow: visible !important;
+    padding: 12px 12px 48px !important;
   }
-  .home-sidebar-left {
+  .home-sidebar-left,
+  .home-sidebar-right {
     display: none !important;
   }
   .home-feed-center {
-    height: auto;
-    overflow-y: visible;
+    height: auto !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    overscroll-behavior: auto !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   .section {
     padding: 56px 0;

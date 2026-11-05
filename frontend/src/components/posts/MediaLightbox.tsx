@@ -15,6 +15,9 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const panStart = useRef({ x: 0, y: 0 });
+  const initialDistance = useRef<number | null>(null);
+  const initialZoom = useRef<number>(1);
+  const lastTap = useRef<number>(0);
 
   const resetZoom = useCallback(() => {
     setZoom(1);
@@ -47,10 +50,11 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
       }
     };
     window.addEventListener('keydown', handleKeyDown);
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = prevOverflow || 'unset';
     };
   }, [onClose, handleZoomIn, handleZoomOut, resetZoom]);
 
@@ -65,7 +69,7 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
     }
   };
 
-  // Dragging / Pan handling
+  // Dragging / Pan handling (Mouse)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (zoom <= 1 || isVideo) return;
     e.preventDefault();
@@ -88,15 +92,74 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
     setIsDragging(false);
   };
 
-  // Double click toggles between 1x and 2x zoom
+  // Double click / Double tap toggles between 1x and 2.5x zoom
   const handleDoubleClick = (e: React.MouseEvent) => {
     if (isVideo) return;
     e.stopPropagation();
     if (zoom > 1) {
       resetZoom();
     } else {
-      setZoom(2);
+      setZoom(2.5);
     }
+  };
+
+  // Mobile Touch Gestures (Pinch to Zoom & Touch Pan)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isVideo) return;
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      initialDistance.current = dist;
+      initialZoom.current = zoom;
+    } else if (e.touches.length === 1) {
+      const now = Date.now();
+      if (now - lastTap.current < 320) {
+        if (zoom > 1) {
+          resetZoom();
+        } else {
+          setZoom(2.5);
+        }
+        lastTap.current = 0;
+        return;
+      }
+      lastTap.current = now;
+
+      if (zoom > 1) {
+        setIsDragging(true);
+        dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        panStart.current = { ...pan };
+      }
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isVideo) return;
+    if (e.touches.length === 2 && initialDistance.current !== null) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const factor = currentDist / initialDistance.current;
+      const newZoom = Math.min(Math.max(initialZoom.current * factor, 1), 4);
+      setZoom(newZoom);
+      if (newZoom === 1) {
+        setPan({ x: 0, y: 0 });
+      }
+    } else if (e.touches.length === 1 && isDragging && zoom > 1) {
+      const dx = e.touches[0].clientX - dragStart.current.x;
+      const dy = e.touches[0].clientY - dragStart.current.y;
+      setPan({
+        x: panStart.current.x + dx,
+        y: panStart.current.y + dy,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    initialDistance.current = null;
+    setIsDragging(false);
   };
 
   return (
@@ -108,16 +171,18 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.92)',
-        backdropFilter: 'blur(12px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.94)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
         zIndex: 99999,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: '12px',
         userSelect: 'none',
         animation: 'fadeIn 0.2s ease-out',
+        touchAction: zoom > 1 ? 'none' : 'auto',
       }}
     >
       {/* ===== TOP TOOLBAR ===== */}
@@ -131,18 +196,20 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: 'rgba(20, 20, 35, 0.75)',
+          background: 'rgba(20, 20, 35, 0.85)',
           backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.18)',
           borderRadius: '30px',
           padding: '6px 14px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
           zIndex: 100000,
+          maxWidth: 'calc(100vw - 24px)',
         }}
       >
         {!isVideo && (
           <>
             <button
+              type="button"
               onClick={handleZoomOut}
               disabled={zoom <= 1}
               style={{
@@ -150,7 +217,7 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
                 border: 'none',
                 color: zoom <= 1 ? 'rgba(255,255,255,0.3)' : '#fff',
                 cursor: zoom <= 1 ? 'default' : 'pointer',
-                padding: '4px 8px',
+                padding: '6px 10px',
                 borderRadius: '6px',
                 fontSize: '1rem',
                 display: 'flex',
@@ -164,16 +231,17 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
             </button>
 
             <button
+              type="button"
               onClick={resetZoom}
               style={{
-                background: 'rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.12)',
                 border: 'none',
                 color: '#fff',
                 cursor: 'pointer',
-                padding: '2px 10px',
+                padding: '3px 10px',
                 borderRadius: '12px',
                 fontSize: '0.78rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 minWidth: '54px',
                 textAlign: 'center',
               }}
@@ -183,6 +251,7 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
             </button>
 
             <button
+              type="button"
               onClick={handleZoomIn}
               disabled={zoom >= 4}
               style={{
@@ -190,7 +259,7 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
                 border: 'none',
                 color: zoom >= 4 ? 'rgba(255,255,255,0.3)' : '#fff',
                 cursor: zoom >= 4 ? 'default' : 'pointer',
-                padding: '4px 8px',
+                padding: '6px 10px',
                 borderRadius: '6px',
                 fontSize: '1rem',
                 display: 'flex',
@@ -204,7 +273,7 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
               </svg>
             </button>
 
-            <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
+            <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.15)', margin: '0 2px' }} />
           </>
         )}
 
@@ -214,13 +283,13 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            color: 'rgba(255,255,255,0.8)',
+            color: 'rgba(255,255,255,0.85)',
             textDecoration: 'none',
             fontSize: '0.8rem',
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
-            padding: '4px 8px',
+            padding: '6px 10px',
             borderRadius: '6px',
             transition: 'background 0.2s',
           }}
@@ -235,24 +304,25 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
 
         {/* Close Button */}
         <button
+          type="button"
           onClick={onClose}
           style={{
-            background: 'rgba(255, 77, 106, 0.2)',
-            border: '1px solid rgba(255, 77, 106, 0.4)',
+            background: 'rgba(255, 77, 106, 0.25)',
+            border: '1px solid rgba(255, 77, 106, 0.5)',
             color: '#ff4d6a',
             borderRadius: '50%',
-            width: '28px',
-            height: '28px',
+            width: '30px',
+            height: '30px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            marginLeft: '4px',
+            marginLeft: '2px',
             transition: 'all 0.2s',
           }}
           title="Cerrar (Esc)"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -267,6 +337,9 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onDoubleClick={handleDoubleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{
           width: '100%',
           height: '100%',
@@ -275,6 +348,7 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
           justifyContent: 'center',
           overflow: 'hidden',
           cursor: isVideo ? 'default' : zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+          touchAction: zoom > 1 ? 'none' : 'pan-y',
         }}
       >
         {isVideo ? (
@@ -283,8 +357,8 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
             controls
             autoPlay
             style={{
-              maxWidth: '92vw',
-              maxHeight: '85vh',
+              maxWidth: '94vw',
+              maxHeight: '86vh',
               borderRadius: '12px',
               boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
             }}
@@ -295,8 +369,10 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
             alt={alt}
             draggable={false}
             style={{
-              maxWidth: zoom === 1 ? '92vw' : 'none',
-              maxHeight: zoom === 1 ? '85vh' : 'none',
+              width: 'auto',
+              height: 'auto',
+              maxWidth: zoom === 1 ? '94vw' : 'none',
+              maxHeight: zoom === 1 ? '86vh' : 'none',
               objectFit: 'contain',
               borderRadius: '12px',
               boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
@@ -314,15 +390,19 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
         style={{
           position: 'absolute',
           bottom: '16px',
-          color: 'rgba(255,255,255,0.4)',
+          color: 'rgba(255,255,255,0.45)',
           fontSize: '0.75rem',
           pointerEvents: 'none',
           display: 'flex',
           gap: '16px',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          padding: '0 16px',
+          textAlign: 'center',
         }}
       >
-        <span>Doble clic / Rueda para zoom</span>
-        <span>ESC para cerrar</span>
+        <span>Doble toque / Rueda para zoom</span>
+        <span>Pellizcar para ampliar</span>
       </div>
     </div>
   );
