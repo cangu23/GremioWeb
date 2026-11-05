@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as StardustService from './stardust.service';
 import * as MissionsService from './missions.service';
 import * as SeasonsService from './seasons.service';
+import { getDiscordLinkByUserId, unlinkDiscordAccount } from './discord-link.service';
 import * as PlatformService from '../subscriptions/platform-subscriptions.service';
 import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
@@ -165,5 +166,17 @@ export const getDailyStreak = async (req: any, res: Response) => {
 export const getCommunityChallenge = async (_req: any, res: Response) => {
   const result = await MissionsService.getCommunityChallenge();
   res.json({ success: true, data: result });
+};
+
+export const getDiscordStatus = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const status = await getDiscordLinkByUserId(userId);
+  res.json({ success: true, data: status });
+};
+
+export const unlinkDiscord = async (req: any, res: Response) => {
+  const userId = req.user!.id;
+  const ok = await unlinkDiscordAccount(userId);
+  res.json({ success: ok, message: ok ? 'Cuenta de Discord desvinculada exitosamente' : 'Error al desvincular' });
 };
 

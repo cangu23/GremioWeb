@@ -5,13 +5,14 @@ import AppError from '../../errors/AppError';
 import env from '../../config/env';
 import { prisma } from '../../database/index';
 import { generateTokens, hashToken } from './tokens';
+import { linkDiscordAccount } from '../ecosystem/discord-link.service';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 
 /**
  * Exchange authorization code for Discord tokens
  */
-const exchangeCode = async (code: string, redirectUri: string) => {
+export const exchangeCode = async (code: string, redirectUri: string) => {
   const params = new URLSearchParams({
     client_id: env.DISCORD_CLIENT_ID,
     client_secret: env.DISCORD_CLIENT_SECRET,
@@ -39,7 +40,7 @@ const exchangeCode = async (code: string, redirectUri: string) => {
 /**
  * Fetch Discord user info
  */
-const fetchDiscordUser = async (accessToken: string) => {
+export const fetchDiscordUser = async (accessToken: string) => {
   const res = await fetch(`${DISCORD_API}/users/@me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });

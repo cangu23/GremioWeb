@@ -76,6 +76,44 @@ function UserSettings() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [discordLink, setDiscordLink] = useState<{ connected: boolean; discordUsername?: string }>({ connected: false });
+  const [unlinkingDiscord, setUnlinkingDiscord] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('discord_connected') === 'true') {
+        showToast('✦ Cuenta de Discord vinculada con éxito.', 'success');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    if (user) {
+      apiFetch<{ success: boolean; data: { connected: boolean; discordUsername?: string } }>('/ecosystem/discord-status')
+        .then((res) => {
+          if (res?.data) {
+            setDiscordLink(res.data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
+  const handleUnlinkDiscord = async () => {
+    if (!confirm('¿Deseas desconectar tu cuenta de Discord?')) return;
+    setUnlinkingDiscord(true);
+    try {
+      await apiFetch('/ecosystem/discord-link', { method: 'DELETE' });
+      setDiscordLink({ connected: false });
+      showToast('✦ Cuenta de Discord desconectada.', 'success');
+    } catch (err: any) {
+      showToast(`Error al desconectar: ${err?.message || err}`, 'error');
+    } finally {
+      setUnlinkingDiscord(false);
+    }
+  };
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -878,6 +916,97 @@ function UserSettings() {
               <span>{bio.length} caracteres · Visible en tu perfil público</span>
               {bio.length > 500 && <span style={{ color: 'var(--warm)' }}>Máximo 500 caracteres</span>}
             </div>
+          </div>
+        </div>
+
+        {/* Discord Account Connection (Minimal & Clean) */}
+        <div className="glass" style={{
+          padding: '16px 20px',
+          marginBottom: '20px',
+          borderRadius: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          flexWrap: 'wrap',
+          border: '1px solid rgba(88, 101, 242, 0.18)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: 'rgba(88, 101, 242, 0.12)',
+              border: '1px solid rgba(88, 101, 242, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#5865F2">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+              </svg>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f0f0f5', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                Discord
+                {discordLink.connected && (
+                  <span style={{ fontSize: '0.66rem', fontWeight: 700, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '2px 8px', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                    CONECTADO
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                {discordLink.connected
+                  ? `@${discordLink.discordUsername} • Sincronizado con el servidor oficial`
+                  : (effectivePlan !== 'FREE'
+                      ? `Conecta tu Discord para activar tu rol ${effectivePlan} en el servidor.`
+                      : 'Conecta tu cuenta para verificar tu perfil en el servidor oficial.')}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            {discordLink.connected ? (
+              <button
+                type="button"
+                onClick={handleUnlinkDiscord}
+                disabled={unlinkingDiscord}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: 'var(--text-muted)',
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: unlinkingDiscord ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {unlinkingDiscord ? 'Desconectando...' : 'Desconectar'}
+              </button>
+            ) : (
+              <a
+                href={`${process.env.NEXT_PUBLIC_API_URL || 'https://gremioweb-hnq1.onrender.com/api'}/auth/discord/connect`}
+                style={{
+                  background: 'rgba(88, 101, 242, 0.15)',
+                  border: '1px solid #5865F2',
+                  color: '#5865F2',
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s',
+                }}
+              >
+                Conectar Discord
+              </a>
+            )}
           </div>
         </div>
 

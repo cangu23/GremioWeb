@@ -84,5 +84,7 @@ router.post('/google', loginLimiter, GoogleController.googleLogin);
 // Discord OAuth
 router.get('/discord', DiscordController.redirectToDiscord);
 router.get('/discord/callback', DiscordController.handleDiscordCallback);
+router.get('/discord/connect', authenticate, DiscordController.redirectToDiscordConnect);
+router.get('/discord/connect/callback', DiscordController.handleDiscordConnectCallback);
 
 export default router;

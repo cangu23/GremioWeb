@@ -48,4 +48,8 @@ router.get('/community-challenge', EcosystemController.getCommunityChallenge);
 router.post('/pet-requests', PetRequestsController.createPetRequest);
 router.get('/pet-requests/my', PetRequestsController.getMyPetRequests);
 
+// Discord Link Status & Unlink
+router.get('/discord-status', EcosystemController.getDiscordStatus);
+router.delete('/discord-link', EcosystemController.unlinkDiscord);
+
 export default router;
