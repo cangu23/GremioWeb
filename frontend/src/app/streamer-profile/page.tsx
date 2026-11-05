@@ -15,6 +15,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
+import { Kick } from '@/components/ui/Icons';
 
 function StreamerProfileEditor() {
   const { user, isLoading } = useAuth();
@@ -199,7 +200,7 @@ function StreamerProfileEditor() {
   const socialLinks = [
     { url: twitchUrl, label: 'Twitch', icon: 'TW', color: '#9146FF' },
     { url: youtubeUrl, label: 'YouTube', icon: 'YT', color: '#FF0000' },
-    { url: kickUrl, label: 'Kick', icon: 'KC', color: '#53fc18' },
+    { url: kickUrl, label: 'Kick', icon: <Kick size={16} color="#53fc18" />, color: '#53fc18' },
     { url: tiktokUrl, label: 'TikTok', icon: 'TK', color: '#00f2ea' },
     { url: twitterUrl, label: 'Twitter/X', icon: 'X', color: '#1DA1F2' },
     { url: discordUrl, label: 'Discord', icon: 'DC', color: '#5865F2' },

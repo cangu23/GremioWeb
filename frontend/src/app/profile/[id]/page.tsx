@@ -14,7 +14,7 @@ import Image from 'next/image';
 import nextDynamic from 'next/dynamic';
 
 const MediaLightbox = nextDynamic(() => import('@/components/posts/MediaLightbox'), { ssr: false });
-import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink, Gift } from '@/components/ui/Icons';
+import { Star, Users, Heart, MessageCircle, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, ZoomIn, Image as IconImage, ExternalLink, Gift , Kick } from '@/components/ui/Icons';
 import FriendButton from '@/components/social/FriendButton';
 import NoteModal from '@/components/ui/NoteModal';
 import GiftPlanModal from '@/components/ui/GiftPlanModal';
@@ -360,7 +360,7 @@ function ProfileContent() {
   const socialLinks = [
     { url: vtuber?.twitchUrl, label: 'Twitch', icon: <Twitch size={18} color="#9146FF" strokeWidth={2} />, color: '#9146FF', bg: 'rgba(145,65,255,0.15)' },
     { url: vtuber?.youtubeUrl, label: 'YouTube', icon: <Youtube size={18} color="#FF0000" strokeWidth={2} />, color: '#FF0000', bg: 'rgba(255,0,0,0.12)' },
-    { url: vtuber?.kickUrl, label: 'Kick', icon: <Music size={18} color="#53fc18" strokeWidth={2.5} />, color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
+    { url: vtuber?.kickUrl, label: 'Kick', icon: <Kick size={18} color="#53fc18" />, color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
     { url: vtuber?.tiktokUrl, label: 'TikTok', icon: <Music size={18} color="#00f2ea" strokeWidth={2} />, color: '#00f2ea', bg: 'rgba(0,242,234,0.12)' },
     { url: vtuber?.twitterUrl, label: 'Twitter/X', icon: <Twitter size={18} color="#1DA1F2" strokeWidth={2} />, color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)' },
     { url: vtuber?.discordUrl, label: 'Discord', icon: <Discord size={18} color="#5865F2" strokeWidth={2} />, color: '#5865F2', bg: 'rgba(88,101,242,0.12)' },

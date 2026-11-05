@@ -18,7 +18,7 @@ import { hasAnyRole } from '@gremio-estelar/shared';
 import FriendButton from '@/components/social/FriendButton';
 import KofiWidget from '@/components/ui/KofiWidget';
 import ProfileMusicPlayer from '@/components/ui/ProfileMusicPlayer';
-import { Star, Users, Heart, MessageCircle, Image as IconImage, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, Sparkles, Telescope, Info, ZoomIn, Gamepad, Palette, Mic, Headphones, MessageSquare } from '@/components/ui/Icons';
+import { Star, Users, Heart, MessageCircle, Image as IconImage, BookOpen, Link2, Calendar, Globe, Twitch, Youtube, Twitter, Discord, Music, Sparkles, Telescope, Info, ZoomIn, Gamepad, Palette, Mic, Headphones, MessageSquare , Kick } from '@/components/ui/Icons';
 
 // ===== PROFILE MUSIC — TEMPORARILY DISABLED (flip to true to re-enable) =====
 const PROFILE_MUSIC_ENABLED = false;
@@ -458,7 +458,7 @@ function StreamerPublicProfile() {
   const socialLinks = [
     { url: streamer?.twitchUrl, label: 'Twitch', icon: <Twitch size={18} color="#9146FF" strokeWidth={2} />, color: '#9146FF', bg: 'rgba(145,65,255,0.15)' },
     { url: streamer?.youtubeUrl, label: 'YouTube', icon: <Youtube size={18} color="#FF0000" strokeWidth={2} />, color: '#FF0000', bg: 'rgba(255,0,0,0.12)' },
-    { url: streamer?.kickUrl, label: 'Kick', icon: <Sparkles size={18} color="#53fc18" strokeWidth={2.5} />, color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
+    { url: streamer?.kickUrl, label: 'Kick', icon: <Kick size={18} color="#53fc18" />, color: '#53fc18', bg: 'rgba(83,252,24,0.12)' },
     { url: streamer?.tiktokUrl, label: 'TikTok', icon: <Music size={18} color="#00f2ea" strokeWidth={2} />, color: '#00f2ea', bg: 'rgba(0,242,234,0.12)' },
     { url: streamer?.twitterUrl, label: 'Twitter/X', icon: <Twitter size={18} color="#1DA1F2" strokeWidth={2} />, color: '#1DA1F2', bg: 'rgba(29,161,242,0.12)' },
     { url: streamer?.discordUrl, label: 'Discord', icon: <Discord size={18} color="#5865F2" strokeWidth={2} />, color: '#5865F2', bg: 'rgba(88,101,242,0.12)' },

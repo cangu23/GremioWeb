@@ -18,7 +18,8 @@ import {
   Headphones,
   MessageSquare,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Kick,
 } from '@/components/ui/Icons';
 
 export interface VTuberUser {
@@ -439,11 +440,7 @@ export default function VTuberIDCard({ vtuber, compact = false }: VTuberIDCardPr
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {vtuber.twitchUrl && <Twitch size={15} color="#9146FF" title="Twitch" />}
               {vtuber.youtubeUrl && <Youtube size={15} color="#FF0000" title="YouTube" />}
-              {vtuber.kickUrl && (
-                <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#53FC18', letterSpacing: '-0.05em' }} title="Kick">
-                  KICK
-                </span>
-              )}
+              {vtuber.kickUrl && <Kick size={15} color="#53FC18" title="Kick" />}
               {vtuber.twitterUrl && <Twitter size={14} color="#1DA1F2" title="Twitter / X" />}
               {vtuber.discordUrl && <Discord size={14} color="#5865F2" title="Discord" />}
               {vtuber.websiteUrl && <Globe size={14} color="var(--text-muted)" title="Website" />}

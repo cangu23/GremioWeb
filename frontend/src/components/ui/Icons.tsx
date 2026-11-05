@@ -85,6 +85,17 @@ export const LiveDot = ({ size = 8, ...props }: IconProps & { pulse?: boolean })
 
 /* ─────────── Social / Content Type ─────────── */
 
+export const Kick = (props: IconProps) => withDefaults(
+  <path
+    fillRule="evenodd"
+    clipRule="evenodd"
+    d="M3 2h5.5v6.5h3V4.5H16V2h5v6h-3.5v2.5H15v3h2.5V16H21v6h-5v-2.5h-4.5V15.5h-3V22H3V2z"
+    fill={props.color || props.fill || 'currentColor'}
+    stroke="none"
+  />,
+  props
+);
+
 export const Twitch = (props: IconProps) => withDefaults(
   <><path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9V7m5 4V7" /></>, props
 );

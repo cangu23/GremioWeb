@@ -14,6 +14,7 @@ import StardustProgressBar from '@/components/ui/StardustProgressBar';
 import PlanBadge from '@/components/ui/PlanBadge';
 import { hasAnyRole } from '@gremio-estelar/shared';
 import { usePosts } from '@/lib/hooks/usePosts';
+import { Kick } from '@/components/ui/Icons';
 import type { GuildItem, TrendingHashtag, LiveVTuberProfile, LiveStreamerProfile, FollowingUser, EventItem } from '@gremio-estelar/shared';
 
 // Twitch helper
@@ -935,8 +936,8 @@ function HomeContent() {
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '1px' }}>
                       @{v.user.username} ·{' '}
-                      <span style={{ color: v.twitchUrl ? '#9146FF' : '#FF0000', fontWeight: 600 }}>
-                        {v.twitchUrl ? 'Twitch' : 'YouTube'}
+                      <span style={{ color: v.twitchUrl ? '#9146FF' : (v as any).kickUrl ? '#53fc18' : '#FF0000', fontWeight: 600 }}>
+                        {v.twitchUrl ? 'Twitch' : (v as any).kickUrl ? 'Kick' : 'YouTube'}
                       </span>
                     </div>
                   </div>
@@ -1043,6 +1044,27 @@ function HomeContent() {
                         <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.428l-3 3v-3H6.857V1.714h13.714z"/>
                       </svg>
                       Ver en Twitch
+                    </a>
+                  )}
+
+                  {/* Ver en Kick */}
+                  {!v.twitchUrl && (v as any).kickUrl && (
+                    <a
+                      href={(v as any).kickUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '6px 14px', borderRadius: '8px',
+                        background: '#53fc18', color: '#000',
+                        fontSize: '0.78rem', fontWeight: 700,
+                        textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#45db10'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#53fc18'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      <Kick size={14} color="#000" fill="#000" />
+                      Ver en Kick
                     </a>
                   )}
 
@@ -1165,8 +1187,8 @@ function HomeContent() {
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '1px' }}>
                       @{v.user.username} ·{' '}
-                      <span style={{ color: v.twitchUrl ? '#9146FF' : '#FF0000', fontWeight: 600 }}>
-                        {v.twitchUrl ? 'Twitch' : 'YouTube'}
+                      <span style={{ color: v.twitchUrl ? '#9146FF' : (v as any).kickUrl ? '#53fc18' : '#FF0000', fontWeight: 600 }}>
+                        {v.twitchUrl ? 'Twitch' : (v as any).kickUrl ? 'Kick' : 'YouTube'}
                       </span>
                     </div>
                   </div>
@@ -1273,6 +1295,27 @@ function HomeContent() {
                         <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.428l-3 3v-3H6.857V1.714h13.714z"/>
                       </svg>
                       Ver en Twitch
+                    </a>
+                  )}
+
+                  {/* Ver en Kick */}
+                  {!v.twitchUrl && (v as any).kickUrl && (
+                    <a
+                      href={(v as any).kickUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '6px 14px', borderRadius: '8px',
+                        background: '#53fc18', color: '#000',
+                        fontSize: '0.78rem', fontWeight: 700,
+                        textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#45db10'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#53fc18'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                    >
+                      <Kick size={14} color="#000" fill="#000" />
+                      Ver en Kick
                     </a>
                   )}
 

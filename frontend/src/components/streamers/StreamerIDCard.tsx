@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Sparkles,
   ExternalLink,
+  Kick,
 } from '@/components/ui/Icons';
 
 export interface StreamerUser {
@@ -440,11 +441,7 @@ export default function StreamerIDCard({ streamer, compact = false }: StreamerID
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {streamer.twitchUrl && <Twitch size={15} color="#9146FF" title="Twitch" />}
               {streamer.youtubeUrl && <Youtube size={15} color="#FF0000" title="YouTube" />}
-              {streamer.kickUrl && (
-                <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#53FC18', letterSpacing: '-0.05em' }} title="Kick">
-                  KICK
-                </span>
-              )}
+              {streamer.kickUrl && <Kick size={15} color="#53FC18" title="Kick" />}
               {streamer.twitterUrl && <Twitter size={14} color="#1DA1F2" title="Twitter / X" />}
               {streamer.discordUrl && <Discord size={14} color="#5865F2" title="Discord" />}
               {streamer.websiteUrl && <Globe size={14} color="var(--text-muted)" title="Website" />}
