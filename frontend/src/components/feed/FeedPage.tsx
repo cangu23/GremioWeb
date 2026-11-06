@@ -787,8 +787,24 @@ function HomeContent() {
       {/* ===== CENTER FEED ===== */}
       <div className="home-feed-center" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Feed mode toggle */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap',
+          marginBottom: '2px',
+          maxWidth: '100%',
+        }}>
+          <h1 style={{
+            fontSize: '1.35rem',
+            fontWeight: 700,
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexShrink: 0,
+          }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16v4H4z"/><path d="M4 12h16v8H4z"/>
             </svg>
@@ -802,13 +818,14 @@ function HomeContent() {
             padding: '3px',
             border: '1px solid rgba(255, 255, 255, 0.08)',
             gap: '2px',
+            flexShrink: 0,
           }}>
             <button
               type="button"
               onClick={() => switchFeedMode('for-you')}
               style={{
-                padding: '6px 16px',
-                fontSize: '0.84rem',
+                padding: '6px 14px',
+                fontSize: '0.82rem',
                 borderRadius: '9px',
                 border: 'none',
                 background: feedMode === 'for-you' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
@@ -824,8 +841,8 @@ function HomeContent() {
               type="button"
               onClick={() => switchFeedMode('following')}
               style={{
-                padding: '6px 16px',
-                fontSize: '0.84rem',
+                padding: '6px 14px',
+                fontSize: '0.82rem',
                 borderRadius: '9px',
                 border: 'none',
                 background: feedMode === 'following' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',

@@ -961,11 +961,12 @@ input[type="radio"] {
     height: auto !important;
     overflow: visible !important;
     overflow-y: visible !important;
-    overflow-x: visible !important;
+    overflow-x: hidden !important;
     overscroll-behavior: auto !important;
     padding-right: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
     touch-action: pan-y !important;
     -webkit-overflow-scrolling: touch !important;
   }
@@ -1727,5 +1728,70 @@ img, svg {
     bottom: 12px !important;
     transform: scale(0.92);
     transform-origin: bottom left;
+  }
+}
+
+
+/* Stardust Progress Bar Responsive Layout */
+.stardust-bar-wrapper {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(138, 43, 226, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  max-width: 100%;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.stardust-bar-left {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.stardust-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .stardust-bar-wrapper {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 10px 12px !important;
+    gap: 10px !important;
+  }
+  .stardust-bar-left {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  .stardust-bar-right {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .stardust-bar-right button,
+  .stardust-bar-right a {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 10px !important;
+    font-size: 0.78rem !important;
   }
 }

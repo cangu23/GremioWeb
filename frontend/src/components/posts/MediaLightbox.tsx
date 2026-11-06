@@ -13,6 +13,8 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const panStart = useRef({ x: 0, y: 0 });
   const initialDistance = useRef<number | null>(null);
@@ -357,22 +359,31 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
             controls
             autoPlay
             style={{
-              maxWidth: '94vw',
-              maxHeight: '86vh',
+              maxWidth: '92vw',
+              maxHeight: '85vh',
               borderRadius: '12px',
               boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
             }}
           />
+        ) : hasError ? (
+          <div style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', padding: '24px' }}>
+            <p style={{ fontSize: '0.9rem', marginBottom: '8px' }}>✦ No se pudo cargar la imagen</p>
+            <a href={src} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary, #8b5cf6)', fontSize: '0.82rem', textDecoration: 'underline' }}>
+              Abrir archivo original ↗
+            </a>
+          </div>
         ) : (
           <img
             src={src}
             alt={alt}
             draggable={false}
+            onLoad={() => setLoaded(true)}
+            onError={() => setHasError(true)}
             style={{
               width: 'auto',
               height: 'auto',
-              maxWidth: zoom === 1 ? '94vw' : 'none',
-              maxHeight: zoom === 1 ? '86vh' : 'none',
+              maxWidth: '92vw',
+              maxHeight: '85vh',
               objectFit: 'contain',
               borderRadius: '12px',
               boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
@@ -380,6 +391,7 @@ export default function MediaLightbox({ src, alt = 'Media preview', isVideo = fa
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
               display: 'block',
+              opacity: loaded ? 1 : 0.6,
             }}
           />
         )}

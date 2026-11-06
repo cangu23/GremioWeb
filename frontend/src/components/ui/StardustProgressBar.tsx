@@ -132,24 +132,9 @@ export default function StardustProgressBar() {
 
   return (
     <>
-      <div
-        className="glass"
-        style={{
-          padding: '12px 14px',
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(138,43,226,0.05))',
-          border: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '10px 14px',
-          marginBottom: '14px',
-          transition: 'all 0.2s ease',
-        }}
-      >
+      <div className="glass stardust-bar-wrapper">
         {/* LEFT: STARDUST BADGE & LEVEL PROGRESS */}
-        <div style={{ flex: '1 1 240px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', minWidth: 0 }}>
+        <div className="stardust-bar-left">
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -164,7 +149,7 @@ export default function StardustProgressBar() {
             flexShrink: 0,
           }}>
             <StarIcon size={13} color="#fbbf24" />
-            <span>{user?.role?.includes('ADMIN') || stardust >= 99999990 ? '♾️ Infinito' : `${stardust.toLocaleString()} Stardust`}</span>
+            <span>{user?.role?.includes('ADMIN') || stardust >= 99999990 ? '∞ Infinito' : `${stardust.toLocaleString()} Stardust`}</span>
             {multiplier > 1 && !user?.role?.includes('ADMIN') && (
               <span style={{ fontSize: '0.65rem', background: '#fbbf24', color: '#000', padding: '0 4px', borderRadius: '4px' }}>
                 ×{multiplier}
@@ -173,7 +158,7 @@ export default function StardustProgressBar() {
           </div>
 
           {/* COMPACT PROGRESS BAR */}
-          <div style={{ flex: '1 1 140px', minWidth: '110px', cursor: 'pointer' }} onClick={() => setShowModal(true)}>
+          <div style={{ flex: '1 1 140px', minWidth: '90px', cursor: 'pointer' }} onClick={() => setShowModal(true)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', fontSize: '0.72rem' }}>
               <span style={{ color: 'var(--text-muted, #a1a1aa)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                 <SparklesIcon size={11} color="#38bdf8" /> Misiones
@@ -204,7 +189,7 @@ export default function StardustProgressBar() {
         </div>
 
         {/* RIGHT: BUTTON TO OPEN MISSIONS MODAL & PASE */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+        <div className="stardust-bar-right">
           <button
             onClick={() => setShowModal(true)}
             style={{
@@ -234,9 +219,10 @@ export default function StardustProgressBar() {
               fontSize: '0.78rem',
               fontWeight: 700,
               textDecoration: 'none',
+              whiteSpace: 'nowrap',
             }}
           >
-            Pase Estelar ⭐
+            Pase Estelar ✦
           </Link>
         </div>
       </div>
