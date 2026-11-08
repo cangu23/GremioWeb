@@ -71,13 +71,24 @@ export const calculateStreak = async (userId: string) => {
     select: { createdAt: true },
   });
 
-  if (spins.length === 0) {
+  const dailyClaims = prisma.dailyReward?.findMany
+    ? await prisma.dailyReward.findMany({
+        where: { userId },
+        orderBy: { claimedAt: 'desc' },
+        select: { claimedAt: true, claimDate: true },
+      })
+    : [];
+
+  const allDateStrings: string[] = [
+    ...spins.map((s) => s.createdAt.toISOString().split('T')[0]),
+    ...dailyClaims.map((c) => c.claimDate || c.claimedAt.toISOString().split('T')[0]),
+  ];
+
+  if (allDateStrings.length === 0) {
     return { currentStreak: 0, bestStreak: 0 };
   }
 
-  const dates = Array.from(
-    new Set(spins.map((s) => s.createdAt.toISOString().split('T')[0]))
-  );
+  const dates = Array.from(new Set(allDateStrings)).sort().reverse();
 
   const todayStr = new Date().toISOString().split('T')[0];
   const yesterdayDate = new Date();
@@ -131,7 +142,11 @@ export const getStatus = async (userId: string) => {
   });
 
   const now = Date.now();
-  const canSpin = !lastSpin || (now - lastSpin.createdAt.getTime() >= 24 * 60 * 60 * 1000);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const lastSpinDateStr = lastSpin ? lastSpin.createdAt.toISOString().split('T')[0] : null;
+
+  // Calendar day reset (UTC) or 24h passed
+  const canSpin = !lastSpin || lastSpinDateStr !== todayStr || (now - lastSpin.createdAt.getTime() >= 24 * 60 * 60 * 1000);
   const streakInfo = await calculateStreak(userId);
   const stardustInfo = await getStardustBalance(userId).catch(() => ({ stardust: 0 }));
 
@@ -141,9 +156,13 @@ export const getStatus = async (userId: string) => {
   const rouletteTier = streakInfo.currentStreak >= 7 ? 3 : streakInfo.currentStreak >= 3 ? 2 : 1;
   const tierName = rouletteTier === 3 ? 'Cósmico' : rouletteTier === 2 ? 'Épico' : 'Estándar';
 
+  const tomorrow = new Date();
+  tomorrow.setUTCHours(24, 0, 0, 0);
+  const nextSpinAt = canSpin ? null : tomorrow.toISOString();
+
   return {
     canSpin,
-    nextSpinAt: lastSpin ? new Date(lastSpin.createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString() : null,
+    nextSpinAt,
     prizes: PRIZES,
     currentStreak: streakInfo.currentStreak,
     bestStreak: streakInfo.bestStreak,

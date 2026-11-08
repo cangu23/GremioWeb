@@ -1,3 +1,4 @@
+import { calculateStreak } from '../roulette/roulette.service';
 import AppError from '../../errors/AppError';
 import { attachVerified, isVerifiedEffective } from '@gremio-estelar/shared';
 import * as SocialRepository from './social.repository';
@@ -76,9 +77,10 @@ export const getSocialProfile = async (userIdOrUsername: string, currentUserId?:
     }
   }
 
-  const [followersCount, followingCount] = await Promise.all([
+  const [followersCount, followingCount, streakInfo] = await Promise.all([
     SocialRepository.getFollowersCount(userId),
     SocialRepository.getFollowingCount(userId),
+    calculateStreak(userId).catch(() => ({ currentStreak: 0, bestStreak: 0 })),
   ]);
 
   let isFollowedByMe = false;
@@ -101,6 +103,8 @@ export const getSocialProfile = async (userIdOrUsername: string, currentUserId?:
 
   return {
     ...profile,
+    streak: streakInfo.currentStreak,
+    bestStreak: streakInfo.bestStreak,
     _count: {
       followers: followersCount,
       following: followingCount,

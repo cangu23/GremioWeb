@@ -1,3 +1,4 @@
+import { calculateStreak } from '../roulette/roulette.service';
 import AppError from '../../errors/AppError';
 import prisma from '../../database/prisma';
 import * as GamificationRepository from '../gamification/gamification.repository';
@@ -34,6 +35,11 @@ export const getStatus = async (userId: string) => {
   let claimedToday = false;
   let currentDay = 1;
   let streakSaved = false;
+  let monthlyPardonUsed = false;
+
+  const twoDaysAgo = new Date(now);
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const twoDaysAgoStr = twoDaysAgo.toISOString().split('T')[0];
 
   if (lastClaim) {
     const lastClaimDateStr = new Date(lastClaim.claimedAt).toISOString().split('T')[0];
@@ -47,18 +53,41 @@ export const getStatus = async (userId: string) => {
       // Claimed yesterday -> continue streak today!
       currentDay = lastClaim.day >= 7 ? 1 : lastClaim.day + 1;
     } else {
-      // User missed one or more days. Check if user has an unused STREAK_SAVER consumable item
-      const streakSaver = await prisma.userPurchase.findFirst({
-        where: {
-          userId,
-          item: { type: 'STREAK_SAVER' },
-        },
-      });
+      // User missed one or more days.
+      // 1. Check if user has an unused STREAK_SAVER consumable item
+      const streakSaver = prisma.userPurchase?.findFirst
+        ? await prisma.userPurchase.findFirst({
+            where: {
+              userId,
+              item: { type: 'STREAK_SAVER' },
+            },
+          })
+        : null;
 
       if (streakSaver) {
         // Streak protected by Escudo de Racha!
         streakSaved = true;
         currentDay = lastClaim.day >= 7 ? 1 : lastClaim.day + 1;
+      } else if (lastClaimDateStr === twoDaysAgoStr) {
+        // Missed exactly 1 day: Check if free monthly emergency pardon is available
+        const currentMonthStr = todayStr.substring(0, 7);
+        const pardonReason = `Perdón Mensual de Racha - ${currentMonthStr}`;
+        const pardonRecord = prisma.stardustTransaction?.findFirst
+          ? await prisma.stardustTransaction.findFirst({
+              where: {
+                userId,
+                reason: { contains: pardonReason },
+              },
+            })
+          : null;
+
+        if (!pardonRecord) {
+          streakSaved = true;
+          monthlyPardonUsed = true;
+          currentDay = lastClaim.day >= 7 ? 1 : lastClaim.day + 1;
+        } else {
+          currentDay = 1;
+        }
       } else {
         // Streak broken, reset to Day 1
         currentDay = 1;
@@ -80,11 +109,16 @@ export const getStatus = async (userId: string) => {
   // Count total claims
   const totalClaims = await prisma.dailyReward.count({ where: { userId } });
 
+  const streakInfo = await calculateStreak(userId).catch(() => ({ currentStreak: 0, bestStreak: 0 }));
+
   return {
     canClaim,
     claimedToday,
     currentDay,
     streakSaved,
+    monthlyPardonUsed,
+    totalStreak: streakInfo.currentStreak,
+    bestStreak: streakInfo.bestStreak,
     lastClaimedDay: lastClaim ? lastClaim.day : null,
     nextRewardAt: tomorrow.toISOString(),
     rewards: DAILY_REWARDS,
@@ -128,28 +162,43 @@ export const claim = async (userId: string) => {
     throw err;
   }
 
-  // If streak was protected by a STREAK_SAVER, consume 1 item from inventory now
+  // If streak was protected, consume STREAK_SAVER or record monthly pardon
   let usedStreakSaver = false;
   if (status.streakSaved) {
-    const streakSaver = await prisma.userPurchase.findFirst({
-      where: {
-        userId,
-        item: { type: 'STREAK_SAVER' },
-      },
-    });
-
-    if (streakSaver) {
-      if (streakSaver.remaining !== null && streakSaver.remaining !== undefined && streakSaver.remaining > 1) {
-        await prisma.userPurchase.update({
-          where: { id: streakSaver.id },
-          data: { remaining: streakSaver.remaining - 1 },
-        });
-      } else {
-        await prisma.userPurchase.delete({
-          where: { id: streakSaver.id },
-        });
+    if (status.monthlyPardonUsed) {
+      const currentMonthStr = todayStr.substring(0, 7);
+      if (prisma.stardustTransaction?.create) {
+        await prisma.stardustTransaction.create({
+          data: {
+            userId,
+            amount: 0,
+            reason: `Perdón Mensual de Racha - ${currentMonthStr}`,
+          },
+        }).catch(() => {});
       }
-      usedStreakSaver = true;
+    } else {
+      const streakSaver = prisma.userPurchase?.findFirst
+        ? await prisma.userPurchase.findFirst({
+            where: {
+              userId,
+              item: { type: 'STREAK_SAVER' },
+            },
+          })
+        : null;
+
+      if (streakSaver) {
+        if (streakSaver.remaining !== null && streakSaver.remaining !== undefined && streakSaver.remaining > 1) {
+          await prisma.userPurchase.update({
+            where: { id: streakSaver.id },
+            data: { remaining: streakSaver.remaining - 1 },
+          });
+        } else {
+          await prisma.userPurchase.delete({
+            where: { id: streakSaver.id },
+          });
+        }
+        usedStreakSaver = true;
+      }
     }
   }
 
@@ -168,6 +217,6 @@ export const claim = async (userId: string) => {
     bonus: reward.bonus || false,
     label: reward.label,
     usedStreakSaver,
-    message: `+${finalXp} XP — ${reward.bonus ? '¡BONUS!' : `Día ${reward.day}`}${usedStreakSaver ? ' ✦ (¡Escudo de Racha usado!)' : ''}`,
+    message: `+${finalXp} XP ✦ ${reward.bonus ? '¡BONUS!' : `Día ${reward.day}`}${status.monthlyPardonUsed ? ' ✦ (¡Perdón Mensual de Racha activado!)' : usedStreakSaver ? ' ✦ (¡Escudo de Racha usado!)' : ''}`,
   };
 };

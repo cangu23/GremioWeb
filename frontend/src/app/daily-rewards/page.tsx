@@ -21,6 +21,10 @@ interface RewardStatus {
   canClaim: boolean;
   claimedToday?: boolean;
   currentDay: number;
+  streakSaved?: boolean;
+  monthlyPardonUsed?: boolean;
+  totalStreak?: number;
+  bestStreak?: number;
   lastClaimedDay?: number | null;
   nextRewardAt: string | null;
   rewards: RewardDay[];
@@ -104,6 +108,50 @@ function RewardsContent() {
           Reclama tu recompensa cada 24 horas. ¡Mantén tu racha para obtener mejores premios!
         </p>
       </div>
+
+      {/* Active Unified Streak Banner */}
+      {status && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(139,92,246,0.08))',
+          border: '1px solid rgba(245,158,11,0.25)',
+          borderRadius: '16px',
+          padding: '14px 20px',
+          marginBottom: '24px',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '1.4rem', color: '#f59e0b' }}>✦</span>
+            <div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Racha Estelar Unificada
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                {status.streakSaved
+                  ? (status.monthlyPardonUsed
+                      ? '✧ ¡Tu racha se mantuvo gracias a tu Perdón Mensual gratuito!'
+                      : '✧ ¡Tu racha se mantuvo protegida con tu Escudo!')
+                  : 'Reclama recompensas o gira la ruleta a diario para acumular días.'}
+              </div>
+            </div>
+          </div>
+          <div style={{
+            fontSize: '1.25rem',
+            fontWeight: 800,
+            color: '#f59e0b',
+            background: 'rgba(245,158,11,0.15)',
+            border: '1px solid rgba(245,158,11,0.3)',
+            borderRadius: '999px',
+            padding: '4px 16px',
+            fontVariantNumeric: 'tabular-nums',
+          }}>
+            {status.totalStreak || 0} {(status.totalStreak || 0) === 1 ? 'DÍA' : 'DÍAS'}
+          </div>
+        </div>
+      )}
 
       {/* Current reward card */}
       {claimed ? (
@@ -220,7 +268,7 @@ function RewardsContent() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '1.1rem',
                 }}>
-                  {isClaimed ? '✓' : reward.bonus ? '⭐' : reward.day}
+                  {isClaimed ? '✓' : reward.bonus ? '★' : reward.day}
                 </div>
                 <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '4px' }}>
                   {reward.bonus ? 'BONUS' : `Día ${reward.day}`}
@@ -243,9 +291,17 @@ function RewardsContent() {
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total reclamados</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{status.totalClaims}</div>
             </div>
+                        <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Racha consecutiva</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#f59e0b' }}>
+                {status.totalStreak || 0} {(status.totalStreak || 0) === 1 ? 'día' : 'días'}
+              </div>
+            </div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Racha actual</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>Día {status.currentDay}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mejor racha</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>
+                {status.bestStreak || status.totalStreak || 0} {(status.bestStreak || status.totalStreak || 0) === 1 ? 'día' : 'días'}
+              </div>
             </div>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Semana completa</div>

@@ -19,6 +19,8 @@ interface ProfileCardData {
   createdAt?: string | Date | null;
   xp: number;
   level: number;
+  streak?: number;
+  bestStreak?: number;
   displayName?: string | null;
   avatarUrl?: string | null;
   note?: string | null;
@@ -451,6 +453,28 @@ function CardContent({
         }}>
           @{profile.username}
         </p>
+
+        {/* Unified Streak Badge */}
+        {profile.streak !== undefined && profile.streak > 0 && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            fontSize: '0.74rem',
+            fontWeight: 700,
+            color: '#f59e0b',
+            background: 'rgba(245, 158, 11, 0.1)',
+            border: '1px solid rgba(245, 158, 11, 0.25)',
+            padding: '2px 10px',
+            borderRadius: '999px',
+            marginTop: '2px',
+            marginBottom: '6px',
+            letterSpacing: '0.02em',
+          }}>
+            <span>✦</span>
+            <span>{profile.streak} {profile.streak === 1 ? 'día de racha' : 'días de racha'}</span>
+          </div>
+        )}
 
         {/* Compact Pet Badge if equipped */}
         {profile.profilePet && (
