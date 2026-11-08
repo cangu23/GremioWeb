@@ -25,23 +25,23 @@ interface SendStardustModalProps {
 }
 
 const PRESET_AMOUNTS = [
-  { amount: 50, label: 'Caramelito', icon: '🍬', color: '#38bdf8' },
-  { amount: 100, label: 'Café', icon: '☕', color: '#f59e0b' },
-  { amount: 250, label: 'Pastel', icon: '🍰', color: '#ec4899' },
-  { amount: 500, label: 'Varita', icon: '✨', color: '#a855f7' },
-  { amount: 1000, label: 'Gemas', icon: '💎', color: '#3b82f6' },
-  { amount: 2500, label: 'Cohete', icon: '🚀', color: '#ef4444' },
-  { amount: 5000, label: 'Corona', icon: '👑', color: '#eab308' },
-  { amount: 10000, label: 'Galaxia', icon: '🌟', color: '#10b981' },
+  { amount: 50, label: 'Destello', icon: '✦', color: '#38bdf8' },
+  { amount: 100, label: 'Estela', icon: '★', color: '#f59e0b' },
+  { amount: 250, label: 'Cometa', icon: '✧', color: '#ec4899' },
+  { amount: 500, label: 'Orbe', icon: '✦', color: '#a855f7' },
+  { amount: 1000, label: 'Cristal', icon: '★', color: '#3b82f6' },
+  { amount: 2500, label: 'Supernova', icon: '✧', color: '#ef4444' },
+  { amount: 5000, label: 'Corona', icon: '★', color: '#eab308' },
+  { amount: 10000, label: 'Galaxia', icon: '∞', color: '#10b981' },
 ];
 
 const PRESET_MESSAGES = [
-  '¡Excelente contenido! 👏',
-  '¡Un regalito estelar para ti! 🎁',
-  '¡Sigue así, crack! 🚀',
-  '¡Para un café! ☕',
-  '¡Te mereces el universo! 🌟',
-  '¡Mucho éxito con tus transmisiones! 🔥',
+  '¡Excelente contenido! ✦',
+  '¡Un regalito estelar para ti! ★',
+  '¡Sigue así, crack! ✦',
+  '¡Para apoyarte! ✧',
+  '¡Te mereces el universo! ★',
+  '¡Mucho éxito con tus transmisiones! ✦',
 ];
 
 export default function SendStardustModal({
@@ -150,7 +150,12 @@ export default function SendStardustModal({
 
   const playSuccessSound = () => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
       const notes = [523.25, 659.25, 783.99, 1046.50];
       notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
@@ -327,7 +332,7 @@ export default function SendStardustModal({
                 animation: 'scaleUp 0.3s ease-out',
               }}
             >
-              <div style={{ fontSize: '3rem', marginBottom: '8px' }}>🎉✨</div>
+              <div style={{ fontSize: '3rem', marginBottom: '8px' }}>✦ ★</div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fbbf24', margin: '0 0 8px 0' }}>
                 ¡Regalo Enviado con Éxito!
               </h3>
@@ -493,7 +498,7 @@ export default function SendStardustModal({
                         }}
                       >
                         <div style={{ padding: '8px 12px', fontSize: '0.7rem', color: '#fbbf24', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                          👥 Sugerencias de Usuarios
+                          ✦ Sugerencias de Usuarios
                         </div>
                         {searchResults.map((u) => {
                           const isVtuber = hasAnyRole(u.role, ['VTUBER']);
@@ -535,7 +540,7 @@ export default function SendStardustModal({
                                   color: isVtuber ? '#c084fc' : isStreamer ? '#22d3ee' : isMaid ? '#d4a030' : isAdmin ? '#f87171' : '#9ca3af',
                                 }}
                               >
-                                {isVtuber ? '👑 VTuber' : isStreamer ? '📡 Streamer' : isMaid ? '🧹 Maid' : isAdmin ? '🛡️ Admin' : '👤 User'}
+                                {isVtuber ? '✦ VTuber' : isStreamer ? '✧ Streamer' : isMaid ? '✦ Maid' : isAdmin ? '★ Admin' : 'Usuario'}
                               </div>
                             </div>
                           );

@@ -75,7 +75,12 @@ export default function GiftEnvelopeModal({
 
   const playOpenAudio = () => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
       const notes = [440, 554.37, 659.25, 880, 1108.73];
       notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
@@ -213,7 +218,7 @@ export default function GiftEnvelopeModal({
               }}
             >
               <Sparkles size={18} color={isPremium ? '#c084fc' : '#fbbf24'} />
-              <span>✨ ¡Toca la carta para abrir tu regalo! ✨</span>
+              <span>✦ ¡Toca la carta para abrir tu regalo! ✦</span>
             </div>
 
             {/* 3D Interactive Envelope */}
@@ -430,7 +435,7 @@ export default function GiftEnvelopeModal({
                       return isNaN(num) ? giftData.amount : num.toLocaleString();
                     })()} Polvo Estelar`
                   : giftData.planName
-                  ? `👑 Plan ${giftData.planName} (10 Días Premium)`
+                  ? `✦ Plan ${giftData.planName} (10 Días Premium)`
                   : giftData.title || 'Regalo Estelar'}
               </div>
             </div>
@@ -458,7 +463,7 @@ export default function GiftEnvelopeModal({
                 transition: 'all 0.2s ease',
               }}
             >
-              <Check size={20} /> {isClaimed ? '✓ Regalo Reclamado (Cerrar)' : '¡Aceptar y Disfrutar Regalo! 🎉'}
+              <Check size={20} /> {isClaimed ? '✓ Regalo Reclamado (Cerrar)' : '¡Aceptar y Disfrutar Regalo! ✦'}
             </button>
           </div>
         )}

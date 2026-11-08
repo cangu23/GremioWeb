@@ -12,14 +12,14 @@ import { addStardust, spendStardust, getStardustBalance } from '../ecosystem/sta
 const PRIZES = [
   { id: 'xp_50', label: '50 XP', value: 50, stardust: 3, weight: 24, color: '#8B5CF6', type: 'XP' },
   { id: 'stardust_25', label: '15 Stardust', value: 15, stardust: 15, weight: 20, color: '#F59E0B', type: 'STARDUST' },
-  { id: 'xp_200', label: '200 XP', value: 200, stardust: 10, weight: 15, color: '#7C3AED', type: 'XP' },
-  { id: 'chest_bronze', label: 'Cofre Bronce', value: 150, stardust: 15, weight: 12, color: '#CD7F32', type: 'CHEST', chestType: 'BRONZE' },
-  { id: 'stardust_100', label: '35 Stardust', value: 35, stardust: 35, weight: 10, color: '#3B82F6', type: 'STARDUST' },
-  { id: 'chest_silver', label: 'Cofre Plata', value: 400, stardust: 25, weight: 8, color: '#C0C0C0', type: 'CHEST', chestType: 'SILVER' },
-  { id: 'xp_1000', label: '1,000 XP', value: 1000, stardust: 30, weight: 5, color: '#EC4899', type: 'XP' },
-  { id: 'chest_gold', label: 'Cofre Oro', value: 1200, stardust: 50, weight: 3, color: '#FFD700', type: 'CHEST', chestType: 'GOLD' },
-  { id: 'badge_lucky', label: 'Insignia Mítica', value: 500, stardust: 60, weight: 2, color: '#10B981', type: 'BADGE' },
-  { id: 'chest_cosmic', label: 'Cofre Cósmico', value: 5000, stardust: 100, weight: 1, color: '#9333EA', type: 'CHEST', chestType: 'COSMIC' },
+  { id: 'xp_200', label: '150 XP', value: 150, stardust: 8, weight: 15, color: '#7C3AED', type: 'XP' },
+  { id: 'chest_bronze', label: 'Cofre Bronce', value: 100, stardust: 12, weight: 12, color: '#CD7F32', type: 'CHEST', chestType: 'BRONZE' },
+  { id: 'stardust_100', label: '30 Stardust', value: 30, stardust: 30, weight: 10, color: '#3B82F6', type: 'STARDUST' },
+  { id: 'chest_silver', label: 'Cofre Plata', value: 200, stardust: 20, weight: 8, color: '#C0C0C0', type: 'CHEST', chestType: 'SILVER' },
+  { id: 'xp_1000', label: '350 XP', value: 350, stardust: 25, weight: 5, color: '#EC4899', type: 'XP' },
+  { id: 'chest_gold', label: 'Cofre Oro', value: 450, stardust: 35, weight: 3, color: '#FFD700', type: 'CHEST', chestType: 'GOLD' },
+  { id: 'badge_lucky', label: 'Insignia Mítica', value: 250, stardust: 40, weight: 2, color: '#10B981', type: 'BADGE' },
+  { id: 'chest_cosmic', label: 'Cofre Cósmico', value: 1000, stardust: 60, weight: 1, color: '#9333EA', type: 'CHEST', chestType: 'COSMIC' },
 ];
 
 const TOTAL_WEIGHT = PRIZES.reduce((sum, p) => sum + p.weight, 0);
@@ -43,21 +43,21 @@ async function processChestReward(userId: string, chestType: string) {
   let itemsWon: string[] = [];
 
   if (chestType === 'BRONZE') {
-    bonusXp = Math.floor(Math.random() * 100) + 50;
-    bonusStardust = Math.floor(Math.random() * 15) + 5;
-    itemsWon.push('📦 Ficha Extra');
+    bonusXp = Math.floor(Math.random() * 40) + 20;
+    bonusStardust = Math.floor(Math.random() * 8) + 4;
+    itemsWon.push('✦ Ficha Extra');
   } else if (chestType === 'SILVER') {
-    bonusXp = Math.floor(Math.random() * 200) + 100;
-    bonusStardust = Math.floor(Math.random() * 25) + 15;
-    itemsWon.push('⚡ Multiplicador 2x');
+    bonusXp = Math.floor(Math.random() * 80) + 40;
+    bonusStardust = Math.floor(Math.random() * 15) + 8;
+    itemsWon.push('✧ Multiplicador 2x');
   } else if (chestType === 'GOLD') {
-    bonusXp = Math.floor(Math.random() * 400) + 200;
-    bonusStardust = Math.floor(Math.random() * 35) + 25;
-    itemsWon.push('👑 Título Dorado');
+    bonusXp = Math.floor(Math.random() * 150) + 75;
+    bonusStardust = Math.floor(Math.random() * 20) + 12;
+    itemsWon.push('★ Título Dorado');
   } else if (chestType === 'COSMIC') {
-    bonusXp = Math.floor(Math.random() * 1200) + 800;
-    bonusStardust = Math.floor(Math.random() * 100) + 50;
-    itemsWon.push('🌌 Insignia Estelar Leyenda');
+    bonusXp = Math.floor(Math.random() * 300) + 150;
+    bonusStardust = Math.floor(Math.random() * 30) + 20;
+    itemsWon.push('∞ Insignia Estelar Leyenda');
   }
 
   return { bonusXp, bonusStardust, itemsWon };
@@ -203,9 +203,9 @@ export const spin = async (userId: string) => {
   const randomOffset = Math.random() * segmentAngle * 0.8;
   const rotation = 720 + (360 - targetAngle - randomOffset);
 
-  let message = `¡Ganaste ${prize.label}! (+${finalXp} XP, ⭐ ${finalStardust} Stardust)`;
+  let message = `¡Ganaste ${prize.label}! (+${finalXp} XP, ★ ${finalStardust} Stardust)`;
   if (chestDetails && chestDetails.itemsWon.length > 0) {
-    message = `¡Abriste ${prize.label}! Ganaste +${finalXp} XP, ⭐ ${finalStardust} Stardust y ${chestDetails.itemsWon.join(', ')}`;
+    message = `¡Abriste ${prize.label}! Ganaste +${finalXp} XP, ★ ${finalStardust} Stardust y ${chestDetails.itemsWon.join(', ')}`;
   }
 
   return {
@@ -279,9 +279,9 @@ export const spinWithStardust = async (userId: string) => {
   const randomOffset = Math.random() * segmentAngle * 0.8;
   const rotation = 720 + (360 - targetAngle - randomOffset);
 
-  let message = `¡Ganaste ${prize.label}! (+${finalXp} XP, ⭐ ${finalStardust} Stardust)`;
+  let message = `¡Ganaste ${prize.label}! (+${finalXp} XP, ★ ${finalStardust} Stardust)`;
   if (chestDetails && chestDetails.itemsWon.length > 0) {
-    message = `¡Abriste ${prize.label}! Ganaste +${finalXp} XP, ⭐ ${finalStardust} Stardust y ${chestDetails.itemsWon.join(', ')}`;
+    message = `¡Abriste ${prize.label}! Ganaste +${finalXp} XP, ★ ${finalStardust} Stardust y ${chestDetails.itemsWon.join(', ')}`;
   }
 
   return {

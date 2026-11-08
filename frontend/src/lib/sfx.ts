@@ -18,17 +18,18 @@ export function setSfxMuted(m: boolean) {
 
 function ensureCtx(): AudioContext | null {
   try {
+    if (typeof window === 'undefined') return null;
+    const hasInteracted = typeof navigator !== 'undefined' && (navigator as any).userActivation?.hasBeenActive;
     if (!ctx) {
+      if (!hasInteracted) return null;
       const AC =
         window.AudioContext ||
         (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AC) return null;
       ctx = new AC();
     }
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {
-        /* autoplay policy — resume on the next gesture */
-      });
+    if (ctx.state === 'suspended' && hasInteracted) {
+      ctx.resume().catch(() => {});
     }
     return ctx;
   } catch {
@@ -39,10 +40,19 @@ function ensureCtx(): AudioContext | null {
 // Unlock the context on the first user gesture (autoplay policy).
 if (typeof window !== 'undefined') {
   const unlock = () => {
-    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+    try {
+      if (!ctx) {
+        const AC =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (AC) ctx = new AC();
+      } else if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    } catch {}
   };
-  window.addEventListener('pointerdown', unlock, { passive: true });
-  window.addEventListener('keydown', unlock);
+  window.addEventListener('pointerdown', unlock, { passive: true, once: true });
+  window.addEventListener('keydown', unlock, { passive: true, once: true });
 }
 
 /**

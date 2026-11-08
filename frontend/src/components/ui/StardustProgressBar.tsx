@@ -103,7 +103,7 @@ export default function StardustProgressBar() {
 
     try {
       const res = await apiFetch(`/ecosystem/missions/${missionId}/claim`, { method: 'POST' });
-      showToast(res.data?.message || `¡+${targetMission.stardustReward} ⭐ Reclamados!`, 'success');
+      showToast(res.data?.message || `¡+${targetMission.stardustReward} ★ Stardust Reclamados!`, 'success');
       notifyMissionsChanged();
     } catch (err: any) {
       showToast(err?.message || 'Error al reclamar misión', 'error');
@@ -118,9 +118,9 @@ export default function StardustProgressBar() {
     const inviteUrl = `${window.location.origin}/register?ref=${user?.username || 'gremio'}`;
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      showToast('🔗 ¡Enlace de invitación copiado! Ganarás +70 XP y +50 ⭐ cuando tu amigo se registre ✨', 'success');
+      showToast('✦ ¡Enlace de invitación copiado! Ganarás +40 XP y +20 ★ cuando tu amigo se registre ✧', 'success');
     } catch {
-      showToast('🔗 Tu enlace de invitación: ' + inviteUrl, 'info');
+      showToast('✦ Tu enlace de invitación: ' + inviteUrl, 'info');
     }
   };
 
@@ -132,7 +132,7 @@ export default function StardustProgressBar() {
 
   return (
     <>
-      <div className="glass stardust-bar-wrapper">
+      <div className="glass stardust-bar-wrapper" style={{ flexWrap: 'wrap' }}>
         {/* LEFT: STARDUST BADGE & LEVEL PROGRESS */}
         <div className="stardust-bar-left">
           <div style={{
@@ -286,7 +286,7 @@ export default function StardustProgressBar() {
                               background: '#fbbf24', color: '#000', fontWeight: 900, fontSize: '0.78rem', cursor: 'pointer',
                             }}
                           >
-                            Reclamar ✨
+                            Reclamar ✦
                           </button>
                         ) : m.action === 'INVITE_FRIEND' ? (
                           <button
@@ -298,7 +298,7 @@ export default function StardustProgressBar() {
                               display: 'inline-flex', alignItems: 'center', gap: '4px',
                             }}
                           >
-                            🔗 Copiar Enlace
+                            ✦ Copiar Enlace
                           </button>
                         ) : (
                           <Link

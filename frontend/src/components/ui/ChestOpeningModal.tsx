@@ -31,8 +31,8 @@ const CHEST_CONFIGS: Record<string, {
     color: '#cd7f32',
     glow: 'rgba(205, 127, 50, 0.6)',
     bgGradient: 'linear-gradient(135deg, #2a1b0e 0%, #4a2e16 100%)',
-    badge: '🥉 Bronce Místico',
-    icon: '🥉',
+    badge: '✦ Bronce Místico',
+    icon: '✦',
     accentBorder: '#e69a4c',
   },
   SILVER: {
@@ -40,8 +40,8 @@ const CHEST_CONFIGS: Record<string, {
     color: '#e2e8f0',
     glow: 'rgba(226, 232, 240, 0.7)',
     bgGradient: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-    badge: '🥈 Plata Resplandeciente',
-    icon: '🥈',
+    badge: '✧ Plata Resplandeciente',
+    icon: '✧',
     accentBorder: '#94a3b8',
   },
   GOLD: {
@@ -49,8 +49,8 @@ const CHEST_CONFIGS: Record<string, {
     color: '#ffd700',
     glow: 'rgba(255, 215, 0, 0.8)',
     bgGradient: 'linear-gradient(135deg, #3b2d00 0%, #664d00 100%)',
-    badge: '🥇 Oro Legendario',
-    icon: '🥇',
+    badge: '★ Oro Legendario',
+    icon: '★',
     accentBorder: '#ffe033',
   },
   COSMIC: {
@@ -58,8 +58,8 @@ const CHEST_CONFIGS: Record<string, {
     color: '#c084fc',
     glow: 'rgba(192, 132, 252, 0.9)',
     bgGradient: 'linear-gradient(135deg, #2e1065 0%, #581c87 50%, #1e1b4b 100%)',
-    badge: '🌌 JACKPOT CÓSMICO',
-    icon: '🌌',
+    badge: '∞ JACKPOT CÓSMICO',
+    icon: '∞',
     accentBorder: '#f0abfc',
   },
 };
@@ -84,7 +84,12 @@ export default function ChestOpeningModal({ isOpen, onClose, chestData }: ChestO
 
   const playChestSound = () => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
       const freqs = [330, 440, 554.37, 659.25, 880, 1108.73, 1318.5];
       freqs.forEach((f, i) => {
         const osc = ctx.createOscillator();
@@ -252,7 +257,7 @@ export default function ChestOpeningModal({ isOpen, onClose, chestData }: ChestO
                 boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
                 whiteSpace: 'nowrap',
               }}>
-                ✨ ¡TOCA PARA ABRIR!
+                ✦ ¡TOCA PARA ABRIR!
               </div>
             )}
           </div>
@@ -262,7 +267,7 @@ export default function ChestOpeningModal({ isOpen, onClose, chestData }: ChestO
         {stage === 'REVEALED' && (
           <div style={{ animation: 'rewardPop 0.5s ease forwards', marginBottom: '24px' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '16px', color: config.color }}>
-              ¡Tus Recompensas del Cofre! 🎁
+              ¡Tus Recompensas del Cofre! ✦
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '360px', margin: '0 auto' }}>
@@ -279,7 +284,7 @@ export default function ChestOpeningModal({ isOpen, onClose, chestData }: ChestO
                   fontSize: '0.95rem',
                   fontWeight: 800,
                 }}>
-                  <span>⚡ Experiencia (XP)</span>
+                  <span>✦ Experiencia (XP)</span>
                   <span style={{ color: '#A78BFA' }}>+{chestData.finalXp} XP</span>
                 </div>
               )}
@@ -297,8 +302,8 @@ export default function ChestOpeningModal({ isOpen, onClose, chestData }: ChestO
                   fontSize: '0.95rem',
                   fontWeight: 800,
                 }}>
-                  <span>⭐ Polvo Estelar</span>
-                  <span style={{ color: '#F59E0B' }}>+⭐ {chestData.finalStardust}</span>
+                  <span>★ Polvo Estelar</span>
+                  <span style={{ color: '#F59E0B' }}>+★ {chestData.finalStardust}</span>
                 </div>
               )}
 
@@ -315,7 +320,7 @@ export default function ChestOpeningModal({ isOpen, onClose, chestData }: ChestO
                   fontSize: '0.95rem',
                   fontWeight: 800,
                 }}>
-                  <span>🎉 Recompensa Especial</span>
+                  <span>✧ Recompensa Especial</span>
                   <span style={{ color: '#34D399' }}>{item}</span>
                 </div>
               ))}
@@ -337,7 +342,7 @@ export default function ChestOpeningModal({ isOpen, onClose, chestData }: ChestO
               boxShadow: `0 4px 20px ${config.glow}`,
             }}
           >
-            ¡Reclamar Todo y Continuar! 🚀
+            ¡Reclamar Todo y Continuar! ✦
           </button>
         ) : (
           <button
@@ -353,7 +358,7 @@ export default function ChestOpeningModal({ isOpen, onClose, chestData }: ChestO
               color: '#fff',
             }}
           >
-            {stage === 'OPENING' ? '¡Abriendo Cofre...' : '✨ Abrir Cofre'}
+            {stage === 'OPENING' ? '¡Abriendo Cofre...' : '✦ Abrir Cofre'}
           </button>
         )}
       </div>

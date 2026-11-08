@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import ClientOnly from '@/lib/ClientOnly';
 import { useToast } from '@/lib/ToastContext';
 import ChestOpeningModal, { ChestData } from '@/components/ui/ChestOpeningModal';
-import { Clock, Sparkles, Star, Zap } from '@/components/ui/Icons';
+import { Clock, Sparkles, Star, Zap, Volume2, VolumeX } from '@/components/ui/Icons';
 
 interface Prize {
   id: string;
@@ -58,16 +58,16 @@ interface RouletteStats {
 
 // Meta info for prize cards & badges (Evolving & Chest prizes)
 const PRIZE_META: Record<string, { rarity: string; icon: string; badgeBg: string; pct: string }> = {
-  xp_50: { rarity: 'Común', icon: '✨', badgeBg: 'rgba(139, 92, 246, 0.2)', pct: '24%' },
-  stardust_25: { rarity: 'Común', icon: '⭐', badgeBg: 'rgba(245, 158, 11, 0.2)', pct: '20%' },
-  xp_200: { rarity: 'Poco Común', icon: '⚡', badgeBg: 'rgba(124, 58, 237, 0.2)', pct: '15%' },
-  chest_bronze: { rarity: 'Especial', icon: '📦', badgeBg: 'rgba(205, 127, 50, 0.25)', pct: '12%' },
-  stardust_100: { rarity: 'Raro', icon: '💎', badgeBg: 'rgba(59, 130, 246, 0.2)', pct: '10%' },
-  chest_silver: { rarity: 'Épico', icon: '🧰', badgeBg: 'rgba(192, 192, 192, 0.25)', pct: '8%' },
-  xp_1000: { rarity: 'Épico', icon: '🔥', badgeBg: 'rgba(236, 72, 153, 0.2)', pct: '5%' },
-  chest_gold: { rarity: 'Legendario', icon: '👑', badgeBg: 'rgba(255, 215, 0, 0.25)', pct: '3%' },
-  badge_lucky: { rarity: 'Mítico', icon: '🍀', badgeBg: 'rgba(16, 185, 129, 0.25)', pct: '2%' },
-  chest_cosmic: { rarity: 'JACKPOT CÓSMICO', icon: '🌌', badgeBg: 'rgba(147, 51, 234, 0.35)', pct: '1%' },
+  xp_50: { rarity: 'Común', icon: '✦', badgeBg: 'rgba(139, 92, 246, 0.2)', pct: '24%' },
+  stardust_25: { rarity: 'Común', icon: '★', badgeBg: 'rgba(245, 158, 11, 0.2)', pct: '20%' },
+  xp_200: { rarity: 'Poco Común', icon: '✧', badgeBg: 'rgba(124, 58, 237, 0.2)', pct: '15%' },
+  chest_bronze: { rarity: 'Especial', icon: '✦', badgeBg: 'rgba(205, 127, 50, 0.25)', pct: '12%' },
+  stardust_100: { rarity: 'Raro', icon: '★', badgeBg: 'rgba(59, 130, 246, 0.2)', pct: '10%' },
+  chest_silver: { rarity: 'Épico', icon: '✧', badgeBg: 'rgba(192, 192, 192, 0.25)', pct: '8%' },
+  xp_1000: { rarity: 'Épico', icon: '✦', badgeBg: 'rgba(236, 72, 153, 0.2)', pct: '5%' },
+  chest_gold: { rarity: 'Legendario', icon: '★', badgeBg: 'rgba(255, 215, 0, 0.25)', pct: '3%' },
+  badge_lucky: { rarity: 'Mítico', icon: '✧', badgeBg: 'rgba(16, 185, 129, 0.25)', pct: '2%' },
+  chest_cosmic: { rarity: 'JACKPOT CÓSMICO', icon: '∞', badgeBg: 'rgba(147, 51, 234, 0.35)', pct: '1%' },
 };
 
 function stripEmojis(str: string): string {
@@ -181,16 +181,20 @@ function RouletteContent() {
   const lastTickSegmentRef = useRef<number>(-1);
 
   const getAudioContext = useCallback(() => {
-    if (!audioCtxRef.current && typeof window !== 'undefined') {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        audioCtxRef.current = new AudioCtx();
+    try {
+      if (!audioCtxRef.current && typeof window !== 'undefined') {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          audioCtxRef.current = new AudioCtx();
+        }
       }
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().catch(() => {});
+      }
+      return audioCtxRef.current;
+    } catch {
+      return null;
     }
-    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
-    }
-    return audioCtxRef.current;
   }, []);
 
   const playTickSound = useCallback(() => {
@@ -443,7 +447,7 @@ function RouletteContent() {
     if (spinning) return;
     const cost = status?.stardustCostForExtraSpin || 50;
     if ((status?.userStardust || 0) < cost) {
-      showToast(`No tienes suficiente Polvo Estelar (requieres 🪙 ${cost}).`, 'error');
+      showToast(`No tienes suficiente Polvo Estelar (requieres ★ ${cost}).`, 'error');
       return;
     }
 
@@ -547,7 +551,7 @@ function RouletteContent() {
             className="btn btn--ghost"
             style={{ padding: '8px 12px', borderRadius: '50%', fontSize: '1.1rem' }}
           >
-            {soundEnabled ? '🔊' : '🔇'}
+            {soundEnabled ? <Volume2 size={18} color="#38bdf8" /> : <VolumeX size={18} color="#94a3b8" />}
           </button>
         </div>
       </div>
@@ -661,7 +665,7 @@ function RouletteContent() {
 
                 const pathData = `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`;
 
-                const meta = PRIZE_META[prize.id] || { icon: '🎁' };
+                const meta = PRIZE_META[prize.id] || { icon: '✦' };
                 const labelLines = getWheelLabelLines(prize.label);
 
                 // Position icon and text along the wedge bisector
@@ -855,7 +859,7 @@ function RouletteContent() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', maxHeight: '320px', overflowY: 'auto', paddingRight: '4px' }}>
               {prizes.map((p) => {
-                const meta = PRIZE_META[p.id] || { rarity: 'Especial', icon: '🎁', badgeBg: 'rgba(255,255,255,0.1)', pct: '?' };
+                const meta = PRIZE_META[p.id] || { rarity: 'Especial', icon: '✦', badgeBg: 'rgba(255,255,255,0.1)', pct: '?' };
                 const isLastWon = spinResult?.prize.id === p.id;
 
                 return (
@@ -946,7 +950,7 @@ function RouletteContent() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{spin.prizeValue > 0 ? '🎉' : '💨'}</span>
+                        <span>{spin.prizeValue > 0 ? '✦' : '✧'}</span>
                         <span style={{ fontWeight: 500 }}>{spin.prizeLabel}</span>
                       </div>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -996,7 +1000,7 @@ function RouletteContent() {
                 filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.4))',
                 animation: 'bounce 1s infinite alternate',
               }}>
-                {PRIZE_META[spinResult.prize.id]?.icon || '🎁'}
+                {PRIZE_META[spinResult.prize.id]?.icon || '✦'}
               </div>
 
               <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '6px' }}>
@@ -1020,7 +1024,7 @@ function RouletteContent() {
                   marginBottom: '24px',
                 }}>
                   <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFF' }}>
-                    ⚡ +{spinResult.finalXp || spinResult.prize.value} XP
+                    ✦ +{spinResult.finalXp || spinResult.prize.value} XP
                   </div>
                   {(spinResult.streakBonusPercent || 0) > 0 && (
                     <div style={{ fontSize: '0.78rem', color: '#FBBF24', fontWeight: 700 }}>
