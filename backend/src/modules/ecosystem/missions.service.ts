@@ -381,13 +381,13 @@ export const claimAllMissions = async (userId: string) => {
 };
 
 export const STREAK_REWARDS = [
-  { day: 1, stardust: 15, xp: 0, label: '15 Stardust ⭐' },
-  { day: 2, stardust: 25, xp: 50, label: '25 Stardust + 50 XP' },
-  { day: 3, stardust: 40, xp: 0, label: '40 Stardust ⭐' },
-  { day: 4, stardust: 60, xp: 0, label: '60 Stardust ⭐' },
-  { day: 5, stardust: 75, xp: 150, label: '75 Stardust + 150 XP' },
-  { day: 6, stardust: 100, xp: 0, label: '100 Stardust ⭐' },
-  { day: 7, stardust: 300, xp: 300, isChest: true, label: '¡Cofre Misterioso + 300 Stardust!' },
+  { day: 1, stardust: 15, xp: 0, label: '15 ★ Stardust' },
+  { day: 2, stardust: 25, xp: 50, label: '25 ★ Stardust + 50 XP' },
+  { day: 3, stardust: 40, xp: 0, label: '40 ★ Stardust' },
+  { day: 4, stardust: 60, xp: 0, label: '60 ★ Stardust' },
+  { day: 5, stardust: 75, xp: 150, label: '75 ★ Stardust + 150 XP' },
+  { day: 6, stardust: 100, xp: 0, label: '100 ★ Stardust' },
+  { day: 7, stardust: 300, xp: 300, isChest: true, label: '✦ Cofre Misterioso + 300 ★ Stardust' },
 ];
 
 export const getDailyStreak = async (userId: string) => {
