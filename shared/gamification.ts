@@ -121,7 +121,7 @@ export const PASS_TIERS: PassTier[] = [
   {
     id: 'bronze',
     name: 'Bronce',
-    icon: '🪙',
+    icon: '✦',
     color: '#CD7F32',
     gradient: 'linear-gradient(135deg, #CD7F32, #A0652A)',
     glowColor: 'rgba(205, 127, 50, 0.4)',
@@ -132,7 +132,7 @@ export const PASS_TIERS: PassTier[] = [
   {
     id: 'silver',
     name: 'Plata',
-    icon: '🥈',
+    icon: '✧',
     color: '#C0C0C0',
     gradient: 'linear-gradient(135deg, #E8E8E8, #A0A0A0)',
     glowColor: 'rgba(192, 192, 192, 0.4)',
@@ -143,7 +143,7 @@ export const PASS_TIERS: PassTier[] = [
   {
     id: 'gold',
     name: 'Oro',
-    icon: '🥇',
+    icon: '★',
     color: '#FFD700',
     gradient: 'linear-gradient(135deg, #FFD700, #FF8C00)',
     glowColor: 'rgba(255, 215, 0, 0.4)',
@@ -154,7 +154,7 @@ export const PASS_TIERS: PassTier[] = [
   {
     id: 'platinum',
     name: 'Platino',
-    icon: '💎',
+    icon: '✦',
     color: '#00E5FF',
     gradient: 'linear-gradient(135deg, #00E5FF, #0099CC)',
     glowColor: 'rgba(0, 229, 255, 0.4)',
@@ -165,7 +165,7 @@ export const PASS_TIERS: PassTier[] = [
   {
     id: 'diamond',
     name: 'Diamante',
-    icon: '🔮',
+    icon: '∞',
     color: '#B026FF',
     gradient: 'linear-gradient(135deg, #B026FF, #6B21A8)',
     glowColor: 'rgba(176, 38, 255, 0.4)',

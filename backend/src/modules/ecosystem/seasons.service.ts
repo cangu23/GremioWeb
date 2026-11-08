@@ -1,7 +1,22 @@
 import prisma from '../../database/prisma';
 import AppError from '../../errors/AppError';
 import { addStardust } from './stardust.service';
-import { awardCustomXp } from '../gamification/gamification.service';
+import * as GamificationRepository from '../gamification/gamification.repository';
+import { getLevelFromXp } from '@gremio-estelar/shared';
+
+/** Helper to grant XP without circular dependencies */
+const awardXpDirectly = async (userId: string, amount: number) => {
+  if (amount <= 0) return;
+  const user = await GamificationRepository.getUserGamificationProfile(userId);
+  if (!user) return;
+  await GamificationRepository.addXpToUser(userId, amount);
+  const newTotal = user.xp + amount;
+  const newLevel = getLevelFromXp(newTotal);
+  if (newLevel > user.level) {
+    await GamificationRepository.setUserLevel(userId, newLevel);
+  }
+};
+
 import { PASS_TIERS, getTierForLevel, getTierProgress, isTierRevealed } from '@gremio-estelar/shared';
 
 // Caché ligero por proceso de temporada activa y niveles del pase. Evita
@@ -13,23 +28,170 @@ export const invalidateActiveSeasonCache = () => {
   activeSeasonCache = null;
 };
 
+export const closeSeasonAndRollover = async (oldSeason: any) => {
+  try {
+    const userPasses = await prisma.userSeasonPass.findMany({
+      where: { seasonId: oldSeason.id },
+      include: { user: { select: { id: true, username: true } } },
+    });
+
+    const passLevels = await prisma.passLevel.findMany({
+      where: { seasonId: oldSeason.id },
+      orderBy: { level: 'asc' },
+    });
+
+    for (const up of userPasses) {
+      try {
+        let claimed: number[] = [];
+        try {
+          claimed = JSON.parse(up.claimedLevels || '[]');
+        } catch {
+          claimed = [];
+        }
+
+        const unclaimedLevels = passLevels.filter(
+          (l) => l.level <= up.level && !claimed.includes(l.level)
+        );
+
+        let autoStardust = 0;
+        let autoXp = 0;
+        const newClaimed = [...claimed];
+
+        for (const targetLevel of unclaimedLevels) {
+          newClaimed.push(targetLevel.level);
+          const freeReward = targetLevel.freeReward ? JSON.parse(targetLevel.freeReward) : null;
+          const premiumReward = targetLevel.premiumReward ? JSON.parse(targetLevel.premiumReward) : null;
+
+          if (freeReward) {
+            if (freeReward.type === 'stardust') autoStardust += freeReward.amount;
+            else if (freeReward.type === 'xp') autoXp += freeReward.amount;
+            else if (freeReward.type === 'title') {
+              await grantTitleToUser(up.userId, freeReward.label).catch(() => {});
+            }
+          }
+
+          if (up.isPremium && premiumReward) {
+            if (premiumReward.type === 'stardust') autoStardust += premiumReward.amount;
+            else if (premiumReward.type === 'xp') autoXp += premiumReward.amount;
+            else if (premiumReward.type === 'title') {
+              await grantTitleToUser(up.userId, premiumReward.label).catch(() => {});
+            }
+          }
+        }
+
+        if (autoStardust > 0) {
+          await addStardust(up.userId, autoStardust, `Auto-Reclamo Cierre de ${oldSeason.name}`).catch(() => {});
+        }
+        if (autoXp > 0) {
+          await awardXpDirectly(up.userId, autoXp).catch(() => {});
+        }
+
+        // Grant Season League Commemorative Title
+        let leagueTitle = '';
+        if (up.level >= 50) {
+          leagueTitle = `Campeón T${oldSeason.number} Diamante`;
+        } else if (up.level >= 40) {
+          leagueTitle = `Veterano T${oldSeason.number} Platino`;
+        } else if (up.level >= 30) {
+          leagueTitle = `Pionero T${oldSeason.number} Oro`;
+        } else if (up.level >= 20) {
+          leagueTitle = `Miembro T${oldSeason.number} Plata`;
+        } else if (up.level >= 10) {
+          leagueTitle = `Aventurero T${oldSeason.number} Bronce`;
+        }
+
+        if (leagueTitle) {
+          await grantTitleToUser(up.userId, leagueTitle).catch(() => {});
+        }
+
+        await prisma.userSeasonPass.update({
+          where: { id: up.id },
+          data: { claimedLevels: JSON.stringify(newClaimed) },
+        }).catch(() => {});
+
+        const summaryMsg = autoStardust > 0 || autoXp > 0
+          ? `La ${oldSeason.name} ha finalizado. Hemos auto-reclamado tus niveles pendientes (+${autoStardust} ★ Stardust, +${autoXp} XP)${leagueTitle ? ` y tu título de temporada: "${leagueTitle}"` : ''}.`
+          : `La ${oldSeason.name} ha finalizado.${leagueTitle ? ` ¡Felicidades por obtener tu título de temporada: "${leagueTitle}"!` : ''}`;
+
+        await prisma.notification.create({
+          data: {
+            userId: up.userId,
+            type: 'SYSTEM',
+            title: '✦ ¡Fin de Temporada!',
+            message: summaryMsg,
+          },
+        }).catch(() => {});
+      } catch (err) {
+        console.error(`Error processing season rollover for user ${up.userId}:`, err);
+      }
+    }
+
+    await prisma.season.update({
+      where: { id: oldSeason.id },
+      data: { active: false },
+    });
+
+    const nextNumber = (oldSeason.number || 1) + 1;
+    const seasonThemes = [
+      { name: `Temporada ${nextNumber}: Vía Láctea ✦`, theme: 'milkyway' },
+      { name: `Temporada ${nextNumber}: Nebulosa Mística ✦`, theme: 'nebula' },
+      { name: `Temporada ${nextNumber}: Eclipse Cósmico ✦`, theme: 'eclipse' },
+      { name: `Temporada ${nextNumber}: Supernova Estelar ✦`, theme: 'supernova' },
+      { name: `Temporada ${nextNumber}: Constelación de Cristal ✦`, theme: 'crystal' },
+    ];
+    const themeInfo = seasonThemes[(nextNumber - 1) % seasonThemes.length];
+
+    const startsAt = new Date();
+    const endsAt = new Date(startsAt.getTime() + 45 * 24 * 60 * 60 * 1000);
+
+    const newSeason = await prisma.season.create({
+      data: {
+        name: themeInfo.name,
+        theme: themeInfo.theme,
+        number: nextNumber,
+        startsAt,
+        endsAt,
+        active: true,
+      },
+    });
+
+    await seedPassLevels(newSeason.id);
+    activeSeasonCache = null;
+    return newSeason;
+  } catch (err) {
+    console.error('Error during closeSeasonAndRollover:', err);
+    activeSeasonCache = null;
+    return null;
+  }
+};
+
 export const getOrCreateActiveSeason = async () => {
+  if (!prisma?.season?.findFirst) return null;
+
   if (activeSeasonCache && Date.now() - activeSeasonCache.timestamp < ACTIVE_SEASON_CACHE_TTL_MS) {
     return activeSeasonCache.season;
   }
 
+  const now = new Date();
   let season = await prisma.season.findFirst({
     where: { active: true },
   });
 
+  // Automatic rollover if active season has expired
+  if (season && season.endsAt && new Date(season.endsAt) <= now) {
+    await closeSeasonAndRollover(season);
+    season = await prisma.season.findFirst({
+      where: { active: true },
+    });
+  }
+
   if (!season) {
     const startsAt = new Date();
-    const endsAt = new Date();
-    endsAt.setMonth(endsAt.getMonth() + 2); // 2-month season
+    const endsAt = new Date(startsAt.getTime() + 45 * 24 * 60 * 60 * 1000); // 45 days (6 weeks)
 
     season = await prisma.season.create({
       data: {
-        name: 'Temporada 1: Lluvia de Estrellas ⭐',
+        name: 'Temporada 1: Lluvia de Estrellas ✦',
         theme: 'stars',
         number: 1,
         startsAt,
@@ -84,15 +246,15 @@ function generateRewardForLevel(level: number): {
     const stardustAmount = baseAmount;
     const premiumAmount = Math.round(baseAmount * 3);
     return {
-      free: { type: 'stardust', amount: stardustAmount, label: `${stardustAmount} Stardust ⭐` },
-      premium: { type: 'stardust', amount: premiumAmount, label: `${premiumAmount} Stardust ⭐` },
+      free: { type: 'stardust', amount: stardustAmount, label: `${stardustAmount} ★ Polvo Estelar` },
+      premium: { type: 'stardust', amount: premiumAmount, label: `${premiumAmount} ★ Polvo Estelar` },
     };
   } else {
     const xpAmount = baseAmount;
     const premiumStardust = Math.round(baseAmount * 2);
     return {
       free: { type: 'xp', amount: xpAmount, label: `${xpAmount} XP` },
-      premium: { type: 'stardust', amount: premiumStardust, label: `${premiumStardust} Stardust ⭐` },
+      premium: { type: 'stardust', amount: premiumStardust, label: `${premiumStardust} ★ Polvo Estelar` },
     };
   }
 }
@@ -118,6 +280,79 @@ export const seedPassLevels = async (seasonId: string) => {
 };
 
 import { hasAnyRole, isStaffRole } from '@gremio-estelar/shared';
+
+
+/**
+ * Advance Season Pass progress when user earns XP anywhere in the app.
+ * Each Pass level requires 150 XP (~1.1 levels per day with active play).
+ * Levels 50+ enter "Prestigio Infinito" granting +50 ★ Stardust per 150 XP.
+ */
+export const addSeasonPassXp = async (userId: string, xpEarned: number) => {
+  if (xpEarned <= 0 || !prisma?.season?.findFirst || !prisma?.userSeasonPass?.findUnique) return;
+  try {
+    const season = await getOrCreateActiveSeason();
+    if (!season) return;
+
+    let userPass = await prisma.userSeasonPass.findUnique({
+      where: { userId_seasonId: { userId, seasonId: season.id } },
+    });
+
+    if (!userPass) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { plan: true, role: true },
+      });
+      const isVip = isStaffRole(user?.role) || hasAnyRole(user?.role, ['VIP_STELLAR']);
+      const isPremiumUser = isVip || (user?.plan && user.plan !== 'FREE');
+      userPass = await prisma.userSeasonPass.create({
+        data: {
+          userId,
+          seasonId: season.id,
+          level: 1,
+          xp: 0,
+          isPremium: isPremiumUser,
+          claimedLevels: '[]',
+        },
+      });
+    }
+
+    const XP_PER_PASS_LEVEL = 150;
+    const totalXp = (userPass.xp || 0) + xpEarned;
+    const levelsGained = Math.floor(totalXp / XP_PER_PASS_LEVEL);
+    const remainderXp = totalXp % XP_PER_PASS_LEVEL;
+
+    if (levelsGained > 0) {
+      if (userPass.level < 50) {
+        const newLevel = Math.min(50, userPass.level + levelsGained);
+        await prisma.userSeasonPass.update({
+          where: { id: userPass.id },
+          data: {
+            level: newLevel,
+            xp: remainderXp,
+          },
+        });
+      } else {
+        // Prestigio Infinito (Nivel 50 alcanzado):
+        // Cada 150 XP otorga +50 ★ Polvo Estelar repetible
+        const bonusStardust = levelsGained * 50;
+        await addStardust(userId, bonusStardust, 'Recompensa Prestigio Pase Estelar (Nivel 50+)').catch(() => {});
+        await prisma.userSeasonPass.update({
+          where: { id: userPass.id },
+          data: {
+            xp: remainderXp,
+          },
+        });
+      }
+    } else {
+      await prisma.userSeasonPass.update({
+        where: { id: userPass.id },
+        data: { xp: remainderXp },
+      });
+    }
+  } catch (err) {
+    console.error('Error adding season pass XP:', err);
+  }
+};
 
 export const getUserSeasonPass = async (userId: string) => {
   const season = await getOrCreateActiveSeason();
@@ -145,15 +380,14 @@ export const getUserSeasonPass = async (userId: string) => {
       data: {
         userId,
         seasonId: season.id,
-        level: userLevel,
+        level: 1,
         xp: 0,
         isPremium: !!isPremiumUser || !!passPurchase,
         claimedLevels: '[]',
       },
     });
   } else {
-    const updatedLevel = Math.max(userPass.level, userLevel);
-    // If not premium yet, check if user has a Stardust purchase transaction
+    // Sync premium state if plan changed or stardust transaction exists
     let targetPremium = userPass.isPremium || !!isPremiumUser;
     if (!targetPremium) {
       const passPurchase = await prisma.stardustTransaction.findFirst({
@@ -162,11 +396,10 @@ export const getUserSeasonPass = async (userId: string) => {
       if (passPurchase) targetPremium = true;
     }
 
-    if (userPass.level !== updatedLevel || userPass.isPremium !== targetPremium) {
+    if (userPass.isPremium !== targetPremium) {
       userPass = await prisma.userSeasonPass.update({
         where: { id: userPass.id },
         data: {
-          level: updatedLevel,
           isPremium: targetPremium,
         },
       });
@@ -278,7 +511,7 @@ export const claimPassLevel = async (userId: string, levelNumber: number) => {
       const res = await addStardust(userId, targetLevel.freeReward.amount, `Recompensa Pase Nivel ${levelNumber}`);
       summary += `+${typeof res === 'object' ? res.stardustEarned : targetLevel.freeReward.amount} Stardust ⭐ `;
     } else if (targetLevel.freeReward.type === 'xp') {
-      await awardCustomXp(userId, targetLevel.freeReward.amount).catch(() => {});
+      await awardXpDirectly(userId, targetLevel.freeReward.amount).catch(() => {});
       summary += `+${targetLevel.freeReward.amount} XP `;
     } else if (targetLevel.freeReward.type === 'title') {
       await grantTitleToUser(userId, targetLevel.freeReward.label).catch(() => {});
@@ -292,7 +525,7 @@ export const claimPassLevel = async (userId: string, levelNumber: number) => {
       const res = await addStardust(userId, targetLevel.premiumReward.amount, `Recompensa Premium Pase Nivel ${levelNumber}`);
       summary += `+${typeof res === 'object' ? res.stardustEarned : targetLevel.premiumReward.amount} Stardust (Premium) ⭐ `;
     } else if (targetLevel.premiumReward.type === 'xp') {
-      await awardCustomXp(userId, targetLevel.premiumReward.amount).catch(() => {});
+      await awardXpDirectly(userId, targetLevel.premiumReward.amount).catch(() => {});
       summary += `+${targetLevel.premiumReward.amount} XP (Premium) `;
     } else if (targetLevel.premiumReward.type === 'title') {
       await grantTitleToUser(userId, targetLevel.premiumReward.label).catch(() => {});
@@ -360,7 +593,7 @@ export const claimAllPassLevels = async (userId: string) => {
     await addStardust(userId, totalStardust, `Recompensa Pase Estelar (Reclamar Todo - ${unclaimedUnlockedLevels.length} niveles)`);
   }
   if (totalXp > 0) {
-    await awardCustomXp(userId, totalXp).catch(() => {});
+    await awardXpDirectly(userId, totalXp).catch(() => {});
   }
 
   return {
@@ -523,7 +756,7 @@ export const openMysteryChest = async (userId: string) => {
     await addStardust(userId, stardustAmount, 'Cofre Estelar Misterioso');
   }
   if (xpAmount > 0) {
-    await awardCustomXp(userId, xpAmount).catch(() => {});
+    await awardXpDirectly(userId, xpAmount).catch(() => {});
   }
 
   return {

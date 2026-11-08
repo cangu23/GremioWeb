@@ -154,7 +154,7 @@ export default function SendStardustModal({
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
+        ctx.resume().catch(() => { });
       }
       const notes = [523.25, 659.25, 783.99, 1046.50];
       notes.forEach((freq, i) => {
@@ -169,7 +169,7 @@ export default function SendStardustModal({
         osc.start(ctx.currentTime + i * 0.08);
         osc.stop(ctx.currentTime + i * 0.08 + 0.35);
       });
-    } catch {}
+    } catch { }
   };
 
   const handleSend = async (e: React.FormEvent) => {

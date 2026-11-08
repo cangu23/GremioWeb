@@ -367,7 +367,7 @@ function MysteryChestModal({
               color: '#38bdf8', fontWeight: 900, fontSize: '1.1rem',
               display: 'flex', alignItems: 'center', gap: '6px',
             }}>
-              <span>⚡ +{rewardData.xpAmount} XP</span>
+              <span>✦ +{rewardData.xpAmount} XP</span>
             </div>
           )}
 
@@ -378,7 +378,7 @@ function MysteryChestModal({
               color: '#c084fc', fontWeight: 900, fontSize: '1rem',
               display: 'flex', alignItems: 'center', gap: '6px',
             }}>
-              <span>🖼️ Marco: {rewardData.frameGranted}</span>
+              <span>✦ Marco: {rewardData.frameGranted}</span>
             </div>
           )}
         </div>
@@ -392,7 +392,7 @@ function MysteryChestModal({
             cursor: 'pointer', boxShadow: '0 0 20px rgba(251, 191, 36, 0.4)',
           }}
         >
-          ¡Aceptar Recompensas! ✨
+          ¡Aceptar Recompensas! ✦
         </button>
       </div>
     </div>
@@ -494,7 +494,7 @@ function TierCard({
 
   const statusColor = isComplete ? '#22c55e' : isActive ? tier.color : '#52525b';
   const statusLabel = isComplete ? 'Completado' : isActive ? 'Activo' : 'Bloqueado';
-  const statusIcon = isComplete ? '✓' : isActive ? '◉' : '✕';
+  const statusIcon = isComplete ? '✦' : isActive ? '◉' : '✧';
 
   return (
     <div style={{
@@ -637,10 +637,10 @@ function TierCard({
                     border: '1px solid rgba(255,255,255,0.04)',
                   }}>
                     <div style={{ fontSize: '0.62rem', color: '#888', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                      Gratuito {isChestLevel && '🎁 Cofre'}
+                      Gratuito {isChestLevel && '✦ Cofre'}
                     </div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#ddd', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span>{isChestLevel ? '🎁 Cofre Misterioso Estelar' : (lvl.freeReward?.label?.replace(/\s*[⭐✨🌟🌸]\s*/g, '') || '—')}</span>
+                      <span>{isChestLevel ? '✦ Cofre Misterioso Estelar' : (lvl.freeReward?.label?.replace(/\s*[⭐✨🌟🌸]\s*/g, '') || '—')}</span>
                       {lvl.freeReward?.type === 'stardust' && !isChestLevel && <StarIcon size={11} color="#fbbf24" />}
                     </div>
                   </div>
@@ -750,8 +750,9 @@ export default function StellarPassPage() {
     }
   }, []);
 
-  // FOMO Countdown Timer to UTC Midnight
+  // FOMO Countdown Timer to UTC Midnight & Season End
   const [timeToReset, setTimeToReset] = useState<string>('');
+  const [seasonTimeLeft, setSeasonTimeLeft] = useState<string>('');
 
   const [expandedTiers, setExpandedTiers] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -769,20 +770,31 @@ export default function StellarPassPage() {
       const diffMs = nextReset.getTime() - now.getTime();
       if (diffMs <= 0) {
         setTimeToReset('00:00:00');
-        return;
+      } else {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+        setTimeToReset(
+          `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+        );
       }
 
-      const hours = Math.floor(diffMs / (1000 * 60 * 60));
-      const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-      setTimeToReset(
-        `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-      );
+      if (data?.season?.endsAt) {
+        const seasonEnd = new Date(data.season.endsAt).getTime();
+        const seasonDiff = seasonEnd - now.getTime();
+        if (seasonDiff <= 0) {
+          setSeasonTimeLeft('¡Temporada finalizada!');
+        } else {
+          const sDays = Math.floor(seasonDiff / (1000 * 60 * 60 * 24));
+          const sHours = Math.floor((seasonDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const sMins = Math.floor((seasonDiff % (1000 * 60 * 60)) / (1000 * 60));
+          setSeasonTimeLeft(`${sDays}d ${sHours}h ${sMins}m`);
+        }
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [data?.season?.endsAt]);
 
   // useCallback (con `user` en deps) para que el efecto de carga tenga
   // dependencias estables y no se re-ejecute en bucle (antes eran funciones
@@ -1038,16 +1050,27 @@ export default function StellarPassPage() {
                 <StarIcon size={12} color="#fbbf24" /> TEMPORADA ACTIVA
               </div>
 
-              {/* FOMO Countdown Timer */}
+              {/* Season Countdown */}
+              {seasonTimeLeft && (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '4px 12px', borderRadius: '999px',
+                  background: 'rgba(168, 85, 247, 0.18)', border: '1px solid rgba(168, 85, 247, 0.45)',
+                  color: '#c084fc', fontSize: '0.78rem', fontWeight: 800,
+                }}>
+                  ✦ Temporada: {seasonTimeLeft}
+                </div>
+              )}
+
+              {/* Daily Reset Timer */}
               {timeToReset && (
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: '6px',
                   padding: '4px 12px', borderRadius: '999px',
-                  background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)',
-                  color: '#f87171', fontSize: '0.78rem', fontWeight: 800,
-                  boxShadow: '0 0 10px rgba(239, 68, 68, 0.2)',
+                  background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.35)',
+                  color: '#38bdf8', fontSize: '0.78rem', fontWeight: 800,
                 }}>
-                  ⏱️ Reinicio en: {timeToReset}
+                  ✧ Misiones Diarias: {timeToReset}
                 </div>
               )}
             </div>
@@ -1306,7 +1329,7 @@ export default function StellarPassPage() {
                             fontSize: '1.4rem',
                             filter: tier.isRevealed ? 'none' : 'grayscale(1) opacity(0.3)',
                           }}>
-                            {tier.isRevealed ? tier.icon : '❓'}
+                            {tier.isRevealed ? tier.icon : '✧'}
                           </span>
                           <span style={{
                             fontSize: '0.68rem', fontWeight: 700,
@@ -1316,7 +1339,7 @@ export default function StellarPassPage() {
                             {tier.isRevealed ? tier.name : '???'}
                           </span>
                           <span style={{ fontSize: '0.6rem', color: '#666' }}>
-                            {tier.isRevealed ? `Lv.${tier.minLevel}-${tier.maxLevel}` : '🔒'}
+                            {tier.isRevealed ? `Lv.${tier.minLevel}-${tier.maxLevel}` : '✦ Bloqueado'}
                           </span>
                         </div>
                       </div>
@@ -1429,7 +1452,7 @@ export default function StellarPassPage() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '1.4rem', boxShadow: '0 0 15px rgba(249, 115, 22, 0.5)',
                     }}>
-                      🔥
+                      ★
                     </div>
                     <div>
                       <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#fff' }}>
@@ -1473,7 +1496,7 @@ export default function StellarPassPage() {
                         DÍAS {d.day}
                       </span>
                       <span style={{ fontSize: '1.4rem' }}>
-                        {d.isChest ? '🎁' : '⭐'}
+                        {d.isChest ? '✦' : '★'}
                       </span>
                       <span style={{ fontSize: '0.72rem', fontWeight: 800, color: d.isCompleted ? '#22c55e' : '#fff' }}>
                         {d.label}
@@ -1543,7 +1566,7 @@ export default function StellarPassPage() {
             {/* 3. MISSIONS LIST GRID */}
             {loading ? (
               <div style={{ textAlign: 'center', padding: '60px', color: '#a1a1aa' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🎯</div>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>✦</div>
                 <div>Cargando Misiones...</div>
               </div>
             ) : missions.length > 0 ? (

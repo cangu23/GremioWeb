@@ -3,6 +3,7 @@ import { getLevelFromXp, XP_REWARDS, isVerifiedEffective } from '@gremio-estelar
 import * as GamificationRepository from './gamification.repository';
 import * as NotificationsService from '../notifications/notifications.service';
 import { getXpMultiplier } from '../subscriptions/platform-subscriptions.service';
+import { addSeasonPassXp } from '../ecosystem/seasons.service';
 import prisma from '../../database/prisma';
 
 export const getMyGamificationProfile = async (userId: string) => {
@@ -72,6 +73,7 @@ async function awardXpBase(userId: string, xpAmount: number) {
   const finalXp = Math.max(1, Math.round(xpAmount * multiplier));
 
   await GamificationRepository.addXpToUser(userId, finalXp);
+  await addSeasonPassXp(userId, finalXp).catch(() => {});
 
   let runningTotal = user.xp + finalXp;
   let runningLevel = getLevelFromXp(runningTotal);

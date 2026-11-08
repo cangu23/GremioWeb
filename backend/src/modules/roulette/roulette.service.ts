@@ -3,6 +3,7 @@ import prisma from '../../database/prisma';
 import * as GamificationRepository from '../gamification/gamification.repository';
 import { getXpMultiplierForUser } from '../subscriptions/platform-subscriptions.service';
 import { addStardust, spendStardust, getStardustBalance } from '../ecosystem/stardust.service';
+import { addSeasonPassXp } from '../ecosystem/seasons.service';
 
 // ── Enhanced Prize Pool (Includes Mystic Chests & Epic Rewards) ──
 // Balanced so the expected Stardust value per spin stays well BELOW the
@@ -182,6 +183,7 @@ export const spin = async (userId: string) => {
   // Award XP & Stardust
   if (finalXp > 0) {
     await GamificationRepository.addXpToUser(userId, finalXp);
+    await addSeasonPassXp(userId, finalXp).catch(() => {});
   }
   if (finalStardust > 0) {
     await addStardust(userId, finalStardust, `Ruleta: ${prize.label}`).catch(() => {});
@@ -259,6 +261,7 @@ export const spinWithStardust = async (userId: string) => {
 
   if (finalXp > 0) {
     await GamificationRepository.addXpToUser(userId, finalXp);
+    await addSeasonPassXp(userId, finalXp).catch(() => {});
   }
   if (finalStardust > 0) {
     await addStardust(userId, finalStardust, `Ruleta (Extra): ${prize.label}`).catch(() => {});

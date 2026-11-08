@@ -4,6 +4,7 @@ import * as GamificationRepository from '../gamification/gamification.repository
 import { getXpMultiplierForUser } from '../subscriptions/platform-subscriptions.service';
 import { addStardust } from '../ecosystem/stardust.service';
 import { trackMissionProgress } from '../ecosystem/missions.service';
+import { addSeasonPassXp } from '../ecosystem/seasons.service';
 import * as GamificationService from '../gamification/gamification.service';
 
 const DAILY_REWARDS = [
@@ -156,6 +157,7 @@ export const claim = async (userId: string) => {
   const multiplier = await getXpMultiplierForUser(userId);
   const finalXp = Math.max(1, Math.round(reward.xp * multiplier));
   await GamificationRepository.addXpToUser(userId, finalXp);
+  await addSeasonPassXp(userId, finalXp).catch(() => {});
   await addStardust(userId, Math.round(reward.xp / 2), `Recompensa Diaria Día ${reward.day}`).catch(() => {});
   await trackMissionProgress(userId, 'DAILY_LOGIN').catch(() => {});
 
@@ -166,6 +168,6 @@ export const claim = async (userId: string) => {
     bonus: reward.bonus || false,
     label: reward.label,
     usedStreakSaver,
-    message: `+${finalXp} XP — ${reward.bonus ? '¡BONUS!' : `Día ${reward.day}`}${usedStreakSaver ? ' 🛡️ (¡Escudo de Racha usado!)' : ''}`,
+    message: `+${finalXp} XP — ${reward.bonus ? '¡BONUS!' : `Día ${reward.day}`}${usedStreakSaver ? ' ✦ (¡Escudo de Racha usado!)' : ''}`,
   };
 };
