@@ -24,12 +24,13 @@ export const createPost = async (payload: CreatePostPayload, userId: string, men
     userId,
   });
 
-  // Process hashtags
-  const hashtagRegex = /#(\w+)/g;
+  // Process hashtags with full Unicode support (Spanish accents, ñ, kana/kanji)
+  const hashtagRegex = /#([\p{L}\p{N}_]+)/gu;
   const hashtags = cleanContent ? cleanContent.match(hashtagRegex) : null;
   if (hashtags) {
     for (const tag of hashtags) {
-      const name = tag.slice(1); // Remove #
+      const name = tag.slice(1).toLowerCase().trim(); // Remove # and normalize
+      if (!name) continue;
       const hashtag = await PostsRepository.findOrCreateHashtag(name);
       await PostsRepository.linkPostToHashtag(post.id, hashtag.id);
     }
@@ -598,9 +599,26 @@ export const getTrendingHashtags = async (limit = 10) => {
   return PostsRepository.findTrendingHashtags(limit);
 };
 
-export const getPostsByHashtag = async (hashtag: string, page = 1, limit = 20) => {
+export const getPostsByHashtag = async (hashtag: string, currentUserId?: string, page = 1, limit = 20) => {
   const posts = await PostsRepository.findPostsByHashtag(hashtag, page, limit);
-  return posts.map(formatPost);
+  let likedPostIds = new Set<string>();
+
+  if (currentUserId && posts.length > 0) {
+    const postIds = posts.map(p => p.id);
+    const likes = await prisma.like.findMany({
+      where: { userId: currentUserId, postId: { in: postIds } },
+      select: { postId: true },
+    });
+    likedPostIds = new Set(likes.map(l => l.postId!).filter(Boolean));
+  }
+
+  return posts.map(p => {
+    const formatted = formatPost(p);
+    if (currentUserId) {
+      formatted.isLikedByMe = likedPostIds.has(p.id);
+    }
+    return formatted;
+  });
 };
 
 // ========== REPORTS ==========

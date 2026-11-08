@@ -783,7 +783,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
         {post.hashtags.length > 0 && (
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
             {post.hashtags.map(tag => (
-              <Link key={tag} href={`/feed?tag=${tag}`} style={{ fontSize: '0.78rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 500 }}>#{tag}</Link>
+              <Link key={tag} href={`/?tag=${encodeURIComponent(tag)}`} style={{ fontSize: '0.78rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 500 }}>#{tag}</Link>
             ))}
           </div>
         )}

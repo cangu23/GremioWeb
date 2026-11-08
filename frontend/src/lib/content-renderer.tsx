@@ -129,7 +129,7 @@ export function renderFormattedContent(
   }
 
   // Split by hashtags (#tag), mentions (@user), and shortcodes (:name:)
-  const parts = text.split(/(#[\wáéíóúÁÉÍÓÚñÑ]+|@[\w.]+|:[a-zA-Z0-9_.-]+:)/g);
+  const parts = text.split(/(#[\p{L}\p{N}_]+|@[\w.]+|:[a-zA-Z0-9_.-]+:)/gu);
 
   return parts.map((part, i) => {
     // 1. Hashtags (#tag)
@@ -138,7 +138,7 @@ export function renderFormattedContent(
       return (
         <Link
           key={i}
-          href={options?.hashtagLink ? `${options.hashtagLink}${tag}` : `/feed?tag=${tag}`}
+          href={options?.hashtagLink ? `${options.hashtagLink}${encodeURIComponent(tag)}` : `/?tag=${encodeURIComponent(tag)}`}
           style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}
         >
           {part}

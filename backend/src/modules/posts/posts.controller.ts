@@ -151,7 +151,7 @@ export const getPostsByHashtag = async (req: Request, res: Response, next: NextF
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(50, Number(req.query.limit) || 20);
-    const posts = await PostsService.getPostsByHashtag(String(req.params.hashtag), page, limit);
+    const posts = await PostsService.getPostsByHashtag(String(req.params.hashtag), req.user?.id, page, limit);
     res.json(posts);
   } catch (err) { next(err); }
 };

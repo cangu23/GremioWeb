@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { connectSocket } from '@/lib/socket-client';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import type { Socket } from 'socket.io-client';
 import PostCard from '@/components/posts/PostCard';
 import CreatePost from '@/components/posts/CreatePost';
@@ -43,11 +44,21 @@ function HomeContent() {
   const [myGuilds, setMyGuilds] = useState<GuildItem[]>([]);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
 
+  const searchParams = useSearchParams();
+  const tagFromUrl = searchParams?.get('tag') || null;
+
   // Center - Feed
   const {
     posts, setPosts, loading, error, hasMore, loadingMore,
-    feedMode, setFeedMode, switchFeedMode, setPage, loadMore, handleLike,
-  } = usePosts({ user });
+    feedMode, setFeedMode, switchFeedMode, filterTag, setFilterTag, setPage, loadMore, handleLike,
+  } = usePosts({ user, initialTag: tagFromUrl });
+
+  useEffect(() => {
+    const currentTag = searchParams?.get('tag') || null;
+    if (currentTag !== filterTag) {
+      setFilterTag(currentTag);
+    }
+  }, [searchParams]);
 
   const [newPostsQueue, setNewPostsQueue] = useState<any[]>([]);
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
@@ -505,19 +516,33 @@ function HomeContent() {
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {trendingHashtags.map((tag, i) => (
-              <Link key={tag.id} href={`/feed?tag=${tag.name}`} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '6px 8px', borderRadius: '6px', textDecoration: 'none', color: 'var(--text)',
-                fontSize: '0.82rem', transition: 'background 0.15s',
-              }}
-                onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                onMouseOut={e => (e.currentTarget.style.background = 'transparent')}>
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => {
+                  setFilterTag(tag.name);
+                  if (typeof window !== 'undefined') {
+                    window.history.pushState(null, '', `/?tag=${encodeURIComponent(tag.name)}`);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '6px 8px', borderRadius: '6px', border: 'none',
+                  background: filterTag === tag.name ? 'rgba(139,92,246,0.18)' : 'transparent',
+                  color: 'var(--text)',
+                  fontSize: '0.82rem', transition: 'all 0.15s ease',
+                  cursor: 'pointer', width: '100%', textAlign: 'left',
+                }}
+                onMouseOver={e => { if (filterTag !== tag.name) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                onMouseOut={e => { if (filterTag !== tag.name) e.currentTarget.style.background = 'transparent'; }}
+              >
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', minWidth: '16px' }}>#{i + 1}</span>
-                  <span style={{ color: 'var(--primary)', fontWeight: 500 }}>#{tag.name}</span>
+                  <span style={{ color: filterTag === tag.name ? '#c084fc' : 'var(--primary)', fontWeight: 600 }}>#{tag.name}</span>
                 </span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{tag._count.posts}</span>
-              </Link>
+              </button>
             ))}
           </div>
         </div>
@@ -786,6 +811,58 @@ function HomeContent() {
 
       {/* ===== CENTER FEED ===== */}
       <div className="home-feed-center" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Active Tag Filter Banner */}
+        {filterTag && (
+          <div
+            className="glass"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 18px',
+              borderRadius: '14px',
+              marginBottom: '16px',
+              border: '1px solid rgba(139, 92, 246, 0.35)',
+              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(34, 211, 238, 0.08))',
+              animation: 'fadeIn 0.2s ease-out',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.3rem', color: '#c084fc' }}>✦</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ffffff' }}>
+                  Publicaciones con #{filterTag}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Mostrando publicaciones etiquetadas con esta temática
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFilterTag(null);
+                if (typeof window !== 'undefined') {
+                  window.history.pushState(null, '', '/');
+                }
+              }}
+              className="btn btn--sm"
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                padding: '6px 14px',
+                fontSize: '0.8rem',
+                borderRadius: '8px',
+                color: '#ffffff',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              ✕ Quitar filtro
+            </button>
+          </div>
+        )}
+
         {/* Feed mode toggle */}
         <div style={{
           display: 'flex',
@@ -828,10 +905,10 @@ function HomeContent() {
                 fontSize: '0.82rem',
                 borderRadius: '9px',
                 border: 'none',
-                background: feedMode === 'for-you' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: feedMode === 'for-you' ? '#ffffff' : 'var(--text-muted)',
+                background: !filterTag && feedMode === 'for-you' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: !filterTag && feedMode === 'for-you' ? '#ffffff' : 'var(--text-muted)',
                 cursor: 'pointer',
-                fontWeight: feedMode === 'for-you' ? 600 : 500,
+                fontWeight: !filterTag && feedMode === 'for-you' ? 600 : 500,
                 transition: 'all 0.15s ease',
               }}
             >
@@ -845,14 +922,31 @@ function HomeContent() {
                 fontSize: '0.82rem',
                 borderRadius: '9px',
                 border: 'none',
-                background: feedMode === 'following' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: feedMode === 'following' ? '#ffffff' : 'var(--text-muted)',
+                background: !filterTag && feedMode === 'following' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: !filterTag && feedMode === 'following' ? '#ffffff' : 'var(--text-muted)',
                 cursor: 'pointer',
-                fontWeight: feedMode === 'following' ? 600 : 500,
+                fontWeight: !filterTag && feedMode === 'following' ? 600 : 500,
                 transition: 'all 0.15s ease',
               }}
             >
               Siguiendo
+            </button>
+            <button
+              type="button"
+              onClick={() => switchFeedMode('trending')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.82rem',
+                borderRadius: '9px',
+                border: 'none',
+                background: !filterTag && feedMode === 'trending' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: !filterTag && feedMode === 'trending' ? '#ffffff' : 'var(--text-muted)',
+                cursor: 'pointer',
+                fontWeight: !filterTag && feedMode === 'trending' ? 600 : 500,
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Tendencias
             </button>
           </div>
         </div>

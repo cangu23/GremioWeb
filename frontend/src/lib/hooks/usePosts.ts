@@ -12,6 +12,7 @@ export type FeedMode = 'for-you' | 'trending' | 'recent' | 'media' | 'following'
 interface UsePostsOptions {
   user?: { id: string } | null;
   initialFeedMode?: FeedMode;
+  initialTag?: string | null;
   /** Whether to fetch immediately on mount (default: true) */
   autoFetch?: boolean;
 }
@@ -27,6 +28,8 @@ interface UsePostsReturn {
   feedMode: FeedMode;
   setFeedMode: React.Dispatch<React.SetStateAction<FeedMode>>;
   switchFeedMode: (newMode: FeedMode) => void;
+  filterTag: string | null;
+  setFilterTag: (tag: string | null) => void;
   setPage: React.Dispatch<React.SetStateAction<number>>;
   loadMore: () => void;
   handleLike: (postId: string, isLiked: boolean) => Promise<void>;
@@ -37,7 +40,7 @@ interface UsePostsReturn {
 // Hook
 // ==========================================================================
 export function usePosts(options?: UsePostsOptions): UsePostsReturn {
-  const { user, initialFeedMode = 'for-you', autoFetch = true } = options || {};
+  const { user, initialFeedMode = 'for-you', initialTag = null, autoFetch = true } = options || {};
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(autoFetch);
@@ -46,6 +49,7 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [feedMode, setFeedMode] = useState<FeedMode>(initialFeedMode);
+  const [filterTag, setFilterTagState] = useState<string | null>(initialTag || null);
 
   // Guard de secuencia: SOLO los fetches frescos (carga inicial, cambio de
   // feedMode, refetch) invalidan las respuestas en vuelo. Los append (loadMore)
@@ -57,7 +61,10 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
     if (!append) requestSeq.current += 1;
     const seq = requestSeq.current;
     try {
-      const data = await apiFetch(`/posts?limit=20&page=${pageNum}&mode=${feedMode}`, {});
+      const endpoint = filterTag
+        ? `/posts/hashtag/${encodeURIComponent(filterTag.replace(/^#/, ''))}?limit=20&page=${pageNum}`
+        : `/posts?limit=20&page=${pageNum}&mode=${feedMode}`;
+      const data = await apiFetch(endpoint, {});
       if (seq !== requestSeq.current) return; // respuesta obsoleta
       if (append) {
         setPosts(prev => [...prev, ...data]);
@@ -74,7 +81,7 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
         setLoadingMore(false);
       }
     }
-  }, [feedMode]);
+  }, [feedMode, filterTag]);
 
   const loadMore = useCallback(() => {
     // Guard contra llamadas concurrentes: evita fetchear la misma página dos
@@ -121,15 +128,23 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
     }
   }, [user]);
 
+  const setFilterTag = useCallback((tag: string | null) => {
+    setFilterTagState(tag);
+    setPage(1);
+    setLoading(true);
+    setError('');
+  }, []);
+
   const switchFeedMode = useCallback((newMode: FeedMode) => {
+    setFilterTagState(null);
     setFeedMode((current) => {
-      if (current === newMode) return current;
+      if (current === newMode && !filterTag) return current;
       setPage(1);
       setLoading(true);
       setError('');
       return newMode;
     });
-  }, []);
+  }, [filterTag]);
 
   const refetch = useCallback(() => {
     setPage(1);
@@ -156,6 +171,8 @@ export function usePosts(options?: UsePostsOptions): UsePostsReturn {
     feedMode,
     setFeedMode,
     switchFeedMode,
+    filterTag,
+    setFilterTag,
     setPage,
     loadMore,
     handleLike,

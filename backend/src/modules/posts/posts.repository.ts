@@ -125,10 +125,11 @@ export const findPostsByUser = (userId: string, page = 1, limit = 20) => {
 
 export const findPostsByHashtag = (hashtagName: string, page = 1, limit = 20) => {
   const skip = (page - 1) * limit;
+  const cleanName = (hashtagName || '').toLowerCase().replace(/^#/, '').trim();
   return prisma.post.findMany({
     where: {
       hashtags: {
-        some: { hashtag: { name: hashtagName } },
+        some: { hashtag: { name: cleanName } },
       },
     },
     orderBy: { createdAt: 'desc' },
@@ -258,9 +259,67 @@ export const linkPostToHashtag = (postId: string, hashtagId: string) => {
   });
 };
 
-export const findTrendingHashtags = (limit = 10) => {
+export const findTrendingHashtags = async (limit = 10) => {
+  const safeLimit = Math.max(1, Math.min(limit, 30));
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  // 1. Group recent post-hashtag associations from the last 7 days
+  const recentTagGroups = prisma.postHashtag?.groupBy
+    ? await prisma.postHashtag.groupBy({
+        by: ['hashtagId'],
+        where: {
+          post: {
+            createdAt: { gte: sevenDaysAgo },
+          },
+        },
+        _count: {
+          postId: true,
+        },
+        orderBy: {
+          _count: {
+            postId: 'desc',
+          },
+        },
+        take: safeLimit,
+      }).catch(() => [])
+    : [];
+
+  if (recentTagGroups.length > 0) {
+    const hashtagIds = recentTagGroups.map(g => g.hashtagId);
+    const hashtags = await prisma.hashtag.findMany({
+      where: { id: { in: hashtagIds } },
+      select: { id: true, name: true },
+    });
+
+    const hashtagMap = new Map(hashtags.map(h => [h.id, h.name]));
+    const results = recentTagGroups
+      .map(g => ({
+        id: g.hashtagId,
+        name: hashtagMap.get(g.hashtagId) || '',
+        _count: { posts: g._count.postId },
+      }))
+      .filter(r => r.name);
+
+    if (results.length >= safeLimit) {
+      return results;
+    }
+
+    // Fill remaining slots with historical all-time hashtags not in recent
+    const existingIds = new Set(results.map(r => r.id));
+    const fallbackLimit = safeLimit - results.length;
+    const fallbackHashtags = await prisma.hashtag.findMany({
+      where: { id: { notIn: Array.from(existingIds) } },
+      take: fallbackLimit,
+      orderBy: { posts: { _count: 'desc' } },
+      include: { _count: { select: { posts: true } } },
+    });
+
+    return [...results, ...fallbackHashtags];
+  }
+
+  // Fallback: If no activity in last 7 days, return all-time hashtags
   return prisma.hashtag.findMany({
-    take: limit,
+    take: safeLimit,
     orderBy: { posts: { _count: 'desc' } },
     include: { _count: { select: { posts: true } } },
   });
