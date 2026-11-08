@@ -303,7 +303,7 @@ export const addSeasonPassXp = async (userId: string, xpEarned: number) => {
         select: { plan: true, role: true },
       });
       const isVip = isStaffRole(user?.role) || hasAnyRole(user?.role, ['VIP_STELLAR']);
-      const isPremiumUser = isVip || (user?.plan && user.plan !== 'FREE');
+      const isPremiumUser = Boolean(isVip || (user?.plan && user.plan !== 'FREE'));
       userPass = await prisma.userSeasonPass.create({
         data: {
           userId,
@@ -363,7 +363,7 @@ export const getUserSeasonPass = async (userId: string) => {
 
   // El Pase Premium gratis queda solo para staff real y roles VIP de pago.
   const isVip = isStaffRole(user?.role) || hasAnyRole(user?.role, ['VIP_STELLAR']);
-  const isPremiumUser = isVip || (user?.plan && user.plan !== 'FREE');
+  const isPremiumUser = Boolean(isVip || (user?.plan && user.plan !== 'FREE'));
   const userLevel = Math.max(1, user?.level || 1);
 
   let userPass = await prisma.userSeasonPass.findUnique({
