@@ -132,7 +132,7 @@ export default function StardustProgressBar() {
 
   return (
     <>
-      <div className="glass stardust-bar-wrapper" style={{ flexWrap: 'wrap' }}>
+      <div className="glass stardust-bar-wrapper">
         {/* LEFT: STARDUST BADGE & LEVEL PROGRESS */}
         <div className="stardust-bar-left">
           <div style={{
@@ -269,7 +269,9 @@ export default function StardustProgressBar() {
                   <div key={m.id} style={{ padding: '16px', borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <div style={{ fontWeight: 800, color: '#fff' }}>{m.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#fbbf24' }}>+{m.stardustReward} ⭐</div>
+                      <div style={{ fontSize: '0.75rem', color: '#fbbf24', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        +{m.stardustReward} <StarIcon size={12} color="#fbbf24" />
+                      </div>
                     </div>
                     <div style={{ height: '6px', background: '#222', borderRadius: '4px', overflow: 'hidden', marginBottom: '12px' }}>
                       <div style={{ width: `${pct}%`, height: '100%', background: isReady ? '#fbbf24' : '#38bdf8' }} />

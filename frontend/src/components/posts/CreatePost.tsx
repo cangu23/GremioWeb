@@ -213,7 +213,7 @@ export default function CreatePost({
                 value={content}
                 onChange={setContent}
                 onMentionsChange={setMentionIds}
-                placeholder={placeholder || '¿Qué está pasando, estelar? ✨'}
+                placeholder={placeholder || '¿Qué está pasando, estelar? ✦'}
                 maxLength={2000}
                 minHeight="48px"
                 style={{
@@ -278,6 +278,7 @@ export default function CreatePost({
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px',
+                flexWrap: 'wrap', gap: '8px',
               }}>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   <input
@@ -401,7 +402,7 @@ export default function CreatePost({
           value={content}
           onChange={setContent}
           onMentionsChange={setMentionIds}
-          placeholder={placeholder || (user ? 'Arrastra una imagen o escribe algo... Comparte con la comunidad 📸' : 'Inicia sesión para publicar...')}
+          placeholder={placeholder || (user ? 'Arrastra una imagen o escribe algo... Comparte con la comunidad ✦' : 'Inicia sesión para publicar...')}
           maxLength={2000}
           minHeight="80px"
           style={{

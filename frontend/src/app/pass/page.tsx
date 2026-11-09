@@ -1570,7 +1570,7 @@ export default function StellarPassPage() {
                 <div>Cargando Misiones...</div>
               </div>
             ) : missions.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '16px' }}>
                 {[...missions].sort((a, b) => {
                   const aClaimed = !!a.claimedAt;
                   const bClaimed = !!b.claimedAt;

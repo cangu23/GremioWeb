@@ -811,7 +811,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
         </div>
 
         {/* ===== ACTION BUTTONS ===== */}
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div className="post-actions-bar">
           {/* LIKE BUTTON */}
           <button
             type="button"
@@ -826,6 +826,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             }}
             onMouseOver={e => { if (!post.isLikedByMe) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
             onMouseOut={e => { if (!post.isLikedByMe) e.currentTarget.style.background = 'transparent'; }}
+            title={post.isLikedByMe ? 'Ya no me gusta' : 'Me gusta'}
           >
             <svg
               width="17" height="17" viewBox="0 0 24 24"
@@ -834,11 +835,12 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               style={{
                 animation: likeAnimating ? 'postHeartPop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none',
                 filter: post.isLikedByMe ? 'drop-shadow(0 0 6px rgba(139,92,246,0.5))' : 'none',
+                flexShrink: 0,
               }}
             >
               <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/>
             </svg>
-            <span>Me gusta</span>
+            <span className="post-action-btn-label">Me gusta</span>
           </button>
 
           {/* DISLIKE BUTTON */}
@@ -855,6 +857,7 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             }}
             onMouseOver={e => { if (!isDislikedByMe) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
             onMouseOut={e => { if (!isDislikedByMe) e.currentTarget.style.background = 'transparent'; }}
+            title="No me gusta"
           >
             <svg
               width="17" height="17" viewBox="0 0 24 24"
@@ -863,11 +866,12 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               style={{
                 animation: dislikeAnimating ? 'postHeartPop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none',
                 filter: isDislikedByMe ? 'drop-shadow(0 0 6px rgba(255,77,106,0.5))' : 'none',
+                flexShrink: 0,
               }}
             >
               <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10zM17 2h3a2 2 0 012 2v7a2 2 0 01-2 2h-3"/>
             </svg>
-            <span>No me gusta</span>
+            <span className="post-action-btn-label">No me gusta</span>
           </button>
 
           {/* COMMENT BUTTON */}
@@ -879,11 +883,13 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
             transition: 'all 0.2s',
           }}
             onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-            onMouseOut={e => (e.currentTarget.style.background = 'none')}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            onMouseOut={e => (e.currentTarget.style.background = 'none')}
+            title="Comentar"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
-            Comentar
+            <span className="post-action-btn-label">Comentar</span>
           </button>
 
           {/* REACTION BUTTON (NOVA+) */}
@@ -907,8 +913,13 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               onMouseOver={e => { if (canReact) e.currentTarget.style.background = 'rgba(138,43,226,0.18)'; }}
               onMouseOut={e => { if (!showReactionPicker) e.currentTarget.style.background = 'rgba(138,43,226,0.06)'; }}
             >
-              <span style={{ fontSize: '0.95rem', display: 'inline-block', animation: animatingReaction ? 'reactionPop 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.49)' : 'none' }}>😍</span>
-              <span>Reaccionar</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+              </svg>
+              <span className="post-action-btn-label">Reaccionar</span>
             </button>
             {showReactionPicker && (
               <div
@@ -959,11 +970,12 @@ export default function PostCard({ post, onLike, currentUserId, currentUserRole,
               }}
               onMouseOver={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.18)')}
               onMouseOut={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.08)')}
+              title="Regalar Stardust"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1" style={{ flexShrink: 0 }}>
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
-              <span>Regalar</span>
+              <span className="post-action-btn-label">Regalar</span>
             </button>
           )}
         </div>

@@ -887,7 +887,7 @@ function HomeContent() {
             </svg>
             Inicio
           </h1>
-          <div style={{
+          <div className="feed-mode-tabs" style={{
             display: 'flex',
             alignItems: 'center',
             background: 'rgba(255, 255, 255, 0.035)',

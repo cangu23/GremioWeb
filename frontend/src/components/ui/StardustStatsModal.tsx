@@ -55,21 +55,21 @@ function SparkleSvg({ size = 14, color = 'currentColor' }: { size?: number; colo
 function getTransactionMeta(reason: string) {
   const r = (reason || '').toLowerCase();
   if (r.includes('ruleta') || r.includes('giro')) {
-    return { icon: '🎰', bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)', color: '#c084fc', label: 'Ruleta' };
+    return { icon: '✦', bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.3)', color: '#c084fc', label: 'Ruleta' };
   }
   if (r.includes('transferencia') || r.includes('regalo') || r.includes('propina') || r.includes('café') || r.includes('enviada')) {
-    return { icon: '🎁', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)', color: '#fbbf24', label: 'Regalo' };
+    return { icon: '★', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)', color: '#fbbf24', label: 'Regalo' };
   }
   if (r.includes('paypal') || r.includes('plan') || r.includes('bono')) {
-    return { icon: '💳', bg: 'rgba(56, 189, 248, 0.15)', border: 'rgba(56, 189, 248, 0.3)', color: '#38bdf8', label: 'Suscripción' };
+    return { icon: '✧', bg: 'rgba(56, 189, 248, 0.15)', border: 'rgba(56, 189, 248, 0.3)', color: '#38bdf8', label: 'Suscripción' };
   }
   if (r.includes('misión') || r.includes('mission')) {
-    return { icon: '🎯', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.3)', color: '#34d399', label: 'Misión' };
+    return { icon: '✦', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.3)', color: '#34d399', label: 'Misión' };
   }
   if (r.includes('tienda') || r.includes('compra')) {
-    return { icon: '🛍️', bg: 'rgba(244, 63, 94, 0.15)', border: 'rgba(244, 63, 94, 0.3)', color: '#fb7185', label: 'Tienda' };
+    return { icon: '★', bg: 'rgba(244, 63, 94, 0.15)', border: 'rgba(244, 63, 94, 0.3)', color: '#fb7185', label: 'Tienda' };
   }
-  return { icon: '⭐', bg: 'rgba(251, 191, 36, 0.15)', border: 'rgba(251, 191, 36, 0.3)', color: '#fbbf24', label: 'Stardust' };
+  return { icon: '★', bg: 'rgba(251, 191, 36, 0.15)', border: 'rgba(251, 191, 36, 0.3)', color: '#fbbf24', label: 'Stardust' };
 }
 
 function UserAutocompleteInput({
@@ -531,7 +531,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
               transition: 'all 0.15s ease',
             }}
           >
-            🎁 Transferir & Regalar
+            <SparkleSvg size={13} color="#f59e0b" /> Transferir & Regalar
           </button>
           <button
             onClick={() => setActiveTab('history')}
