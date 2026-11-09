@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch, notifyStardustChanged } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
@@ -70,6 +70,135 @@ function getTransactionMeta(reason: string) {
     return { icon: '🛍️', bg: 'rgba(244, 63, 94, 0.15)', border: 'rgba(244, 63, 94, 0.3)', color: '#fb7185', label: 'Tienda' };
   }
   return { icon: '⭐', bg: 'rgba(251, 191, 36, 0.15)', border: 'rgba(251, 191, 36, 0.3)', color: '#fbbf24', label: 'Stardust' };
+}
+
+function UserAutocompleteInput({
+  value,
+  onChange,
+  onSelectUser,
+  placeholder,
+  required,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  onSelectUser: (user: { id: string; username: string; displayName?: string | null }) => void;
+  placeholder?: string;
+  required?: boolean;
+}) {
+  const [results, setResults] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const search = async (q: string) => {
+    const clean = q.replace(/^@/, '').trim();
+    if (!clean) {
+      setResults([]);
+      setOpen(false);
+      return;
+    }
+    try {
+      const data = await apiFetch(`/users/search?q=${encodeURIComponent(clean)}`, {});
+      const list = Array.isArray(data) ? data : data?.data || [];
+      setResults(list.slice(0, 5));
+      setOpen(list.length > 0);
+    } catch {
+      setResults([]);
+      setOpen(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    onChange(val);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => search(val), 180);
+  };
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+      <input
+        type="text"
+        placeholder={placeholder || 'ej: @usuario'}
+        value={value}
+        onChange={handleInputChange}
+        onFocus={() => { if (value.trim()) search(value); }}
+        className="input"
+        style={{ width: '100%', fontSize: '0.88rem' }}
+        required={required}
+      />
+      {open && results.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 4px)',
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          background: '#16162a',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: '12px',
+          padding: '6px',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+          maxHeight: '220px',
+          overflowY: 'auto',
+          animation: 'fadeInUp 0.12s ease-out',
+        }}>
+          {results.map((u) => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => {
+                onSelectUser(u);
+                setOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                width: '100%',
+                padding: '8px',
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--text)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background 0.15s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <UserAvatar
+                src={u.avatarUrl || u.vtuberProfile?.avatarUrl || u.streamerProfile?.avatarUrl}
+                alt={u.username}
+                size={28}
+                user={u}
+                userId={u.id}
+              />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.84rem', color: '#fff' }}>
+                  {u.displayName || u.vtuberProfile?.displayName || u.streamerProfile?.displayName || u.username}
+                </div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                  @{u.username}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function StardustStatsModal({ isOpen, onClose }: StardustStatsModalProps) {
@@ -847,13 +976,11 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                           <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
                             Usuario Destinatario
                           </label>
-                          <input
-                            type="text"
-                            placeholder="ej: @usuario o correo"
+                          <UserAutocompleteInput
                             value={transferTarget}
-                            onChange={(e) => setTransferTarget(e.target.value)}
-                            className="input"
-                            style={{ width: '100%', fontSize: '0.88rem' }}
+                            onChange={setTransferTarget}
+                            onSelectUser={(u) => setTransferTarget(u.username)}
+                            placeholder="ej: @usuario o escribe para buscar..."
                             required
                           />
                         </div>
@@ -881,7 +1008,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                           Mensaje Opcional
                         </label>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
-                          {['¡Excelente contenido! 👏', '¡Un regalito estelar! 🎁', '¡Para un café! ☕', '¡Sigue así, crack! 🚀'].map((msg) => (
+                          {['¡Excelente contenido! ✦', '¡Un regalito estelar! ★', '¡Para apoyar tu contenido! ✧', '¡Sigue así, crack! ✦'].map((msg) => (
                             <button
                               key={msg}
                               type="button"
@@ -902,7 +1029,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         </div>
                         <input
                           type="text"
-                          placeholder="¡Gracias por tu ayuda en el gremio!"
+                          placeholder="¡Gracias por tu apoyo a la comunidad!"
                           value={transferMessage}
                           onChange={(e) => setTransferMessage(e.target.value)}
                           className="input"
@@ -927,7 +1054,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                           cursor: 'pointer',
                         }}
                       >
-                        {transferSubmitting ? 'Enviando...' : '🚀 Regalar Stardust'}
+                        {transferSubmitting ? 'Enviando...' : '✦ Transferir Stardust'}
                       </button>
                     </form>
                   </div>
@@ -1015,13 +1142,11 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                         <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
                           Usuario Destinatario del Regalo
                         </label>
-                        <input
-                          type="text"
-                          placeholder="ej: @amigo o correo"
+                        <UserAutocompleteInput
                           value={giftTarget}
-                          onChange={(e) => setGiftTarget(e.target.value)}
-                          className="input"
-                          style={{ width: '100%', fontSize: '0.88rem' }}
+                          onChange={setGiftTarget}
+                          onSelectUser={(u) => setGiftTarget(u.username)}
+                          placeholder="ej: @amigo o escribe para buscar..."
                           required
                         />
                       </div>
@@ -1040,7 +1165,7 @@ export default function StardustStatsModal({ isOpen, onClose }: StardustStatsMod
                           opacity: !isEligibleToGift ? 0.5 : 1,
                         }}
                       >
-                        {giftSubmitting ? 'Procesando Regalo...' : `🎁 Regalar Plan ${selectedGiftPlan}`}
+                        {giftSubmitting ? 'Procesando Regalo...' : `✦ Regalar Plan ${selectedGiftPlan}`}
                       </button>
                     </form>
                   </div>

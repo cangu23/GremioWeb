@@ -147,6 +147,15 @@ export const getTrendingHashtags = async (req: Request, res: Response, next: Nex
   } catch (err) { next(err); }
 };
 
+export const searchHashtags = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const q = String(req.query.q || '');
+    const limit = Math.min(20, Math.max(1, Number(req.query.limit) || 8));
+    const hashtags = await PostsService.searchHashtags(q, limit);
+    res.json(hashtags);
+  } catch (err) { next(err); }
+};
+
 export const getPostsByHashtag = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);

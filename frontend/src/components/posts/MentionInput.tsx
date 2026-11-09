@@ -28,6 +28,12 @@ interface MentionUser {
   } | null;
 }
 
+interface HashtagItem {
+  id?: string;
+  name: string;
+  _count?: { posts: number };
+}
+
 interface MentionInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -54,12 +60,14 @@ export default function MentionInput({
   style,
   disabled = false,
 }: MentionInputProps) {
-  const [mentionSearch, setMentionSearch] = useState('');  // Text after @
+  const [mentionSearch, setMentionSearch] = useState('');  // Text after trigger (@ or #)
+  const [triggerType, setTriggerType] = useState<'mention' | 'hashtag' | null>(null);
   const [mentionResults, setMentionResults] = useState<MentionUser[]>([]);
+  const [hashtagResults, setHashtagResults] = useState<HashtagItem[]>([]);
   const [showMentions, setShowMentions] = useState(false);
   const [cursorPos, setCursorPos] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [mentionStart, setMentionStart] = useState(-1);  // Cursor pos when @ was typed
+  const [mentionStart, setMentionStart] = useState(-1);  // Cursor pos when trigger was typed
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -77,6 +85,7 @@ export default function MentionInput({
     try {
       const data = await apiFetch(`/users/search/mentions?q=${encodeURIComponent(query)}`, {});
       setMentionResults(data || []);
+      setTriggerType('mention');
       setShowMentions((data?.length || 0) > 0);
       setSelectedIndex(0);
     } catch {
@@ -85,7 +94,21 @@ export default function MentionInput({
     }
   }, []);
 
-  // Handle text input — detect @ character
+  // Search hashtags as user types after #
+  const searchHashtags = useCallback(async (query: string) => {
+    try {
+      const data = await apiFetch(`/posts/hashtags/search?q=${encodeURIComponent(query)}&limit=6`, {});
+      setHashtagResults(data || []);
+      setTriggerType('hashtag');
+      setShowMentions((data?.length || 0) > 0);
+      setSelectedIndex(0);
+    } catch {
+      setHashtagResults([]);
+      setShowMentions(false);
+    }
+  }, []);
+
+  // Handle text input — detect @ (mentions) or # (hashtags)
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     const pos = e.target.selectionStart || 0;
@@ -93,27 +116,34 @@ export default function MentionInput({
 
     onChange(newValue);
 
-    // Look backwards from cursor to find @trigger
+    // Look backwards from cursor to find closest trigger (@ or #)
     const textBefore = newValue.slice(0, pos);
     const atIndex = textBefore.lastIndexOf('@');
-    if (atIndex !== -1) {
-      // Check there's no space before @ (or it's at the start)
-      const charBefore = atIndex > 0 ? textBefore[atIndex - 1] : ' ';
+    const hashIndex = textBefore.lastIndexOf('#');
+
+    const lastTriggerIndex = Math.max(atIndex, hashIndex);
+    if (lastTriggerIndex !== -1) {
+      const isHash = lastTriggerIndex === hashIndex;
+      const charBefore = lastTriggerIndex > 0 ? textBefore[lastTriggerIndex - 1] : ' ';
       if (charBefore === ' ' || charBefore === '\n' || charBefore === '\t') {
-        const afterAt = textBefore.slice(atIndex + 1);
-        // Only trigger if it's alphanumeric (no spaces)
-        if (!afterAt.includes(' ') && !afterAt.includes('\n')) {
-          setMentionSearch(afterAt);
-          setMentionStart(atIndex);
+        const query = textBefore.slice(lastTriggerIndex + 1);
+        if (!query.includes(' ') && !query.includes('\n')) {
+          setMentionSearch(query);
+          setMentionStart(lastTriggerIndex);
           if (searchTimeout.current) clearTimeout(searchTimeout.current);
-          searchTimeout.current = setTimeout(() => searchMentions(afterAt), 150);
+          if (isHash) {
+            searchTimeout.current = setTimeout(() => searchHashtags(query), 150);
+          } else {
+            searchTimeout.current = setTimeout(() => searchMentions(query), 150);
+          }
           return;
         }
       }
     }
 
-    // No active @mention
+    // No active trigger
     setShowMentions(false);
+    setTriggerType(null);
     setMentionStart(-1);
     setMentionSearch('');
   };
@@ -154,27 +184,60 @@ export default function MentionInput({
     });
 
     setShowMentions(false);
+    setTriggerType(null);
     setMentionStart(-1);
     setMentionSearch('');
   };
 
-  // Keyboard navigation for mention dropdown
+  // Insert selected hashtag
+  const insertHashtag = (tag: HashtagItem) => {
+    if (!textareaRef.current) return;
+
+    const textarea = textareaRef.current;
+    const textBefore = value.slice(0, mentionStart);
+    const textAfter = value.slice(mentionStart + 1 + mentionSearch.length);
+    const hashtagText = `#${tag.name} `;
+    const newValue = textBefore + hashtagText + textAfter;
+
+    onChange(newValue);
+
+    const newCursorPos = mentionStart + hashtagText.length;
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    });
+
+    setShowMentions(false);
+    setTriggerType(null);
+    setMentionStart(-1);
+    setMentionSearch('');
+  };
+
+  // Keyboard navigation for autocomplete dropdown
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!showMentions) return;
 
+    const listLength = triggerType === 'hashtag' ? hashtagResults.length : mentionResults.length;
+    if (listLength === 0) return;
+
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % mentionResults.length);
+      setSelectedIndex(prev => (prev + 1) % listLength);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + mentionResults.length) % mentionResults.length);
+      setSelectedIndex(prev => (prev - 1 + listLength) % listLength);
     } else if (e.key === 'Enter' || e.key === 'Tab') {
-      if (selectedIndex >= 0 && selectedIndex < mentionResults.length) {
+      if (selectedIndex >= 0 && selectedIndex < listLength) {
         e.preventDefault();
-        insertMention(mentionResults[selectedIndex]);
+        if (triggerType === 'hashtag') {
+          insertHashtag(hashtagResults[selectedIndex]);
+        } else {
+          insertMention(mentionResults[selectedIndex]);
+        }
       }
     } else if (e.key === 'Escape') {
       setShowMentions(false);
+      setTriggerType(null);
       setMentionStart(-1);
     }
   };
@@ -216,8 +279,8 @@ export default function MentionInput({
         disabled={disabled}
       />
 
-      {/* @mention autocomplete dropdown */}
-      {showMentions && mentionResults.length > 0 && (
+      {/* Autocomplete dropdown (Mentions & Hashtags) */}
+      {showMentions && (
         <div
           ref={dropdownRef}
           style={{
@@ -237,73 +300,128 @@ export default function MentionInput({
             animation: 'fadeInUp 0.12s ease-out',
           }}
         >
-          <div style={{
-            padding: '4px 10px 6px',
-            fontSize: '0.65rem',
-            color: 'var(--text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            fontWeight: 600,
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
-          }}>
-            Menciones
-            <span style={{ marginLeft: '8px', fontWeight: 400, opacity: 0.6 }}>
-              @{mentionSearch}
-            </span>
-          </div>
-          {mentionResults.map((user, idx) => {
-            const isVtuber = hasAnyRole(user.role, ['VTUBER']) || !!user.vtuberProfile?.isApproved;
-            const isStreamer = hasAnyRole(user.role, ['STREAMER']) || !!user.streamerProfile?.isApproved;
-            return (
-              <button
-                key={user.id}
-                type="button"
-                onClick={() => insertMention(user)}
-                onMouseEnter={() => setSelectedIndex(idx)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  padding: '7px 10px',
-                  border: 'none',
-                  background: idx === selectedIndex ? 'rgba(139,92,246,0.15)' : 'transparent',
-                  color: 'var(--text)',
-                  cursor: 'pointer',
-                  fontSize: '0.82rem',
-                  borderRadius: '8px',
-                  transition: 'background 0.1s',
-                  textAlign: 'left',
-                }}
-              >
-                <UserAvatar
-                  src={user.avatarUrl || user.vtuberProfile?.avatarUrl || user.streamerProfile?.avatarUrl}
-                  alt={user.username}
-                  size={26}
-                  user={user}
-                  userId={user.id}
-                />
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <span style={{ fontWeight: 600 }}>
-                    {user.displayName || user.vtuberProfile?.displayName || user.streamerProfile?.displayName || user.username}
+          {triggerType === 'hashtag' ? (
+            <>
+              <div style={{
+                padding: '4px 10px 6px',
+                fontSize: '0.65rem',
+                color: 'var(--primary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                fontWeight: 700,
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}>
+                <span>✦</span>
+                <span>Hashtags y Tendencias</span>
+                <span style={{ marginLeft: 'auto', fontWeight: 400, opacity: 0.6 }}>
+                  #{mentionSearch}
+                </span>
+              </div>
+              {hashtagResults.map((tag, idx) => (
+                <button
+                  key={tag.name}
+                  type="button"
+                  onClick={() => insertHashtag(tag)}
+                  onMouseEnter={() => setSelectedIndex(idx)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: 'none',
+                    background: idx === selectedIndex ? 'rgba(139,92,246,0.18)' : 'transparent',
+                    color: 'var(--text)',
+                    cursor: 'pointer',
+                    fontSize: '0.84rem',
+                    borderRadius: '8px',
+                    transition: 'background 0.1s',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span style={{ fontWeight: 700, color: '#c084fc' }}>
+                    #{tag.name}
                   </span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '4px' }}>
-                    @{user.username}
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    {tag._count?.posts || 0} {(tag._count?.posts || 0) === 1 ? 'publicación' : 'publicaciones'}
                   </span>
-                </div>
-                {isVtuber && (
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Verificada">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                )}
-                {isStreamer && (
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#22D3EE" stroke="none" aria-label="Streamer Verificado">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                )}
-              </button>
-            );
-          })}
+                </button>
+              ))}
+            </>
+          ) : (
+            <>
+              <div style={{
+                padding: '4px 10px 6px',
+                fontSize: '0.65rem',
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                fontWeight: 600,
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+              }}>
+                Menciones
+                <span style={{ marginLeft: '8px', fontWeight: 400, opacity: 0.6 }}>
+                  @{mentionSearch}
+                </span>
+              </div>
+              {mentionResults.map((user, idx) => {
+                const isVtuber = hasAnyRole(user.role, ['VTUBER']) || !!user.vtuberProfile?.isApproved;
+                const isStreamer = hasAnyRole(user.role, ['STREAMER']) || !!user.streamerProfile?.isApproved;
+                return (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => insertMention(user)}
+                    onMouseEnter={() => setSelectedIndex(idx)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      padding: '7px 10px',
+                      border: 'none',
+                      background: idx === selectedIndex ? 'rgba(139,92,246,0.15)' : 'transparent',
+                      color: 'var(--text)',
+                      cursor: 'pointer',
+                      fontSize: '0.82rem',
+                      borderRadius: '8px',
+                      transition: 'background 0.1s',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <UserAvatar
+                      src={user.avatarUrl || user.vtuberProfile?.avatarUrl || user.streamerProfile?.avatarUrl}
+                      alt={user.username}
+                      size={26}
+                      user={user}
+                      userId={user.id}
+                    />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <span style={{ fontWeight: 600 }}>
+                        {user.displayName || user.vtuberProfile?.displayName || user.streamerProfile?.displayName || user.username}
+                      </span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '4px' }}>
+                        @{user.username}
+                      </span>
+                    </div>
+                    {isVtuber && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none" aria-label="VTuber Verificada">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                      </svg>
+                    )}
+                    {isStreamer && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#22D3EE" stroke="none" aria-label="Streamer Verificado">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </>
+          )}
           <div style={{
             padding: '6px 10px 2px',
             fontSize: '0.65rem',

@@ -599,6 +599,21 @@ export const getTrendingHashtags = async (limit = 10) => {
   return PostsRepository.findTrendingHashtags(limit);
 };
 
+export const searchHashtags = async (query: string, limit = 8) => {
+  const cleanQ = (query || '').toLowerCase().replace(/^#/, '').trim();
+  if (!cleanQ) {
+    return PostsRepository.findTrendingHashtags(limit);
+  }
+  return prisma.hashtag.findMany({
+    where: {
+      name: { contains: cleanQ, mode: 'insensitive' as any },
+    },
+    take: limit,
+    orderBy: { posts: { _count: 'desc' } },
+    include: { _count: { select: { posts: true } } },
+  });
+};
+
 export const getPostsByHashtag = async (hashtag: string, currentUserId?: string, page = 1, limit = 20) => {
   const posts = await PostsRepository.findPostsByHashtag(hashtag, page, limit);
   let likedPostIds = new Set<string>();

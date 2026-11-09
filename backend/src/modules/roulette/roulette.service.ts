@@ -146,7 +146,7 @@ export const getStatus = async (userId: string) => {
   const lastSpinDateStr = lastSpin ? lastSpin.createdAt.toISOString().split('T')[0] : null;
 
   // Calendar day reset (UTC) or 24h passed
-  const canSpin = !lastSpin || lastSpinDateStr !== todayStr || (now - lastSpin.createdAt.getTime() >= 24 * 60 * 60 * 1000);
+  const canSpin = !lastSpin || (now - lastSpin.createdAt.getTime() >= 24 * 60 * 60 * 1000);
   const streakInfo = await calculateStreak(userId);
   const stardustInfo = await getStardustBalance(userId).catch(() => ({ stardust: 0 }));
 
@@ -158,7 +158,7 @@ export const getStatus = async (userId: string) => {
 
   const tomorrow = new Date();
   tomorrow.setUTCHours(24, 0, 0, 0);
-  const nextSpinAt = canSpin ? null : tomorrow.toISOString();
+  const nextSpinAt = lastSpin ? new Date(lastSpin.createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString() : null;
 
   return {
     canSpin,

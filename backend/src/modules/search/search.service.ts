@@ -13,8 +13,8 @@ export const globalSearch = async (query: string, limit = 5) => {
     prisma.user.findMany({
       where: {
         OR: [
-          { username: { contains: q } },
-          { displayName: { contains: q } },
+          { username: { contains: q, mode: 'insensitive' as any } },
+          { displayName: { contains: q, mode: 'insensitive' as any } },
         ],
       },
       select: {
@@ -41,8 +41,8 @@ export const globalSearch = async (query: string, limit = 5) => {
     prisma.guild.findMany({
       where: {
         OR: [
-          { name: { contains: q } },
-          { description: { contains: q } },
+          { name: { contains: q, mode: 'insensitive' as any } },
+          { description: { contains: q, mode: 'insensitive' as any } },
         ],
       },
       select: {
@@ -58,7 +58,7 @@ export const globalSearch = async (query: string, limit = 5) => {
     // Search posts
     prisma.post.findMany({
       where: {
-        content: { contains: q },
+        content: { contains: q, mode: 'insensitive' as any },
       },
       select: {
         id: true,
@@ -81,8 +81,8 @@ export const globalSearch = async (query: string, limit = 5) => {
     prisma.event.findMany({
       where: {
         OR: [
-          { title: { contains: q } },
-          { description: { contains: q } },
+          { title: { contains: q, mode: 'insensitive' as any } },
+          { description: { contains: q, mode: 'insensitive' as any } },
         ],
       },
       select: {

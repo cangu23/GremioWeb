@@ -10,6 +10,7 @@ const router = Router();
 // ========== POSTS ==========
 // Public routes
 router.get('/', optionalAuth, PostsController.getFeed);
+router.get('/hashtags/search', optionalAuth, PostsController.searchHashtags);
 router.get('/hashtags/trending', optionalAuth, PostsController.getTrendingHashtags);
 router.get('/hashtag/:hashtag', optionalAuth, PostsController.getPostsByHashtag);
 router.get('/user/:userId', optionalAuth, PostsController.getUserPosts);
