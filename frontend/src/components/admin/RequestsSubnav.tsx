@@ -7,6 +7,7 @@ export default function RequestsSubnav() {
   const pathname = usePathname();
 
   const tabs = [
+    { href: '/admin/applications', label: 'Postulaciones de Roles', icon: '★', activeColor: '#fbbf24' },
     { href: '/admin/vtuber-requests', label: 'Solicitudes VTuber', icon: '✦', activeColor: '#ec4899' },
     { href: '/admin/streamer-requests', label: 'Solicitudes Streamer', icon: '✦', activeColor: '#38bdf8' },
     { href: '/admin/pet-requests', label: 'Solicitudes Mascotas', icon: '✦', activeColor: '#ff9800' },

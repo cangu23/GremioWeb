@@ -71,11 +71,11 @@ router.use('/creators', creatorRoutes);
 
 // ─── Standalone Routes ────────────────────────────────────────────
 
-// VTuber request (authenticated users)
+// Creator & Role applications (authenticated users)
 router.post('/vtubers/request', authenticate, RequestsController.submitRequest);
-
-// Streamer request (authenticated users)
 router.post('/streamers/request', authenticate, RequestsController.submitRequest);
+router.post('/applications/submit', authenticate, RequestsController.submitRequest);
+router.get('/applications/my', authenticate, RequestsController.getMyRequests);
 
 // Public stickers endpoint (optional auth, plan-gated for exclusivity)
 router.get('/stickers', authenticateOptional, StickersController.getActiveStickers);

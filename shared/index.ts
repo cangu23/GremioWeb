@@ -22,4 +22,5 @@ export * from './chat';
 export * from './payments';
 export * from './posts';
 export * from './vtuber-survey';
+export * from './applications';
 export * from './types';

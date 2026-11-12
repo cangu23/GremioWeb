@@ -6,15 +6,37 @@ import { generateCode } from './codes.service';
 import * as NotificationsService from '../notifications/notifications.service';
 import { parseUserRoles } from '@gremio-estelar/shared';
 
-export type RequestType = 'VTUBER' | 'STREAMER';
+export type RequestType =
+  | 'VTUBER'
+  | 'STREAMER'
+  | 'ADMIN'
+  | 'MODERATOR'
+  | 'ARTIST'
+  | 'CLIPPER'
+  | 'HELPER';
 
 const ROLE_BY_TYPE: Record<RequestType, string> = {
   VTUBER: 'VTUBER',
   STREAMER: 'STREAMER',
+  ADMIN: 'ADMIN',
+  MODERATOR: 'MODERATOR',
+  ARTIST: 'ARTIST',
+  CLIPPER: 'CLIPPER',
+  HELPER: 'HELPER',
+};
+
+const LABEL_BY_TYPE: Record<RequestType, string> = {
+  VTUBER: 'VTuber Oficial',
+  STREAMER: 'Streamer Oficial',
+  ADMIN: 'Alto Mando Estelar',
+  MODERATOR: 'Centinela del Santuario',
+  ARTIST: 'Artista Cósmico',
+  CLIPPER: 'Clipper & Editor',
+  HELPER: 'Guía Estelar',
 };
 
 /**
- * Submit a creator request (VTuber or Streamer)
+ * Submit an application request
  */
 export const submitRequest = async (data: {
   userId: string;
@@ -23,20 +45,29 @@ export const submitRequest = async (data: {
   description?: string;
   avatarUrl?: string;
   lore?: string;
-  surveyAnswers?: Record<string, string>;
+  surveyAnswers?: Record<string, any>;
 }) => {
-  const type: RequestType = data.type === 'STREAMER' ? 'STREAMER' : 'VTUBER';
+  const type: RequestType = (data.type?.toUpperCase() as RequestType) || 'VTUBER';
+  const role = ROLE_BY_TYPE[type] || 'VTUBER';
+  const label = LABEL_BY_TYPE[type] || 'VTuber';
 
   // Check if user already has a pending request of the same type
   const existing = await RequestsRepository.findUserRequestPending(data.userId, type);
   if (existing) {
-    throw new AppError('Ya tienes una solicitud pendiente. Espera a que sea revisada.', 409);
+    throw new AppError('Ya tienes una postulación pendiente para este rol. Espera a que sea revisada.', 409);
   }
 
-  // Check if user already has an approved profile of this type
+  // Check if user already has this role or profile
   const user = await AdminRepository.findUserById(data.userId);
+  if (!user) throw new AppError('Usuario no encontrado', 404);
+
+  const userRoles = parseUserRoles(user.role);
+  if (userRoles.includes(role)) {
+    throw new AppError(`Ya cuentas con el rol de ${label} en tu cuenta`, 400);
+  }
+
   const approvedProfile =
-    type === 'STREAMER' ? (user as any)?.streamerProfile?.isApproved : user?.vtuberProfile?.isApproved;
+    type === 'STREAMER' ? (user as any)?.streamerProfile?.isApproved : type === 'VTUBER' ? user?.vtuberProfile?.isApproved : false;
   if (approvedProfile) {
     throw new AppError(type === 'STREAMER' ? 'Ya eres un Streamer aprobado' : 'Ya eres un VTuber aprobado', 400);
   }
@@ -51,9 +82,28 @@ export const submitRequest = async (data: {
   const notify = type === 'STREAMER'
     ? NotificationsService.notifyNewStreamerRequest
     : NotificationsService.notifyNewVtuberRequest;
-  notify(user!.username, data.displayName, request.id).catch(() => {});
+  notify(user.username, data.displayName, request.id).catch(() => {});
 
   return request;
+};
+
+/**
+ * Get all requests submitted by a specific user
+ */
+export const getMyRequests = async (userId: string) => {
+  return prisma.vtuberRequest.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      displayName: true,
+      notes: true,
+      createdAt: true,
+      reviewedAt: true,
+    },
+  });
 };
 
 /**
@@ -80,18 +130,18 @@ export const listRequests = async (query: {
 };
 
 /**
- * Approve a creator request - generates a code for the user
+ * Approve a role / creator request - grants the role and notifies user
  */
 export const approveRequest = async (id: string, adminId: string) => {
   const request = await RequestsRepository.findRequestById(id);
   if (!request) throw new AppError('Solicitud no encontrada', 404);
   if (request.status !== 'PENDING') throw new AppError('La solicitud ya fue procesada', 400);
 
-  const type: RequestType = request.type === 'STREAMER' ? 'STREAMER' : 'VTUBER';
-  const role = ROLE_BY_TYPE[type];
-  const label = type === 'STREAMER' ? 'Streamer' : 'VTuber';
+  const type = (request.type?.toUpperCase() as RequestType) || 'VTUBER';
+  const role = ROLE_BY_TYPE[type] || request.type;
+  const label = LABEL_BY_TYPE[type] || request.type;
 
-  // Mark request as approved (scalar field name)
+  // Mark request as approved
   await prisma.vtuberRequest.update({
     where: { id },
     data: {
@@ -101,15 +151,15 @@ export const approveRequest = async (id: string, adminId: string) => {
     },
   });
 
-  // Generate secure code for the creator role
-  const codeName = `${label}-${request.displayName}`;
+  // Generate secure code for the creator/role
+  const codeName = `${role}-${request.displayName}`;
   const codeResult = await generateCode({
     name: codeName,
     role,
     generatedById: adminId,
   });
 
-  // Append role to existing roles (never overwrite: the role field
+  // Append role to existing roles (never overwrite: role field
   // can hold multiple comma-separated roles like "USER,MAID").
   const roleList = parseUserRoles(request.user?.role);
   if (!roleList.includes(role)) {
@@ -120,39 +170,42 @@ export const approveRequest = async (id: string, adminId: string) => {
     data: { role: roleList.join(',') },
   });
 
-  // Create or Update the creator profile with isApproved: true and isVerified: true
-  const profilePayload = {
-    displayName: request.displayName,
-    description: request.description || null,
-    avatarUrl: request.avatarUrl || null,
-    lore: request.lore || null,
-    isApproved: true,
-    isHidden: false,
-    isVerified: true,
-  };
-  if (type === 'STREAMER') {
-    await prisma.streamerProfile.upsert({
-      where: { userId: request.userId },
-      create: { userId: request.userId, ...profilePayload },
-      update: profilePayload,
-    });
-  } else {
-    await prisma.vTuberProfile.upsert({
-      where: { userId: request.userId },
-      create: { userId: request.userId, ...profilePayload },
-      update: profilePayload,
-    });
+  // Create or Update creator profile if VTuber or Streamer
+  if (type === 'VTUBER' || type === 'STREAMER') {
+    const profilePayload = {
+      displayName: request.displayName,
+      description: request.description || null,
+      avatarUrl: request.avatarUrl || null,
+      lore: request.lore || null,
+      isApproved: true,
+      isHidden: false,
+      isVerified: true,
+    };
+    if (type === 'STREAMER') {
+      await prisma.streamerProfile.upsert({
+        where: { userId: request.userId },
+        create: { userId: request.userId, ...profilePayload },
+        update: profilePayload,
+      });
+    } else {
+      await prisma.vTuberProfile.upsert({
+        where: { userId: request.userId },
+        create: { userId: request.userId, ...profilePayload },
+        update: profilePayload,
+      });
+    }
   }
 
   // Log admin action
   await AdminRepository.createAdminLog({
     userId: adminId,
-    action: type === 'STREAMER' ? 'APPROVE_STREAMER_REQUEST' : 'APPROVE_VTUBER_REQUEST',
+    action: `APPROVE_${type}_REQUEST`,
     detail: JSON.stringify({
       requestId: id,
       userName: request.user.username,
       displayName: request.displayName,
       codeName,
+      grantedRole: role,
     }),
   });
 
@@ -160,15 +213,15 @@ export const approveRequest = async (id: string, adminId: string) => {
   await prisma.notification.create({
     data: {
       userId: request.userId,
-      type: type === 'STREAMER' ? 'streamer_approved' : 'vtuber_approved',
-      title: `✨ ¡Tu solicitud de ${label} ha sido APROBADA!`,
-      message: `¡Felicidades, ${request.displayName}! Tu solicitud para ser ${label} oficial ha sido aprobada por la administración. Ya tienes el rol de ${label} y tu insignia de verificación activada.`,
+      type: `${type.toLowerCase()}_approved`,
+      title: `✦ ¡Tu postulación de ${label} ha sido APROBADA!`,
+      message: `¡Felicidades, ${request.displayName}! Tu postulación para ${label} ha sido aprobada por la administración. Ya tienes el rol de ${label} activado en tu perfil.`,
       referenceId: request.id,
     },
   });
 
   return {
-    message: 'Solicitud aprobada. Se ha generado un código único para el usuario.',
+    message: 'Postulación aprobada con éxito.',
     rawCode: codeResult.rawCode,
     codeName: codeResult.name,
     request,
@@ -176,15 +229,15 @@ export const approveRequest = async (id: string, adminId: string) => {
 };
 
 /**
- * Reject a creator request
+ * Reject an application request
  */
 export const rejectRequest = async (id: string, adminId: string, notes?: string) => {
   const request = await RequestsRepository.findRequestById(id);
   if (!request) throw new AppError('Solicitud no encontrada', 404);
   if (request.status !== 'PENDING') throw new AppError('La solicitud ya fue procesada', 400);
 
-  const type: RequestType = request.type === 'STREAMER' ? 'STREAMER' : 'VTUBER';
-  const label = type === 'STREAMER' ? 'Streamer' : 'VTuber';
+  const type = (request.type?.toUpperCase() as RequestType) || 'VTUBER';
+  const label = LABEL_BY_TYPE[type] || request.type;
 
   await prisma.vtuberRequest.update({
     where: { id },
@@ -199,7 +252,7 @@ export const rejectRequest = async (id: string, adminId: string, notes?: string)
   // Log admin action
   await AdminRepository.createAdminLog({
     userId: adminId,
-    action: type === 'STREAMER' ? 'REJECT_STREAMER_REQUEST' : 'REJECT_VTUBER_REQUEST',
+    action: `REJECT_${type}_REQUEST`,
     detail: JSON.stringify({
       requestId: id,
       userName: request.user.username,
@@ -212,12 +265,12 @@ export const rejectRequest = async (id: string, adminId: string, notes?: string)
   await prisma.notification.create({
     data: {
       userId: request.userId,
-      type: type === 'STREAMER' ? 'streamer_rejected' : 'vtuber_rejected',
-      title: `Solicitud de ${label}`,
-      message: `Tu solicitud para ser ${label} no fue aprobada en esta ocasión.${notes ? ` Motivo: ${notes}` : ' Puedes intentarlo de nuevo más tarde.'}`,
+      type: `${type.toLowerCase()}_rejected`,
+      title: `Postulación de ${label}`,
+      message: `Tu postulación para ${label} no fue aprobada en esta ocasión.${notes ? ` Motivo: ${notes}` : ' Puedes volver a intentarlo más adelante.'}`,
       referenceId: request.id,
     },
   });
 
-  return { message: 'Solicitud rechazada' };
+  return { message: 'Postulación rechazada' };
 };

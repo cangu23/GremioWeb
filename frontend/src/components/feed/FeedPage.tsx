@@ -277,6 +277,7 @@ function HomeContent() {
     { icon: NavIcons.chat, label: 'Chat', href: '/chat' },
     { icon: NavIcons.shop, label: 'Observatorio Estelar', href: '/shop', color: 'var(--warm)' },
     { icon: NavIcons.leaderboard, label: 'Ranking', href: '/leaderboard' },
+    { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, label: 'Postulaciones', href: '/postulaciones', color: '#f59e0b' },
     { icon: NavIcons.dashboard, label: 'Dashboard', href: '/dashboard' },
   ];
 

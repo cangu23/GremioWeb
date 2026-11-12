@@ -103,6 +103,11 @@ router.post('/codes/generate', adminOnly, CodesController.generateCode);
 router.get('/codes', adminOnly, validateRequest(adminQuerySchema), CodesController.listCodes);
 router.delete('/codes/:id', adminOnly, CodesController.revokeCode);
 
+// ========== ALL ROLE APPLICATIONS (Staff View & Approve) ==========
+router.get('/applications', validateRequest(adminQuerySchema), RequestsController.listRequests);
+router.post('/applications/:id/approve', RequestsController.approveRequest);
+router.post('/applications/:id/reject', RequestsController.rejectRequest);
+
 // ========== VTUBER REQUESTS (Staff View & Approve) ==========
 // Forzar el discriminador type para que cada panel solo vea sus solicitudes.
 const vtuberRequestFilter = (req: Request, _res: Response, next: NextFunction) => {
