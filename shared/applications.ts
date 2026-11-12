@@ -447,3 +447,4 @@ export function getApplicationConfig(role: string): RoleApplicationConfig | unde
 export function getAllApplicationConfigs(): RoleApplicationConfig[] {
   return Object.values(APPLICATION_ROLES_CONFIG);
 }
+
