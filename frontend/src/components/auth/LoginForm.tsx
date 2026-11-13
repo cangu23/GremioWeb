@@ -32,7 +32,13 @@ export default function LoginForm() {
 
     try {
       await login({ email, password });
-      router.push('/dashboard');
+      const cached = localStorage.getItem('gremio_user_v2') || sessionStorage.getItem('gremio_user_v2');
+      const parsed = cached ? JSON.parse(cached) : null;
+      if (parsed && !parsed.displayName) {
+        router.push('/inscripcion');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {

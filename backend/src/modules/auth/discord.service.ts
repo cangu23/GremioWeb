@@ -144,6 +144,7 @@ export const authenticateWithDiscord = async (code: string, redirectUri: string)
   const newUser = await UserRepository.createUser({
     email: discordUser.email,
     username,
+    avatarUrl: discordUser.avatarUrl || null,
     password: null,
     provider: AuthProvider.DISCORD,
     status: 'ACTIVE',

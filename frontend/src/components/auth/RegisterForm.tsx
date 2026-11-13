@@ -48,7 +48,7 @@ export default function RegisterForm() {
 
     try {
       await register({ username, email, password, ref: refParam });
-      router.push('/dashboard');
+      router.push('/inscripcion');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al registrarse');
     } finally {

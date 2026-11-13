@@ -128,6 +128,22 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
     }
   }
 
+  const me = await UserRepository.findById(userId);
+  const effective = getEffectivePlan(me?.plan, me?.role);
+  const isPremiumOrStaff = planMeetsOrExceeds(effective, 'ASTRO') || isStaffRole(me?.role);
+
+  // ── Restricción de cambio de nombre para miembros gratuitos ──
+  // Si el usuario es FREE y ya tiene su nombre establecido (ya completó su inscripción inicial),
+  // no se le permite cambiar su displayName ni su username. Solo miembros Premium (ASTRO+) o Staff pueden hacerlo.
+  if (!isPremiumOrStaff) {
+    if (payload.username && me?.username && payload.username.trim().toLowerCase() !== me.username.trim().toLowerCase()) {
+      throw new AppError('El cambio de nombre de usuario es un beneficio exclusivo de miembros Premium (Plan Astro o superior).', 403);
+    }
+    if (payload.displayName && me?.displayName && payload.displayName.trim().toLowerCase() !== me.displayName.trim().toLowerCase()) {
+      throw new AppError('El cambio de nombre en el Gremio es exclusivo de miembros Premium (Plan Astro o superior).', 403);
+    }
+  }
+
   if (payload.username) {
     const existingUser = await UserRepository.findByUsername(payload.username);
     if (existingUser && existingUser.id !== userId) {

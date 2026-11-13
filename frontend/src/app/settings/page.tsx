@@ -46,6 +46,7 @@ function UserSettings() {
   const router = useRouter();
   const { showToast } = useToast();
   const canBannerImg = canUseBannerImage(user?.plan, user?.role);
+  const isPremiumUser = planMeetsOrExceeds(user?.plan, user?.role, 'ASTRO') || isStaffRole(user?.role);
 
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -856,27 +857,75 @@ function UserSettings() {
 
         {/* Basic info */}
         <div className="glass" style={{ padding: '24px', marginBottom: '20px', borderRadius: '16px' }}>
-          <h3 style={{
-            fontSize: '1.05rem', fontWeight: 700, marginBottom: '16px',
-            display: 'flex', alignItems: 'center', gap: '8px',
-          }}>
-            Información básica
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{
+              fontSize: '1.05rem', fontWeight: 700, margin: 0,
+              display: 'flex', alignItems: 'center', gap: '8px',
+            }}>
+              Información básica
+            </h3>
+            <Link
+              href="/inscripcion"
+              className="btn btn-outline"
+              style={{
+                padding: '6px 14px', fontSize: '0.78rem', borderRadius: '8px',
+                borderColor: 'rgba(232, 199, 122, 0.4)', color: '#E8C77A',
+                textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px',
+                fontWeight: 600,
+              }}
+            >
+              📜 Ver / Descargar mi Carnet del Gremio
+            </Link>
+          </div>
 
           <div className="form-group">
-            <label className="form-label">
-              Nombre para mostrar
-              <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.8rem', marginLeft: '6px' }}>
-                (opcional — si no pones nada, se usará tu nombre de usuario)
-              </span>
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <label className="form-label" style={{ margin: 0 }}>
+                Nombre en el Gremio
+              </label>
+              {!isPremiumUser && Boolean(user.displayName) && (
+                <span style={{
+                  fontSize: '0.72rem',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  background: 'rgba(232, 199, 122, 0.12)',
+                  border: '1px solid rgba(232, 199, 122, 0.3)',
+                  color: '#E8C77A',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}>
+                  🔒 Sellado por el Gremio (Exclusivo Premium)
+                </span>
+              )}
+            </div>
             <input
               className="input"
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
               placeholder={user.username}
               maxLength={50}
+              disabled={!isPremiumUser && Boolean(user.displayName)}
+              style={!isPremiumUser && Boolean(user.displayName) ? {
+                opacity: 0.7,
+                cursor: 'not-allowed',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderColor: 'rgba(232, 199, 122, 0.2)',
+              } : undefined}
             />
+            {!isPremiumUser && Boolean(user.displayName) ? (
+              <p style={{ fontSize: '0.75rem', color: 'rgba(232, 199, 122, 0.85)', marginTop: '6px', lineHeight: 1.4 }}>
+                ✦ Tu nombre quedó grabado en los anales del Gremio. Para cambiarlo,{' '}
+                <Link href="/premium" style={{ color: '#E8C77A', textDecoration: 'underline', fontWeight: 700 }}>
+                  mejora a Plan Astro, Nova o Stellar
+                </Link>.
+              </p>
+            ) : (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                Tu nombre visible ante todos los miembros del Gremio en chats, perfiles y gremios.
+              </p>
+            )}
           </div>
 
           <div className="form-group" style={{ marginTop: '16px' }}>

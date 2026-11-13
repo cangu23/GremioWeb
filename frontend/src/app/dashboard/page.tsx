@@ -92,6 +92,12 @@ function DashboardContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (!isLoading && user && !user.displayName) {
+      router.push('/inscripcion');
+    }
+  }, [user, isLoading, router]);
+
+  useEffect(() => {
     const codeParam = searchParams?.get('code');
     if (codeParam) {
       setRedeemCode(codeParam.trim());

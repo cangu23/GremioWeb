@@ -18,30 +18,58 @@ interface GoogleTokenPayload {
 }
 
 /**
- * Verify a Google ID token and return the payload
+ * Verify a Google ID token or Google OAuth2 access token and return the payload
  */
 const verifyGoogleToken = async (credential: string): Promise<GoogleTokenPayload> => {
-  try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: env.GOOGLE_CLIENT_ID,
-    });
+  // 1. Probar verificación como ID Token JWT si parece JWT
+  if (credential.includes('.')) {
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: env.GOOGLE_CLIENT_ID,
+      });
 
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
-      throw new AppError('Token de Google inválido', 401);
+      const payload = ticket.getPayload();
+      if (payload && payload.email) {
+        return {
+          sub: payload.sub,
+          email: payload.email,
+          name: payload.name || payload.given_name || payload.email.split('@')[0],
+          picture: payload.picture || '',
+        };
+      }
+    } catch {
+      // Si falla como ID token, intentar como access token a continuación
     }
-
-    return {
-      sub: payload.sub,
-      email: payload.email,
-      name: payload.name || payload.given_name || payload.email.split('@')[0],
-      picture: payload.picture || '',
-    };
-  } catch (err) {
-    if (err instanceof AppError) throw err;
-    throw new AppError('Error al verificar token de Google', 401);
   }
+
+  // 2. Probar como access_token consultando la API userinfo de Google
+  try {
+    const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${credential}` },
+    });
+    if (userInfoRes.ok) {
+      const info = (await userInfoRes.json()) as {
+        sub?: string;
+        email?: string;
+        name?: string;
+        given_name?: string;
+        picture?: string;
+      };
+      if (info.email && info.sub) {
+        return {
+          sub: info.sub,
+          email: info.email,
+          name: info.name || info.given_name || info.email.split('@')[0],
+          picture: info.picture || '',
+        };
+      }
+    }
+  } catch {
+    // Continuar al error
+  }
+
+  throw new AppError('Error al verificar credencial de Google', 401);
 };
 
 /**
@@ -94,6 +122,7 @@ export const authenticateWithGoogle = async (credential: string) => {
   const newUser = await UserRepository.createUser({
     email: googleUser.email,
     username,
+    avatarUrl: googleUser.picture || null,
     password: null,
     provider: AuthProvider.GOOGLE,
     status: 'ACTIVE',

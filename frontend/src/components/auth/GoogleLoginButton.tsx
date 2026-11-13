@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/lib/ToastContext';
 import { useRouter } from 'next/navigation';
@@ -22,10 +22,31 @@ export default function GoogleLoginButton() {
   const { googleLogin } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // If Google Client ID is not configured, show a disabled button
+  // Hook nativo de Google OAuth sin iframes sobrepuestos
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      try {
+        await googleLogin(tokenResponse.access_token);
+        showToast('¡Bienvenido al Gremio!', 'success');
+        router.push('/inscripcion');
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Error al iniciar sesión con Google';
+        showToast(msg, 'error');
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      showToast('Error al conectar con Google', 'error');
+      setLoading(false);
+    },
+  });
+
+  // Si Google Client ID no está configurado, mostrar botón deshabilitado
   if (!GOOGLE_CLIENT_ID) {
     return (
       <button
@@ -56,131 +77,69 @@ export default function GoogleLoginButton() {
     );
   }
 
-  // If a previous render errored, show a retry button
-  if (error) {
-    return (
-      <button
-        onClick={() => setError(false)}
-        style={{
-          width: '100%',
-          height: '42px',
-          padding: '10px 14px',
-          fontSize: '0.85rem',
-          borderRadius: '10px',
-          boxSizing: 'border-box',
-          border: '1px solid rgba(255,77,79,0.3)',
-          background: 'rgba(255,77,79,0.08)',
-          color: '#ff4d4f',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '9px',
-          fontWeight: 600,
-          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,77,79,0.15)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,77,79,0.08)'; }}
-      >
-        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ff4d4f' }}>!</span>
-        <span>Reintentar</span>
-      </button>
-    );
-  }
-
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '42px',
-        borderRadius: '10px',
-        overflow: 'hidden',
+    <button
+      type="button"
+      onClick={() => {
+        if (!loading) {
+          setLoading(true);
+          handleGoogleLogin();
+        }
       }}
+      disabled={loading}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{
+        width: '100%',
+        height: '42px',
+        padding: '10px 14px',
+        fontSize: '0.85rem',
+        borderRadius: '10px',
+        boxSizing: 'border-box',
+        cursor: loading ? 'wait' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '9px',
+        fontWeight: 600,
+        letterSpacing: '0.02em',
+        border: isHovered && !loading
+          ? '1px solid rgba(232, 199, 122, 0.55)'
+          : '1px solid rgba(232, 199, 122, 0.25)',
+        background: isHovered && !loading
+          ? 'linear-gradient(135deg, rgba(232, 199, 122, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%)'
+          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%)',
+        color: '#fff',
+        boxShadow: isHovered && !loading
+          ? '0 6px 20px rgba(212, 175, 55, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18)'
+          : '0 4px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+        transform: isHovered && !loading ? 'translateY(-1px)' : 'translateY(0)',
+        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        outline: 'none',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
     >
-      {/* Botón visual idéntico al de Discord en proporciones, tamaño y estilo */}
-      <button
-        type="button"
-        tabIndex={-1}
-        style={{
-          width: '100%',
-          height: '42px',
-          padding: '10px 14px',
-          fontSize: '0.85rem',
-          borderRadius: '10px',
-          boxSizing: 'border-box',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '9px',
-          fontWeight: 600,
-          letterSpacing: '0.02em',
-          border: isHovered
-            ? '1px solid rgba(232, 199, 122, 0.55)'
-            : '1px solid rgba(232, 199, 122, 0.35)',
-          background: isHovered
-            ? 'linear-gradient(135deg, rgba(232, 199, 122, 0.2) 0%, rgba(255, 255, 255, 0.08) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%)',
-          color: '#fff',
-          boxShadow: isHovered
-            ? '0 6px 20px rgba(212, 175, 55, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18)'
-            : '0 4px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-          transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
-          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-          pointerEvents: 'none',
-        }}
-      >
-        <GoogleLogo size={18} />
-        <span>Google</span>
-      </button>
-
-      {/* Capa de Google GSI que captura el clic en cualquier punto del botón de forma 100% nativa */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          opacity: 0.001,
-          cursor: 'pointer',
-          zIndex: 10,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          pointerEvents: 'auto',
-        }}
-      >
-        <div style={{ transform: 'scale(1.6)', transformOrigin: 'center center' }}>
-          <GoogleLogin
-            onSuccess={async (credentialResponse) => {
-              try {
-                if (!credentialResponse.credential) {
-                  showToast('Error: No se recibió credencial de Google', 'error');
-                  return;
-                }
-                await googleLogin(credentialResponse.credential);
-                showToast('¡Bienvenido al Gremio!', 'success');
-                router.push('/dashboard');
-              } catch (err: unknown) {
-                const msg = err instanceof Error ? err.message : 'Error al iniciar sesión con Google';
-                showToast(msg, 'error');
-                setError(true);
-              }
+      {loading ? (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              width: '14px',
+              height: '14px',
+              border: '2px solid rgba(255,255,255,0.25)',
+              borderTopColor: '#fff',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
             }}
-            onError={() => {
-              showToast('Error al cargar el botón de Google', 'error');
-              setError(true);
-            }}
-            size="large"
-            width="320"
           />
-        </div>
-      </div>
-    </div>
+          Google...
+        </span>
+      ) : (
+        <>
+          <GoogleLogo size={18} />
+          <span>Google</span>
+        </>
+      )}
+    </button>
   );
 }
