@@ -3,7 +3,7 @@
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/lib/ToastContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -18,9 +18,11 @@ const GoogleLogo = ({ size = 20 }: { size?: number }) => (
   </svg>
 );
 
-export default function GoogleLoginButton() {
+export default function GoogleLoginButton({ referralCode }: { referralCode?: string }) {
   const { googleLogin } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refParam = referralCode || (searchParams ? searchParams.get('ref') || undefined : undefined);
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -30,7 +32,7 @@ export default function GoogleLoginButton() {
     onSuccess: async (tokenResponse) => {
       setLoading(true);
       try {
-        await googleLogin(tokenResponse.access_token);
+        await googleLogin(tokenResponse.access_token, refParam);
         showToast('¡Bienvenido al Gremio!', 'success');
         router.push('/inscripcion');
       } catch (err: unknown) {

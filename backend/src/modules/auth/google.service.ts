@@ -6,6 +6,7 @@ import AppError from '../../errors/AppError';
 import env from '../../config/env';
 import { prisma } from '../../database/index';
 import { generateTokens, hashToken } from './tokens';
+import { processReferral } from '../referrals/referral.service';
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
@@ -75,7 +76,7 @@ const verifyGoogleToken = async (credential: string): Promise<GoogleTokenPayload
 /**
  * Authenticate or register a user with Google
  */
-export const authenticateWithGoogle = async (credential: string) => {
+export const authenticateWithGoogle = async (credential: string, ref?: string, clientIp?: string) => {
   // 1. Verify the Google token
   const googleUser = await verifyGoogleToken(credential);
 
@@ -128,6 +129,12 @@ export const authenticateWithGoogle = async (credential: string) => {
     status: 'ACTIVE',
     role: Role.USER,
   });
+
+  if (ref) {
+    await processReferral(ref, newUser.id, clientIp).catch((refErr) => {
+      console.error('Referral processing error in Google signup:', refErr);
+    });
+  }
 
   // ── NOTA: NO crear VTuberProfile aquí ──
   // Los usuarios registrados con Google deben ser role USER sin perfil VTuber.

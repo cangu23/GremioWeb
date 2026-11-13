@@ -146,6 +146,10 @@ model User {
   groupMemberships  GroupConversationMember[]  @relation("groupMember")
   groupMessagesSent GroupMessage[]             @relation("groupMessageSender")
 
+  // Referrals & Ambassador Campaign
+  referralsGiven   Referral[] @relation("referrerRelation")
+  referralReceived Referral?  @relation("referredUserRelation")
+
   @@index([username])
   @@index([xp])
 }
@@ -1076,4 +1080,25 @@ model NewsArticle {
   @@index([isPublished])
   @@index([createdAt])
 }
+
+// ========== REFERRALS & AMBASSADOR CAMPAIGN ==========
+
+model Referral {
+  id              String   @id @default(cuid())
+  referrerId      String
+  referredUserId  String   @unique
+  ipHash          String?
+  status          String   @default("VALID") // VALID, SUSPECT_MULTI_ACCOUNT, SUSPECT_SELF_REFERRAL, PENDING_INSCRIPTION
+  stardustAwarded Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  referrer     User @relation("referrerRelation", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUser User @relation("referredUserRelation", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@index([ipHash])
+  @@index([status])
+}
+
 

@@ -35,7 +35,8 @@ export const register = async (
   next: NextFunction
 ) => {
   try {
-    await AuthService.register(req.body);
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress;
+    await AuthService.register(req.body, clientIp);
     const { refreshToken, ...authResponse } = await AuthService.login({
       email: req.body.email,
       password: req.body.password,

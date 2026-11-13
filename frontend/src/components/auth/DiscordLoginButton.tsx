@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { CSSProperties } from 'react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
@@ -39,7 +40,9 @@ const btnBase: CSSProperties = {
   outline: 'none',
 };
 
-export default function DiscordLoginButton() {
+export default function DiscordLoginButton({ referralCode }: { referralCode?: string }) {
+  const searchParams = useSearchParams();
+  const refParam = referralCode || (searchParams ? searchParams.get('ref') || undefined : undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const mountedRef = useRef(true);
@@ -52,7 +55,8 @@ export default function DiscordLoginButton() {
     setLoading(true);
     setError(false);
     // Redirect to Discord OAuth — the callback will redirect back to the app
-    window.location.href = `${API_BASE_URL}/auth/discord`;
+    const dest = refParam ? `${API_BASE_URL}/auth/discord?ref=${encodeURIComponent(refParam)}` : `${API_BASE_URL}/auth/discord`;
+    window.location.href = dest;
     // If after 5 seconds we're still here, the redirect probably failed
     setTimeout(() => {
       if (mountedRef.current) {

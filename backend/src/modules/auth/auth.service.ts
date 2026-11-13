@@ -10,14 +10,14 @@ import env from '../../config/env';
 import logger from '../../utils/logger';
 import { generateTokens, hashToken } from './tokens';
 import { LoginInput, RegisterInput, RefreshTokenInput } from './auth.types';
-import { trackMissionProgress } from '../ecosystem/missions.service';
+import { processReferral } from '../referrals/referral.service';
 import { addStardust } from '../ecosystem/stardust.service';
 import { sendPasswordResetEmail } from '../../services/email.service';
 
 /**
  * Registers a new user and returns the user object without tokens.
  */
-export const register = async (input: RegisterInput) => {
+export const register = async (input: RegisterInput, clientIp?: string) => {
   const existingUser = await UserRepository.findByEmail(input.email);
   if (existingUser) {
     throw new AppError('Ya existe una cuenta con este correo electrónico.', 409);
@@ -40,48 +40,11 @@ export const register = async (input: RegisterInput) => {
     role: Role.USER, // Default role
   });
 
-  // Handle referral tracking & reward if ref provided
+  // Handle referral tracking with anti-cheat & whitelist
   if ((input as any).ref) {
-    try {
-      const refClean = String((input as any).ref).trim().toLowerCase();
-      const referrer = await prisma.user.findFirst({
-        where: { username: { equals: refClean, mode: 'insensitive' } },
-        select: { id: true, username: true },
-      });
-
-      if (referrer && referrer.id !== user.id) {
-        // Track referrer's mission and grant referrer bonus
-        await trackMissionProgress(referrer.id, 'INVITE_FRIEND');
-        await addStardust(referrer.id, 50, 'REFERRAL_BONUS');
-
-        // Grant new user welcome bonus for using an invite link
-        await addStardust(user.id, 50, 'WELCOME_REFERRAL_BONUS');
-
-        // Notify referrer
-        await prisma.notification.create({
-          data: {
-            userId: referrer.id,
-            type: 'referral_join',
-            title: '🎉 ¡Nuevo miembro invitado!',
-            message: `@${input.username} se ha unido a Gremio Estelar con tu enlace. (+50 ⭐)`,
-            referenceId: user.id,
-          },
-        });
-
-        // Notify new user
-        await prisma.notification.create({
-          data: {
-            userId: user.id,
-            type: 'referral_welcome',
-            title: '🎁 ¡Bienvenido al Gremio!',
-            message: `¡Recibiste +50 ⭐ Stardust de regalo por unirte con el enlace de @${referrer.username}!`,
-            referenceId: referrer.id,
-          },
-        }).catch(() => {});
-      }
-    } catch (refErr) {
+    await processReferral(String((input as any).ref), user.id, clientIp).catch((refErr) => {
       console.error('Referral processing error:', refErr);
-    }
+    });
   }
 
   // Omit password from the returned user object

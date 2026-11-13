@@ -245,8 +245,8 @@ export default function RegisterForm() {
 
       {/* Side-by-side Social Widgets */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-        <GoogleLoginButton />
-        <DiscordLoginButton />
+        <GoogleLoginButton referralCode={refParam} />
+        <DiscordLoginButton referralCode={refParam} />
       </div>
     </div>
   );

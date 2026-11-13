@@ -35,6 +35,16 @@ export const redirectToDiscord = (req: Request, res: Response) => {
     maxAge: 10 * 60 * 1000, // 10 minutos de validez
   });
 
+  if (req.query.ref) {
+    res.cookie('discord_oauth_ref', String(req.query.ref).slice(0, 50), {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: (isSecure ? 'none' : 'lax') as 'none' | 'lax',
+      path: '/',
+      maxAge: 10 * 60 * 1000,
+    });
+  }
+
   const params = new URLSearchParams({
     client_id: env.DISCORD_CLIENT_ID,
     redirect_uri: getRedirectUri(),
@@ -54,9 +64,11 @@ export const handleDiscordCallback = async (req: Request, res: Response, next: N
   try {
     const { code, state, error } = req.query;
     const storedState = req.cookies?.discord_oauth_state;
+    const ref = req.cookies?.discord_oauth_ref;
 
-    // Limpiar la cookie de estado inmediatamente tras la lectura
+    // Limpiar las cookies de estado inmediatamente tras la lectura
     res.clearCookie('discord_oauth_state', { path: '/' });
+    if (ref) res.clearCookie('discord_oauth_ref', { path: '/' });
 
     if (error || !code) {
       return res.redirect(`${env.FRONTEND_URL}/login?error=discord_auth_cancelled`);
@@ -66,7 +78,8 @@ export const handleDiscordCallback = async (req: Request, res: Response, next: N
       return res.redirect(`${env.FRONTEND_URL}/login?error=${encodeURIComponent('Error de validación CSRF en Discord (state inválido)')}`);
     }
 
-    const authResponse = await DiscordService.authenticateWithDiscord(code as string, getRedirectUri());
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress;
+    const authResponse = await DiscordService.authenticateWithDiscord(code as string, getRedirectUri(), ref, clientIp);
 
     // Set refresh token using unified secure cookie options
     res.cookie('refreshToken', authResponse.refreshToken, getRefreshCookieOptions(req));

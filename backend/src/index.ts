@@ -30,6 +30,7 @@ import ecosystemRoutes from './modules/ecosystem/ecosystem.routes';
 import searchRoutes from './modules/search/search.routes';
 import newsRoutes from './modules/news/news.routes';
 import creatorRoutes from './modules/creators/creator-codes.routes';
+import referralRoutes from './modules/referrals/referral.routes';
 import * as StickersController from './modules/admin/stickers.controller';
 import { searchRateLimiter, uploadRateLimiter } from './middleware/rateLimiters';
 import { createLogger } from './utils/logger';
@@ -68,6 +69,7 @@ router.use('/ecosystem', ecosystemRoutes);
 router.use('/search', searchRateLimiter, searchRoutes);
 router.use('/news', newsRoutes);
 router.use('/creators', creatorRoutes);
+router.use('/referrals', referralRoutes);
 
 // ─── Standalone Routes ────────────────────────────────────────────
 

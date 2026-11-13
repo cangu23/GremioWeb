@@ -5,6 +5,7 @@ import AppError from '../../errors/AppError';
 import env from '../../config/env';
 import { prisma } from '../../database/index';
 import { generateTokens, hashToken } from './tokens';
+import { processReferral } from '../referrals/referral.service';
 import { linkDiscordAccount } from '../ecosystem/discord-link.service';
 
 const DISCORD_API = 'https://discord.com/api/v10';
@@ -99,7 +100,12 @@ function buildUsernameFromDiscord(discordUser: { username: string; displayName?:
 /**
  * Authenticate or register a user with Discord
  */
-export const authenticateWithDiscord = async (code: string, redirectUri: string) => {
+export const authenticateWithDiscord = async (
+  code: string,
+  redirectUri: string,
+  ref?: string,
+  clientIp?: string,
+) => {
   // 1. Exchange code for token
   const tokenData = await exchangeCode(code, redirectUri);
 
@@ -150,6 +156,12 @@ export const authenticateWithDiscord = async (code: string, redirectUri: string)
     status: 'ACTIVE',
     role: Role.USER,
   });
+
+  if (ref) {
+    await processReferral(ref, newUser.id, clientIp).catch((refErr) => {
+      console.error('Referral processing error in Discord signup:', refErr);
+    });
+  }
 
   // ── NOTA: NO crear VTuberProfile aquí ──
   // Los usuarios registrados con Discord deben ser role USER sin perfil VTuber.

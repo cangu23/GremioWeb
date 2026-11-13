@@ -930,6 +930,17 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
               <span>Logros y Trofeos</span>
             </Link>
 
+            <Link href="/invitar" onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(16,185,129,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#10b981', display: 'inline-flex' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+                </svg>
+              </span>
+              <span>✦ Invitar (Gana Nitro)</span>
+            </Link>
+
             <Link href="/pass" onClick={() => setOpen(false)} style={menuItemStyle}
               onMouseOver={e => { e.currentTarget.style.background = 'rgba(56,189,248,0.1)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
               onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
@@ -1090,6 +1101,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
             { icon: <MessageCircle size={18} />, label: 'Chat', href: '/chat', badge: dmUnreadCount > 0 ? dmUnreadCount : undefined },
             { icon: <ShoppingBag size={18} />, label: 'Observatorio Estelar', href: '/shop' },
             { icon: <Award size={18} />, label: 'Ranking', href: '/leaderboard' },
+            { icon: <Award size={18} />, label: '✦ Invitar (Gana Nitro)', href: '/invitar' },
             { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, label: 'Recompensas', href: '/daily-rewards' },
             { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>, label: 'Ruleta', href: '/roulette' },
             { icon: <BarChart size={18} />, label: 'Dashboard', href: '/dashboard' },

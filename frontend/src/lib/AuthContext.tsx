@@ -9,7 +9,7 @@ interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
   login: (data: LoginPayload) => Promise<void>;
-  googleLogin: (credential: string) => Promise<void>;
+  googleLogin: (credential: string, ref?: string) => Promise<void>;
   register: (data: RegisterPayload & { ref?: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -222,10 +222,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserAndCache(res.user);
   };
 
-  const googleLogin = async (credential: string) => {
+  const googleLogin = async (credential: string, ref?: string) => {
     const res = await apiFetch('/auth/google', {
       method: 'POST',
-      body: JSON.stringify({ credential })
+      body: JSON.stringify({ credential, ref })
     });
     setAccessToken(res.accessToken);
     setUserAndCache(res.user);

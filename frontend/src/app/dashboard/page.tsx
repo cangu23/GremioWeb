@@ -302,6 +302,65 @@ function DashboardContent() {
         </div>
       )}
 
+      {/* ===== BANNER DINÁMICA DE CRECIMIENTO ===== */}
+      <Link
+        href="/invitar"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '20px 24px',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, rgba(232, 199, 122, 0.15) 0%, rgba(16, 185, 129, 0.12) 100%)',
+          border: '1px solid rgba(232, 199, 122, 0.35)',
+          marginBottom: '32px',
+          textDecoration: 'none',
+          color: '#fff',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+          flexWrap: 'wrap',
+          gap: '16px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #E8C77A 0%, #10B981 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.4rem',
+            color: '#120E24',
+            fontWeight: 800,
+            flexShrink: 0,
+          }}>
+            ✦
+          </div>
+          <div>
+            <div style={{ fontSize: '0.78rem', color: '#E8C77A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Dinámica de Crecimiento del Gremio
+            </div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>
+              ¡Gana VRChat Plus o Discord Nitro invitando amigos!
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
+              Obtén tu enlace único, revisa tus invitaciones en tiempo real y compite en el ranking.
+            </div>
+          </div>
+        </div>
+        <div style={{
+          background: '#E8C77A',
+          color: '#120E24',
+          padding: '10px 20px',
+          borderRadius: '10px',
+          fontWeight: 700,
+          fontSize: '0.86rem',
+        }}>
+          Ver Mi Marcador →
+        </div>
+      </Link>
+
       {/* ===== COMUNIDAD ===== */}
       <div style={{ marginBottom: '40px' }}>
         <SectionHeader icon={<SvgUsers />} label="Comunidad" />
@@ -313,6 +372,7 @@ function DashboardContent() {
             { icon: <SvgStar />, label: 'VTubers', href: '/vtubers', desc: 'Explora perfiles' },
             { icon: <SvgAward />, label: 'Recompensas', href: '/daily-rewards', desc: 'Reclama tu recompensa', color: '#F59E0B' },
             { icon: <SvgStar />, label: 'Ruleta', href: '/roulette', desc: 'Gira y gana', color: '#EF4444' },
+            { icon: <SvgAward />, label: 'Invitar y Ganar', href: '/invitar', desc: 'Gana VRChat+ o Nitro', color: '#10B981' },
           ].map(renderQuickCard)}
         </div>
       </div>

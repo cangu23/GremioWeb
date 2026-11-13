@@ -5,6 +5,7 @@ import { UpdateUserPayload, PublicUser, UserProfile, canUseProfileMusic, isSpoti
 import * as DailyRewardsService from '../daily-rewards/daily-rewards.service';
 import { sanitizeString } from '../../middleware/sanitize';
 import { trackMissionProgress } from '../ecosystem/missions.service';
+import { validatePendingReferralOnInscription } from '../referrals/referral.service';
 import { getMyPlatformPlan, getEffectivePlan, planMeetsOrExceeds } from '../subscriptions/platform-subscriptions.service';
 import { invalidateUserAuthCache } from '../auth/authenticate';
 
@@ -154,6 +155,14 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
   const updatedProfile = await UserRepository.updateUserProfile(userId, payload);
   if (updatedProfile) {
     invalidateUserAuthCache(userId);
+
+    // Si el usuario no tenía displayName y ahora sí lo tiene (completó su inscripción),
+    // validar cualquier referencia pendiente que estuviese asociada a él.
+    if (!me?.displayName && payload.displayName) {
+      validatePendingReferralOnInscription(userId).catch((valErr) => {
+        console.error('Error validando referido en inscripción:', valErr);
+      });
+    }
   }
   if (!updatedProfile) {
     throw new AppError('Failed to update user profile', 500);
