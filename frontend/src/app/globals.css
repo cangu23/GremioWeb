@@ -1323,6 +1323,7 @@ img, svg {
   position: absolute;
   top: 4px;
   bottom: 4px;
+  left: 4px;
   width: calc(50% - 4px);
   background: linear-gradient(135deg, #F8F1DE 0%, #E8CA7C 40%, #D4AF37 100%);
   border: 1px solid rgba(255, 255, 255, 0.5);

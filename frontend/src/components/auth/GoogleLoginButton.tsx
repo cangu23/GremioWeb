@@ -23,6 +23,7 @@ export default function GoogleLoginButton() {
   const router = useRouter();
   const { showToast } = useToast();
   const [error, setError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // If Google Client ID is not configured, show a disabled button
   if (!GOOGLE_CLIENT_ID) {
@@ -31,9 +32,11 @@ export default function GoogleLoginButton() {
         disabled
         style={{
           width: '100%',
+          height: '42px',
           padding: '10px 14px',
           fontSize: '0.85rem',
           borderRadius: '10px',
+          boxSizing: 'border-box',
           border: '1px solid rgba(232, 199, 122, 0.2)',
           background: 'rgba(255, 255, 255, 0.04)',
           color: 'rgba(255, 255, 255, 0.5)',
@@ -47,8 +50,8 @@ export default function GoogleLoginButton() {
           opacity: 0.75,
         }}
       >
-        <GoogleLogo size={20} />
-        Google
+        <GoogleLogo size={18} />
+        <span>Google</span>
       </button>
     );
   }
@@ -60,9 +63,11 @@ export default function GoogleLoginButton() {
         onClick={() => setError(false)}
         style={{
           width: '100%',
+          height: '42px',
           padding: '10px 14px',
           fontSize: '0.85rem',
           borderRadius: '10px',
+          boxSizing: 'border-box',
           border: '1px solid rgba(255,77,79,0.3)',
           background: 'rgba(255,77,79,0.08)',
           color: '#ff4d4f',
@@ -78,57 +83,104 @@ export default function GoogleLoginButton() {
         onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,77,79,0.08)'; }}
       >
         <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ff4d4f' }}>!</span>
-        Reintentar
+        <span>Reintentar</span>
       </button>
     );
   }
 
-  // ⚡ OPTIMIZACIÓN: el provider GSI vive en el layout del grupo (auth) — un
-  // único GoogleOAuthProvider compartido entre /login y /register. Antes cada
-  // montaje del botón llamaba google.accounts.id.initialize() de nuevo (doble
-  // init en consola). El script de ~300KB solo se descarga en las páginas de auth.
   return (
-    <GoogleLogin
-      onSuccess={async (credentialResponse) => {
-        try {
-          if (!credentialResponse.credential) {
-            showToast('Error: No se recibió credencial de Google', 'error');
-            return;
-          }
-          await googleLogin(credentialResponse.credential);
-          showToast('Inicio de sesión con Google exitoso', 'success');
-          router.push('/dashboard');
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : 'Error al iniciar sesión con Google';
-          showToast(msg, 'error');
-          setError(true);
-        }
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '42px',
+        borderRadius: '10px',
+        overflow: 'hidden',
       }}
-      onError={() => {
-        showToast('Error al cargar el botón de Google', 'error');
-        setError(true);
-      }}
-      theme="filled_black"
-      size="large"
-      text="signin"
-      width="100%"
-      shape="rectangular"
-      containerProps={{
-        className: 'google-login-wrap',
-        style: {
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Botón visual idéntico al de Discord en proporciones, tamaño y estilo */}
+      <button
+        type="button"
+        tabIndex={-1}
+        style={{
           width: '100%',
           height: '42px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          overflow: 'hidden',
+          padding: '10px 14px',
+          fontSize: '0.85rem',
           borderRadius: '10px',
-          border: '1px solid rgba(232, 199, 122, 0.2)',
-          boxShadow: '0 4px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
-          background: 'rgba(255, 255, 255, 0.045)',
+          boxSizing: 'border-box',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '9px',
+          fontWeight: 600,
+          letterSpacing: '0.02em',
+          border: isHovered
+            ? '1px solid rgba(232, 199, 122, 0.55)'
+            : '1px solid rgba(232, 199, 122, 0.35)',
+          background: isHovered
+            ? 'linear-gradient(135deg, rgba(232, 199, 122, 0.2) 0%, rgba(255, 255, 255, 0.08) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%)',
+          color: '#fff',
+          boxShadow: isHovered
+            ? '0 6px 20px rgba(212, 175, 55, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18)'
+            : '0 4px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+          transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
           transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-        },
-      }}
-    />
+          pointerEvents: 'none',
+        }}
+      >
+        <GoogleLogo size={18} />
+        <span>Google</span>
+      </button>
+
+      {/* Capa de Google GSI que captura el clic en cualquier punto del botón de forma 100% nativa */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.001,
+          cursor: 'pointer',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          pointerEvents: 'auto',
+        }}
+      >
+        <div style={{ transform: 'scale(1.6)', transformOrigin: 'center center' }}>
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              try {
+                if (!credentialResponse.credential) {
+                  showToast('Error: No se recibió credencial de Google', 'error');
+                  return;
+                }
+                await googleLogin(credentialResponse.credential);
+                showToast('¡Bienvenido al Gremio!', 'success');
+                router.push('/dashboard');
+              } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : 'Error al iniciar sesión con Google';
+                showToast(msg, 'error');
+                setError(true);
+              }
+            }}
+            onError={() => {
+              showToast('Error al cargar el botón de Google', 'error');
+              setError(true);
+            }}
+            size="large"
+            width="320"
+          />
+        </div>
+      </div>
+    </div>
   );
 }

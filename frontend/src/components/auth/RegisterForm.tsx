@@ -220,7 +220,7 @@ export default function RegisterForm() {
               Creando cuenta...
             </span>
           ) : (
-            'Crear cuenta'
+            'Registrarse en el Gremio'
           )}
         </button>
       </form>
