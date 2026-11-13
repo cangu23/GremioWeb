@@ -228,8 +228,8 @@ function UserSettings() {
           bannerUrl: canBannerImg ? (bannerUrl.trim() || null) : null,
           displayedRole: displayedRole || undefined,
           profileMusic: profileMusic.trim() || null,
-          profileBg: profileBg || undefined,
-          profileParticles: profileParticles || undefined,
+          profileBg: planMeetsOrExceeds(user?.plan, user?.role, 'NOVA') ? (profileBg || undefined) : undefined,
+          profileParticles: planMeetsOrExceeds(user?.plan, user?.role, 'STELLAR') ? (profileParticles || undefined) : undefined,
         }),
       });
       showToast('Perfil actualizado correctamente', 'success');

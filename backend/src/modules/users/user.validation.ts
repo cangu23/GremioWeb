@@ -8,17 +8,22 @@ export const updateNoteSchema = z.object({
   }),
 });
 
+const imageUriSchema = z.string().refine(
+  (val) => !val || val.startsWith('/') || /^https?:\/\//i.test(val),
+  { message: 'URL o ruta de imagen inválida' }
+);
+
 export const updateUserSchema = z.object({
   body: z.object({
     username: z.string().min(3).max(30).optional(),
     displayName: z.string().max(50).optional(),
-    avatarUrl: z.string().url().optional().or(z.literal('')),
+    avatarUrl: imageUriSchema.optional().or(z.literal('')),
     bio: z.string().max(2000).optional(),
     // Profile music — semantic validation (Spotify-only + legacy keep + premium) happens in the service,
     // where we can compare against the user's current value (legacy MP3 URLs must remain editable).
     profileMusic: z.string().nullable().optional(),
     bannerColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Color hex inválido (ej: #8a2be2)').optional().or(z.literal('')),
-    bannerUrl: z.string().url().nullable().optional().or(z.literal('')),
+    bannerUrl: imageUriSchema.nullable().optional().or(z.literal('')),
     displayedRole: z.string().optional().nullable(),
     description: z.string().max(2000).optional(),
     lore: z.string().max(5000).optional(),

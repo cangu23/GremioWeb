@@ -85,24 +85,37 @@ export const updateMe = async (userId: string, payload: UpdateUserPayload): Prom
 
   if (payload.bannerUrl !== undefined && payload.bannerUrl) {
     const me = await UserRepository.findById(userId);
-    if (!canUseBannerImage(me?.plan, me?.role)) {
+    const isKeep = !!me && me.bannerUrl === payload.bannerUrl;
+    if (!isKeep && !canUseBannerImage(me?.plan, me?.role)) {
       throw new AppError('Las imágenes de banner son exclusivas de miembros con Plan Astro o superior y Creadores. Como usuario Explorer (Gratis) puedes elegir un color sólido para tu banner.', 403);
     }
   }
 
+  const DEFAULT_PROFILE_BG = 'linear-gradient(180deg, #16132b 0%, #0d0b1a 100%)';
   if (payload.profileBg !== undefined && payload.profileBg) {
     const me = await UserRepository.findById(userId);
     const effective = getEffectivePlan(me?.plan, me?.role);
+    const isDefault = payload.profileBg === DEFAULT_PROFILE_BG;
+    const isKeep = !!me && me.profileBg === payload.profileBg;
     if (!planMeetsOrExceeds(effective, 'NOVA')) {
-      throw new AppError('Los fondos de tarjeta son exclusivos de Nova Pro y Stellar Elite.', 403);
+      if (isDefault || isKeep) {
+        delete (payload as Record<string, unknown>).profileBg;
+      } else {
+        throw new AppError('Los fondos de tarjeta son exclusivos de Nova Pro y Stellar Elite.', 403);
+      }
     }
   }
 
   if (payload.profileParticles !== undefined && payload.profileParticles && payload.profileParticles !== 'OFF') {
     const me = await UserRepository.findById(userId);
     const effective = getEffectivePlan(me?.plan, me?.role);
+    const isKeep = !!me && me.profileParticles === payload.profileParticles;
     if (!planMeetsOrExceeds(effective, 'STELLAR')) {
-      throw new AppError('Las partículas cósmicas son exclusivas de Stellar Elite.', 403);
+      if (isKeep) {
+        delete (payload as Record<string, unknown>).profileParticles;
+      } else {
+        throw new AppError('Las partículas cósmicas son exclusivas de Stellar Elite.', 403);
+      }
     }
   }
 
