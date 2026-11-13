@@ -12,3 +12,4 @@ router.get('/check/:code', ReferralController.checkReferralCode);
 router.get('/me', authenticate, ReferralController.getMyReferrals);
 
 export default router;
+

@@ -18,18 +18,22 @@ export const getMyReferrals = async (req: Request, res: Response, next: NextFunc
 export const getLeaderboard = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : 10;
-    const leaderboard = await ReferralService.getReferralLeaderboard(limit);
+    const period = req.query.period === 'all_time' ? 'all_time' : 'monthly';
+    const result = await ReferralService.getReferralLeaderboard(limit, period);
+
     res.json({
       campaign: {
-        title: '✦ Campaña de Crecimiento del Gremio ✦',
+        title: '✦ Campaña Mensual de Crecimiento del Gremio ✦',
         rewards: [
-          'VRChat Plus (Suscripción)',
+          'VRChat Plus (Suscripción mensual / anual)',
           'Discord Nitro',
           'Títulos estelares y Stardust extra',
         ],
         antiCheatNotice: 'Las cuentas creadas en la misma red/IP o no verificadas son filtradas automáticamente.',
+        frequencyNotice: 'La dinámica se evalúa a fin de cada mes. El contador mensual se reinicia el último día de cada mes para dar igualdad de oportunidades.',
       },
-      leaderboard,
+      season: result.season,
+      leaderboard: result.leaderboard,
     });
   } catch (err) {
     next(err);
@@ -73,3 +77,4 @@ export const checkReferralCode = async (req: Request, res: Response, next: NextF
     next(err);
   }
 };
+

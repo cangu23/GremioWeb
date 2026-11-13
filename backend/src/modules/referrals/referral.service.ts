@@ -249,8 +249,28 @@ export const validatePendingReferralOnInscription = async (userId: string) => {
   }
 };
 
+export const getMonthBoundaries = () => {
+  const now = new Date();
+  const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+  const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+  const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  const monthName = monthNames[now.getUTCMonth()];
+  const daysRemaining = Math.max(0, Math.ceil((endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
+  return {
+    now,
+    startOfMonth,
+    endOfMonth,
+    monthName,
+    daysRemaining,
+  };
+};
+
 /**
- * Obtiene las estadísticas de invitaciones y enlace del usuario
+ * Obtiene las estadísticas de invitaciones y enlace del usuario (mensual e histórico)
  */
 export const getMyReferrals = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -261,6 +281,8 @@ export const getMyReferrals = async (userId: string) => {
   if (!user) {
     throw new Error('Usuario no encontrado');
   }
+
+  const { startOfMonth, endOfMonth, monthName, daysRemaining } = getMonthBoundaries();
 
   const referrals = await prisma.referral.findMany({
     where: { referrerId: userId },
@@ -278,12 +300,29 @@ export const getMyReferrals = async (userId: string) => {
     orderBy: { createdAt: 'desc' },
   });
 
-  const validCount = referrals.filter((r) => r.status === 'VALID').length;
+  const validAllTime = referrals.filter((r) => r.status === 'VALID');
+  const validThisMonth = validAllTime.filter((r) => new Date(r.createdAt) >= startOfMonth);
   const pendingCount = referrals.filter((r) => r.status === 'PENDING_INSCRIPTION').length;
   const invalidCount = referrals.filter((r) => r.status.startsWith('SUSPECT_')).length;
 
-  // Calcular ranking actual en la campaña
-  const allValidGroups = await prisma.referral.groupBy({
+  // 1. Ranking del mes en curso (el que compite por VRChat+ / Nitro)
+  const monthlyGroups = await prisma.referral.groupBy({
+    by: ['referrerId'],
+    where: {
+      status: 'VALID',
+      createdAt: { gte: startOfMonth },
+    },
+    _count: { id: true },
+    orderBy: {
+      _count: { id: 'desc' },
+    },
+  });
+
+  const userMonthlyIndex = monthlyGroups.findIndex((g) => g.referrerId === userId);
+  const monthlyRank = userMonthlyIndex >= 0 ? userMonthlyIndex + 1 : (validThisMonth.length > 0 ? monthlyGroups.length + 1 : null);
+
+  // 2. Ranking histórico global (acumulado de todos los meses)
+  const allTimeGroups = await prisma.referral.groupBy({
     by: ['referrerId'],
     where: { status: 'VALID' },
     _count: { id: true },
@@ -292,8 +331,8 @@ export const getMyReferrals = async (userId: string) => {
     },
   });
 
-  const userIndex = allValidGroups.findIndex((g) => g.referrerId === userId);
-  const rank = userIndex >= 0 ? userIndex + 1 : (validCount > 0 ? allValidGroups.length + 1 : null);
+  const userAllTimeIndex = allTimeGroups.findIndex((g) => g.referrerId === userId);
+  const allTimeRank = userAllTimeIndex >= 0 ? userAllTimeIndex + 1 : (validAllTime.length > 0 ? allTimeGroups.length + 1 : null);
 
   const baseUrl = process.env.FRONTEND_URL || 'https://gremioweb.com';
   const referralCode = user.username;
@@ -302,11 +341,19 @@ export const getMyReferrals = async (userId: string) => {
   return {
     referralCode,
     referralLink,
-    validCount,
+    monthlyValidCount: validThisMonth.length,
+    validCount: validAllTime.length, // Total histórico
     pendingCount,
     invalidCount,
     totalCount: referrals.length,
-    rank,
+    monthlyRank,
+    allTimeRank,
+    rank: monthlyRank, // Compatibilidad
+    season: {
+      monthName,
+      endsAt: endOfMonth.toISOString(),
+      daysRemaining,
+    },
     referrals: referrals.map((r) => ({
       id: r.id,
       status: r.status,
@@ -323,14 +370,20 @@ export const getMyReferrals = async (userId: string) => {
 };
 
 /**
- * Tabla de clasificación en vivo para la dinámica de Discord Nitro / VRChat Plus
+ * Tabla de clasificación en vivo: mensual (competición activa) o histórico
  */
-export const getReferralLeaderboard = async (limit = 10) => {
+export const getReferralLeaderboard = async (limit = 10, period: 'monthly' | 'all_time' = 'monthly') => {
   const safeLimit = Math.min(Math.max(limit, 1), 50);
+  const { startOfMonth, endOfMonth, monthName, daysRemaining } = getMonthBoundaries();
+
+  const whereClause: any = { status: 'VALID' };
+  if (period === 'monthly') {
+    whereClause.createdAt = { gte: startOfMonth };
+  }
 
   const groups = await prisma.referral.groupBy({
     by: ['referrerId'],
-    where: { status: 'VALID' },
+    where: whereClause,
     _count: { id: true },
     orderBy: {
       _count: { id: 'desc' },
@@ -339,7 +392,15 @@ export const getReferralLeaderboard = async (limit = 10) => {
   });
 
   if (groups.length === 0) {
-    return [];
+    return {
+      season: {
+        period,
+        monthName,
+        endsAt: endOfMonth.toISOString(),
+        daysRemaining,
+      },
+      leaderboard: [],
+    };
   }
 
   const userIds = groups.map((g) => g.referrerId);
@@ -357,7 +418,7 @@ export const getReferralLeaderboard = async (limit = 10) => {
 
   const userMap = new Map(users.map((u) => [u.id, u]));
 
-  return groups
+  const leaderboard = groups
     .map((g, index) => {
       const u = userMap.get(g.referrerId);
       if (!u) return null;
@@ -373,4 +434,15 @@ export const getReferralLeaderboard = async (limit = 10) => {
       };
     })
     .filter(Boolean);
+
+  return {
+    season: {
+      period,
+      monthName,
+      endsAt: endOfMonth.toISOString(),
+      daysRemaining,
+    },
+    leaderboard,
+  };
 };
+
