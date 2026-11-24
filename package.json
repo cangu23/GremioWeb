@@ -9,7 +9,7 @@
     "shared"
   ],
   "scripts": {
-    "postinstall": "npm run prisma:generate",
+    "postinstall": "npm run build:shared && (npm run prisma:generate || true)",
     "dev": "npm run build:shared && concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
@@ -19,7 +19,7 @@
     "build:backend": "npm run build --workspace=backend",
     "start:backend": "npm run start --workspace=backend",
     "build:shared": "npm run build --workspace=@gremio-estelar/shared",
-    "prisma:generate": "prisma generate --schema backend/prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema backend/prisma/schema.prisma || npx --yes prisma generate --schema backend/prisma/schema.prisma || true",
     "prisma:push": "prisma db push --schema backend/prisma/schema.prisma",
     "prisma:generate:sqlite": "prisma generate --schema backend/prisma/schema.sqlite.prisma",
     "prisma:push:sqlite": "prisma db push --schema backend/prisma/schema.sqlite.prisma",
@@ -32,8 +32,10 @@
     "check:backend": "cd backend && npm run build && npm run test -- --run",
     "restore:backup": "node scripts/restore-backup.mjs"
   },
-  "devDependencies": {
-    "concurrently": "^9.2.1",
+  "dependencies": {
     "prisma": "^5.22.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
