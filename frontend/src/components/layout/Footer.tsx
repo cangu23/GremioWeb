@@ -23,6 +23,7 @@ export default function Footer() {
 
   const footerLinks = {
     Plataforma: [
+      { href: '/estelar-forge', label: '✦ Estelar Forge (OBS)' },
       { href: '/vtubers', label: 'VTubers' },
       { href: '/events', label: 'Eventos' },
       { href: '/guilds', label: 'Gremios' },

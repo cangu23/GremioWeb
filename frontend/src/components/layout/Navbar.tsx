@@ -314,6 +314,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             <span>Accesos rápidos:</span>
             {[
               { label: 'Noticias & Novedades', href: '/news' },
+              { label: '✦ Estelar Forge (OBS)', href: '/estelar-forge' },
               { label: 'VTubers', href: '/vtubers' },
               { label: 'Streamers', href: '/streamers' },
               { label: 'Eventos', href: '/events' },
@@ -917,6 +918,18 @@ function UserMenu({ closeMenu, equippedBadge }: { closeMenu?: () => void; equipp
               <span>Dashboard</span>
             </Link>
 
+            <Link href="/estelar-forge" onClick={() => setOpen(false)} style={menuItemStyle}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.12)'; e.currentTarget.style.transform = 'translateX(3px)'; }}
+              onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = 'translateX(0)'; }}>
+              <span style={{ color: '#8b5cf6', display: 'inline-flex' }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>Estelar Forge</span>
+                <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '4px', background: 'var(--primary)', color: '#fff' }}>OBS</span>
+              </span>
+            </Link>
+
             <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '4px 0' }} />
 
             <Link href="/achievements" onClick={() => setOpen(false)} style={menuItemStyle}
@@ -1098,6 +1111,7 @@ function AuthNav({ closeMenu, isMobile, unreadCount, dmUnreadCount, equippedBadg
             { icon: <Shield size={18} />, label: 'Gremios', href: '/guilds' },
             { icon: <Users size={18} />, label: 'VTubers', href: '/vtubers' },
             { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>, label: 'Streamers', href: '/streamers' },
+            { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, label: '✦ Estelar Forge (OBS)', href: '/estelar-forge' },
             { icon: <MessageCircle size={18} />, label: 'Chat', href: '/chat', badge: dmUnreadCount > 0 ? dmUnreadCount : undefined },
             { icon: <ShoppingBag size={18} />, label: 'Observatorio Estelar', href: '/shop' },
             { icon: <Award size={18} />, label: 'Ranking', href: '/leaderboard' },

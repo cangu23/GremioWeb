@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { hasAnyRole } from '@gremio-estelar/shared';
 import * as AuthService from './auth.service';
 
 // 30 days in milliseconds
@@ -115,6 +116,59 @@ export const resetPassword = async (
   try {
     const { token, newPassword } = req.body;
     const result = await AuthService.resetPassword(token, newPassword);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createDesktopToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: 'No autenticado.' });
+    }
+
+    const isCreator =
+      hasAnyRole(user.role, ['VTUBER', 'STREAMER', 'PARTNER', 'STAFF', 'MODERATOR', 'MOD', 'ADMIN', 'OWNER', 'SYSADMIN']) ||
+      Boolean((user as any).vtuberProfile) ||
+      Boolean((user as any).streamerProfile);
+
+    if (!isCreator) {
+      return res.status(403).json({
+        message: 'Acceso denegado: Estelar Forge es una herramienta exclusiva para creadores acreditados (VTubers y Streamers) del Gremio Estelar. Postúlate como creador en la plataforma para desbloquear tu acceso.',
+        requiresCreatorRole: true,
+      });
+    }
+
+    const token = await AuthService.generateDesktopToken(user.id, user.username, user.role);
+    res.status(200).json({
+      token,
+      user,
+      isCreator: true,
+      licensedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyLicense = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ valid: false, message: 'Token de licencia requerido.' });
+    }
+    const token = authHeader.split(' ')[1];
+    const result = await AuthService.verifyDesktopLicense(token);
     res.status(200).json(result);
   } catch (error) {
     next(error);

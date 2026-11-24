@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { AuthProvider, Role } from '@gremio-estelar/shared';
+import { AuthProvider, Role, hasAnyRole } from '@gremio-estelar/shared';
 import { prisma } from '../../database/index';
 import * as UserRepository from '../users/user.repository';
 import * as AuthRepository from './auth.repository';
@@ -277,4 +277,62 @@ export const resetPassword = async (token: string, newPassword: string) => {
   return {
     message: 'Contraseña actualizada con éxito. Ya puedes iniciar sesión con tu nueva clave.',
   };
+};
+
+/**
+ * Generates an extended-validity token for Estelar Forge desktop application,
+ * restricted strictly to verified creators.
+ */
+export const generateDesktopToken = async (userId: string, username?: string, role?: string) => {
+  const payload = {
+    userId,
+    username,
+    role,
+    client: 'estelar-forge',
+    isCreator: true,
+    issuedAt: Date.now(),
+  };
+  const desktopToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    expiresIn: '90d',
+  });
+  return desktopToken;
+};
+
+/**
+ * Validates a desktop license token and ensures the user still has an active creator status.
+ */
+export const verifyDesktopLicense = async (token: string) => {
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as any;
+    if (decoded.client !== 'estelar-forge') {
+      throw new AppError('Licencia no válida para Estelar Forge.', 403);
+    }
+    const user = await UserRepository.findById(decoded.userId);
+    if (!user || user.status !== 'ACTIVE') {
+      throw new AppError('La cuenta del creador no se encuentra activa.', 403);
+    }
+    const isCreator =
+      hasAnyRole(user.role, ['VTUBER', 'STREAMER', 'PARTNER', 'STAFF', 'MODERATOR', 'MOD', 'ADMIN', 'OWNER', 'SYSADMIN']) ||
+      Boolean((user as any).vtuberProfile) ||
+      Boolean((user as any).streamerProfile);
+
+    if (!isCreator) {
+      throw new AppError('Licencia no autorizada: Se requiere acreditación de Creador activa (VTuber / Streamer).', 403);
+    }
+
+    return {
+      valid: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName || user.username,
+        avatarUrl: user.avatarUrl,
+        role: user.role,
+        isCreator: true,
+      },
+    };
+  } catch (err: any) {
+    if (err instanceof AppError) throw err;
+    throw new AppError('Licencia inválida, manipulada o expirada.', 401);
+  }
 };

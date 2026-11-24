@@ -87,4 +87,8 @@ router.get('/discord/callback', DiscordController.handleDiscordCallback);
 router.get('/discord/connect', authenticate, DiscordController.redirectToDiscordConnect);
 router.get('/discord/connect/callback', DiscordController.handleDiscordConnectCallback);
 
+// Token exclusivo para aplicación de escritorio Estelar Forge (requiere cuenta del gremio activa y rol de creador)
+router.post('/desktop-token', authenticate, AuthController.createDesktopToken);
+router.post('/verify-license', AuthController.verifyLicense);
+
 export default router;
